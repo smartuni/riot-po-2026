@@ -1,0 +1,128 @@
+
+## 📁 Branch Hierarchy
+
+At the top sits:
+
+main
+
+
+Below it, two **team branches**:
+
+nodes
+server
+
+
+Under each team, you have **sub-group branches**:
+
+nodes/
+├── hardware
+├── ble
+└── lorawan
+
+server/
+├── logic
+├── frontend
+├── backend
+└── security
+
+
+### Why this hierarchy?
+
+- **main** is always deployable (CI-green).
+- **team branches** gather stable, cross-subgroup changes.
+- **sub-group branches** localize work and reviews to the right specialists.
+
+---
+
+## 🌱 Feature Branches
+
+> **“Feature work branches always stem from a sub-group branch”** means:  
+> 1. You **checkout** the specific sub-group branch you’re targeting (e.g. `server/backend`).  
+> 2. You **create** your feature branch off that—so your new work builds directly on the latest subgroup code.  
+> 3. You name it `feature/<team>/<subgroup>/<short-description>`.
+
+Example:
+
+git fetch origin
+git checkout server/backend
+git pull
+
+git checkout -b feature/server/backend/add-auth-module
+team: “nodes” or “server”
+
+subgroup: one of that team’s sub-groups (e.g. “backend”)
+
+short-description: concise summary (no spaces; use hyphens)
+
+This pattern guarantees your branch:
+
+Starts from the correct context (all subgroup dependencies are present)
+
+Keeps history organized by team and function
+
+Reduces merge conflicts with parallel work in other sub-groups
+
+🔄 Detailed Workflow
+Sync & Start
+
+git fetch origin
+git checkout <team>/<subgroup>
+git pull
+git checkout -b feature/<team>/<subgroup>/<short-desc>
+Always start from the latest subgroup head.
+
+Develop & Commit
+
+Focus each commit on one logical change.
+
+Reference ticket/issue:
+
+git commit -m "FEATURE: (nodes/ble) implement scan filter (#42)"
+Push & Open PR
+
+git push -u origin feature/<…>
+Target branch: the sub-group branch (e.g. nodes/ble).
+
+PR title: start with [team/subgroup] tag, then summary.
+
+Review Layers
+
+Peer Review: at least one approval from any subgroup member.
+
+Sub-group Lead: checks naming, style, CI passes.
+
+Merge: once approved, merge using “Squash & Merge” or “Rebase & Merge” for clean history.
+
+Integrate to Team
+On your scheduled cadence (e.g. sprint end):
+
+git checkout server
+git merge --no-ff server/backend
+git push origin server
+Team Lead reviews cross-subgroup integration; fixes or approves.
+
+Release to Main
+
+Release Manager merges nodes and server into main (fast-forward or merge commit).
+
+Tag the commit (vX.Y.Z) and trigger deployment.
+
+🛡️ Roles & Responsibilities
+Role	Permissions & Duties
+Maintainer	Create branches, open PRs, merge within sub-groups.
+Peer Reviewer	Review implementation; catch logic bugs.
+Sub-group Lead	Enforce naming, style, CI checks; final subgroup merge.
+Team Lead	Validate cross-subgroup integration; merge to team.
+Release Manager	Merge teams into main, tag release, coordinate deploy.
+
+🔑 Key Benefits
+Contextual branching: Work always starts from the correct subgroup state.
+
+Layered reviews: Peer → Lead → Team → Release.
+
+Clear ownership: Explicit merge responsibilities at each level.
+
+Scalability: 22 maintainers can work in parallel with minimal conflicts.
+
+With this structure, every developer knows exactly where to branch, who reviews, and how changes flow into production. Feel free to add this GIT_FLOW.md to your repository root for easy reference!
+
