@@ -1,0 +1,99 @@
+# ----------------------------------------
+# Operating System
+# ----------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ----------------------------------------
+# IDEs / Editors
+# ----------------------------------------
+# VSCode
+.vscode/
+.history/
+
+# JetBrains (CLion, IntelliJ, PyCharm…)
+.idea/
+*.iml
+
+# ----------------------------------------
+# Node.js / JavaScript
+# ----------------------------------------
+# dependencies
+node_modules/
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# production build
+/dist
+/build
+
+# environment
+.env
+.env.local
+.env.*.local
+
+# ----------------------------------------
+# Python (if used for scripts/tests)
+# ----------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+pip-log.txt
+
+# ----------------------------------------
+# C / C++ / Embedded Builds
+# ----------------------------------------
+# object files, binaries
+*.o
+*.ko
+*.obj
+*.elf
+*.bin
+*.hex
+*.elf
+
+# build directories
+build/
+out/
+*.map
+
+# PlatformIO
+.pio/
+.pioenvs/
+
+# ----------------------------------------
+# Logs & Reports
+# ----------------------------------------
+*.log
+coverage/
+*.lcov
+
+# ----------------------------------------
+# Misc
+# ----------------------------------------
+# archives
+*.zip
+*.tar.gz
+*.rar
+
+# swap, temp files
+*~
+*.swp
+*.tmp
+
+# certificates, keys
+*.crt
+*.key
