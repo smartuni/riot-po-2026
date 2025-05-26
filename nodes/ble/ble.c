@@ -94,7 +94,7 @@ void start_adv(uint8_t *payload, unsigned payload_len)
 
     /* [TASK 2.2: Initialize data structures and configure advertisement parameters] */
     /* buffer for the advertisement */
-    static uint8_t adv_buf[ADV_PKT_BUFFER_SIZE];
+    static uint8_t adv_buf[ABLE_DV_PKT_BUFFER_SIZE];
     struct os_mbuf *data;
     int rc;
     struct ble_gap_ext_adv_params params;
@@ -110,19 +110,19 @@ void start_adv(uint8_t *payload, unsigned payload_len)
 
     params.primary_phy = BLE_HCI_LE_PHY_1M;
     params.secondary_phy = BLE_HCI_LE_PHY_1M;
-    params.tx_power = TX_POWER_UNDEF;
+    params.tx_power = BLE_TX_POWER_UNDEF;
     params.sid = 0;
     /* min/max advertising interval converted from ms to 0.625ms units */
     params.itvl_min = BLE_GAP_ADV_ITVL_MS(600);
     params.itvl_max = BLE_GAP_ADV_ITVL_MS(800);
 
     /* configure the nimble instance */
-    rc = ble_gap_ext_adv_configure(NIMBLE_INSTANCE, &params, NULL, NULL, NULL);
+    rc = ble_gap_ext_adv_configure(BLE_NIMBLE_INSTANCE, &params, NULL, NULL, NULL);
     assert (rc == 0);
 
     /* [TASK 2.3: Create a new advertisement packet] */
     /* get mbuf for adv data */
-    data = os_msys_get_pkthdr(ADV_PKT_BUFFER_SIZE, 0);
+    data = os_msys_get_pkthdr(BLE_ADV_PKT_BUFFER_SIZE, 0);
     assert(data);
 
     /* build advertising data with flags to specifiy that:
@@ -144,11 +144,11 @@ void start_adv(uint8_t *payload, unsigned payload_len)
     rc = os_mbuf_append(data, ad.buf, ad.pos);
     assert(rc == 0);
 
-    rc = ble_gap_ext_adv_set_data(NIMBLE_INSTANCE, data);
+    rc = ble_gap_ext_adv_set_data(BLE_NIMBLE_INSTANCE, data);
     assert (rc == 0);
 
     /* [TASK 2.5: Start advertising] */
-    rc = ble_gap_ext_adv_start(NIMBLE_INSTANCE, 0, 0);
+    rc = ble_gap_ext_adv_start(BLE_NIMBLE_INSTANCE, 0, 0);
     assert (rc == 0);
 
     printf("Now advertising \"%s\"\n", payload);
@@ -165,8 +165,8 @@ int cmd_adv(int argc, char **argv)
 
     /* if advertising is already active stop it before updating
      * the advertised content */
-    if (ble_gap_ext_adv_active(NIMBLE_INSTANCE)) {
-        ble_gap_ext_adv_stop(NIMBLE_INSTANCE);
+    if (ble_gap_ext_adv_active(BLE_NIMBLE_INSTANCE)) {
+        ble_gap_ext_adv_stop(BLE_NIMBLE_INSTANCE);
     }
 
     _pl_len = strlen(argv[1]);
@@ -231,9 +231,9 @@ void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
         uint8_t *marker = &msd.data[sizeof(_company_id_code)];
         if (memcmp(marker, _custom_msd_marker_pattern,
                 sizeof(_custom_msd_marker_pattern)) == 0) {
-            uint8_t *payload = &msd.data[MSD_PAYLOAD_OFFS];
+            uint8_t *payload = &msd.data[BLE_MSD_PAYLOAD_OFFS];
             /* length of the payload without the marker */
-            int pl = msd.len - MSD_PAYLOAD_OFFS;
+            int pl = msd.len - BLE_MSD_PAYLOAD_OFFS;
             printf("%.*s\n", pl, payload);
         }
     }
@@ -275,9 +275,9 @@ void ble_example()
     /* [TASK 1.1: initialize the nimble scanner ] */
     /* [TASK 1.1: initialize the nimble scanner ] */
     nimble_scanner_cfg_t params = {
-        .itvl_ms = SCAN_INTERVAL_MS,
-        .win_ms = SCAN_WINDOW_MS,
-        .flags = NIMBLE_SCANNER_PHY_1M,
+        .itvl_ms = BLE_SCAN_INTERVAL_MS,
+        .win_ms = BLE_SCAN_WINDOW_MS,
+        .flags = BLE_NIMBLE_SCANNER_PHY_1M,
     };
 
     /* initialize the scanner and set up our own callback */
