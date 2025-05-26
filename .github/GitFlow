@@ -39,15 +39,15 @@ server/
 > **“Feature work branches always stem from a sub-group branch”** means:  
 > 1. You **checkout** the specific sub-group branch you’re targeting (e.g. `server/backend`).  
 > 2. You **create** your feature branch off that—so your new work builds directly on the latest subgroup code.  
-> 3. You name it `feature/<team>/<subgroup>/<short-description>`.
+> 3. You name it `<short-description>/<subgroup>/<team>`.
 
 Example:
 
 git fetch origin
-git checkout server/backend
+git checkout backend7server
 git pull
 
-git checkout -b feature/server/backend/add-auth-module
+git checkout -b add-auth-module/backend/server
 team: “nodes” or “server”
 
 subgroup: one of that team’s sub-groups (e.g. “backend”)
@@ -66,9 +66,9 @@ Reduces merge conflicts with parallel work in other sub-groups
 Sync & Start
 
 git fetch origin
-git checkout <team>/<subgroup>
+git checkout <subgroup>/<team>
 git pull
-git checkout -b feature/<team>/<subgroup>/<short-desc>
+git checkout -b <short-desc>/<subgroup>/<team>
 Always start from the latest subgroup head.
 
 Develop & Commit
@@ -77,17 +77,17 @@ Focus each commit on one logical change.
 
 Reference ticket/issue:
 
-git commit -m "FEATURE: (nodes/ble) implement scan filter (#42)"
+git commit -m "FEATURE: (ble/nodes) implement scan filter (#42)"
 Push & Open PR
 
-git push -u origin feature/<…>
-Target branch: the sub-group branch (e.g. nodes/ble).
+git push -u origin /<subgroup>/<…>
+Target branch: the sub-group branch (e.g. ble/nodes).
 
-PR title: start with [team/subgroup] tag, then summary.
+PR title: start with [subgroup/team] tag, then summary.
 
 Review Layers
 
-Peer Review: at least one approval from any subgroup member when pusing to sub-group branch e.g. server/backend.
+Peer Review: at least one approval from any subgroup member when pusing to sub-group branch e.g. backend/server.
 
 Sub-group Lead: checks naming, style, CI passes when pushing to main-group e.g. server.
 
