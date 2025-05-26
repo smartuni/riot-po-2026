@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "ztimer.h"
-#include "ble.h"
+#include "../ble/ble.h"
 
 int main(void)
 {
