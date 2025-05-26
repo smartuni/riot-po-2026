@@ -7,8 +7,10 @@
 
 
 int main(void){
-
     init_interrupt();
+
+
+
     while(1){}
     return 0;
 }

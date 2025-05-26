@@ -13,9 +13,11 @@ void trigger_callback (void *arg)
 {
     (void) arg; /* the argument is not used */
     if (!gpio_read(trigger)) {
+        // TO SMTH
         gpio_set(led0);
     }
     else {
+        // TO SMTH
         gpio_clear(led0);
     }
 }
