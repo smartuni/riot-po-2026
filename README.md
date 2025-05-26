@@ -2,7 +2,7 @@
 ----------
 Aufgaben:
 <ol>
-  <li>TTN - MQTT, API: Jannik, Paul</li>
+  <li>TTN - MQTT, API - Translation layer CBOR/JSON in direction from/to backend server: Jannik, Paul</li>
   <li>BLE - Modul und CBOR, Test BLE Empfang mit mehreren Geräten, Beaconing mit mehreren Geräten: Tini, Nico, Stepan, Maxim</li>
   <li>LoRaWAN - Modul mit API zum Senden / Empfangen</li>
   <li>Datenstruktur (CBOR) - Aufbau, Dokumentation: Tini, Nico, Stepan, Maxim</li>
