@@ -18,7 +18,13 @@ DEVELHELP ?= 1
 
 # This board requires a start sleep to actually catch the printed output
 USEMODULE += ztimer_sec
-#
+
+# Include bluetooth stack
+include ../ble/ble.inc.mk
+
+# Include other packages here e.g.
+# include ../other_package/other_package.inc.mk
+
 # We use shell in this example
 USEMODULE += shell
 
@@ -26,6 +32,3 @@ USEMODULE += shell
 QUIET ?= 1
 
 include $(RIOTBASE)/Makefile.include
-
-# include bluetooth stack
-include /../ble/ble.inc.mk
