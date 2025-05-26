@@ -6,6 +6,6 @@
 #ifndef BLE_H
 #define BLE_H
 
-void ble_example();
+void ble_example(void);
 
 #endif // BLE_H

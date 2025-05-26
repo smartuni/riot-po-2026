@@ -258,7 +258,7 @@ int cmd_scan(int argc, char **argv)
 SHELL_COMMAND(scan,"start/stop BLE scanning",cmd_scan);
 
 
-void ble_example()
+void ble_example(void)
 {
     /* Sleep so that we do not miss this message while connecting */
     ztimer_sleep(ZTIMER_SEC, 3);
