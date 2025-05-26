@@ -87,9 +87,9 @@ PR title: start with [team/subgroup] tag, then summary.
 
 Review Layers
 
-Peer Review: at least one approval from any subgroup member.
+Peer Review: at least one approval from any subgroup member when pusing to sub-group branch e.g. server/backend.
 
-Sub-group Lead: checks naming, style, CI passes.
+Sub-group Lead: checks naming, style, CI passes when pushing to main-group e.g. server.
 
 Merge: once approved, merge using “Squash & Merge” or “Rebase & Merge” for clean history.
 
