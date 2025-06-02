@@ -21,6 +21,7 @@ USEMODULE += ztimer_sec
 
 # Include bluetooth stack
 include ../../ble/ble.inc.mk
+include ../../lorawan/lorawan.mk
 
 # Include other packages here e.g.
 # include ../../other_package/other_package.inc.mk
