@@ -5,7 +5,7 @@ You can also run these commands:
 ```
 git submodule init
 git submodule update
-```26.05.2025
+```
 ----------
 Aufgaben:
 <ol>
