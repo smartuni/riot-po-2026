@@ -1,0 +1,336 @@
+#include "menu.h"
+#include "displayDemo.h"
+#include <stddef.h>
+#include <string.h>
+#include "u8g2.h"
+
+#define GATE "Gate "
+#define CANCEL "cancel"
+#define MAX_GATES 50
+
+#define OPEN_GATE_STATE 0
+#define JOB_STATE 1
+
+#define CLOSED 0
+#define OPEN 1
+#define JOB_DONE 0
+#define JOB_TODO 2
+
+
+menu_entry_t set_job_state[3];
+menu_entry_t jobs[MAX_GATES+1];
+menu_entry_t main_menu [2];
+menu_entry_t gate_states[MAX_GATES+1];
+menu_entry_t set_gate[3];
+menu_entry_t confirm_gate[2];
+
+menu_header_t set_jobs_state_header;
+menu_header_t jobs_header;
+menu_header_t main_menu_header;
+menu_header_t gate_states_header;
+menu_header_t set_gate_header;
+menu_header_t confirm_gate_header;
+
+menu_header_t *active_menu = &main_menu_header;
+menu_entry_t *active_entry = main_menu;
+int active_entry_index = 0;
+menu_entry_t *other_entry = NULL;
+int other_entry_index = -1;
+
+int active_job = -1;
+int active_gate = -1;
+
+void init_menu(void){
+
+    set_job_state[0] = (menu_entry_t){"Done", -1, 0, &jobs_header};
+    set_job_state[1] = (menu_entry_t){"Not done", -1, 0, &jobs_header};
+    set_job_state[2] = (menu_entry_t){CANCEL, -1, 0, &jobs_header};
+
+    main_menu[0] = (menu_entry_t){"Gate status", -1, 0, &gate_states_header};
+    main_menu[1] = (menu_entry_t){"Jobs", -1, 0, &jobs_header};
+
+    set_gate[0] = (menu_entry_t){"set open", -1, 0, &confirm_gate_header};
+    set_gate[1] = (menu_entry_t){"set closed", -1, 0, &confirm_gate_header};
+    set_gate[2] = (menu_entry_t){CANCEL, -1, 0, &gate_states_header};
+
+    confirm_gate[0] = (menu_entry_t){"confirm", -1, 0, &gate_states_header};
+    confirm_gate[1] = (menu_entry_t){CANCEL, -1, 0, &set_gate_header};
+
+    set_jobs_state_header = (menu_header_t){
+        .text = "set Job",
+        .id = -1,
+        .first_entry = set_job_state,
+        .num_entries = 3
+    };
+
+    jobs_header = (menu_header_t){
+        .text = "Jobs",
+        .id = -1,
+        .first_entry = jobs,
+        .num_entries = 0
+    };
+
+    main_menu_header = (menu_header_t){
+        .text = "Main Menu",
+        .id = -1,
+        .first_entry = main_menu,
+        .num_entries = 2
+    };
+
+    gate_states_header = (menu_header_t){
+        .text = "Gate states",
+        .id = -1,
+        .first_entry = gate_states,
+        .num_entries = 0
+    };
+
+    set_gate_header = (menu_header_t){
+        .text = "set Gate",
+        .id = -1,
+        .first_entry = set_gate,
+        .num_entries = 3
+    };
+
+    confirm_gate_header = (menu_header_t){
+        .text = "confirm Gate",
+        .id = -1,
+        .first_entry = confirm_gate,
+        .num_entries = 2
+    };
+
+    for (int i = 0; i < MAX_GATES; i++) {
+        gate_states[i].next = &set_gate_header;
+        gate_states[i].id = i+1;
+        gate_states[i].text = GATE;
+        gate_states[i].state = 0;
+        gate_states_header.num_entries++;
+        
+        jobs[i].next = &set_jobs_state_header;
+        jobs[i].id = i+1;
+        jobs[i].text = GATE;
+        jobs[i].state = 0;
+    }
+
+    gate_states[MAX_GATES].next = &main_menu_header; // Last gate points to main menu
+    gate_states[MAX_GATES].text = CANCEL; // Last gate is the cancel option
+    gate_states[MAX_GATES].id = -1; // Last gate has no ID
+    gate_states[MAX_GATES].state = 0; // Last gate has no state
+    gate_states_header.num_entries++;
+
+    jobs[0].next = &main_menu_header; // Last job points to main menu
+    jobs[0].text = CANCEL; // First job is the cancel option
+    jobs[0].id = -1; // First job has no ID
+    jobs[0].state = 0; // First job has no state
+    jobs_header.num_entries = 1; // Start with the cancel job
+}
+
+void add_job(int id, uint8_t expected_state) {
+    if (id < 1 || id > MAX_GATES) {
+        return; // Invalid job ID
+    }
+    if (jobs_header.num_entries <= MAX_GATES) {
+        jobs[jobs_header.num_entries] = jobs[jobs_header.num_entries-1]; // Copy the last entry (cancel) to the next position
+        jobs[jobs_header.num_entries-1].id = id;
+        jobs[jobs_header.num_entries-1].state = 0;
+        jobs[jobs_header.num_entries-1].state |= expected_state;
+        jobs[jobs_header.num_entries-1].state |= JOB_TODO;
+        jobs_header.num_entries++;
+
+        gate_states[id -1].state |= JOB_TODO;
+    }
+}
+
+void mark_job_done(int id) {
+    if (id < 1 || id > MAX_GATES) {
+        return; // Invalid job ID
+    }
+    
+    for (int i = 0; i < jobs_header.num_entries; i++) {
+        if (jobs[i].id == id) {
+            jobs[i].state &= ~JOB_TODO; // Clear the JOB_TODO bit
+            gate_states[id - 1].state &= ~JOB_TODO; // Clear the JOB_TODO bit in gate state
+            break;
+        }
+    }
+}
+
+void mark_job_todo(int id) {
+    if (id < 1 || id > MAX_GATES) {
+        return; // Invalid job ID
+    }
+    
+    for (int i = 0; i < jobs_header.num_entries; i++) {
+        if (jobs[i].id == id) {
+            jobs[i].state |= JOB_TODO; // Set the JOB_TODO bit
+            gate_states[id - 1].state |= JOB_TODO; // Set the JOB_TODO bit in gate state
+            break;
+        }
+    }
+}
+
+void set_gate_state(int id, uint8_t state) {
+    if (id < 1 || id > MAX_GATES) {
+        return; // Invalid gate ID
+    }
+    
+    gate_states[id - 1].state = state;
+}
+
+void mark_gate_open(int id) {
+    gate_states[id - 1].state |= OPEN; // Set the OPEN bit
+}
+
+void mark_gate_closed(int id) {
+    gate_states[id - 1].state &= ~OPEN; // Clear the OPEN bit
+}
+
+void set_current_meustate(int input) {
+    switch (input)
+    {
+    case INIT:
+        active_menu = &main_menu_header;
+        active_entry = main_menu;
+        other_entry = NULL;
+        active_entry_index = 0;
+        other_entry_index = -1;
+        active_job = -1;
+        active_gate = -1;
+        break;
+
+    case UP: // UP
+        if (active_entry_index > 0) {
+            other_entry_index = active_entry_index;
+            other_entry = active_entry;
+            active_entry_index--;
+            active_entry = &active_menu->first_entry[active_entry_index]; 
+            if(active_menu == &jobs_header){
+                active_job --;
+            }
+            if(active_menu == &gate_states_header){
+                active_gate --;
+            }
+        } else if (other_entry_index >= 0) {
+            other_entry = NULL;
+            other_entry_index = -1;
+        }
+        break;
+    case DOWN: // DOWN
+        if (active_entry_index < active_menu->num_entries - 1) {
+            other_entry_index = active_entry_index;
+            other_entry = active_entry;
+            active_entry_index++;
+            active_entry = &active_menu->first_entry[active_entry_index];
+            if(active_menu == &jobs_header && active_job < jobs_header.num_entries - 2){ // -2 because last entry is cancel
+                active_job ++;
+            }
+            if(active_menu == &gate_states_header && active_gate < gate_states_header.num_entries - 2){ // -2 because last entry is cancel
+                active_gate ++;
+            }
+        }
+        break;
+
+    case SELECT: // SELECT
+        if(active_entry->next == NULL){
+            set_current_meustate(INIT); // Reset to main menu if no next menu
+        } else {
+            active_menu = active_entry->next; // Move to the next menu
+
+            if (active_menu == &jobs_header) {
+                if  (active_job != -1){
+                    // If we are in the jobs menu and a job is selected
+                active_entry = &active_menu->first_entry[active_job]; // Set the active entry to the current job
+                active_entry_index = active_job; // Set the active entry index to the current job
+                other_entry = active_entry+1; // Set the other entry to the next job
+                }else{
+                    // If we are in the jobs menu and no job is selected
+                    active_entry = &active_menu->first_entry[0]; // Set the active entry to the first job or cancel
+                    active_entry_index = 0; // Set the active entry index to 0
+                    other_entry = NULL; // No other entry
+                    other_entry_index = -1; // No other entry index
+                }
+
+            } else if (active_menu == &gate_states_header) {
+                if (active_gate != -1){
+                    // If we are in the gate states menu and a gate is selected
+                    active_entry = &active_menu->first_entry[active_gate]; // Set the active entry to the current gate
+                    active_entry_index = active_gate; // Set the active entry index to the current gate
+                    other_entry = active_entry+1; // Set the other entry to the next gate
+                } else {
+                    // If we are in the gate states menu and no gate is selected
+                    active_entry = &active_menu->first_entry[0]; // Set the active entry to the first gate
+                    active_entry_index = 0; // Set the active entry index to 0
+                    other_entry = NULL; // No other entry
+                    other_entry_index = -1; // No other entry index
+                }
+            }
+            else {
+                active_entry = active_menu->first_entry; // Set the active entry to the first entry of the new menu
+                active_entry_index = 0; // Reset the active entry index
+                other_entry = NULL; // No other entry
+                other_entry_index = -1; // No other entry index
+            }
+        }
+        break;
+
+    default:
+        break;
+    }
+}
+
+char* build_text_conc_int(char* text, int value) {
+    
+})
+
+void refresh_display(void) {
+    new_page(); // Clear the display for the new page
+    
+    if (active_menu != &gate_states_header) {
+        if (other_entry != NULL) {
+            if(active_entry_index < other_entry_index){
+                display_ordinary_menu(active_entry->text, true, true, active_entry_index > 0);
+                display_ordinary_menu(other_entry->text, false, false, active_menu->num_entries > other_entry_index + 1);
+            } else {
+                display_ordinary_menu(other_entry->text, true, false, other_entry_index > 0);
+                display_ordinary_menu(active_entry->text, false, true, active_menu->num_entries > active_entry_index + 1);
+            }
+        } else {
+            display_menu_header(active_menu->text);
+            display_ordinary_menu(active_entry->text, false, true, active_menu->num_entries > active_entry_index + 1);
+        }
+
+    } else if (active_menu == &gate_states_header) {
+        if (other_entry != NULL) {
+            if(active_entry_index < other_entry_index){
+
+                display_gate_menu_box(active_entry->text, true, true, active_entry->state & OPEN, active_entry_index > 0);
+                
+                if(other_entry_index < active_menu->num_entries - 1){
+                    display_gate_menu_box(other_entry->text, false, false, other_entry->state & OPEN, active_menu->num_entries > other_entry_index + 1);
+                }else{
+                    display_ordinary_menu(other_entry->text, false, false, active_menu->num_entries > other_entry_index + 1);
+                }
+
+            } else {
+                
+                display_gate_menu_box(other_entry->text, true, false, other_entry->state & OPEN, other_entry_index > 0);
+                
+                if(active_entry_index < active_menu->num_entries - 1){
+                    display_gate_menu_box(active_entry->text, false, true, active_entry->state & OPEN, active_menu->num_entries > active_entry_index + 1);
+                }else{
+                    display_ordinary_menu(active_entry->text, false, true, active_menu->num_entries > active_entry_index + 1);
+                }
+            }
+
+        } else {
+            display_menu_header(active_menu->text);
+            if(active_entry_index < active_menu->num_entries - 1){
+                display_gate_menu_box(active_entry->text, false, true, active_entry->state & OPEN, active_menu->num_entries > active_entry_index + 1);
+            }else{
+                display_ordinary_menu(active_entry->text, false, true, active_menu->num_entries > active_entry_index + 1);
+            }
+        }
+    }
+
+    
+    
+}
