@@ -44,6 +44,8 @@
 
 #include "ztimer.h"
 
+#include "cbor.h"
+
 /* Interval between data transmissions, in seconds */
 #define SEND_INTERVAL_SEC 1
 
@@ -57,6 +59,9 @@ static char _rx_thread_stack[THREAD_STACKSIZE_DEFAULT];
 static msg_t _rx_msg_queue[QUEUE_SIZE];
 
 static msg_t _tx_msg_queue[QUEUE_SIZE];
+
+uint8_t send_buffer[128];
+size_t buffer_size;
 
 /**
  * @brief   Find the LoRaWAN network interface in the registry.
@@ -81,13 +86,15 @@ static void _join_lorawan_network(const netif_t *netif);
  * @retval   0 on success
  * @retval  -1 on failure
  */
-static int _send_lorawan_packet(const netif_t *netif, const phydat_t *temperature);
+static int _send_lorawan_packet(const netif_t *netif);
 
 /**
  * @brief   Print to STDOUT the received packet.
  * @param   pkt  Pointer to the received packet.
  */
 static void _print_received_packet(gnrc_pktsnip_t *pkt);
+
+static void createMessage(void);
 
 static netif_t *_find_lorawan_network_interface(void)
 {
@@ -141,10 +148,9 @@ static void _join_lorawan_network(const netif_t *netif)
     }
 }
 
-static int _send_lorawan_packet(const netif_t *netif, const phydat_t *temperature)
+static int _send_lorawan_packet(const netif_t *netif)
 {
     assert(netif != NULL);
-    assert(temperature != NULL);
 
     int result;
     gnrc_pktsnip_t *packet;
@@ -152,13 +158,9 @@ static int _send_lorawan_packet(const netif_t *netif, const phydat_t *temperatur
     gnrc_netif_hdr_t *netif_header;
     uint8_t address = 1;
     msg_t msg;
-    uint8_t data[2];
+    //uint8_t data[2];
 
-    /* [TASK 2.3] implement function to send data via lorawan */
-    data[0] = temperature->val[0] >> 8; // High byte
-    data[1] = temperature->val[0] & 0xFF; // Low byte
-
-    packet = gnrc_pktbuf_add(NULL, &data, sizeof(data), GNRC_NETTYPE_UNDEF);
+    packet = gnrc_pktbuf_add(NULL, send_buffer, 8, GNRC_NETTYPE_UNDEF);
     if (packet == NULL) {
         puts("Failed to create packet");
         return -1;
@@ -198,6 +200,11 @@ static int _send_lorawan_packet(const netif_t *netif, const phydat_t *temperatur
         printf("error: unable to send, error: (%" PRIu32 ")\n", msg.content.value);
         return -1;
     }
+
+    for (size_t i = 0; i < 8; i++) {
+            printf("%02X ", send_buffer[i]);
+        }
+    printf("\n");
 
     return 0;
 }
@@ -244,6 +251,23 @@ static void _print_received_packet(gnrc_pktsnip_t *pkt)
     gnrc_pktbuf_release(pkt);
 }
 
+static void createMessage(void){
+    CborEncoder encoder, mapEncoder;
+    cbor_encoder_init(&encoder, send_buffer, sizeof(send_buffer), 0);
+
+    cbor_encoder_create_map(&encoder, &mapEncoder, 2);
+
+    cbor_encode_int(&mapEncoder, 0);
+    cbor_encode_int(&mapEncoder, 1234);
+
+    cbor_encode_int(&mapEncoder, 1);
+    cbor_encode_int(&mapEncoder, 0);
+
+    buffer_size = cbor_encoder_get_buffer_size(&encoder, send_buffer);
+    
+    cbor_encoder_close_container(&encoder, &mapEncoder);
+}
+
 int start_lorawan(void)
 {
     /* Sleep so that we do not miss this message while connecting */
@@ -261,13 +285,6 @@ int start_lorawan(void)
 
     /* initialize message queue */
     msg_init_queue(_tx_msg_queue, QUEUE_SIZE);
-
-    /* get the on-board temperature sensor */
-    saul_reg_t *temp_sensor = saul_reg_find_type(SAUL_SENSE_TEMP);
-    if (!temp_sensor) {
-        puts("No temperature sensor present");
-        return 1;
-    }
 
     /* find the LoRaWAN network interface and connect */
     netif = _find_lorawan_network_interface();
@@ -297,27 +314,15 @@ int start_lorawan(void)
     ztimer_now_t last_wakeup = ztimer_now(ZTIMER_SEC);
 
     while (1) {
-        /* read a temperature value from the sensor */
-        phydat_t temperature;
-        int dimensions = saul_reg_read(temp_sensor, &temperature);
-        if (dimensions < 1) {
-            puts("Error reading a value from the device");
-            break;
-        }
-
-        /* dump the read value to STDIO */
-        phydat_dump(&temperature, dimensions);
-
+        createMessage();
         /* [TASK 2.3: send sensor data via LoRaWAN ] */
-        puts("Sending temperature data via LoRaWAN...");
-        result = _send_lorawan_packet(netif, &temperature);
+        puts("Sending data...");
+        result = _send_lorawan_packet(netif);
         if (result != 0) {
             puts("Failed to send LoRaWAN packet");
         } else {
             printf("Sent LoRaWAN packet successfully\n");
         }
-
-        printf("%d\n", temperature.val[0]);
 
         /* wait a bit */
         printf("Waiting for %d seconds...\n", SEND_INTERVAL_SEC);

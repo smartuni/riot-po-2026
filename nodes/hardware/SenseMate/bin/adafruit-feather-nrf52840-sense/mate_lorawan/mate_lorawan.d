@@ -123,7 +123,9 @@
  /home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/sys/include/saul_reg.h \
  /home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/drivers/include/saul.h \
  /home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/sys/include/phydat.h \
- /home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/sys/include/od.h
+ /home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/sys/include/od.h \
+ /home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/build/pkg/tinycbor/src/cbor.h \
+ /home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/build/pkg/tinycbor/src/tinycbor-version.h
 /home/networker/Desktop/praktikum/riot-po-2025/nodes/hardware/SenseMate/bin/adafruit-feather-nrf52840-sense/riotbuild/riotbuild.h:
 /home/networker/Desktop/praktikum/riot-po-2025/nodes/mate_lorawan/include/mate_lorawan.h:
 /usr/include/newlib/errno.h:
@@ -260,3 +262,5 @@
 /home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/drivers/include/saul.h:
 /home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/sys/include/phydat.h:
 /home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/sys/include/od.h:
+/home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/build/pkg/tinycbor/src/cbor.h:
+/home/networker/Desktop/praktikum/riot-po-2025/nodes/RIOT/build/pkg/tinycbor/src/tinycbor-version.h:
