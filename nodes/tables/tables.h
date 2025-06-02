@@ -24,6 +24,7 @@ typedef struct {
 
 typedef struct {
     uint8_t gateID;
+    uint8_t done;
 } jobs_entry;
 
 typedef struct {
