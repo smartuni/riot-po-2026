@@ -9,10 +9,10 @@ CFLAGS += -DCONFIG_LORAMAC_APP_KEY_DEFAULT=\"D5586D89F62687A027BD6D3273256FCB\"
 APPLICATION = lorawan_example
 
 # If no BOARD is found in the environment, use this default:
-BOARD ?= lab-feather-nrf52840-sense
+BOARD ?= feather-nrf52840-sense
 
 # This has to be the absolute path to the RIOT base directory:
-RIOTBASE ?= $(CURDIR)/../RIOT
+RIOTBASE ?= $(CURDIR)/../../nodes/RIOT
 
 # include SAUL to interact with onboard sensors and actuators
 USEMODULE += saul
@@ -52,7 +52,6 @@ CFLAGS += -DCONFIG_LORAMAC_DEFAULT_JOIN_PROCEDURE_OTAA
 # Bring the LoRa radio driver
 USEMODULE += sx127x
 
-ifeq ($(BOARD),lab-feather-nrf52840-sense)
 # Indicate how we connected the LoRa radio to the microcontroller
 CFLAGS += -DSX127X_PARAM_SPI_NSS=GPIO_PIN\(0,27\) #B
 CFLAGS += -DSX127X_PARAM_RESET=GPIO_PIN\(0,26\) #C
@@ -63,6 +62,5 @@ CFLAGS += -DSX127X_PARAM_DIO3=GPIO_UNDEF
 CFLAGS += -DSX127X_PARAM_DIO4=GPIO_UNDEF
 CFLAGS += -DSX127X_PARAM_DIO5=GPIO_UNDEF
 CFLAGS += -DSX127X_PARAM_PASELECT=SX127X_PA_BOOST
-endif
 
 include $(RIOTBASE)/Makefile.include
