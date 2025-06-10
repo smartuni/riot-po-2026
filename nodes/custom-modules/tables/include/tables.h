@@ -47,7 +47,12 @@
         int capacity;
     } cbor_buffer;
 
-    int target_state_table_to_cbor(target_state_entry table[], cbor_buffer* buffer);
+    /**
+     * @param buffer cbor buffer to write the cbor package into
+     * @return 0 if successful
+     * converts the target state table to a cbor package
+    */
+    int target_state_table_to_cbor(cbor_buffer* buffer);
 
     int is_state_table_to_cbor(is_state_entry table[], cbor_buffer* buffer);
 
@@ -55,7 +60,7 @@
 
     int jobs_table_to_cbor(jobs_entry table[], cbor_buffer* buffer);
 
-    int cbor_to_target_state_entry(cbor_buffer buffer, target_state_entry* entry);
+    int cbor_to_table(cbor_buffer* buffer);
 
     // TODO function to give back several CBOR packages for LoRaWAN
 

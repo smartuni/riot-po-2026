@@ -5,7 +5,9 @@
 
 int main(void) 
 {
-    ztimer_sleep(ZTIMER_SEC, 3);
+    
+
+#ifdef TEST_TABLE_TO_CBOR
     puts("Starting CBOR Test");
 
     target_state_entry e1 = {4, 2, 2000};
@@ -14,16 +16,18 @@ int main(void)
     puts("Made test object");
 
     cbor_buffer* buf = (cbor_buffer*) malloc(sizeof(uint8_t) * 120);
+    buf->buffer = (uint8_t*) malloc(sizeof(uint8_t) * 100);
     int result = target_state_table_to_cbor(test, buf);
     puts("Used function");
 
-    printf("Result is: %d", result);
-    printf("Size of cbor package: %d", buf->cbor_size);
-    for(int i = 0; i < buf->cbor_size; i++) {
-        printf("%d ", buf->buffer[i]);
+    printf("Result is: %d\n", result);
+    printf("Size of cbor package: %d\n", buf->cbor_size);
+    for(int i = 0; i < 20; i++) {
+        printf("%x ", buf->buffer[i]);
     }
+    printf("\n");
 
     puts("End of Package");
-
+#endif
     return 0;
 }
