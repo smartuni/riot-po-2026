@@ -1,6 +1,8 @@
 #include "tables.h"
 #include <string.h>
-
+#include <stdint.h>
+#include <stddef.h>
+#include "mutex.h"
 #include "embUnit.h"
 #include "embUnit/embUnit.h"
 #include "fmt.h"
@@ -8,10 +10,11 @@
 #include "container.h"
 #include "mutex.h"
 
-int target_state_entry_to_cbor(target_state_entry entry, cbor_buffer buffer) {
-    return 0;
-}
-
+// Return Codes
+#define TABLE_SUCCESS           0
+#define TABLE_ERROR_SIZE_TOO_BIG -1
+#define TABLE_ERROR_INVALID_GATE_ID -2
+#define TABLE_ERROR_NOT_FOUND   -3
 
 // Static tables
 static target_state_entry target_state_entry_table[MAX_GATE_COUNT];
@@ -24,6 +27,11 @@ static mutex_t target_state_mutex = MUTEX_INIT;
 static mutex_t is_state_mutex = MUTEX_INIT;
 static mutex_t seen_status_mutex = MUTEX_INIT;
 static mutex_t jobs_mutex = MUTEX_INIT;
+
+int target_state_entry_to_cbor(target_state_entry entry, cbor_buffer buffer) {
+    return 0;
+}
+
 
 /**
  * Initialize all tables with default values
