@@ -18,9 +18,10 @@ DEVELHELP ?= 1
 # some computers.
 -include ../../lab_workarounds.mk
 
-# This board requires a start sleep to actually catch the printed output
-USEMODULE += ztimer_sec
+USEMODULE += tables
+EXTERNAL_MODULE_DIRS += ../../tables
 
+<<<<<<< HEAD:nodes/apps/cbor-test/Makefile
 
 USEMODULE += tables
 
@@ -31,6 +32,8 @@ USEMODULE += tables
 USEMODULE += shell
 
 # Change this to 0 show compiler invocation lines by default:
+=======
+>>>>>>> 4b57eed (stashing):nodes/tests/tables/Makefile
 QUIET ?= 1
 
 include $(RIOTBASE)/Makefile.include
