@@ -26,8 +26,7 @@ USEMODULE += ztimer_sec
 USEMODULE += benchmark
 USEPKG += tinycbor
 USEPKG += libcose
-USEPKG += libsodium
-USEMODULE += libcose_crypt_sodium
+USEMODULE += libcose_crypt_monocypher
 
 CFLAGS += '-DTHREAD_STACKSIZE_MAIN=(THREAD_STACKSIZE_DEFAULT + 1024)'
 
