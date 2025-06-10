@@ -1,3 +1,6 @@
+<<<<<<< HEAD:nodes/custom-modules/tables/Makefile.include
 # Use an immediate variable to evaluate `MAKEFILE_LIST` now
+=======
+>>>>>>> 8670fcb (getters):nodes/tables/Makefile.include
 USEMODULE_INCLUDES_tables := $(LAST_MAKEFILEDIR)/include
 USEMODULE_INCLUDES += $(USEMODULE_INCLUDES_tables)
