@@ -128,6 +128,10 @@ void display_demo(void){
         ztimer_sleep(ZTIMER_MSEC, 20000);
         */
 
+
+        //display demo but not working, needs to be adapted to updated display function
+        /*
+
         u8g2_FirstPage(&u8g2);
         do {
             display_menu_header("Gate Menu");
@@ -201,16 +205,23 @@ void display_demo(void){
         }while (u8g2_NextPage(&u8g2));
 
         ztimer_sleep(ZTIMER_MSEC, 2000);
-    
+    */
     }
 }
 
-void display_menu_box(char *text, int pos_x, int pos_y, int width, int height, bool selected){
+void display_menu_box(char *text, int num_after_text, bool use_num, int pos_x, int pos_y, int width, int height, bool selected){
     int relative_x = width/32; //expected 128/32 = 4
     int relative_y = height/7; //expected 28/7 = 4
 
     u8g2_DrawFrame(&u8g2, pos_x, pos_y, width, height);
     u8g2_DrawStr(&u8g2, pos_x+3*relative_x, pos_y+5*relative_y, text);
+
+    if (use_num){
+        char num_str[4];
+        snprintf(num_str, sizeof(num_str), "%d", num_after_text);
+        u8g2_DrawStr(&u8g2, pos_x+3*relative_x+u8g2_GetStrWidth(&u8g2, text)+relative_x/2, pos_y+5*relative_y, num_str);
+        //printf("I want to display the number: %s, I got %d\n", num_str, num_after_text);
+    }
     if(selected){
         int tri_top_y = pos_y + (2*relative_y);
         int tri_bottom_y = pos_y + (5*relative_y);
@@ -223,7 +234,7 @@ void display_menu_box(char *text, int pos_x, int pos_y, int width, int height, b
     
 }
 
-void display_menu_header_box(char *text, int pos_x, int pos_y, int width, int height){
+void display_menu_header_box(char *text, int num_after_text, bool use_num, int pos_x, int pos_y, int width, int height){
     int relative_x = width/32; //expected 128/32 = 4
     int relative_y = height/7; //expected 28/7 = 4
 
@@ -233,14 +244,20 @@ void display_menu_header_box(char *text, int pos_x, int pos_y, int width, int he
     //u8g2_SetFont(&u8g2, u8g2_font_helvR12_tf);
 
     u8g2_DrawStr(&u8g2, pos_x+3*relative_x, pos_y+5*relative_y, text);
+    if (use_num){
+        char num_str[4];
+        snprintf(num_str, sizeof(num_str), "%d", num_after_text);
+        u8g2_DrawStr(&u8g2, pos_x+3*relative_x + u8g2_GetStrWidth(&u8g2, text)+relative_x/2, pos_y+5*relative_y, num_str);
+        
+    }
     u8g2_SetDrawColor(&u8g2, 1);
     u8g2_SetFont(&u8g2, u8g2_font_helvR10_tf);
 
 }
 
-void display_menu_header(char *text){
+void display_menu_header(char *text, int num_after_text, bool use_num){
     do{
-        display_menu_header_box(text, 0, (DISPLAY_HEIGHT/16), DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7);
+        display_menu_header_box(text, num_after_text, use_num, 0, (DISPLAY_HEIGHT/16), DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7);
     }while (u8g2_NextPage(&u8g2));
 }
 
@@ -265,18 +282,18 @@ void display_gate_state(int pos_x, int pos_y, bool gate_state_open, int relative
 
 }
 
-void display_ordinary_menu(char *text, bool upper, bool selected, bool more_content){
+void display_ordinary_menu(char *text, int num_after_text, bool use_num, bool upper, bool selected, bool more_content){
     do{
 
         if(upper){
-            display_menu_box(text, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
+            display_menu_box(text, num_after_text, use_num, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
             if(more_content){
                 u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
                 u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 + DISPLAY_WIDTH/32, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
                 u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 - DISPLAY_WIDTH/32, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
             }
         }else{
-            display_menu_box(text, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
+            display_menu_box(text, num_after_text, use_num, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
             if(more_content){
                 u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
                 u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 + DISPLAY_WIDTH/32, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
@@ -286,7 +303,7 @@ void display_ordinary_menu(char *text, bool upper, bool selected, bool more_cont
     } while (u8g2_NextPage(&u8g2));
 }
 
-void display_gate_menu_box(char* text, bool upper, bool selected, bool gate_state_open, bool more_content){
+void display_gate_menu_box(char* text, int num_after_text, bool upper, bool selected, bool gate_state_open, bool more_content){
     do{
         char my_text[11];
         u8g2_uint_t str_width = u8g2_GetStrWidth(&u8g2, text);
@@ -298,7 +315,7 @@ void display_gate_menu_box(char* text, bool upper, bool selected, bool gate_stat
         }
 
         if(upper){
-            display_menu_box(text, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
+            display_menu_box(text, num_after_text, true, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
             display_gate_state(23*(DISPLAY_WIDTH/32), 3*DISPLAY_HEIGHT/16, gate_state_open, DISPLAY_HEIGHT/16);
             if(more_content){
                 u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
@@ -307,7 +324,7 @@ void display_gate_menu_box(char* text, bool upper, bool selected, bool gate_stat
             }
 
         }else{
-            display_menu_box(text, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
+            display_menu_box(text, num_after_text, true, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
             display_gate_state(23*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*10, gate_state_open, DISPLAY_HEIGHT/16);
             if(more_content){
                 u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
