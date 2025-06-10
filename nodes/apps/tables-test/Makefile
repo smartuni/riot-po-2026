@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = tables-test
+APPLICATION = tables-test-getter-setter
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= feather-nrf52840-sense
@@ -21,7 +21,7 @@ DEVELHELP ?= 1
 USEMODULE += tables
 EXTERNAL_MODULE_DIRS += ../../tables
 
-
+USEMODULE += ztimer_msec # millisecond precision
 USEMODULE += tables
 
 # Include other packages here e.g.

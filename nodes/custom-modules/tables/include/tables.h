@@ -177,34 +177,26 @@ int get_seen_status_entry(uint8_t gate_id, seen_status_entry* entry);
 int get_jobs_entry(uint8_t gate_id, jobs_entry* entry);
 
 /**
- * Get all target state entries
- * @param entries Array to copy entries to (must be size MAX_GATE_COUNT)
- * @param count Pointer to store number of valid entries found
- * @return TABLE_SUCCESS on success, error code on failure
+ * Get direct pointer to target state table 
+ * @return Pointer to internal table array
  */
-int get_all_target_state_entries(target_state_entry* entries, uint8_t* count);
+const target_state_entry* get_target_state_table(void);
 
 /**
- * Get all is state entries
- * @param entries Array to copy entries to (must be size MAX_GATE_COUNT)
- * @param count Pointer to store number of valid entries found
- * @return TABLE_SUCCESS on success, error code on failure
+ * Get direct pointer to is state table 
+ * @return Pointer to internal table array
  */
-int get_all_is_state_entries(is_state_entry* entries, uint8_t* count);
+const is_state_entry* get_is_state_table(void);
 
 /**
- * Get all seen status entries
- * @param entries Array to copy entries to (must be size MAX_GATE_COUNT)
- * @param count Pointer to store number of valid entries found
- * @return TABLE_SUCCESS on success, error code on failure
+ * Get direct pointer to seen status table 
+ * @return Pointer to internal table array
  */
-int get_all_seen_status_entries(seen_status_entry* entries, uint8_t* count);
+const seen_status_entry* get_seen_status_table(void);
 
 /**
- * Get all jobs entries
- * @param entries Array to copy entries to (must be size MAX_GATE_COUNT)
- * @param count Pointer to store number of valid entries found
- * @return TABLE_SUCCESS on success, error code on failure
+ * Get direct pointer to jobs table 
+ * @return Pointer to internal table array
  */
-int get_all_jobs_entries(jobs_entry* entries, uint8_t* count);
+const jobs_entry* get_jobs_table(void);
 #endif

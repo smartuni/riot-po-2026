@@ -1,4 +1,5 @@
 #include "tables.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -28,15 +29,15 @@ static mutex_t is_state_mutex = MUTEX_INIT;
 static mutex_t seen_status_mutex = MUTEX_INIT;
 static mutex_t jobs_mutex = MUTEX_INIT;
 
-int target_state_entry_to_cbor(target_state_entry entry, cbor_buffer buffer) {
-    return 0;
-}
+// int target_state_entry_to_cbor(target_state_entry entry, cbor_buffer buffer) {
+//     return 0;
+// }
 
 
 /**
  * Initialize all tables with default values
  */
-int init_tables() {
+int init_tables(void) {
     mutex_lock(&target_state_mutex);
     mutex_lock(&is_state_mutex);
     mutex_lock(&seen_status_mutex);
@@ -199,7 +200,7 @@ int force_set_target_state_entry(const target_state_entry* entry) {
 }
 
 int merge_target_state_entry_table(const target_state_entry* other, uint8_t size) {
-    if (size > MAX_GATE_COUNT) {
+    if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
     
@@ -213,7 +214,7 @@ int merge_target_state_entry_table(const target_state_entry* other, uint8_t size
 }
 
 int merge_is_state_entry_table(const is_state_entry* other, uint8_t size) {
-    if (size > MAX_GATE_COUNT) {
+    if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
     
@@ -227,7 +228,7 @@ int merge_is_state_entry_table(const is_state_entry* other, uint8_t size) {
 }
 
 int merge_seen_status_entry_table(const seen_status_entry* other, uint8_t size) {
-    if (size > MAX_GATE_COUNT) {
+    if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
     
@@ -241,7 +242,7 @@ int merge_seen_status_entry_table(const seen_status_entry* other, uint8_t size) 
 }
 
 int merge_jobs_entry_table(const jobs_entry* other, uint8_t size) {
-    if (size > MAX_GATE_COUNT) {
+    if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
     
@@ -326,78 +327,30 @@ int get_jobs_entry(uint8_t gate_id, jobs_entry* entry) {
     return TABLE_SUCCESS;
 }
 
-int get_all_target_state_entries(target_state_entry* entries, uint8_t* count) {
-    if (entries == NULL || count == NULL) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-    
-    mutex_lock(&target_state_mutex);
-    
-    *count = 0;
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (is_target_state_entry_present_internal(i)) {
-            entries[*count] = target_state_entry_table[i];
-            (*count)++;
-        }
-    }
-    
-    mutex_unlock(&target_state_mutex);
-    return TABLE_SUCCESS;
+/**
+ * Get direct pointer to target state table 
+ */
+const target_state_entry* get_target_state_table(void) {
+    return target_state_entry_table;
 }
 
-int get_all_is_state_entries(is_state_entry* entries, uint8_t* count) {
-    if (entries == NULL || count == NULL) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-    
-    mutex_lock(&is_state_mutex);
-    
-    *count = 0;
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (is_is_state_entry_present_internal(i)) {
-            entries[*count] = is_state_entry_table[i];
-            (*count)++;
-        }
-    }
-    
-    mutex_unlock(&is_state_mutex);
-    return TABLE_SUCCESS;
+/**
+ * Get direct pointer to is state table 
+ */
+const is_state_entry* get_is_state_table(void) {
+    return is_state_entry_table;
 }
 
-int get_all_seen_status_entries(seen_status_entry* entries, uint8_t* count) {
-    if (entries == NULL || count == NULL) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-    
-    mutex_lock(&seen_status_mutex);
-    
-    *count = 0;
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (is_seen_status_entry_present_internal(i)) {
-            entries[*count] = seen_status_entry_table[i];
-            (*count)++;
-        }
-    }
-    
-    mutex_unlock(&seen_status_mutex);
-    return TABLE_SUCCESS;
+/**
+ * Get direct pointer to seen status table
+ */
+const seen_status_entry* get_seen_status_table(void) {
+    return seen_status_entry_table;
 }
 
-int get_all_jobs_entries(jobs_entry* entries, uint8_t* count) {
-    if (entries == NULL || count == NULL) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-    
-    mutex_lock(&jobs_mutex);
-    
-    *count = 0;
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (is_jobs_entry_present_internal(i)) {
-            entries[*count] = jobs_entry_table[i];
-            (*count)++;
-        }
-    }
-    
-    mutex_unlock(&jobs_mutex);
-    return TABLE_SUCCESS;
+/**
+ * Get direct pointer to jobs table 
+ */
+const jobs_entry* get_jobs_table(void) {
+    return jobs_entry_table;
 }
