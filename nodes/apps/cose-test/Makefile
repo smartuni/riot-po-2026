@@ -28,7 +28,7 @@ USEPKG += tinycbor
 USEPKG += libcose
 USEMODULE += libcose_crypt_monocypher
 
-CFLAGS += '-DTHREAD_STACKSIZE_MAIN=(THREAD_STACKSIZE_DEFAULT + 1024)'
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096
 
 
 # Change this to 0 show compiler invocation lines by default:
