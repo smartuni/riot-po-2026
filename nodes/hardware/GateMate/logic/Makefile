@@ -13,6 +13,17 @@ USEMODULE += periph_gpio_irq
 # Enable the milliseconds timer.
 USEMODULE += ztimer
 USEMODULE += ztimer_msec
+USEMODULE += ztimer_sec
+
+
+USEPKG += u8g2
+USEMODULE += event
+USEMODULE += event_thread_highest
+USEMODULE += event_thread
+USEMODULE += event_timeout
+
+
+CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=1024
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
