@@ -21,6 +21,8 @@
 #ifndef MATE_LORAWAN_H
 #define MATE_LORAWAN_H
 
+#include "event.h"
+
 /**
  * @brief       
  *
@@ -28,6 +30,11 @@
  */
 
 int start_lorawan(void);
+
+extern event_queue_t lorawan_queue;
+
+extern event_t send_event;
+
 
 #endif /* MATE_LORAWAN_H */
 /** @} */
