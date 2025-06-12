@@ -1,0 +1,28 @@
+.recent-activity {
+    width: 50%;
+    margin-top: 20px;
+    padding: 16px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.1);
+}
+
+.recent-title {
+    font-weight: bold;
+    color: black;
+}
+
+.activity-list {
+    list-style: none;
+    padding: 0;
+}
+
+.activity-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+.logo{
+    display: flex;
+}
