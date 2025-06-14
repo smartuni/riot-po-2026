@@ -39,7 +39,7 @@ int main(void){
     //     sizeof(lorawan_stack),
     //     THREAD_PRIORITY_MAIN - 1,
     //     THREAD_CREATE_STACKTEST,
-    //     lorawan, //TODO TBA
+    //     start_lorawan,
     //     NULL,
     //     "lorawan"
     // );
@@ -51,7 +51,7 @@ int main(void){
     //     sizeof(lorawan_stack),
     //     THREAD_PRIORITY_MAIN - 1,
     //     THREAD_CREATE_STACKTEST,
-    //     ble, //TODO TBA
+    //     ble_init,
     //     NULL,
     //     "ble"
     // );

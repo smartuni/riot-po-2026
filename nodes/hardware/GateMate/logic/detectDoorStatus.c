@@ -25,7 +25,7 @@ void trigger_door_callback(void *arg) {
     }
     else {
         // TO SMTH
-        //event_post(EVENT_PRIO_HIGHEST, &eventA0);
+        event_post(EVENT_PRIO_HIGHEST, &eventA0);
         gpio_clear(led1);
         
     }  

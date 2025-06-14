@@ -36,9 +36,9 @@ void event_handler_reactivate(event_t *event)
 
     puts("sending");
     // UPDATE TABLE
-    u
-    // CALL UPDATE
     
+    // CALL UPDATE
+    // event_post(send_event, lorawan_queue);
 }
 
 void event_handlerA0(event_t *event)
@@ -58,6 +58,3 @@ void event_handlerA0(event_t *event)
     }
     
 }
-
-
-
