@@ -262,6 +262,9 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
         /* LoRaWAN payload will have 'undefined' type */
         if (snip->type == GNRC_NETTYPE_UNDEF) {
             od_hex_dump(((uint8_t *)pkt->data), pkt->size, OD_WIDTH_DEFAULT);
+            cbor_buffer received_buffer;
+            memcpy(received_buffer.buffer, pkt->data, pkt->size);
+            int cbor_to_table(cbor_buffer* received_buffer);
             // TODO: Forward received message to tables module
         }
         snip = snip->next;
