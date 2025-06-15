@@ -1,16 +1,9 @@
-# Add the NimBLE package which provides the bluetooth stack
-USEPKG += nimble
+### This part is used by riot to discover the module
+# Use an immediate variable to evaluate `MAKEFILE_LIST` now
+USEMODULE_INCLUDES_mate_ble := $(LAST_MAKEFILEDIR)/include
+USEMODULE_INCLUDES += $(USEMODULE_INCLUDES_mate_ble)
 
-# enable the extended advertisement feature of nimble
-USEMODULE += nimble_adv_ext
-
-# enable the scanner feature of NimBLE
-USEMODULE += nimble_scanner
-USEMODULE += nimble_addr
-
-# enable utility features for crafting advertisements
-USEMODULE += bluetil_ad
-
+### This is where the used CFLAGS are added
 # configure some buffersizes of NimBLE to support larger packet sizes
 MSYS_CNT ?= 20
 CFLAGS += -DMYNEWT_VAL_BLE_LL_MAX_PKT_SIZE=251

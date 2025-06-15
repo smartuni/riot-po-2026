@@ -1,5 +1,6 @@
-#include "mate_lorawan.h"
-
+#include <stdio.h>
+#include "ztimer.h"
+#include "ble.h"
 
 int main(void)
 {

@@ -24,7 +24,25 @@ Timestamp is part of the package but not part of list
 | ----------- | ----------- | ----------- |
 | GateID | BYTE | - |
 | Soll Status | BYTE | Information whether a gate should be closed or opened |
-| Timestamp | Int | outside of package |
+
+CBOR Example
+```
+[
+    1,    # 1 is an example value for the message type
+    247,  # Timestamp
+    [     # The list with the "Soll Status" entries
+        [ # This is a "Soll Status" entry
+            187, # GateID
+            0,   # Soll Status
+        ],
+        [ # 2nd "Soll Status" entry
+            69,  # GateID
+            1,   # Soll Status
+        ]
+        # ... More entries
+    ]
+]
+```
 
 ## Ist Status Tabelle (BLE)
 
@@ -33,6 +51,26 @@ Timestamp is part of the package but not part of list
 | GateID | BYTE | - |
 | Status | BYTE | Information whether a gate is closed or opened |
 | Gate Time | Int | Time when the status was updated |
+
+CBOR Example
+```
+[
+    2, # 2 is an example value for the message type
+    [  # The list with the "Ist Status" entries
+        [ # This is a "Ist Status" entry
+            187, # GateID
+            0,   # Ist Status
+            247  # Timestamp
+        ],
+        [ # 2nd "Ist Status" entry
+            69,  # GateID
+            1,   # Ist Status
+            333  # Timestamp
+        ]
+        # ... More entries
+    ]
+]
+```
 
 ## Gesehener Status / Mitarbeiter Input (BLE)
 
