@@ -6,7 +6,7 @@ RIOTBASE ?= $(PROJECT_BASE)/RIOT
 EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
 # If no BOARD is found in the environment, use this default:
-BOARD ?= adafruit-feather-nrf52840-sense
+BOARD ?= feather-nrf52840-sense
 
 # Eigene Module aktivieren
 #USEMODULE += cose-service
@@ -22,16 +22,6 @@ DEVELHELP ?= 1
 
 USEMODULE += mate_lorawan
 EXTERNAL_MODULE_DIRS += ../../mate_lorawan
-
-# This board requires a start sleep to actually catch the printed output
-USEMODULE += xtimer
-USEMODULE += ztimer_sec
-USEMODULE += benchmark
-USEPKG += tinycbor
-USEMODULE += tables
-USEMODULE += EVENT_TIMEOUT
-#USEPKG += libcose
-#USEMODULE += libcose_crypt_monocypher
 
 CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096
 

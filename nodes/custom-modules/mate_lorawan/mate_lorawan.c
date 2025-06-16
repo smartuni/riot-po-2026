@@ -182,9 +182,9 @@ static int _send_lorawan_packet(const netif_t *netif, int msg_no, int read)
     uint8_t address = 1;
     msg_t msg;
 
-    uint8_t send_msg[(cbor_send_buffer.cbor_size[msg_no])];
+    uint8_t send_msg[(cbor_send_buffer.package_size[msg_no])];
 
-    memcpy(send_msg, cbor_send_buffer.buffer + read, cbor_send_buffer.cbor_size[msg_no]);
+    memcpy(send_msg, cbor_send_buffer.buffer + read, cbor_send_buffer.package_size[msg_no]);
 
     packet = gnrc_pktbuf_add(NULL, send_msg, 8, GNRC_NETTYPE_UNDEF);
     if (packet == NULL) {
@@ -268,7 +268,7 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             uint8_t bf[MAX_RECEIVE_SIZE];
             uint8_t count[1];
             received_buffer.buffer = bf;
-            received_buffer.cbor_size = count; 
+            received_buffer.package_size = count; 
             memcpy(received_buffer.buffer, pkt->data, pkt->size);
             int cbor_to_table(cbor_buffer* received_buffer);
             // TODO: Forward received message to tables module
@@ -299,7 +299,7 @@ static void send_handler(event_t *event){
         } else {
             printf("Sent LoRaWAN packet successfully\n");
         }
-        read += cbor_send_buffer.cbor_size[msg_no];
+        read += cbor_send_buffer.package_size[msg_no];
     }
 }
 
@@ -313,7 +313,7 @@ int start_lorawan(void)
     event_queue_init(&lorawan_queue);
     
     cbor_send_buffer.buffer = send_buffer;
-    cbor_send_buffer.cbor_size = msg_sizes;
+    cbor_send_buffer.package_size = msg_sizes;
 
     void event_timeout_init(event_timeout_t *event_timeout, event_queue_t *queue,
                         event_t *event);
