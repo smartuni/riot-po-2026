@@ -229,8 +229,9 @@ int cbor_to_table(cbor_buffer* buffer) {
     return 0;
 }
 
-int target_state_table_to_cbor_many(target_state_entry table[], int package_size, cbor_buffer* buffer) {
+int target_state_table_to_cbor_many(const target_state_entry table[], int package_size, cbor_buffer* buffer) {
     int no_entries_in_cbor = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_TARGET_STATE_MAX_BYTE_SIZE;
+    printf("no_entries_in_cbor %d\n", no_entries_in_cbor);
     if(no_entries_in_cbor <= 0) {
         return -1;
     }
@@ -245,6 +246,7 @@ int target_state_table_to_cbor_many(target_state_entry table[], int package_size
     while (table_index < MAX_GATE_COUNT)
     {
         for(int i = 0; i < no_cbor_streams; i++) { // i is index in table
+           
             CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
             cbor_encoder_init(&encoder, buffer->buffer, sizeof(uint8_t) * (BASE_CBOR_BYTE_SIZE + CBOR_TARGET_STATE_MAX_BYTE_SIZE * no_cbor_streams), 0);
             cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
@@ -255,13 +257,16 @@ int target_state_table_to_cbor_many(target_state_entry table[], int package_size
             if(MAX_GATE_COUNT - table_index < no_entries_in_cbor) {
                 no_entries_in_cbor = MAX_GATE_COUNT - table_index;
             }
-            for(int j = 0; j < no_entries_in_cbor; i++) {
+            for(int j = 0; j < no_entries_in_cbor; j++) {
+            
+
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_simple_value(&singleEntryEncoder, table[table_index + j].gateID);
                 cbor_encode_simple_value(&singleEntryEncoder, table[table_index + j].state);
                 cbor_encode_int(&singleEntryEncoder, table[table_index + j].timestamp);
                 cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
                 table_index++;
+                
             }
 
             cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]

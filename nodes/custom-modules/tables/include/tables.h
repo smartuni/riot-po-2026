@@ -81,7 +81,7 @@
 
     // TODO function to give back several CBOR packages for LoRaWAN
 
-    int target_state_table_to_cbor_many(target_state_entry table[], int package_size, cbor_buffer* buffer);
+    int target_state_table_to_cbor_many(const target_state_entry table[], int package_size, cbor_buffer* buffer);
 
     // Initialization
 int init_tables(void);

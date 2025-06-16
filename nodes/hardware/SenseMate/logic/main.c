@@ -27,6 +27,17 @@ int main(void) {
     refresh_display();
     init_event();
     init_tables();
+    is_state_entry test;
+    test.gateID = 1;
+    test.state = 5;
+    test.gateTime = 20000;
+    int test_merge = set_is_state_entry(&test);
+    is_state_entry receiveide_is_state;
+    int hallo = get_is_state_entry(1, &receiveide_is_state);
+    printf("Gate Id %d\n", receiveide_is_state.gateID);
+
+    (void) test_merge;
+    (void) hallo;
     start_lorawan();
     printf("Menu initialized.\n");
 

@@ -165,6 +165,7 @@ static void _join_lorawan_network(const netif_t *netif)
                 /* Disable uplink confirmation requests */
                 status = NETOPT_DISABLE;
                 netif_set_opt(netif, NETOPT_ACK_REQ, 0, &status, sizeof(status));
+                printf("LoRaWAN uplink confirmation requests disabled\n");
                 return;
             }
         }
@@ -174,7 +175,7 @@ static void _join_lorawan_network(const netif_t *netif)
 static int _send_lorawan_packet(const netif_t *netif, int msg_no, int read)
 {
     assert(netif != NULL);
-
+    printf("sending LoRaWAN package\n");
     int result;
     gnrc_pktsnip_t *packet;
     gnrc_pktsnip_t *header;
@@ -287,8 +288,17 @@ static void send_handler_timeout(event_t *event){
 
 static void send_handler(event_t *event){
     (void) event;
-    int pkg_count = is_state_table_to_cbor(&cbor_send_buffer);
+
+     printf("LoRaWAN send_handler started\n");
+    const target_state_entry* table = get_target_state_table();
+    if(table == NULL){
+        printf("LoRaWan received table is null\n");
+       }
+     printf("LoRaWAN table received\n");
+    int pkg_count = target_state_table_to_cbor_many(table, SEND_BUFFER_SIZE, &cbor_send_buffer);
+     printf("LoRaWAN cbor package received\n");
     int read = 0;
+    printf("pg_count: %d\n", pkg_count);
     puts("Sending data...");
     int result = 0;
     for (int msg_no = 0; msg_no < pkg_count; msg_no++){
@@ -305,6 +315,7 @@ static void send_handler(event_t *event){
 int start_lorawan(void)
 {
     /* Sleep so that we do not miss this message while connecting */
+    
     ztimer_sleep(ZTIMER_SEC, 3);
 
     printf("Starting LoRaWAN module.\n");
@@ -332,6 +343,8 @@ int start_lorawan(void)
 
     _join_lorawan_network(netif);
 
+
+    printf("Starting LoRaWAN receive thread\n");
     /* create the reception thread] */
     kernel_pid_t rx_pid = thread_create(_rx_thread_stack, sizeof(_rx_thread_stack),
                                         THREAD_PRIORITY_MAIN - 1,
@@ -340,13 +353,17 @@ int start_lorawan(void)
     if (-EINVAL == rx_pid) {
         puts("Failed to create reception thread");
         return -1;
+    }else{
+        printf("LoRaWAN receive thread started successfully\n");
     }
 
+    
     /* receive LoRaWAN packets in our reception thread] */
     gnrc_netreg_entry_t entry = GNRC_NETREG_ENTRY_INIT_PID(GNRC_NETREG_DEMUX_CTX_ALL,
                                                            rx_pid);
     gnrc_netreg_register(GNRC_NETTYPE_UNDEF, &entry);
 
+    printf("sTARTING LoRaWAN event queue\n");
     event_loop(&lorawan_queue);
     return 0;
 }
