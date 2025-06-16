@@ -37,6 +37,8 @@ USEMODULE += event_timeout
 
 USEMODULE += tables
 
+USEMODULE += mate_lorawan
+
 
 
 CFLAGS += -DI2C_DEVICE_IDX=0

@@ -9,6 +9,7 @@
 #include "menu.h"
 #include "events_creation.h"
 #include "tables.h"
+#include "mate_lorawan.h"
 
 
 
@@ -26,6 +27,7 @@ int main(void) {
     refresh_display();
     init_event();
     init_tables();
+    start_lorawan();
     printf("Menu initialized.\n");
 
     while (1)

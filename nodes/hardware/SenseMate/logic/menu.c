@@ -5,6 +5,7 @@
 #include <string.h>
 #include "u8g2.h"
 #include "tables.h"
+#include "mate_lorawan.h"
 
 #define GATE "Gate "
 #define CANCEL "cancel"
@@ -18,6 +19,11 @@
 #define JOB_DONE 0
 #define JOB_TODO 2
 #define SENSEMATE_ID 7
+
+#define TABLE_SUCCESS           0
+#define TABLE_ERROR_SIZE_TOO_BIG -1
+#define TABLE_ERROR_INVALID_GATE_ID -2
+#define TABLE_ERROR_NOT_FOUND   -3
 
 
 menu_entry_t set_job_state[3];
@@ -304,6 +310,7 @@ void set_current_meustate(int input) {
                     if(resu == TABLE_SUCCESS){
                         //send_event
                         printf("send_event \n");
+                        event_post(&lorawan_queue, &send_event); // Post the send event to the lorawan queue
                     }
 
 

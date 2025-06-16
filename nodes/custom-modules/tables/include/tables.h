@@ -23,6 +23,8 @@
     #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE 0x0C
     #define CBOR_JOBS_MAX_BYTE_SIZE 0x05
 
+
+
     typedef struct {
         uint8_t gateID;
         uint8_t state;
