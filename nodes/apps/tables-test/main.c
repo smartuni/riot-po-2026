@@ -260,12 +260,12 @@ void test_error_cases(void) {
 int main(void) {
     ztimer_sleep(ZTIMER_MSEC, 5000);
     puts("Starting table tests...\n\n");
-    // test_basic_operations();
-    // test_timestamp_updates();
-    // test_force_set();
-    // test_all_table_types();
+    test_basic_operations();
+    test_timestamp_updates();
+    test_force_set();
+    test_all_table_types();
     test_all_table_entries();
-    //test_error_cases();
+    test_error_cases();
     
     printf("\n=== Tests Complete ===\n");
     while (1) {
