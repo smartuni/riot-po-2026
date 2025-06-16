@@ -3,8 +3,10 @@
 #include "board.h"
 #include "ztimer.h"
 #include "thread.h"
-#include "table.h" // TODO FIX PATH
-#include "lorawan.h" // TODO FIX PATH
+//#include "table.h" // TODO FIX PATH
+#include "../../../custom-modules/tables/include/tables.h"
+//#include "lorawan.h" // TODO FIX PATH
+#include "../../../custom-modules/mate_lorawan/include/mate_lorawan.h"
 
 #include <stdio.h>
 

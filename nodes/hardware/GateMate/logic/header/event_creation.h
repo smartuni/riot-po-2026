@@ -11,6 +11,7 @@
 #include "board.h"
 #include "event/timeout.h"
 #include "../../../../custom-modules/tables/include/tables.h" // TODO FIX PATH
+#include "../../../../custom-modules/mate_lorawan/include/mate_lorawan.h"
 
 #define GATE_ID 1
 #define DEBOUNCE_TIME 10000

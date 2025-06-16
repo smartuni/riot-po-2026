@@ -35,7 +35,7 @@ void init_event(void){
 void event_callback (void *arg)
 {
     (void) arg; /* the argument is not used */
-    ztimer_sleep(ZTIMER_MSEC, 500); // Wait for 0.1 second before accepting the next event
+    ztimer_sleep(ZTIMER_MSEC, 500); // Wait for 0.5 second before accepting the next event
     event_accepted = true; // Allow the event handler to be called again  
 }
 
@@ -48,11 +48,11 @@ void event_handler_reactivate(event_t *event)
     // UPDATE TABLE
     table_entry.gateID = GATE_ID;
     table_entry.state = status;
-    table_entry.time = time++;
+    table_entry.gateTime = time++;
 
     if (TABLE_SUCCESS == set_is_state_entry){
         // CALL UPDATE
-        event_post(send_event, lorawan_queue);
+        event_post(&lorawan_queue, &send_event );
     } 
     
 }
