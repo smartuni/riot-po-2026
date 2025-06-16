@@ -242,13 +242,9 @@ void ble_init(void)
     nimble_scanner_start();
 }
 
-int ble_receive(CBOR_MESSAGE_TYPE type, cbor_buffer* cbor_packet, ble_metadata_t* metadata)
+int ble_receive(cbor_message_type_t type, cbor_buffer* cbor_packet, ble_metadata_t* metadata)
 {
-    (void)type;
-    (void)cbor_packet;
-    (void)metadata;
-
-    return BLE_SUCCESS;
+    return wait_for_message(type, cbor_packet, metadata);
 }
 
 int ble_send(cbor_buffer* cbor_packet)

@@ -26,6 +26,9 @@
 #define BLE_SUCCESS (0)
 #define BLE_ERROR (-1)
 #define BLE_ERROR_INTERNAL_MESSAGE_BUFFER_FULL (-2)
+#define BLE_ERROR_INTERNAL_NO_MESSAGE_FOUND (-3)
+
+typedef uint8_t cbor_message_type_t;
 
 typedef struct {
    // rssi etc..
@@ -39,7 +42,7 @@ typedef struct {
  * @param[inout]    metadata  Pointer to output metadata
  * @return          0 on success, negative error code on failure
  */
-int ble_receive(CBOR_MESSAGE_TYPE type, cbor_buffer* cbor_packet, ble_metadata_t* metadata);
+int ble_receive(cbor_message_type_t type, cbor_buffer* cbor_packet, ble_metadata_t* metadata);
 
 /**
  * @brief       Function to send data over BLE
