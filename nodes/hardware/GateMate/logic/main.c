@@ -39,17 +39,12 @@ int main(void){
 
 
 
-    // TODO  start thread init lorawan
-    thread_create(
-        lorawan_stack,
-        sizeof(lorawan_stack),
-        THREAD_PRIORITY_MAIN - 1,
-        THREAD_CREATE_STACKTEST,
-        start_lorawan,
-        NULL,
-        "lorawan"
-    );
+    // TODO  start lorawan
 
+    if (!start_lorawan()){
+        printf("starting lorawan failed");
+        return -1;
+    }
 
     // start thread init bluetooth
     // thread_create(
