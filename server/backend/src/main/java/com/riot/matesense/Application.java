@@ -1,10 +1,13 @@
 package com.riot.matesense;
 
-import com.riot.matesense.datatypes.Coordinate;
+import com.riot.matesense.config.DownPayload;
+
+import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.Status;
-import com.riot.matesense.model.Gate;
 import com.riot.matesense.repository.GateRepository;
+import com.riot.matesense.service.DownlinkService;
+import com.riot.matesense.service.GateActivityService;
 import com.riot.matesense.service.GateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -14,8 +17,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 @SpringBootApplication
 @EntityScan(basePackages = "com.riot.matesense.entity")
@@ -29,36 +31,46 @@ public class Application {
 
 @Component
 class PopulateTestDataRunner implements CommandLineRunner {
+
+	DownlinkService downlinkService;
 	GateService gateService;
 	GateRepository gateRepository;
+	GateActivityService gateActivityService;
+
 	@Autowired
-	public PopulateTestDataRunner(GateService gateService, GateRepository gateRepository) {
+	public PopulateTestDataRunner(GateActivityService gateActivityService, GateService gateService, GateRepository gateRepository, DownlinkService downlinkService) {
 		this.gateService = gateService;
 		this.gateRepository = gateRepository;
+		this.downlinkService = downlinkService;
+		this.gateActivityService = gateActivityService;
 	}
 	@Override
 	public void run(String... args) throws Exception {
-		List <Coordinate> coordinates = new ArrayList<>();
-		Coordinate coordinate = new Coordinate(23.000, 23.4444);
-		coordinates.add(coordinate);
-		GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.540808,9.9654, "St.Pauli", false, true, null);
-//		GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, coordinates, "Landungsbrücken", false, true, null);
-//		GateEntity gate2 = new GateEntity(Status.OPEN, new Timestamp(System.currentTimeMillis()), 3L, coordinates, "Veddel", true, false, null);
-//		GateEntity gate3 = new GateEntity(Status.OPEN, new Timestamp(System.currentTimeMillis()), 4L, coordinates, "Hafen", true, true, null);
-//		gateRepository.save(gate);
-//		gateRepository.save(gate1);
-//		GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.5408, 9.9654, "St.Pauli", false, true, "OPEN");
-//		GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, 53.5409, 9.8674, "Landungsbrücken", false, true, null);
-//		GateEntity gate2 = new GateEntity(Status.OPEN, new Timestamp(System.currentTimeMillis()), 3L, 53.5410, 9.8664, "Veddel", true, false, null);
-//		GateEntity gate3 = new GateEntity(Status.OPEN, new Timestamp(System.currentTimeMillis()), 4L, 53.5460, 9.8634, "Hafen", true, true, "CLOSED");
-//
-//		gateRepository.save(gate);
-//		gateRepository.save(gate1);
-//
-//
-//		gateService.addGate(gate);
-//		gateService.addGate(gate1);
-//		gateService.addGate(gate2);
-//		gateService.addGate(gate3);
+		DownPayload downPayload =new DownPayload(1,247,Arrays.asList(Arrays.asList(1,0),Arrays.asList(2,1)));
+		//[1,247,[[187,0],[69,1]]]
+		downlinkService.sendDownlinkToDevice(downPayload); // Test call
+ 		GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.5408, 9.9654, "St.Pauli", false, true, "REQUESTED_OPEN");
+ 		GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, 53.5409, 9.8674, "Landungsbrücken", false, true, "REQUESTED_OPEN");
+ 		GateEntity gate2 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 3L, 53.5410, 9.8664, "Veddel", true, false, "REQUESTED_CLOSE");
+ 		GateEntity gate3 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 4L, 53.5460, 9.8634, "Hafen", true, true, "REQUESTED_NONE");
+ 		gateService.addGate(gate);
+ 		gateService.addGate(gate1);
+ 		gateService.addGate(gate2);
+ 		gateService.addGate(gate3);
+
+
+		GateActivityEntity gateActivityEntity1 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
+		GateActivityEntity gateActivityEntity2 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
+		GateActivityEntity gateActivityEntity3 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
+		GateActivityEntity gateActivityEntity4 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
+		GateActivityEntity gateActivityEntity5 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
+
+		gateActivityService.addGateActivity(gateActivityEntity1);
+		gateActivityService.addGateActivity(gateActivityEntity2);
+		gateActivityService.addGateActivity(gateActivityEntity3);
+		gateActivityService.addGateActivity(gateActivityEntity4);
+		gateActivityService.addGateActivity(gateActivityEntity5);
+
+
 	}
 }

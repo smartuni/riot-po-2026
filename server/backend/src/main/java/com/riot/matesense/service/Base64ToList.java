@@ -8,7 +8,7 @@ import java.util.Base64;
 import java.util.List;
 
 @Service
-public class Base64ToJsonConverter {
+public class Base64ToList {
 
     public List<Object> decodeBase64ToList(String base64) throws Exception {
         byte[] cborBytes = Base64.getDecoder().decode(base64);

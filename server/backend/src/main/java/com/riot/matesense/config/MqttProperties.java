@@ -7,6 +7,12 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "mqtt")
 public class MqttProperties {
     private String broker;
+    private String clientId;
+    private String username;
+    private String password;
+    private String subscribeTopic;
+    private String publishTopic;
+    private String applicationId;
 
     public String getBroker() {
         return broker;
@@ -56,10 +62,13 @@ public class MqttProperties {
         this.publishTopic = publishTopic;
     }
 
-    private String clientId;
-    private String username;
-    private String password;
-    private String subscribeTopic;
-    private String publishTopic;
+    public String getApplicationId() {
+        return applicationId;
+    }
+
+    public void setApplicationId(String applicationId) {
+        this.applicationId = applicationId;
+    }
+
 
 }

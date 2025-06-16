@@ -7,6 +7,7 @@ import com.riot.matesense.enums.Status;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
 import com.riot.matesense.model.Gate;
+import com.riot.matesense.model.GateForDownlink;
 import com.riot.matesense.repository.GateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -64,7 +65,7 @@ public class GateService {
 
     public Gate getGateById(Long id) {
         GateEntity gate = gateRepository.getById(id);
-        return new Gate(gate.getId(), gate.getDeviceId(),gate.getLastTimeStamp(), gate.getStatus(),
+        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
                 gate.getSensorConfidence(), gate.getRequestedStatus());
     }
@@ -83,6 +84,30 @@ public class GateService {
 
         System.out.println(gate.getRequestedStatus());
         gateRepository.save(gate);
+    }
+
+    public List<GateForDownlink> getAllGatesForDownlink() {
+        List<GateEntity> gates = gateRepository.findAll();
+        List<GateForDownlink> customGates = new ArrayList<>();
+        gates.forEach(e -> {
+            int requestedStatus;
+            switch (e.getRequestedStatus()) {
+                case "REQUESTED_OPEN":
+                    requestedStatus = 1;
+                    break;
+                case "REQUESTED_CLOSE":
+                    requestedStatus = 0;
+                    break;
+                case "REQUESTED_NONE":
+                    requestedStatus = 2;
+                    break;
+                default:
+                    requestedStatus = 0; // Default to CLOSED if status is unknown
+            }
+            GateForDownlink gate = new GateForDownlink(Math.toIntExact(e.getId()), requestedStatus);
+            customGates.add(gate);
+        });
+        return customGates;
     }
 
 }
