@@ -64,7 +64,7 @@
 #define MAX_RECEIVE_SIZE 222
 
 /* Duration to trigger send_event */
-#define TIMEOUT_DURATION 60000000
+#define TIMEOUT_DURATION 600000
 
 /* Stack for reception thread */
 static char _rx_thread_stack[THREAD_STACKSIZE_DEFAULT];
@@ -153,7 +153,7 @@ static void _join_lorawan_network(const netif_t *netif)
 
         while (ztimer_now(ZTIMER_SEC) - timeout < 10000) {
             /* Wait for a while to allow the join process to complete */
-            ztimer_sleep(ZTIMER_SEC, 1);
+            ztimer_sleep(ZTIMER_SEC, 2);
 
             netif_get_opt(netif, NETOPT_LINK, 0, &status, sizeof(status));
             if (status == NETOPT_ENABLE) {
@@ -288,6 +288,7 @@ static void send_handler_timeout(event_t *event){
 static void send_handler(event_t *event){
     (void) event;
     int pkg_count = is_state_table_to_cbor(&cbor_send_buffer);
+    printf("pkg_count: %d\n", pkg_count);
     int read = 0;
     puts("Sending data...");
     int result = 0;
@@ -348,6 +349,5 @@ int start_lorawan(void)
     gnrc_netreg_register(GNRC_NETTYPE_UNDEF, &entry);
 
     event_loop(&lorawan_queue);
-
     return 0;
 }
