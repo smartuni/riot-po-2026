@@ -8,6 +8,7 @@
 #include "interrupts.h"
 #include "menu.h"
 #include "events_creation.h"
+#include "../../../custom-modules/tables/include/tables.h"
 
 
 
@@ -24,6 +25,7 @@ int main(void) {
     set_current_meustate(INIT);
     refresh_display();
     init_event();
+    init_tables();
     printf("Menu initialized.\n");
 
     while (1)

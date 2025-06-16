@@ -15,7 +15,7 @@ VERBOSE_ASSERT ?= 1
 # Some workarounds are needed in order to get the tutorial running on
 # some computers.
 -include ../../../lab_workarounds.mk
--include ../../../custom-modules/tables/tables.inc.mk
+#-include ../../../custom-modules/tables/tables.inc.mk
 
 # This board requires a start sleep to actually catch the printed output
 USEMODULE += ztimer_sec
@@ -35,7 +35,6 @@ USEMODULE += event_thread
 USEMODULE += event_timeout
 
 USEMODULE += tables
-USEMODULE += cbor
 
 
 

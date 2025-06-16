@@ -11,7 +11,7 @@
 #include "embUnit.h"
 #include "embUnit/embUnit.h"
 #include "fmt.h"
-#include "senml/cbor.h"
+#include "cbor.h"
 
 
 // Static tables
