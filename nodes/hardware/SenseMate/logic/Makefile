@@ -6,6 +6,8 @@ BOARD ?= adafruit-feather-nrf52840-sense
 
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../../../RIOT
+PROJECT_BASE ?= $(CURDIR)/../../../
+EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
@@ -15,7 +17,6 @@ VERBOSE_ASSERT ?= 1
 # Some workarounds are needed in order to get the tutorial running on
 # some computers.
 -include ../../../lab_workarounds.mk
-#-include ../../../custom-modules/tables/tables.inc.mk
 
 # This board requires a start sleep to actually catch the printed output
 USEMODULE += ztimer_sec

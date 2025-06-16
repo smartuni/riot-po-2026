@@ -8,7 +8,7 @@
 #include "interrupts.h"
 #include "menu.h"
 #include "events_creation.h"
-#include "../../../custom-modules/tables/include/tables.h"
+#include "tables.h"
 
 
 
