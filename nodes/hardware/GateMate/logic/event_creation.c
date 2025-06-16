@@ -1,10 +1,20 @@
 #include "header/event_creation.h"
 
+// ID of Gatemate
+int id = GATE_ID;
+time = 0;
 
 
 gpio_t led0 = GPIO_PIN(1, 10); // TODO REMOVE LATER #1
 gpio_mode_t led0_mode = GPIO_OUT; // TODO REMOVE LATER #1
 
+
+// TABLE
+is_state_entry table_entry;
+
+uint8_t status = 0;
+
+// Debounce
 bool event_accepted = true;
 event_timeout_t reactivate;
 
@@ -36,9 +46,15 @@ void event_handler_reactivate(event_t *event)
 
     puts("sending");
     // UPDATE TABLE
+    table_entry.gateID = GATE_ID;
+    table_entry.status = status;
+    table_entry.gate = time++;
+
+    if (TABLE_SUCCESS == set_is_state_entry){
+        // CALL UPDATE
+        event_post(send_event, lorawan_queue);
+    } 
     
-    // CALL UPDATE
-    // event_post(send_event, lorawan_queue);
 }
 
 void event_handlerA0(event_t *event)
@@ -49,11 +65,11 @@ void event_handlerA0(event_t *event)
               
         puts("Set timer");
         gpio_set(led0);
-        event_timeout_set(&reactivate, 10000); // Set a timeout to allow reactivation
+        event_timeout_set(&reactivate, DEBOUNCE_TIME); // Set a timeout to allow reactivation
        
     }else{
         puts("Update timer");
-        event_timeout_set(&reactivate, 10000); // Set a timeout to allow reactivation        
+        event_timeout_set(&reactivate, DEBOUNCE_TIME); // Set a timeout to allow reactivation        
         gpio_clear(led0);
     }
     

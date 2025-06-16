@@ -10,6 +10,10 @@
 #include "ztimer.h"
 #include "board.h"
 #include "event/timeout.h"
+#include "table.h" // TODO FIX PATH
+
+#define GATE_ID 1
+#define DEBOUNCE_TIME 10000
 
 
 // #include "mate_lorawan.h"
@@ -20,5 +24,7 @@ extern event_t eventA0;
 extern event_t event_reactivate;
 
 extern void init_event(void);
+uint8_t update_status(uint8_t status);
+
 
 #endif
