@@ -17,18 +17,11 @@
     #define SEEN_STATUS_KEY 0x02
     #define JOBS_KEY 0x03
 
-<<<<<<< HEAD
-    #define TABLE_SUCCESS               0
-    #define TABLE_ERROR_SIZE_TOO_BIG   -1
-    #define TABLE_ERROR_INVALID_GATE_ID -2
-    #define TABLE_ERROR_NOT_FOUND      -3
-=======
     #define BASE_CBOR_BYTE_SIZE 0x03
     #define CBOR_TARGET_STATE_MAX_BYTE_SIZE 0x0A
     #define CBOR_IS_STATE_MAX_BYTE_SIZE 0x0A
     #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE 0x0C
     #define CBOR_JOBS_MAX_BYTE_SIZE 0x05
->>>>>>> origin/communication/node
 
     typedef struct {
         uint8_t gateID;
