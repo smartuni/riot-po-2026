@@ -21,17 +21,19 @@
 #ifndef MATE_BLE_H
 #define MATE_BLE_H
 
-#include "../tables/tables.h"
+#include "tables.h"
 
 #define BLE_SUCCESS (0)
 #define BLE_ERROR (-1)
 #define BLE_ERROR_INTERNAL_MESSAGE_BUFFER_FULL (-2)
 #define BLE_ERROR_INTERNAL_NO_MESSAGE_FOUND (-3)
 
+#define BLE_MAX_PAYLOAD_SIZE (300)
+
 typedef uint8_t cbor_message_type_t;
 
 typedef struct {
-   // rssi etc..
+   cbor_message_type_t message_type;
    int8_t rssi;
 } ble_metadata_t;
 
