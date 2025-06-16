@@ -61,6 +61,8 @@
 /* Size of single LoRaWAN message */
 #define SEND_BUFFER_SIZE 50
 
+#define MAX_RECEIVE_SIZE 222
+
 /* Duration to trigger send_event */
 #define TIMEOUT_DURATION 600000
 
@@ -71,7 +73,7 @@ static char _rx_thread_stack[THREAD_STACKSIZE_DEFAULT];
 static msg_t _rx_msg_queue[QUEUE_SIZE];
 
 /* Buffer to manage serialized send data */
-cbor_buffer send_buffer;
+cbor_buffer cbor_send_buffer;
 uint8_t send_buffer[MAX_SEND_BUFFER_SIZE];
 uint8_t msg_sizes[MAX_GATE_COUNT];
 
@@ -104,7 +106,7 @@ static void _join_lorawan_network(const netif_t *netif);
  * @retval   0 on success
  * @retval  -1 on failure
  */
-static int _send_lorawan_packet(const netif_t *netif);
+static int _send_lorawan_packet(const netif_t *netif, int msg_no, int read);
 
 /**
  * @brief   Print to STDOUT the received packet.
@@ -112,12 +114,12 @@ static int _send_lorawan_packet(const netif_t *netif);
  */
 static void _handle_received_packet(gnrc_pktsnip_t *pkt);
 
-static void createMessage(void);
-
 static void send_handler(event_t *event);
 
+static void send_handler_timeout(event_t *event);
+
 event_t send_event = { .handler = send_handler };
-event_t send_event_timeout = { .handler = send_handler };
+event_t send_event_timeout = { .handler = send_handler_timeout };
 
 static netif_t *_find_lorawan_network_interface(void)
 {
@@ -180,9 +182,9 @@ static int _send_lorawan_packet(const netif_t *netif, int msg_no, int read)
     uint8_t address = 1;
     msg_t msg;
 
-    uint8_t send_msg[(send_buffer.cbor_size[msg_no])];
+    uint8_t send_msg[(cbor_send_buffer.cbor_size[msg_no])];
 
-    memcpy(send_msg, send_buffer.buffer + read, send_buffer.cbor_size[msg_no]);
+    memcpy(send_msg, cbor_send_buffer.buffer + read, cbor_send_buffer.cbor_size[msg_no]);
 
     packet = gnrc_pktbuf_add(NULL, send_msg, 8, GNRC_NETTYPE_UNDEF);
     if (packet == NULL) {
@@ -263,6 +265,10 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
         if (snip->type == GNRC_NETTYPE_UNDEF) {
             od_hex_dump(((uint8_t *)pkt->data), pkt->size, OD_WIDTH_DEFAULT);
             cbor_buffer received_buffer;
+            uint8_t bf[MAX_RECEIVE_SIZE];
+            uint8_t count[1];
+            received_buffer.buffer = bf;
+            received_buffer.cbor_size = count; 
             memcpy(received_buffer.buffer, pkt->data, pkt->size);
             int cbor_to_table(cbor_buffer* received_buffer);
             // TODO: Forward received message to tables module
@@ -280,17 +286,20 @@ static void send_handler_timeout(event_t *event){
 }
 
 static void send_handler(event_t *event){
-    int pkg_count = get_all_is_state_entries_cbor(&send_buffer, SEMD_BUFFER_SIZE);
+    (void) event;
+    //int pkg_count = get_all_is_state_entries_cbor(&send_buffer, SEND_BUFFER_SIZE);
+    int pkg_count = 0;
     int read = 0;
     puts("Sending data...");
-    for (int msg_no = 0; msg_no < pkg_count; i++){
-        result = _send_lorawan_packet(netif, msg_no);
+    int result = 0;
+    for (int msg_no = 0; msg_no < pkg_count; msg_no++){
+        result = _send_lorawan_packet(netif, msg_no, read);
         if (result != 0) {
             puts("Failed to send LoRaWAN packet");
         } else {
             printf("Sent LoRaWAN packet successfully\n");
         }
-        read += send_buffer.cbor_size[msg_no];
+        read += cbor_send_buffer.cbor_size[msg_no];
     }
 }
 
@@ -303,11 +312,14 @@ int start_lorawan(void)
 
     event_queue_init(&lorawan_queue);
     
+    cbor_send_buffer.buffer = send_buffer;
+    cbor_send_buffer.cbor_size = msg_sizes;
+
+    void event_timeout_init(event_timeout_t *event_timeout, event_queue_t *queue,
+                        event_t *event);
     /* Init timeout event */
     event_timeout_init(&event_timeout, &lorawan_queue, (event_t*)&send_event_timeout);
     event_timeout_set(&event_timeout, TIMEOUT_DURATION);
-
-    int result;
     
     /* Sleep so that we do not miss this message while connecting */
     ztimer_sleep(ZTIMER_SEC, 3);

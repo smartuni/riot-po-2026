@@ -9,7 +9,7 @@ EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 BOARD ?= adafruit-feather-nrf52840-sense
 
 # Eigene Module aktivieren
-USEMODULE += cose-service
+#USEMODULE += cose-service
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
@@ -20,13 +20,18 @@ DEVELHELP ?= 1
 # some computers.
 -include ../../lab_workarounds.mk
 
+USEMODULE += mate_lorawan
+EXTERNAL_MODULE_DIRS += ../../mate_lorawan
+
 # This board requires a start sleep to actually catch the printed output
 USEMODULE += xtimer
 USEMODULE += ztimer_sec
 USEMODULE += benchmark
 USEPKG += tinycbor
-USEPKG += libcose
-USEMODULE += libcose_crypt_monocypher
+USEMODULE += tables
+USEMODULE += EVENT_TIMEOUT
+#USEPKG += libcose
+#USEMODULE += libcose_crypt_monocypher
 
 CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096
 
