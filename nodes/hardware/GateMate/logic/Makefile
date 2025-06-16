@@ -6,6 +6,8 @@ BOARD ?= feather-nrf52840-sense
 
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../../../RIOT
+PROJECT_BASE ?= $(CURDIR)/../../../
+EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
 USEMODULE += periph_gpio
 USEMODULE += periph_gpio_irq
@@ -21,6 +23,8 @@ USEMODULE += event
 USEMODULE += event_thread_highest
 USEMODULE += event_thread
 USEMODULE += event_timeout
+USEMODULE += tables
+USEMODULE += mate_lorawan
 
 
 CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=1024

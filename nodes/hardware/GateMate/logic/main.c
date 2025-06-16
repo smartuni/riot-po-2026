@@ -3,14 +3,15 @@
 #include "board.h"
 #include "ztimer.h"
 #include "thread.h"
-//#include "table.h" // TODO FIX PATH
-#include "../../../custom-modules/tables/include/tables.h"
+//#include "tables.h" // TODO FIX PATH
+#include "tables.h"
 //#include "lorawan.h" // TODO FIX PATH
-#include "../../../custom-modules/mate_lorawan/include/mate_lorawan.h"
+#include "mate_lorawan.h"
 
 #include <stdio.h>
 
 #include "header/detectDoorStatus.h"
+#include "header/event_creation.h"
 
 
 char lorawan_stack[THREAD_STACKSIZE_DEFAULT];
@@ -22,7 +23,7 @@ int main(void){
     
     int inital_door_state = initial_door_state();
     // TODO write initial_door_state to table
-    set_status(uint8_t newStatus);
+    update_status(inital_door_state);
 
     // TODO REMOVE LATER #1
     // ---------------------------------------------
@@ -57,7 +58,9 @@ int main(void){
     //     THREAD_PRIORITY_MAIN - 1,
     //     THREAD_CREATE_STACKTEST,
     //     ble_init,
-    //     NULL,#include "tables.h" 
+    //     NULL,
+    //    "ble"
+    // };
     while(1){
         // TODO  error detection
         // err = check_door_status();

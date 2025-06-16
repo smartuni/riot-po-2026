@@ -12,7 +12,7 @@ gpio_mode_t led0_mode = GPIO_OUT; // TODO REMOVE LATER #1
 // TABLE
 is_state_entry table_entry;
 
-uint8_t status = 0;
+uint8_t event_status = 0;
 
 // Debounce
 bool event_accepted = true;
@@ -47,10 +47,11 @@ void event_handler_reactivate(event_t *event)
     puts("sending");
     // UPDATE TABLE
     table_entry.gateID = GATE_ID;
-    table_entry.state = status;
+    table_entry.state = event_status;
     table_entry.gateTime = time++;
 
-    if (TABLE_SUCCESS == set_is_state_entry){
+    // if (TABLE_SUCCESS == set_is_state_entry()){
+    if (0 == set_is_state_entry(&table_entry)){
         // CALL UPDATE
         event_post(&lorawan_queue, &send_event );
     } 
@@ -73,4 +74,8 @@ void event_handlerA0(event_t *event)
         gpio_clear(led0);
     }
     
+}
+
+void update_status(uint8_t newStatus){
+    event_status = newStatus;
 }
