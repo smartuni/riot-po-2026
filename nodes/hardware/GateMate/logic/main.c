@@ -55,10 +55,7 @@ int main(void){
     //     THREAD_PRIORITY_MAIN - 1,
     //     THREAD_CREATE_STACKTEST,
     //     ble_init,
-    //     NULL,
-    //     "ble"
-    // );
-    
+    //     NULL,#include "tables.h" 
     while(1){
         // TODO  error detection
         // err = check_door_status();

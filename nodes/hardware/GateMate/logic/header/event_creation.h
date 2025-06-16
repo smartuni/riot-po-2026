@@ -10,7 +10,7 @@
 #include "ztimer.h"
 #include "board.h"
 #include "event/timeout.h"
-#include "table.h" // TODO FIX PATH
+#include "../../../../custom-modules/tables/include/tables.h" // TODO FIX PATH
 
 #define GATE_ID 1
 #define DEBOUNCE_TIME 10000

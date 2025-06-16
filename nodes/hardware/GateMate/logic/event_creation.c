@@ -2,7 +2,7 @@
 
 // ID of Gatemate
 int id = GATE_ID;
-time = 0;
+uint8_t time = 0;
 
 
 gpio_t led0 = GPIO_PIN(1, 10); // TODO REMOVE LATER #1
@@ -47,8 +47,8 @@ void event_handler_reactivate(event_t *event)
     puts("sending");
     // UPDATE TABLE
     table_entry.gateID = GATE_ID;
-    table_entry.status = status;
-    table_entry.gate = time++;
+    table_entry.state = status;
+    table_entry.time = time++;
 
     if (TABLE_SUCCESS == set_is_state_entry){
         // CALL UPDATE

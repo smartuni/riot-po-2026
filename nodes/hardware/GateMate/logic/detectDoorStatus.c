@@ -1,6 +1,5 @@
 #include "header/detectDoorStatus.h"
 
-#define DEBOUNCE_TIME 200
 #define TRIGGER GPIO_PIN(0, 3) // PIN A5
 //#define TRIGGER GPIO_PIN(1, 2) // Test Button
 
@@ -48,6 +47,3 @@ void init__door_interrupt(void) {
     gpio_init_int(doorSensor, GPIO_IN_PU, GPIO_BOTH, trigger_door_callback, NULL);
 }
 
-uint8_t get_status(){
-    return status;
-}
