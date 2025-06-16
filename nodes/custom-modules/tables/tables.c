@@ -22,8 +22,8 @@ int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buf
     // [Table Entry]
     for(int i = 0; i < 2; i++) {
         cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-        cbor_encode_simple_value(&singleEntryEncoder, table[i].gateID);
-        cbor_encode_simple_value(&singleEntryEncoder, table[i].state);
+        cbor_encode_int(&singleEntryEncoder, table[i].gateID);
+        cbor_encode_int(&singleEntryEncoder, table[i].state);
         cbor_encode_int(&singleEntryEncoder, table[i].timestamp);
         cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
     }
@@ -46,8 +46,8 @@ int target_state_table_to_cbor(cbor_buffer* buffer) {
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
         cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-        cbor_encode_simple_value(&singleEntryEncoder, target_state_entry_table[i].gateID);
-        cbor_encode_simple_value(&singleEntryEncoder, target_state_entry_table[i].state);
+        cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].gateID);
+        cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].state);
         cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].timestamp);
         cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
     }
@@ -70,8 +70,8 @@ int is_state_table_to_cbor(cbor_buffer* buffer) {
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
         cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-        cbor_encode_simple_value(&singleEntryEncoder, is_state_entry_table[i].gateID);
-        cbor_encode_simple_value(&singleEntryEncoder, is_state_entry_table[i].state);
+        cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].gateID);
+        cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].state);
         cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].gateTime);
         cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
     }
@@ -94,10 +94,10 @@ int seen_status_table_to_cbor(cbor_buffer* buffer) {
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
         cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-        cbor_encode_simple_value(&singleEntryEncoder, seen_status_entry_table[i].gateID);
+        cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].gateID);
         cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].gateTime);
-        cbor_encode_simple_value(&singleEntryEncoder, seen_status_entry_table[i].status);
-        cbor_encode_simple_value(&singleEntryEncoder, seen_status_entry_table[i].senseMateID);
+        cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].status);
+        cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].senseMateID);
         cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
     }
 
@@ -119,8 +119,8 @@ int jobs_table_to_cbor(cbor_buffer* buffer) {
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
         cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-        cbor_encode_simple_value(&singleEntryEncoder, jobs_entry_table[i].gateID);
-        cbor_encode_simple_value(&singleEntryEncoder, jobs_entry_table[i].done);
+        cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].gateID);
+        cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].done);
         cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
     }
 
@@ -132,14 +132,14 @@ int jobs_table_to_cbor(cbor_buffer* buffer) {
     return 0;
 }
 
-int cbor_to_table(cbor_buffer* buffer) {
-
+int cbor_to_table_test(cbor_buffer* buffer) {
     CborParser parser;
     CborValue value;
     CborValue wrapperValue;
     CborValue fieldsValue;
     CborValue entryValue;
-    uint8_t tableType;
+
+    int tableType;
 
     target_state_entry returnTargetTable[buffer->cbor_size];
     is_state_entry returnIsTable[buffer->cbor_size];
@@ -147,51 +147,95 @@ int cbor_to_table(cbor_buffer* buffer) {
     jobs_entry returnJobsTable[buffer->cbor_size];
 
     cbor_parser_init(buffer->buffer, buffer->cbor_size, 0, &parser, &value);
-    cbor_value_enter_container(&value, &wrapperValue); // [
-    cbor_value_get_simple_type(&wrapperValue, &tableType); // get type of table
+    if(cbor_value_enter_container(&value, &wrapperValue) != CborNoError) {
+        return -1;
+    }
+    if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &tableType) != CborNoError) {
+        return -1;
+    } // get type of table
 
-    cbor_value_enter_container(&wrapperValue, &fieldsValue); // [
-    
-    uint8_t id, s, sID, d;
-    int ts, gt;
+    // [ enter second container
+    cbor_value_advance(&wrapperValue);
+    if(cbor_value_enter_container(&wrapperValue, &fieldsValue) != CborNoError) {
+        return -1;
+    }
 
-    for(int i = 0; i < buffer->cbor_size; i++) {
+    int id, s, sID, d, ts, gt;
+    size_t length = 0;
+    cbor_value_get_array_length(&fieldsValue, &length); 	
+    for(size_t i = 0; i < (length - 1); i++) {
         cbor_value_enter_container(&fieldsValue, &entryValue); // [
         switch(tableType) {
             case TARGET_STATE_KEY:
-                cbor_value_get_simple_type(&fieldsValue, &id);
-                cbor_value_get_simple_type(&fieldsValue, &s);
-                cbor_value_get_int(&fieldsValue, &ts);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &ts) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
                 target_state_entry newTargetEntry = {id, s, ts};
                 returnTargetTable[i] = newTargetEntry;
                 break;
             case IS_STATE_KEY:
-                cbor_value_get_simple_type(&fieldsValue, &id);
-                cbor_value_get_simple_type(&fieldsValue, &s);
-                cbor_value_get_int(&fieldsValue, &gt);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
                 is_state_entry newIsEntry = {id, s, gt};
                 returnIsTable[i] = newIsEntry;
                 break;
             case SEEN_STATUS_KEY:
-                cbor_value_get_simple_type(&fieldsValue, &id);
-                cbor_value_get_int(&fieldsValue, &gt);
-                cbor_value_get_simple_type(&fieldsValue, &s);
-                cbor_value_get_simple_type(&fieldsValue, &sID);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &sID) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
                 seen_status_entry newSeenEntry = {id, gt, s, sID};
                 returnSeenTable[i] = newSeenEntry;
                 break;
             case JOBS_KEY:
-                cbor_value_get_simple_type(&fieldsValue, &id);
-                cbor_value_get_simple_type(&fieldsValue, &d);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &d) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
                 jobs_entry newJobsEntry = {id, d};
                 returnJobsTable[i] = newJobsEntry;
                 break;
-        }   
-        cbor_value_leave_container 	(&fieldsValue,&entryValue); // ]	
+        }
+        cbor_value_leave_container(&fieldsValue,&entryValue); // ]
     }
 
-    cbor_value_leave_container 	(&wrapperValue, &fieldsValue); // ]	
-    cbor_value_leave_container 	(&value, &wrapperValue); // ]	
+    cbor_value_leave_container(&wrapperValue, &fieldsValue); // ]	
+    cbor_value_leave_container(&value, &wrapperValue); // ]	
     
     // TODO: Funtionen zum Integrieren aufrufen
     switch(tableType) {
@@ -214,7 +258,7 @@ int cbor_to_table(cbor_buffer* buffer) {
     return 0;
 }
 
-int target_state_table_to_cbor_many(target_state_entry table[], int package_size, cbor_buffer* buffer) {
+int target_state_table_to_cbor_many_test(target_state_entry table[], int package_size, cbor_buffer* buffer) {
     int no_entries_in_cbor = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_TARGET_STATE_MAX_BYTE_SIZE;
     if(no_entries_in_cbor <= 0) {
         return -1;

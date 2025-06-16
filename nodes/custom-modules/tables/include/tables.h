@@ -67,6 +67,10 @@
 
     int jobs_table_to_cbor(cbor_buffer* buffer);
 
+    /**
+     * only for testing purposes
+     * attempts turning a target state table to cbor
+    */
     int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buffer);
 
     /**
@@ -75,9 +79,9 @@
      * receives a cbor buffer and turns the sequence into table structs
      * consequently calls functions to merge received table with saved table
     */
-    int cbor_to_table(cbor_buffer* buffer);
+    int cbor_to_table_test(cbor_buffer* buffer);
 
     // TODO function to give back several CBOR packages for LoRaWAN
 
-    int target_state_table_to_cbor_many(target_state_entry table[], int package_size, cbor_buffer* buffer);
+    int target_state_table_to_cbor_many_test(target_state_entry table[], int package_size, cbor_buffer* buffer);
 #endif
