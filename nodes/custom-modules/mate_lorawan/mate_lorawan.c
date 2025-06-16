@@ -288,7 +288,6 @@ static void send_handler_timeout(event_t *event){
 static void send_handler(event_t *event){
     (void) event;
     int pkg_count = is_state_table_to_cbor(&cbor_send_buffer);
-    printf("pkg_count: %d\n", cbor_send_buffer.);
     int read = 0;
     puts("Sending data...");
     int result = 0;

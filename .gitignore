@@ -21,7 +21,7 @@ compile_commands.json
 # JetBrains (CLion, IntelliJ, PyCharm…)
 .idea/
 *.iml
-
+bin/
 # ----------------------------------------
 # Node.js / JavaScript
 # ----------------------------------------
