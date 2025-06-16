@@ -57,6 +57,7 @@ Include the Paho MQTT client and Spring Integration MQTT in your `pom.xml`:
 For more Information follow the link:
 **https://www.thethingsindustries.com/docs/integrations/other-integrations/mqtt/**
 
+
 ## Recent Updates
 
 - **2025‑06‑15**:
