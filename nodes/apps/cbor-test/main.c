@@ -3,10 +3,15 @@
 #include "ztimer.h"
 #include "tables.h"
 
+#define TEST_TABLE_TO_CBOR
+
 int main(void) 
 {
     
-
+/**
+ * Test for testing table struct to cbor functions
+ * signature of function needs to be changed for test to work
+*/
 #ifdef TEST_TABLE_TO_CBOR
     puts("Starting CBOR Test");
 
@@ -17,7 +22,7 @@ int main(void)
 
     cbor_buffer* buf = (cbor_buffer*) malloc(sizeof(uint8_t) * 120);
     buf->buffer = (uint8_t*) malloc(sizeof(uint8_t) * 100);
-    int result = target_state_table_to_cbor(test, buf);
+    int result = target_state_table_to_cbor_test(test, buf);
     puts("Used function");
 
     printf("Result is: %d\n", result);
@@ -28,6 +33,9 @@ int main(void)
     printf("\n");
 
     puts("End of Package");
+
+    free(buf->buffer);
+    free(buf);
 #endif
     return 0;
 }
