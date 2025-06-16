@@ -2,10 +2,10 @@
 APPLICATION = displayTest
 
 # If no BOARD is found in the environment, use this default:
-BOARD ?= feather-nrf52840-sense
+BOARD ?= adafruit-feather-nrf52840-sense
 
 # This has to be the absolute path to the RIOT base directory:
-RIOTBASE ?= $(CURDIR)/../RIOT
+RIOTBASE ?= $(CURDIR)/../../../RIOT
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
@@ -14,7 +14,8 @@ DEVELHELP ?= 1
 VERBOSE_ASSERT ?= 1
 # Some workarounds are needed in order to get the tutorial running on
 # some computers.
--include ../lab_workarounds.mk
+-include ../../../lab_workarounds.mk
+-include ../../../custom-modules/tables/tables.inc.mk
 
 # This board requires a start sleep to actually catch the printed output
 USEMODULE += ztimer_sec
@@ -32,6 +33,11 @@ USEMODULE += event
 USEMODULE += event_thread_highest
 USEMODULE += event_thread
 USEMODULE += event_timeout
+
+USEMODULE += tables
+USEMODULE += cbor
+
+
 
 CFLAGS += -DI2C_DEVICE_IDX=0
 CFLAGS += -DI2C_DISPLAY_ADDR=0x3c

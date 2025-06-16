@@ -1,0 +1,1 @@
+DIRS += $(CURDIR)/../../../custom-modules/tables

@@ -1,4 +1,4 @@
-#include "tables.h"
+#include "include/tables.h"
 #include <stdio.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,7 +11,7 @@
 #include "embUnit.h"
 #include "embUnit/embUnit.h"
 #include "fmt.h"
-#include "cbor.h"
+#include "senml/cbor.h"
 
 
 // Static tables
