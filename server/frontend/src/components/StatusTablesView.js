@@ -18,18 +18,18 @@ import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
 import CircleIcon from '@mui/icons-material/Circle';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
-import MapView from "../components/MapView";
-import StatusChangedDialog from "../components/StatusChangedDialog";
+import MapView from "./MapView";
+import StatusChangedDialog from "./StatusChangedDialog";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
-function StatusTables() {
+function StatusTablesView() {
     const [gates, setGates] = useState([]);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("");
     const [view, setView] = useState("list");
-    const [selectedGate, setSelectedGate] = useState(null);
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [bulkRequestedStatus, setBulkRequestedStatus] = useState("");
+    // const [selectedGate, setSelectedGate] = useState(null);
+    // const [dialogOpen, setDialogOpen] = useState(false);
+    // const [bulkRequestedStatus, setBulkRequestedStatus] = useState("");
     const [expandedGateId, setExpandedGateId] = useState(null);
 
 
@@ -47,44 +47,44 @@ function StatusTables() {
     }, []);
 
     // Funktion zum Abrufen der Gates
-    const handleClose = async () => {
-        setDialogOpen(false);
-        const updated = await fetchGates();
-        setGates(updated);
-    };
+    // const handleClose = async () => {
+    //     setDialogOpen(false);
+    //     const updated = await fetchGates();
+    //     setGates(updated);
+    // };
 
     // Funktion zum Ändern des angeforderten Status für mehrere Gates
-    const handleBulkRequestedStatusChange = async () => {
-        if (!bulkRequestedStatus) return;
+    // const handleBulkRequestedStatusChange = async () => {
+    //     if (!bulkRequestedStatus) return;
 
-        const statusToSend = bulkRequestedStatus === "NONE" ? null : bulkRequestedStatus;
+    //     const statusToSend = bulkRequestedStatus === "NONE" ? null : bulkRequestedStatus;
 
-        const gatesToUpdate = filteredGates.filter(gate => {
-            const currentRequested = gate.requestedStatus || null;
-            const currentStatus = gate.status;
+    //     const gatesToUpdate = filteredGates.filter(gate => {
+    //         const currentRequested = gate.requestedStatus || null;
+    //         const currentStatus = gate.status;
 
-            // Gleicher Request? Ignorieren
-            if (currentRequested === statusToSend) return false;
+    //         // Gleicher Request? Ignorieren
+    //         if (currentRequested === statusToSend) return false;
 
-            // Status passt schon zum Ziel? Ignorieren
-            return !((statusToSend === "REQUESTED_OPEN" && currentStatus === "OPENED") ||
-                (statusToSend === "REQUESTED_CLOSE" && currentStatus === "CLOSED"));
+    //         // Status passt schon zum Ziel? Ignorieren
+    //         return !((statusToSend === "REQUESTED_OPEN" && currentStatus === "OPENED") ||
+    //             (statusToSend === "REQUESTED_CLOSE" && currentStatus === "CLOSED"));
 
 
-        });
+    //     });
 
-        const promises = gatesToUpdate.map(async (gate) => {
-            try {
-                await requestGateStatusChange(gate.id, statusToSend);
-            } catch (error) {
-                console.error(`Fehler beim Aktualisieren von Gate ${gate.id}`, error);
-            }
-        });
+    //     const promises = gatesToUpdate.map(async (gate) => {
+    //         try {
+    //             await requestGateStatusChange(gate.id, statusToSend);
+    //         } catch (error) {
+    //             console.error(`Fehler beim Aktualisieren von Gate ${gate.id}`, error);
+    //         }
+    //     });
 
-        await Promise.all(promises);
-        const updated = await fetchGates();
-        setGates(updated);
-    };
+    //     await Promise.all(promises);
+    //     const updated = await fetchGates();
+    //     setGates(updated);
+    // };
 
     // Funktion zum Rendern des angeforderten Status
     const renderRequestedStatus = (status) => {
@@ -108,33 +108,33 @@ function StatusTables() {
         )
     );
 
-    const sendManualDownlink = async () => {
-        const statusIntMap = {
-            "REQUESTED_OPEN": 1,
-            "REQUESTED_CLOSE": 0
-        };
+    // const sendManualDownlink = async () => {
+    //     const statusIntMap = {
+    //         "REQUESTED_OPEN": 1,
+    //         "REQUESTED_CLOSE": 0
+    //     };
 
-        const payload = [
-            1, // Type
-            Math.floor(Date.now() / 1000), // Unix Timestamp
-            filteredGates
-                .filter(g => g.requestedStatus in statusIntMap)
-                .map(g => [g.id, statusIntMap[g.requestedStatus]])
-        ];
+    //     const payload = [
+    //         1, // Type
+    //         Math.floor(Date.now() / 1000), // Unix Timestamp
+    //         filteredGates
+    //             .filter(g => g.requestedStatus in statusIntMap)
+    //             .map(g => [g.id, statusIntMap[g.requestedStatus]])
+    //     ];
 
-        if (payload[2].length === 0) {
-            alert("No gates with requested OPEN or CLOSE status.");
-            return;
-        }
+    //     if (payload[2].length === 0) {
+    //         alert("No gates with requested OPEN or CLOSE status.");
+    //         return;
+    //     }
 
-        try {
-            const response = await api.post("api/downlink", JSON.stringify(payload));
-            alert("Downlink sent.");
-        } catch (error) {
-            console.error("Error sending downlink:", error);
-            alert("Failed to send downlink.");
-        }
-    };
+    //     try {
+    //         const response = await api.post("api/downlink", JSON.stringify(payload));
+    //         alert("Downlink sent.");
+    //     } catch (error) {
+    //         console.error("Error sending downlink:", error);
+    //         alert("Failed to send downlink.");
+    //     }
+    // };
 
 
 
@@ -177,8 +177,7 @@ function StatusTables() {
 
             {view === "list" ? (
                 <>
-                    <Box display="flex" alignItems="center" gap={2} mb={2}>
-                        {/* Bulk Select */}
+                    {/* <Box display="flex" alignItems="center" gap={2} mb={2}>
                         <FormControl size="small">
                             <InputLabel>Bulk Requested Status</InputLabel>
                             <Select
@@ -210,7 +209,7 @@ function StatusTables() {
                         >
                             Send Downlink
                         </Button>
-                    </Box>
+                    </Box> */}
 
                     <table className="status-table">
                         <thead>
@@ -222,7 +221,7 @@ function StatusTables() {
                             <th>Device ID</th>
                             <th>Last Update</th>
                             <th>Confidence</th>
-                            <th>Actions</th>
+                            {/* <th>Actions</th> */}
                         </tr>
                         </thead>
                         <tbody>
@@ -271,7 +270,7 @@ function StatusTables() {
                                             />
                                         </Tooltip>
                                     </td>
-                                    <td>
+                                    {/* <td>
                                         <IconButton
                                             color="warning"
                                             size="small"
@@ -283,7 +282,7 @@ function StatusTables() {
                                         >
                                             <SyncAltIcon/>
                                         </IconButton>
-                                    </td>
+                                    </td> */}
                                 </tr>
 
                                 {expandedGateId === gate.id && (
@@ -313,13 +312,13 @@ function StatusTables() {
                 <MapView search={search} statusFilter={filter}/>
             )}
 
-            <StatusChangedDialog
+            {/* <StatusChangedDialog
                 open={dialogOpen}
                 gate={selectedGate}
                 onClose={() => handleClose()}
-            />
+            /> */}
         </div>
     );
 }
 
-export default StatusTables;
+export default StatusTablesView;

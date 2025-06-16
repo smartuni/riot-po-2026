@@ -24,8 +24,11 @@ const FloodGatePopup = ({ gate, onClose, onStatusChange }) => {
 
     const normalizedStatus = gate.status?.toLowerCase();
     const requestedStatus = gate.requestedStatus?.toLowerCase();
-    const oppositeStatus = normalizedStatus === "open" ? "close" : "open";
-    const alreadyRequested = requestedStatus === oppositeStatus;
+    const oppositeStatus = normalizedStatus === "requested_open" ? "requested_close" : "requested_open";
+    const alreadyRequested =
+        requestedStatus === oppositeStatus.toUpperCase() ||
+        gate.status === oppositeStatus.replace("requested_", "").toUpperCase();
+
 
     const requestGateAction = async () => {
         if (loading || alreadyRequested) return;
@@ -34,15 +37,7 @@ const FloodGatePopup = ({ gate, onClose, onStatusChange }) => {
         try {
             // Fix 1: Use correct HTTP method (POST instead of PUT)
             // Fix 2: Send oppositeStatus instead of requestedStatus
-            await axios.post(
-                `http://localhost:8080/${gate.id}/request-status-change`,
-                { requestedStatus: oppositeStatus }, // Fixed: use oppositeStatus
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`,
-                        'Content-Type': 'application/json',
-                    },
-                }
+            await axios.post(`/${gate.id}/request-status-change`, { requestedStatus: oppositeStatus }, // Fixed: use oppositeStatus
             );
             setRequested(true);
             if (onStatusChange) onStatusChange();
@@ -76,7 +71,7 @@ const FloodGatePopup = ({ gate, onClose, onStatusChange }) => {
                 <button
                     onClick={requestGateAction}
                     disabled={loading || alreadyRequested}
-                    className={oppositeStatus === "close" ? "close-button" : "open-button"}
+                    className={oppositeStatus === "requested_close" ? "close-button" : "open-button"}
                 >
                     {loading ? "Senden..." : `Request ${oppositeStatus.toUpperCase()}`}
                 </button>

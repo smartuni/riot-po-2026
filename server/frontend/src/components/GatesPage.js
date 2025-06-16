@@ -52,11 +52,7 @@ const GatesPage = () => {
     const requestGateAction = async (gateId, requestedStatus) => {
         addLoadingGate(gateId);
         try {
-            const response = await axios.post(`http://localhost:8080/${gateId}/request-status-change`, { requestedStatus: requestedStatus }, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            });
+            const response = await axios.post(`/${gateId}/request-status-change`, { requestedStatus: requestedStatus });
 
             if (!response.ok) {
                 throw new Error('Fehler beim Senden der Statusänderung');

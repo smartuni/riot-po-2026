@@ -13,31 +13,28 @@ function StatusChangeDialog({ open, gate, onClose }) {
     if (!gate) return null;
 
     const handleSubmit = async () => {
-        // onRequestChange(requestedStatus);
+        const currentStatus = gate.status?.toUpperCase();
+        const currentRequested = gate.requestedStatus?.toUpperCase();
+        const newRequested = requestedStatus?.toUpperCase();
+
+        if (
+            (newRequested === "REQUESTED_OPEN" && currentStatus === "OPENED") ||
+            (newRequested === "REQUESTED_CLOSE" && currentStatus === "CLOSED") ||
+            (newRequested === currentRequested)
+        ) {
+            console.warn("Kein Statuswechsel nötig.");
+            onClose();
+            setRequestedStatus("");
+            return;
+        }
         try {
-            // await updateGate(selectedGate.id, selectedGate);
             await requestGateStatusChange(gate.id, requestedStatus)
-            // const updated = await fetchGates(); // Reload data
-            // console.log(updated)
-            // setGates(updated);
         } catch (err) {
             console.error("Fehler beim Update:", err);
         }
         onClose();
         setRequestedStatus("");
     };
-
-    // const handleRequestChange = async (newStatus) => {
-    //     try {
-    //         // await updateGate(selectedGate.id, selectedGate);
-    //         await requestGateStatusChange(selectedGate.id, )
-    //         const updated = await fetchGates(); // Reload data
-    //         console.log(updated)
-    //         setGates(updated);
-    //     } catch (err) {
-    //         console.error("Fehler beim Update:", err);
-    //     }
-    // };
 
     return (
         <Dialog open={open} onClose={onClose}>
@@ -47,7 +44,7 @@ function StatusChangeDialog({ open, gate, onClose }) {
                 <Typography><strong>Location:</strong> {gate.location}</Typography>
                 <Typography>
                     <strong>Current Status:</strong> {
-                    gate.status === "OPEN"
+                    gate.status === "OPENED"
                         ? <><LockOpenIcon fontSize="small" /> OPEN</>
                         : <><LockIcon fontSize="small" /> CLOSED</>
                 }
@@ -61,9 +58,9 @@ function StatusChangeDialog({ open, gate, onClose }) {
                     value={requestedStatus}
                     onChange={(e) => setRequestedStatus(e.target.value)}
                 >
-                    <MenuItem value="OPEN">OPEN</MenuItem>
-                    <MenuItem value="CLOSED">CLOSED</MenuItem>
-                    <MenuItem value="NONE">NONE</MenuItem>
+                    <MenuItem value="REQUESTED_OPEN">OPEN</MenuItem>
+                    <MenuItem value="REQUESTED_CLOSE">CLOSE</MenuItem>
+                    <MenuItem value="REQUESTED_NONE">NONE</MenuItem>
                 </TextField>
             </DialogContent>
             <DialogActions>

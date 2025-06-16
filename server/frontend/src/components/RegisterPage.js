@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Avatar, Button, CssBaseline, TextField, Box, Typography, Container, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import { Avatar, Button, CssBaseline, TextField, Box, Typography, Container, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Switch, FormControlLabel } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import api from '../services/api';
 
@@ -14,6 +14,7 @@ const RegisterPage = () => {
   });
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [checked, setChecked] = useState(false);
 
   const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
   const isValidPassword = (password, confirmPassword) => password.length >= 6 && password === confirmPassword;
@@ -31,31 +32,33 @@ const RegisterPage = () => {
     const { name, email, password, confirmPassword } = fields;
 
     if (isValidEmail(email.value) && isValidPassword(password.value, confirmPassword.value)) {
+      var role = 'viewer';
+      if (checked) {
+        role = 'controller';
+      }
       try {
         const registerData = {
           email: email.value.toString(),
           password: password.value.toString(),
           name: name.value.toString(),
+          role: role,
         };
         const response = await api.post('/auth/register', registerData);
         // Assume a successful registration redirects to the login page
         const { token } = response.data;
+        // console.log(token);
         if (response.status === 200) {
-          api.interceptors.request.use(
-            config => {
-              config.headers['Authorization'] = `Bearer ${token}`;
-              return config;
-            },
-            error => {
-              return Promise.reject(error);
-            }
-          )
-          navigate('/dashboard');
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+          if (role === 'controller') {
+            navigate('/dashboard');
+          } else {
+            navigate('/dashboard-view');
+          }
         }
       } catch (error) {
         setErrorMessage(error.response.data.error || 'Sorry, an unexpected error occurred');
         console.log(error);
-        // console.log(response);
         setIsErrorDialogOpen(true);
       }
     } else {
@@ -96,6 +99,10 @@ const RegisterPage = () => {
     />
   );
 
+  const handleChangeCheck = () => {
+    setChecked(!checked);
+  }
+
   const isFormValid = () => {
     return isValidEmail(fields.email.value) && isValidPassword(fields.password.value, fields.confirmPassword.value);
   };
@@ -120,6 +127,9 @@ const RegisterPage = () => {
             </Grid>
             <Grid>
               {formField('confirmPassword', 'Confirm Password', 'password')}
+            </Grid>
+            <Grid>
+              <FormControlLabel control={<Switch checked={checked} onChange={handleChangeCheck}/>} label={'Controller?'}></FormControlLabel>
             </Grid>
           </Grid>
           <Button

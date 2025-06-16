@@ -14,7 +14,7 @@ function opengates(gates) {
     let tmp = 0;
     let gate;
     for (gate of gates) {
-        if (enumToJson(gate.status) === "open") {
+        if (enumToJson(gate.status) === "opened") {
             tmp++;
         }
     }
@@ -44,8 +44,8 @@ function gatesOutOfService(gates) {
 }
 
 function enumToJson(inString) {
-    if (inString === "OPEN") {
-        return "open"
+    if (inString === "OPENED") {
+        return "opened"
     } else if (inString === "CLOSED") {
         return "closed"
     } else if (inString === "UNKNOWN") {
