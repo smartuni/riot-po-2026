@@ -71,6 +71,6 @@ class PopulateTestDataRunner implements CommandLineRunner {
 		gateActivityService.addGateActivity(gateActivityEntity4);
 		gateActivityService.addGateActivity(gateActivityEntity5);
 
-
+		//test commit
 	}
 }
