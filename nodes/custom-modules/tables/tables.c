@@ -59,6 +59,7 @@ int target_state_table_to_cbor(cbor_buffer* buffer) {
     cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
 
+    //TODO hier prüfen ob entry valide
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
         cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
@@ -83,6 +84,7 @@ int is_state_table_to_cbor(cbor_buffer* buffer) {
     cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
 
+    //TODO hier prüfen ob entry valide
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
         cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
@@ -107,6 +109,7 @@ int seen_status_table_to_cbor(cbor_buffer* buffer) {
     cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
 
+    //TODO hier prüfen ob entry valide
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
         cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
@@ -132,6 +135,7 @@ int jobs_table_to_cbor(cbor_buffer* buffer) {
     cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
 
+    //TODO hier prüfen ob entry valide
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
         cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
@@ -650,7 +654,7 @@ int target_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_TARGET_STATE_MAX_BYTE_SIZE < package_size) {
-            //validate table entry
+            //TODO: validate table entry
             if(true) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, target_state_entry_table[table_index].gateID);
@@ -691,7 +695,7 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, IS_STATE_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_IS_STATE_MAX_BYTE_SIZE < package_size) {
-            //validate table entry
+            //TODO: validate table entry
             if(true) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].gateID);
@@ -732,7 +736,7 @@ int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, SEEN_STATUS_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_SEEN_STATUS_MAX_BYTE_SIZE < package_size) {
-            //validate table entry
+            //TODO: validate table entry
             if(true) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 4); // []
                 cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].gateID);
@@ -774,7 +778,7 @@ int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, JOBS_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_JOBS_MAX_BYTE_SIZE < package_size) {
-            //validate table entry
+            //TODO: validate table entry
             if(true) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 2); // []
                 cbor_encode_int(&singleEntryEncoder, jobs_entry_table[table_index].gateID);
