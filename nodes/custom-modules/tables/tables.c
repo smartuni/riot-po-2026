@@ -155,14 +155,7 @@ int cbor_to_table_test(cbor_buffer* buffer) {
     CborValue fieldsValue;
     CborValue entryValue;
 
-    for (size_t idx = 0; idx < ARRAY_SIZE(tests); idx++) {
-        CborParser parser;
-        CborValue it;
-        unsigned char buf[64] = {0};
-        TEST_ASSERT((strlen(tests[idx])/2) <= sizeof(buf));
-
     int tableType;
-
     target_state_entry returnTargetTable[buffer->cbor_size];
     is_state_entry returnIsTable[buffer->cbor_size];
     seen_status_entry returnSeenTable[buffer->cbor_size];
