@@ -1,12 +1,12 @@
 # name of your application
-APPLICATION = tables-test
+APPLICATION = tables-test-getter-setter
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= feather-nrf52840-sense
 
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../../RIOT
-PROJECT_BASE ?= $(CURDIR)/../..
+PROJECT_BASE ?= $(CURDIR)/../../
 EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
 # Comment this out to disable code in RIOT that does safety checking
@@ -21,7 +21,7 @@ DEVELHELP ?= 1
 USEMODULE += tables
 EXTERNAL_MODULE_DIRS += ../../tables
 
-
+USEMODULE += ztimer_msec # millisecond precision
 USEMODULE += tables
 
 # Include other packages here e.g.
@@ -32,7 +32,5 @@ USEMODULE += shell
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
-
-CFLAGS += -DDEBUG_ASSERT_VERBOSE
 
 include $(RIOTBASE)/Makefile.include
