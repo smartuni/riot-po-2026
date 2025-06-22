@@ -21,6 +21,12 @@
     #define TABLE_ERROR_SIZE_TOO_BIG   -1
     #define TABLE_ERROR_INVALID_GATE_ID -2
     #define TABLE_ERROR_NOT_FOUND      -3
+    
+    #define BASE_CBOR_BYTE_SIZE 0x03
+    #define CBOR_TARGET_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
+    #define CBOR_IS_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
+    #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x0C + 0x01)
+    #define CBOR_JOBS_MAX_BYTE_SIZE (0x05 + 0x01)
 
     typedef struct {
         uint8_t gateID;
@@ -49,27 +55,37 @@
     typedef struct {
         uint8_t* buffer;
         int cbor_size;
+        uint8_t* package_size;
         int capacity;
     } cbor_buffer;
 
     /**
      * @param buffer cbor buffer to write the cbor package into
      * @return 0 if successful
-     * converts the target state table to a cbor package
+     * converts the table to a cbor package
     */
     int target_state_table_to_cbor(cbor_buffer* buffer);
+    int is_state_table_to_cbor(cbor_buffer* buffer);
+    int seen_status_table_to_cbor(cbor_buffer* buffer);
+    int jobs_table_to_cbor(cbor_buffer* buffer);
+    /**
+     * @param package_size maximum size of one cbor package
+     * @param buffer cbor buffer to write the cbor package into
+     * @return number of cbor streams the table was converted to, -1 if an error occurred
+     * turns the table into several cbor packages limited in size by the package_size parameter
+    */
+    int target_state_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+    int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+    int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+    int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer);
 
-    int is_state_table_to_cbor(is_state_entry table[], cbor_buffer* buffer);
-
-    int seen_status_table_to_cbor(seen_status_entry table[], cbor_buffer* buffer);
-
-    int jobs_table_to_cbor(jobs_entry table[], cbor_buffer* buffer);
-
-    int cbor_to_table(cbor_buffer* buffer);
-
-    // TODO function to give back several CBOR packages for LoRaWAN
-
-    int target_state_table_to_cbor_many(target_state_entry table[], int package_size, cbor_buffer* buffer);
+    /**
+     * @param buffer cbor buffer
+     * @return 0 if successful, -1 otherwise
+     * receives a cbor buffer and turns the sequence into table structs
+     * consequently calls functions to merge received table with saved table
+    */
+    int cbor_to_table_test(cbor_buffer* buffer);
 
     // Initialization
 int init_tables(void);
@@ -204,4 +220,11 @@ const seen_status_entry* get_seen_status_table(void);
  * @return Pointer to internal table array
  */
 const jobs_entry* get_jobs_table(void);
+
+    /**
+     * only for testing purposes
+    */
+    int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buffer);
+    int target_state_table_to_cbor_many_test(target_state_entry table[], int package_size, cbor_buffer* buffer);
+
 #endif
