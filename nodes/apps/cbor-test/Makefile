@@ -18,6 +18,9 @@ DEVELHELP ?= 1
 # some computers.
 -include ../../lab_workarounds.mk
 
+# This board requires a start sleep to actually catch the printed output
+USEMODULE += ztimer_sec
+
 USEMODULE += tables
 EXTERNAL_MODULE_DIRS += ../../tables
 
