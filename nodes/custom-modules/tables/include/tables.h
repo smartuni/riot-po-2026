@@ -18,10 +18,10 @@
     #define JOBS_KEY 0x03
 
     #define BASE_CBOR_BYTE_SIZE 0x03
-    #define CBOR_TARGET_STATE_MAX_BYTE_SIZE 0x0A
-    #define CBOR_IS_STATE_MAX_BYTE_SIZE 0x0A
-    #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE 0x0C
-    #define CBOR_JOBS_MAX_BYTE_SIZE 0x05
+    #define CBOR_TARGET_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
+    #define CBOR_IS_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
+    #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x0C + 0x01)
+    #define CBOR_JOBS_MAX_BYTE_SIZE (0x05 + 0x01)
 
     typedef struct {
         uint8_t gateID;
@@ -57,21 +57,22 @@
     /**
      * @param buffer cbor buffer to write the cbor package into
      * @return 0 if successful
-     * converts the target state table to a cbor package
+     * converts the table to a cbor package
     */
     int target_state_table_to_cbor(cbor_buffer* buffer);
-
     int is_state_table_to_cbor(cbor_buffer* buffer);
-
     int seen_status_table_to_cbor(cbor_buffer* buffer);
-
     int jobs_table_to_cbor(cbor_buffer* buffer);
-
     /**
-     * only for testing purposes
-     * attempts turning a target state table to cbor
+     * @param package_size maximum size of one cbor package
+     * @param buffer cbor buffer to write the cbor package into
+     * @return number of cbor streams the table was converted to, -1 if an error occurred
+     * turns the table into several cbor packages limited in size by the package_size parameter
     */
-    int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buffer);
+    int target_state_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+    int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+    int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+    int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer);
 
     /**
      * @param buffer cbor buffer
@@ -81,7 +82,9 @@
     */
     int cbor_to_table_test(cbor_buffer* buffer);
 
-    // TODO function to give back several CBOR packages for LoRaWAN
-
+    /**
+     * only for testing purposes
+    */
+    int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buffer);
     int target_state_table_to_cbor_many_test(target_state_entry table[], int package_size, cbor_buffer* buffer);
 #endif
