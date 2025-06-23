@@ -2,8 +2,6 @@
 
 // ID of Gatemate
 int id = GATE_ID;
-uint8_t time = 0;
-
 
 gpio_t led0 = GPIO_PIN(1, 10); // TODO REMOVE LATER #1
 gpio_mode_t led0_mode = GPIO_OUT; // TODO REMOVE LATER #1
@@ -13,6 +11,7 @@ gpio_mode_t led0_mode = GPIO_OUT; // TODO REMOVE LATER #1
 is_state_entry table_entry;
 
 uint8_t event_status = 0;
+uint32_t timestamp = 0;
 
 // Debounce
 bool event_accepted = true;
@@ -48,13 +47,23 @@ void event_handler_reactivate(event_t *event)
     // UPDATE TABLE
     table_entry.gateID = GATE_ID;
     table_entry.state = event_status;
-    table_entry.gateTime = time++;
+    table_entry.gateTime = timestamp++;
 
     // if (TABLE_SUCCESS == set_is_state_entry()){
     if (0 == set_is_state_entry(&table_entry)){
         // CALL UPDATE
         event_post(&lorawan_queue, &send_event );
     } 
+
+
+    // TEST TABLE IS WRITTEN
+    is_state_entry test_table_entry;
+    if (!get_is_state_entry(GATE_ID, &test_table_entry)) {
+        printf("TEST ENTRY Time %d\n", test_table_entry.gateTime);
+        printf("TEST ENTRY State %d\n", test_table_entry.state);
+    } else {
+        printf("test failed");
+    }
     
 }
 
@@ -78,4 +87,12 @@ void event_handlerA0(event_t *event)
 
 void update_status(uint8_t newStatus){
     event_status = newStatus;
+}
+
+void setTimestamp(int newTimestamp) {
+    timestamp = newTimestamp;
+}
+
+int getTimestamp(void) {
+    return timestamp;
 }

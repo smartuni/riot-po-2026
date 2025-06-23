@@ -3,9 +3,7 @@
 #include "board.h"
 #include "ztimer.h"
 #include "thread.h"
-//#include "tables.h" // TODO FIX PATH
 #include "tables.h"
-//#include "lorawan.h" // TODO FIX PATH
 #include "mate_lorawan.h"
 
 #include <stdio.h>
@@ -20,26 +18,51 @@ char ble_stack[THREAD_STACKSIZE_DEFAULT];
 int main(void){
     init__door_interrupt();
     init_tables();
+    setTimestamp(0);
     
-    int inital_door_state = initial_door_state();
-    // TODO write initial_door_state to table
+    uint8_t inital_door_state = initial_door_state();
+    // write initial_door_state to table
     update_status(inital_door_state);
 
-    // TODO REMOVE LATER #1
-    // ---------------------------------------------
-    if (!inital_door_state) {
+    // write to table
+    int timestamp = getTimestamp();
+
+    is_state_entry table_entry;
+    table_entry.gateID = GATE_ID;
+    table_entry.state = inital_door_state;
+    table_entry.gateTime = timestamp;
+    setTimestamp(timestamp++);
+
+    // if (TABLE_SUCCESS == set_is_state_entry()){
+    if (0 == set_is_state_entry(&table_entry)){
         
-        puts("door closed initially");
-    }
-    else {
-        
-        puts("door opened initially");
-    }
+
+        // TODO REMOVE LATER #1
+        // ---------------------------------------------
+        if (!inital_door_state) {
+            
+            puts("door closed initially");
+        }
+        else {
+            
+            puts("door opened initially");
+        }
     // ----------------------------------------------
+    } else {
+        //err = -1;
+    }
 
 
+    // TEST TABLE IS WRITTEN
+    is_state_entry test_table_entry;
+    if (!get_is_state_entry(GATE_ID, &test_table_entry)) {
+        printf("TEST ENTRY Time %d\n", test_table_entry.gateTime);
+        printf("TEST ENTRY State %d\n", test_table_entry.state);
+    } else {
+        printf("test failed");
+    }
 
-    // TODO  start lorawan
+    // start lorawan
 
     if (!start_lorawan()){
         printf("starting lorawan failed");

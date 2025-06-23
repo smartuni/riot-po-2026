@@ -10,7 +10,7 @@
 
 
 void init__door_interrupt(void);
-int initial_door_state(void);
+uint8_t initial_door_state(void);
 
 
 

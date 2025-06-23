@@ -36,7 +36,7 @@ void trigger_door_callback(void *arg) {
     }  
 }
 
-int initial_door_state(void) {
+uint8_t initial_door_state(void) {
     gpio_init(led1, led1_mode);
     gpio_clear(led1);
     return gpio_read(doorSensor);
