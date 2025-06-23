@@ -1,0 +1,28 @@
+# Include board's default network devices and auto-initialization of GNRC
+# interfaces
+USEMODULE += netdev_default
+USEMODULE += auto_init_gnrc_netif
+
+# GNRC modules to build and receive packets
+USEMODULE += gnrc_pktbuf
+USEMODULE += gnrc_netif_hdr
+USEMODULE += gnrc_netapi
+USEMODULE += gnrc_netreg
+USEMODULE += gnrc_neterr
+
+# Add support for GNRC LoRaWAN
+USEMODULE += gnrc_lorawan
+
+# Bring the LoRa radio driver
+USEMODULE += sx127x
+
+# This board requires a start sleep to actually catch the printed output
+USEMODULE += xtimer
+USEMODULE += ztimer_sec
+USEMODULE += benchmark
+USEMODULE += tables
+USEMODULE += event
+USEMODULE += event_timeout
+USEMODULE += od
+#USEPKG += libcose
+#USEMODULE += libcose_crypt_monocypher

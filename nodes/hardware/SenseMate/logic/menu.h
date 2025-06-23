@@ -30,4 +30,6 @@ extern void set_current_meustate(int input);
 
 extern void refresh_display(void);
 
+extern void refresh_menu(void);
+
 #endif

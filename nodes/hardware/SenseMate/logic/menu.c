@@ -4,10 +4,12 @@
 #include <stddef.h>
 #include <string.h>
 #include "u8g2.h"
+#include "tables.h"
+#include "mate_lorawan.h"
 
 #define GATE "Gate "
 #define CANCEL "cancel"
-#define MAX_GATES 50
+#define MAX_GATES 15
 
 #define OPEN_GATE_STATE 0
 #define JOB_STATE 1
@@ -16,6 +18,12 @@
 #define OPEN 1
 #define JOB_DONE 0
 #define JOB_TODO 2
+#define SENSEMATE_ID 7
+
+#define TABLE_SUCCESS           0
+#define TABLE_ERROR_SIZE_TOO_BIG -1
+#define TABLE_ERROR_INVALID_GATE_ID -2
+#define TABLE_ERROR_NOT_FOUND   -3
 
 
 menu_entry_t set_job_state[3];
@@ -41,6 +49,11 @@ int new_gate_state = CLOSED; // Default state for new gates
 
 int active_job = -1;
 int active_gate = -1;
+
+target_state_entry  target_state_buf;
+is_state_entry is_state_buf;
+seen_status_entry seen_status_buf;
+int my_timestamp = 1;
 
 void init_menu(void){
 
@@ -100,6 +113,29 @@ void init_menu(void){
         .num_entries = 2
     };
 
+    int initial_ts = 1;
+    uint8_t initstate = 0;
+    uint8_t senseMateID = SENSEMATE_ID;
+    
+    target_state_entry  initial_target_state = {
+        .gateID = 0,
+        .state = initstate,
+        .timestamp = initial_ts
+    };
+
+    is_state_entry initial_is_state = {
+        .gateID = 0,
+        .state = initstate,
+        .gateTime = initial_ts
+    };
+
+    seen_status_entry initial_seen_status = {
+        .gateID = 0,
+        .gateTime = initial_ts,
+        .status = initstate,
+        .senseMateID = senseMateID
+    };
+
     for (int i = 0; i < MAX_GATES; i++) {
         gate_states[i].next = &set_gate_header;
         gate_states[i].id = i+1;
@@ -111,6 +147,13 @@ void init_menu(void){
         jobs[i].id = i+1;
         jobs[i].text = GATE;
         jobs[i].state = 0;
+
+        initial_target_state.gateID = i;
+        initial_is_state.gateID = i;
+        initial_seen_status.gateID = i;
+        set_target_state_entry(&initial_target_state);
+        set_is_state_entry(&initial_is_state);
+        set_seen_status_entry(&initial_seen_status);
     }
 
     gate_states[MAX_GATES].next = &main_menu_header; // Last gate points to main menu
@@ -239,11 +282,38 @@ void set_current_meustate(int input) {
             
             if (active_menu == &confirm_gate_header) { // If we are in the confirm gate menu
                 if (active_entry_index == 0) { //CONFIRM
+                    get_seen_status_entry(active_gate + 1, &seen_status_buf);
+                    get_is_state_entry(active_gate + 1, &is_state_buf);
+                    get_target_state_entry(active_gate + 1, &target_state_buf);
+
+                    int resu = TABLE_ERROR_NOT_FOUND;
+
                     if (new_gate_state == OPEN) {
+                        
                         mark_gate_open(active_gate + 1); // Mark the gate as open
+                        resu = set_seen_status_entry(&(seen_status_entry){
+                            .gateID = active_gate,
+                            .status = OPEN,
+                            .senseMateID = SENSEMATE_ID,
+                            .gateTime = my_timestamp++
+                        });
                     } else if (new_gate_state == CLOSED) {
                         mark_gate_closed(active_gate + 1); // Mark the gate as closed
+                        resu = set_seen_status_entry(&(seen_status_entry){
+                            .gateID = active_gate,
+                            .status = CLOSED,
+                            .senseMateID = SENSEMATE_ID,
+                            .gateTime = my_timestamp++
+                        });
                     }
+
+                    if(resu == TABLE_SUCCESS){
+                        //send_event
+                        printf("send_event \n");
+                        event_post(&lorawan_queue, &send_event); // Post the send event to the lorawan queue
+                    }
+
+
                 }
             } else if (active_menu == &set_gate_header){
                 if (active_entry_index == 0) { // OPEN
@@ -298,6 +368,17 @@ void set_current_meustate(int input) {
     }
 }
 
+void refresh_menu(void) {
+    for (int i = 0; i < gate_states_header.num_entries; i++) {
+        get_is_state_entry(i, &is_state_buf);
+        get_seen_status_entry(i, &seen_status_buf);
+        if(is_state_buf.gateTime  >  seen_status_buf.gateTime){
+            gate_states[i].state = is_state_buf.state;
+        }else{
+            gate_states[i].state = seen_status_buf.status;
+        }
+    }
+}
 
 void refresh_display(void) {
     new_page(); // Clear the display for the new page
