@@ -20,12 +20,11 @@ function RecentActivity() {
 
     const activitiesRecent = activities.slice(Math.max(activities.length - 4, 0))
 
-
     return (
         <div className="recent-activity">
             <h2 className="recent-title">Recent Activity</h2>
             <ul className="activity-list">
-                {activities.map((activity, index) => (
+                {activitiesRecent.map((activity, index) => (
                     <li key={activity.id} className="activity-item">
                         <span className="activity-time">{activity.lastTimeStamp}</span>
                         <span className="activity-action">{activity.message}</span>
