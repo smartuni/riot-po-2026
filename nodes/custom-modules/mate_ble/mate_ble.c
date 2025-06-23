@@ -12,6 +12,7 @@
 #include "shell.h"
 #include "timex.h"
 #include "ztimer.h"
+#include "cbor.h"
 
 #include "incoming_list.h"
 
@@ -212,7 +213,7 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
         if (memcmp(marker, _custom_msd_marker_pattern,
                 sizeof(_custom_msd_marker_pattern)) == 0) {
             uint8_t *payload = &msd.data[MATE_BLE_MSD_PAYLOAD_OFFS];
-            /* length of the payload without the marker */
+            // length of the payload without the marker
             int pl = msd.len - MATE_BLE_MSD_PAYLOAD_OFFS;
             printf("Received: %.*s\n", pl, payload);
 

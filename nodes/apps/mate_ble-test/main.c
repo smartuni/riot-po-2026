@@ -40,8 +40,7 @@ int main(void)
         int strength = (float)(received_metadata.rssi + 100) / 100.f * 25.f;
         char buffer[28] = {};
         buffer[0] = '{';
-        for (int i = 0; i < 25; i++)
-        {
+        for (int i = 0; i < 25; i++) {
             buffer[i+1] = i + 1 <= strength ? '=' : ' ';
         }
         buffer[26] = '}';
