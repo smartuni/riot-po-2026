@@ -30,8 +30,8 @@ int main(void){
     is_state_entry table_entry;
     table_entry.gateID = GATE_ID;
     table_entry.state = inital_door_state;
-    table_entry.gateTime = timestamp;
-    setTimestamp(timestamp++);
+    table_entry.gateTime = timestamp++;
+    setTimestamp(timestamp);
 
     // if (TABLE_SUCCESS == set_is_state_entry()){
     if (0 == set_is_state_entry(&table_entry)){

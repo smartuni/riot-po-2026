@@ -40,30 +40,28 @@ void event_callback (void *arg)
 
 void event_handler_reactivate(event_t *event) 
 {
+    gpio_set(led0);
     (void) event;   /* Not used */
     event_accepted = true; // Allow the event handler to be called again
 
-    puts("sending");
     // UPDATE TABLE
     table_entry.gateID = GATE_ID;
     table_entry.state = event_status;
     table_entry.gateTime = timestamp++;
+    if(!set_is_state_entry(&table_entry)){
 
-    // if (TABLE_SUCCESS == set_is_state_entry()){
-    if (0 == set_is_state_entry(&table_entry)){
-        // CALL UPDATE
-        event_post(&lorawan_queue, &send_event );
-    } 
-
-
-    // TEST TABLE IS WRITTEN
-    is_state_entry test_table_entry;
-    if (!get_is_state_entry(GATE_ID, &test_table_entry)) {
-        printf("TEST ENTRY Time %d\n", test_table_entry.gateTime);
-        printf("TEST ENTRY State %d\n", test_table_entry.state);
+        // TEST
+        is_state_entry test_table_entry;
+        if (!get_is_state_entry(GATE_ID, &test_table_entry)) {
+            printf("TEST ENTRY Time %d\n", test_table_entry.gateTime);
+            printf("TEST ENTRY State %d\n", test_table_entry.state);
+        } else {
+            printf("test failed");
+        } 
     } else {
-        printf("test failed");
+        printf("writing to oabel failed!");
     }
+    gpio_clear(led0);
     
 }
 
@@ -72,15 +70,9 @@ void event_handlerA0(event_t *event)
     (void) event;   /* Not used */
     if(event_accepted){
         event_accepted = false; // Prevent further calls until reset
-              
-        puts("Set timer");
-        gpio_set(led0);
         event_timeout_set(&reactivate, DEBOUNCE_TIME); // Set a timeout to allow reactivation
-       
     }else{
-        puts("Update timer");
         event_timeout_set(&reactivate, DEBOUNCE_TIME); // Set a timeout to allow reactivation        
-        gpio_clear(led0);
     }
     
 }
