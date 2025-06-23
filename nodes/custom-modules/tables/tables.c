@@ -107,11 +107,13 @@ int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buf
 
     // [Table Entry]
     for(int i = 0; i < 2; i++) {
-        cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-        cbor_encode_int(&singleEntryEncoder, table[i].gateID);
-        cbor_encode_int(&singleEntryEncoder, table[i].state);
-        cbor_encode_int(&singleEntryEncoder, table[i].timestamp);
-        cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        if (table[i].gateID != MAX_GATE_COUNT) {
+            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
+            cbor_encode_int(&singleEntryEncoder, table[i].gateID);
+            cbor_encode_int(&singleEntryEncoder, table[i].state);
+            cbor_encode_int(&singleEntryEncoder, table[i].timestamp);
+            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        }
     }
 
     cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
@@ -330,15 +332,20 @@ int cbor_to_table_test(cbor_buffer* buffer) {
     cbor_value_leave_container(&wrapperValue, &fieldsValue); // ]	
     cbor_value_leave_container(&value, &wrapperValue); // ]	
     
+    // Integrate local data into global table
     switch(tableType) {
             case TARGET_STATE_KEY:
-                return merge_target_state_entry_table(returnTargetTable, buffer->cbor_size);
+                merge_target_state_entry_table(returnTargetTable, (length-1));
+                break;
             case IS_STATE_KEY:
-                return merge_is_state_entry_table(returnIsTable, buffer->cbor_size);
+                merge_is_state_entry_table(returnIsTable, (length-1));
+                break;
             case SEEN_STATUS_KEY:
-                return merge_seen_status_entry_table(returnSeenTable, buffer->cbor_size);
+                merge_seen_status_entry_table(returnSeenTable, (length-1));
+                break;
             case JOBS_KEY:
-                return merge_jobs_entry_table(returnJobsTable, buffer->cbor_size);
+                merge_jobs_entry_table(returnJobsTable, (length-1));
+                break;
             default:
                 return -1;
     }
@@ -667,7 +674,7 @@ int target_state_table_to_cbor_many_test(target_state_entry table[], int package
         printf("while %d + %d < %d\n", size_of_current_cbor, CBOR_TARGET_STATE_MAX_BYTE_SIZE, package_size);
         while(size_of_current_cbor + CBOR_TARGET_STATE_MAX_BYTE_SIZE < package_size) {
             //validate table entry
-            if(true) {
+            if(table[table_index].gateID != MAX_GATE_COUNT) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, table[table_index].state);
