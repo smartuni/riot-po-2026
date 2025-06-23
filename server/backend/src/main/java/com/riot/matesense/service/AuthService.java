@@ -73,7 +73,6 @@ public class AuthService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-
         return Long.parseLong(claims.getSubject());
     }
 
@@ -82,7 +81,7 @@ public class AuthService {
         Long uId = getUserIdFromToken(splitTok);
         UserEntity user = userRepository.getById(uId);
         // System.out.println(user.getEmail());
-        return new UserDetailsResponse(user.getName(), user.getEmail(), user.getRole());
+        return new UserDetailsResponse(user.getName(), user.getEmail(), user.getRole(), user.getId());
     }
 
     public void changeUserDetails(UserChangeRequest request, String token) {

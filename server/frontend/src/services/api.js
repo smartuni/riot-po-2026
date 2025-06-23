@@ -24,6 +24,38 @@ export const fetchGates = async () => {
     }
 };
 
+export const fetchNotificationByWorkerId = async (workerId) => {
+    try {
+        const response = await api.get(`/notifications/${workerId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        throw error;
+    }
+};
+
+export const fetchNotification = async () => {
+    try {
+        const response = await api.get('/notifications');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        throw error;
+    }
+};
+
+export const fetchActivities = async () => {
+    try {
+        const response = await api.get('/gate-activities');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching gate-activities:', error);
+        throw error;
+    }
+};
+
+
+
 // Gate-Update mit besserer Fehlerbehandlung
 export const updateGate = async (gateId, gate) => {
     try {
@@ -48,5 +80,17 @@ export const requestGateStatusChange = async (gateId, status) => {
         throw error;
     }
 };
+
+export const markNotificationAsRead = async (notificationId) => {
+    try {
+        console.log("Markiere Notification als gelesen:", notificationId); // zum Debuggen
+        await api.post(`/notifications/${notificationId}/request-read-change`);
+    } catch (error) {
+        console.error("Fehler beim Aktualisieren der Benachrichtigung:", error);
+        throw error;
+    }
+};
+
+
 
 export default api;

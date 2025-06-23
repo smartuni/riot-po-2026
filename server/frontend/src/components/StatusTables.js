@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {fetchGates, requestGateStatusChange} from "../services/api";
+import {fetchActivities, fetchGates, requestGateStatusChange} from "../services/api";
 import axios from "axios";
 import api from "../services/api";
 import {
@@ -31,9 +31,11 @@ function StatusTables() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [bulkRequestedStatus, setBulkRequestedStatus] = useState("");
     const [expandedGateId, setExpandedGateId] = useState(null);
+    const [activities, setActivities] = useState([]);
 
-
-
+    /**
+     * Lädt die Gates beim ersten Rendern der Komponente.
+     */
     useEffect(() => {
         const loadGates = async () => {
             try {
@@ -46,14 +48,35 @@ function StatusTables() {
         loadGates();
     }, []);
 
-    // Funktion zum Abrufen der Gates
+    /**
+     * Lädt die Aktivitäten beim ersten Rendern der Komponente.
+     */
+    useEffect(() => {
+        const loadActivities = async () => {
+            try {
+                const data = await fetchActivities();
+                setActivities(data);
+            } catch (error) {
+                console.error('Fehler beim Laden der Aktivitäten', error);
+            }
+        };
+        loadActivities();
+    }, []);
+
+    /**
+     * Schließt den Dialog und aktualisiert die Gates.
+     * @returns {Promise<void>}
+     */
     const handleClose = async () => {
         setDialogOpen(false);
         const updated = await fetchGates();
         setGates(updated);
     };
 
-    // Funktion zum Ändern des angeforderten Status für mehrere Gates
+    /**
+     * Verarbeitet die Massenänderung des angeforderten Status für die gefilterten Gates.
+     * @returns {Promise<void>}
+     */
     const handleBulkRequestedStatusChange = async () => {
         if (!bulkRequestedStatus) return;
 
@@ -86,7 +109,11 @@ function StatusTables() {
         setGates(updated);
     };
 
-    // Funktion zum Rendern des angeforderten Status
+    /**
+     * Rendert den angeforderten Status für ein Gate.
+     * @param status
+     * @returns {Element}
+     */
     const renderRequestedStatus = (status) => {
         switch (status) {
             case "REQUESTED_OPEN":
@@ -98,7 +125,10 @@ function StatusTables() {
         }
     };
 
-    // Filtere die Gates basierend auf der Suche und dem Statusfilter
+    /**
+     * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
+     * @type {*[]}
+     */
     const filteredGates = gates.filter(gate =>
         (gate.id.toString().includes(search) || gate.location.toLowerCase().includes(search.toLowerCase())) &&
         (
@@ -108,6 +138,10 @@ function StatusTables() {
         )
     );
 
+    /**
+     * Sendet eine manuelle Downlink-Anfrage für die gefilterten Gates.
+     * @returns {Promise<void>}
+     */
     const sendManualDownlink = async () => {
         const statusIntMap = {
             "REQUESTED_OPEN": 1,
@@ -136,7 +170,26 @@ function StatusTables() {
         }
     };
 
+    /**
+     * Berechnet die Zeit seit dem letzten Update eines Gates in einem lesbaren Format.
+     * @param timestamp
+     * @returns {string}
+     */
+    function getTimeAgo(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const secondsAgo = Math.floor((now - date) / 1000);
 
+        if (secondsAgo < 60) return `${secondsAgo} seconds ago`;
+        const minutes = Math.floor(secondsAgo / 60);
+        if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+        const days = Math.floor(hours / 24);
+        if (days === 1) return "yesterday";
+        if (days < 7) return `${days} days ago`;
+        return date.toLocaleDateString(); // fallback to a readable date
+    }
 
     return (
         <div className="gate-status-container">
@@ -185,7 +238,7 @@ function StatusTables() {
                                 value={bulkRequestedStatus}
                                 label="Bulk Requested Status"
                                 onChange={(e) => setBulkRequestedStatus(e.target.value)}
-                                style={{ minWidth: 160 }}
+                                style={{minWidth: 160}}
                             >
                                 <MenuItem value="">None</MenuItem>
                                 <MenuItem value="REQUESTED_OPEN">Request Open</MenuItem>
@@ -238,25 +291,26 @@ function StatusTables() {
                                         <span className="coords">{gate.latitude}, {gate.longitude}</span>
                                     </td>
                                     <td>
-          <span className={`badge ${gate.status.toLowerCase()}`}>
-            {gate.status === "OPENED"
-                ? <LockOpenIcon fontSize="small"/>
-                : <LockIcon fontSize="small"/>
-            } {gate.status}
-          </span>
+                                        <span className={`badge ${gate.status.toLowerCase()}`}>
+                                            {gate.status === "OPENED"
+                                                ? <LockOpenIcon fontSize="small"/>
+                                                : <LockIcon fontSize="small"/>
+                                            } {gate.status}
+                                        </span>
                                     </td>
                                     <td>
-          <span className={`badge ${gate.requestedStatus ? gate.requestedStatus.toLowerCase() : 'none'}`}>
-            {renderRequestedStatus(gate.requestedStatus)}
-          </span>
+                                        <span className={`badge ${gate.requestedStatus ? gate.requestedStatus.toLowerCase() : 'none'}`}>
+                                            {renderRequestedStatus(gate.requestedStatus)}
+                                        </span>
                                     </td>
                                     <td>{gate.deviceId}</td>
                                     <td>
-                                        <div>about 1 hour ago</div>
+                                        <div>{getTimeAgo(gate.lastTimeStamp)}</div>
                                         <div className="date">{gate.lastUpdate}</div>
                                     </td>
                                     <td>
-                                        100%<br/>
+                                        {gate.confidence}
+                                        <br/>
                                         <Tooltip
                                             title="Confidence reflects agreement between sensor and worker. 100% means both match.">
                                             <HelpOutlineIcon
@@ -285,21 +339,22 @@ function StatusTables() {
                                         </IconButton>
                                     </td>
                                 </tr>
-
                                 {expandedGateId === gate.id && (
                                     <tr className="expanded-row">
-                                        <td colSpan={8} style={{backgroundColor: "#f9f9f9"}}>
+                                        <td colSpan={8} style={{ backgroundColor: "#f9f9f9" }}>
                                             <div>
                                                 <strong>Activities</strong>
-                                                <p>
-                                                    Worker with id: 4 has closed the gate
-                                                </p>
-                                                <p>
-                                                    Sensor with id: 2 has opened the gate
-                                                </p>
-                                                <p>
-                                                    Worker with id: 3 has requested to open the gate
-                                                </p>
+                                                {activities
+                                                    .filter(activity => activity.gateId === gate.id)
+                                                    .slice(-4) // Optional: nur die letzten 4 zeigen
+                                                    .map((activity, index) => (
+                                                        <p key={activity.id}>
+                                                            <strong>{activity.lastTimeStamp}:</strong> {activity.message}
+                                                        </p>
+                                                    ))}
+                                                {activities.filter(a => a.gateId === gate.id).length === 0 && (
+                                                    <p>No activities available for this gate.</p>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

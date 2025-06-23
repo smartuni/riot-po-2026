@@ -4,11 +4,13 @@ import com.riot.matesense.config.DownPayload;
 
 import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
+import com.riot.matesense.entity.NotificationEntity;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.repository.GateRepository;
 import com.riot.matesense.service.DownlinkService;
 import com.riot.matesense.service.GateActivityService;
 import com.riot.matesense.service.GateService;
+import com.riot.matesense.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -36,40 +38,51 @@ class PopulateTestDataRunner implements CommandLineRunner {
 	GateService gateService;
 	GateRepository gateRepository;
 	GateActivityService gateActivityService;
+	NotificationService notificationService;
 
 	@Autowired
-	public PopulateTestDataRunner(GateActivityService gateActivityService, GateService gateService, GateRepository gateRepository, DownlinkService downlinkService) {
+	public PopulateTestDataRunner(GateActivityService gateActivityService, GateService gateService, GateRepository gateRepository,
+								  DownlinkService downlinkService, NotificationService notificationService) {
 		this.gateService = gateService;
 		this.gateRepository = gateRepository;
 		this.downlinkService = downlinkService;
 		this.gateActivityService = gateActivityService;
+		this.notificationService = notificationService;
 	}
 	@Override
 	public void run(String... args) throws Exception {
 		DownPayload downPayload =new DownPayload(1,247,Arrays.asList(Arrays.asList(1,0),Arrays.asList(2,1)));
 		//[1,247,[[187,0],[69,1]]]
 		downlinkService.sendDownlinkToDevice(downPayload); // Test call
- 		GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.5408, 9.9654, "St.Pauli", false, true, "REQUESTED_OPEN");
- 		GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, 53.5409, 9.8674, "Landungsbrücken", false, true, "REQUESTED_OPEN");
- 		GateEntity gate2 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 3L, 53.5410, 9.8664, "Veddel", true, false, "REQUESTED_CLOSE");
- 		GateEntity gate3 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 4L, 53.5460, 9.8634, "Hafen", true, true, "REQUESTED_NONE");
+ 		GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.5408, 9.9654, "St.Pauli", false, true, "REQUESTED_OPEN", "100%");
+ 		GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, 53.5409, 9.8674, "Landungsbrücken", false, true, "REQUESTED_OPEN", "75%");
+ 		GateEntity gate2 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 3L, 53.5410, 9.8664, "Veddel", true, false, "REQUESTED_CLOSE", "80%");
+ 		GateEntity gate3 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 4L, 53.5460, 9.8634, "Hafen", true, true, "REQUESTED_NONE", "60%");
  		gateService.addGate(gate);
  		gateService.addGate(gate1);
  		gateService.addGate(gate2);
  		gateService.addGate(gate3);
 
 
-		GateActivityEntity gateActivityEntity1 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
-		GateActivityEntity gateActivityEntity2 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
-		GateActivityEntity gateActivityEntity3 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
-		GateActivityEntity gateActivityEntity4 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
-		GateActivityEntity gateActivityEntity5 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
+		GateActivityEntity gateActivityEntity1 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
+		GateActivityEntity gateActivityEntity2 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate2.getId() +" has " + gate.getRequestedStatus().toLowerCase());
+		GateActivityEntity gateActivityEntity3 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate2.getId(), gate.getRequestedStatus(), "The Gate " +gate3.getId() +" has " + gate.getRequestedStatus().toLowerCase());
+		GateActivityEntity gateActivityEntity4 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate3.getId(), gate.getRequestedStatus(), "The Gate " +gate.getId() +" has " + gate.getRequestedStatus().toLowerCase());
+		GateActivityEntity gateActivityEntity5 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
 
 		gateActivityService.addGateActivity(gateActivityEntity1);
 		gateActivityService.addGateActivity(gateActivityEntity2);
 		gateActivityService.addGateActivity(gateActivityEntity3);
 		gateActivityService.addGateActivity(gateActivityEntity4);
 		gateActivityService.addGateActivity(gateActivityEntity5);
+
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 2L, "Baba Nachricht an Worker: " + 2L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 3L, "Baba Nachricht an Worker: " + 3L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 4L, "Baba Nachricht an Worker: " + 4L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 5L, "Baba Nachricht an Worker: " + 5L, false));
 
 		//test commit
 	}

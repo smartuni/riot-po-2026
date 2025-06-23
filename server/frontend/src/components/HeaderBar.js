@@ -1,31 +1,83 @@
 import React, { useState, useEffect, useRef } from "react";
 import '../styles/HeaderBar.css';
-import {FiHome, FiLock, FiMap, FiClipboard, FiActivity, FiUser, FiBell, FiGrid} from 'react-icons/fi';
-import { Button, Badge } from "@mui/material";
+import { FiHome, FiUser, FiBell } from 'react-icons/fi';
+import {
+    Button, Badge, Dialog, DialogTitle,
+    DialogContent, DialogContentText, DialogActions
+} from "@mui/material";
 import { useNavigate } from 'react-router-dom';
 import NotificationPopup from './NotificationPopup';
+import api, { fetchNotificationByWorkerId, markNotificationAsRead } from "../services/api";
 
 function HeaderBar() {
     const navigate = useNavigate();
-    const [notifications, setNotifications] = useState([
-        'System started successfully',
-        'Water level rising at Station A',
-        'Sensor 4 disconnected',
-        'Unexpected erorr',
-        'Open the 4th Gate at 16:30'
-    ]);
+    const [notifications, setNotifications] = useState([]);
     const [popupVisible, setPopupVisible] = useState(false);
+    const [workerId, setWorkerId] = useState(null);
     const popupRef = useRef();
+
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [selectedNotification, setSelectedNotification] = useState(null);
+
+    const numberOfUnreadNotifications = notifications.filter(n => !n.read).length;
+
+    useEffect(() => {
+        const loadDetails = async () => {
+            try {
+                const response = await api.get('/auth/user-details');
+                if (response.status !== 200) {
+                    throw new Error('Request failed with status code ' + response.status);
+                }
+                setWorkerId(response.data.workerId);
+            } catch (e) {
+                console.error("Fehler beim Laden der User-Details:", e);
+            }
+        };
+
+        loadDetails();
+    }, []);
+
+    useEffect(() => {
+        if (workerId !== null) {
+            const loadNotifications = async () => {
+                try {
+                    const data = await fetchNotificationByWorkerId(workerId);
+                    setNotifications(data);
+                } catch (error) {
+                    console.error('Fehler beim Laden der Nachrichten:', error);
+                }
+            };
+            loadNotifications();
+        }
+    }, [workerId]);
 
     const togglePopup = () => {
         setPopupVisible(prev => !prev);
     };
 
-    const handleNotificationClick = (index) => {
-        const clickedMessage = notifications[index];
-        alert(`Opening notification: ${clickedMessage}`);
-        // You can navigate somewhere or update the state to show details
+    const handleNotificationClick = async (index) => {
+        const clicked = notifications[index];
+
+        // Prüfen, ob die Nachricht bereits gelesen wurde
+        if (!clicked.read) {
+            try {
+                await markNotificationAsRead(clicked.id);
+
+                // UI-Update lokal
+                const updatedNotifications = [...notifications];
+                updatedNotifications[index] = { ...clicked, read: true };
+                setNotifications(updatedNotifications);
+            } catch (error) {
+                console.error("Fehler beim Aktualisieren der Benachrichtigung:", error);
+                return;
+            }
+        }
+
+        // In jedem Fall: Dialog öffnen
+        setSelectedNotification(clicked);
+        setDialogOpen(true);
     };
+
 
     const handleClickOutside = (event) => {
         if (popupRef.current && !popupRef.current.contains(event.target)) {
@@ -48,19 +100,21 @@ function HeaderBar() {
         <div style={{ position: 'relative' }}>
             <div className="header-bar">
                 <div className="logo">
-                    <Button startIcon={<FiHome />} size="large" color="white" onClick={() => navigate('/dashboard')}></Button>
+                    <Button
+                        startIcon={<FiHome />}
+                        size="large"
+                        color="white"
+                        onClick={() => navigate('/dashboard')}
+                    />
                     <div className="logo-title">
-                        <h1>
-                            SenseMate
-                        </h1>
-                        <p>
-                            Gate Management Dashboard
-                        </p>
+                        <h1>SenseMate</h1>
+                        <p>Gate Management Dashboard</p>
                     </div>
                 </div>
+
                 <div className="profile-notify-icons">
-                    <Badge 
-                        badgeContent={notifications.length} 
+                    <Badge
+                        badgeContent={numberOfUnreadNotifications}
                         color="error"
                         overlap="circular"
                     >
@@ -91,6 +145,23 @@ function HeaderBar() {
                     />
                 </div>
             )}
+
+            <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+                <DialogTitle>Benachrichtigung</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ fontSize: '1rem', color: 'black' }}>
+                        {selectedNotification?.message}
+                    </DialogContentText>
+                    <DialogContentText sx={{ fontSize: '0.8rem', mt: 2, color: 'grey' }}>
+                        {selectedNotification && new Date(selectedNotification.lastTimeStamp).toLocaleString()}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDialogOpen(false)} variant="contained">
+                        Schließen
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </div>
     );
 }
