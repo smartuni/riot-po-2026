@@ -148,6 +148,22 @@ function StatusTables() {
         }
     };
 
+    function getTimeAgo(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const secondsAgo = Math.floor((now - date) / 1000);
+
+        if (secondsAgo < 60) return `${secondsAgo} seconds ago`;
+        const minutes = Math.floor(secondsAgo / 60);
+        if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+        const days = Math.floor(hours / 24);
+        if (days === 1) return "yesterday";
+        if (days < 7) return `${days} days ago`;
+        return date.toLocaleDateString(); // fallback to a readable date
+    }
+
 
     return (
         <div className="gate-status-container">
@@ -263,7 +279,7 @@ function StatusTables() {
                                     </td>
                                     <td>{gate.deviceId}</td>
                                     <td>
-                                        <div>about 1 hour ago</div>
+                                        <div>{getTimeAgo(gate.lastTimeStamp)}</div>
                                         <div className="date">{gate.lastUpdate}</div>
                                     </td>
                                     <td>

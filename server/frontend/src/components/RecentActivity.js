@@ -9,8 +9,7 @@ function RecentActivity() {
     useEffect(() => {
         const loadActivities = async () => {
             try {
-                const data = await fetchActivities();
-                setActivities(data);
+                setActivities(await fetchActivities());
             } catch (error) {
                 console.error('Fehler beim Laden der Aktivitäten', error);
             }
