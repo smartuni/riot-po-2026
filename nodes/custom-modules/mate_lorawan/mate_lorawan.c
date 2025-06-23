@@ -276,12 +276,19 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
         if (snip->type == GNRC_NETTYPE_UNDEF) {
             od_hex_dump(((uint8_t *)pkt->data), pkt->size, OD_WIDTH_DEFAULT);
             cbor_buffer received_buffer;
-            uint8_t bf[MAX_RECEIVE_SIZE];
-            uint8_t count[1];
-            received_buffer.buffer = bf;
-            received_buffer.package_size = count; 
-            memcpy(received_buffer.buffer, pkt->data, pkt->size);
-            int cbor_to_table(cbor_buffer* received_buffer);
+            //uint8_t bf[MAX_RECEIVE_SIZE];
+            //uint8_t count[1];
+            received_buffer.buffer = pkt->data;
+            received_buffer.cbor_size = pkt->size; 
+            //printf("Vor MEMCPY\n");
+            //memcpy(received_buffer.buffer, pkt->data, pkt->size);
+            //printf("Nach MEMCPY\n");
+            //print_hex_arr(received_buffer.buffer, received_buffer.package_size[0]);
+            if (cbor_to_table_test(&received_buffer) == 0) {
+                printf("Downlink received and table updated.\n");
+            }else{
+                printf("Error updating table.\n");
+            }
             // TODO: Forward received message to tables module
         }
         snip = snip->next;
