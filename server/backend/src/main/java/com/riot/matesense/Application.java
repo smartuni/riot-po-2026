@@ -4,11 +4,13 @@ import com.riot.matesense.config.DownPayload;
 
 import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
+import com.riot.matesense.entity.NotificationEntity;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.repository.GateRepository;
 import com.riot.matesense.service.DownlinkService;
 import com.riot.matesense.service.GateActivityService;
 import com.riot.matesense.service.GateService;
+import com.riot.matesense.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -36,13 +38,16 @@ class PopulateTestDataRunner implements CommandLineRunner {
 	GateService gateService;
 	GateRepository gateRepository;
 	GateActivityService gateActivityService;
+	NotificationService notificationService;
 
 	@Autowired
-	public PopulateTestDataRunner(GateActivityService gateActivityService, GateService gateService, GateRepository gateRepository, DownlinkService downlinkService) {
+	public PopulateTestDataRunner(GateActivityService gateActivityService, GateService gateService, GateRepository gateRepository,
+								  DownlinkService downlinkService, NotificationService notificationService) {
 		this.gateService = gateService;
 		this.gateRepository = gateRepository;
 		this.downlinkService = downlinkService;
 		this.gateActivityService = gateActivityService;
+		this.notificationService = notificationService;
 	}
 	@Override
 	public void run(String... args) throws Exception {
@@ -70,6 +75,13 @@ class PopulateTestDataRunner implements CommandLineRunner {
 		gateActivityService.addGateActivity(gateActivityEntity3);
 		gateActivityService.addGateActivity(gateActivityEntity4);
 		gateActivityService.addGateActivity(gateActivityEntity5);
+
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
 
 		//test commit
 	}

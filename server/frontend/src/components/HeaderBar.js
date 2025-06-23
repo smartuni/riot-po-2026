@@ -4,18 +4,25 @@ import {FiHome, FiLock, FiMap, FiClipboard, FiActivity, FiUser, FiBell, FiGrid} 
 import { Button, Badge } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
 import NotificationPopup from './NotificationPopup';
+import {fetchGates, fetchNotification} from "../services/api";
 
 function HeaderBar() {
     const navigate = useNavigate();
-    const [notifications, setNotifications] = useState([
-        'System started successfully',
-        'Water level rising at Station A',
-        'Sensor 4 disconnected',
-        'Unexpected erorr',
-        'Open the 4th Gate at 16:30'
-    ]);
+    const [notifications, setNotifications] = useState([]);
     const [popupVisible, setPopupVisible] = useState(false);
     const popupRef = useRef();
+
+    useEffect(() => {
+        const loadNotifications = async () => {
+            try {
+                const data = await fetchNotification();
+                setNotifications(data);
+            } catch (error) {
+                console.error('Fehler beim Laden der Nachrichten', error);
+            }
+        };
+        loadNotifications();
+    }, []);
 
     const togglePopup = () => {
         setPopupVisible(prev => !prev);
@@ -59,8 +66,8 @@ function HeaderBar() {
                     </div>
                 </div>
                 <div className="profile-notify-icons">
-                    <Badge 
-                        badgeContent={notifications.length} 
+                    <Badge
+                        badgeContent={notifications.length}
                         color="error"
                         overlap="circular"
                     >
