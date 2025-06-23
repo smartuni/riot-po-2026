@@ -26,7 +26,7 @@ event_t event_reactivate = { .handler = event_handler_reactivate };
 
 void init_event(void){
     gpio_init(led0, led0_mode);
-    gpio_clear(led0);
+    gpio_set(led0);
     event_timeout_ztimer_init(&reactivate, ZTIMER_MSEC, EVENT_PRIO_HIGHEST, &event_reactivate);
 }
 
@@ -61,18 +61,20 @@ void event_handler_reactivate(event_t *event)
     } else {
         printf("writing to oabel failed!");
     }
-    gpio_clear(led0);
+    
     
 }
 
 void event_handlerA0(event_t *event)
 {
     (void) event;   /* Not used */
+    gpio_clear(led0); 
     if(event_accepted){
         event_accepted = false; // Prevent further calls until reset
         event_timeout_set(&reactivate, DEBOUNCE_TIME); // Set a timeout to allow reactivation
     }else{
-        event_timeout_set(&reactivate, DEBOUNCE_TIME); // Set a timeout to allow reactivation        
+        event_timeout_set(&reactivate, DEBOUNCE_TIME); // Set a timeout to allow reactivation    
+           
     }
     
 }
