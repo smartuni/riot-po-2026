@@ -61,35 +61,40 @@ static int is_target_state_entry_present_internal(uint8_t gate_id) {
     if (gate_id >= MAX_GATE_COUNT) {
         return 0;  // Invalid gate_id = not present
     }
-    return target_state_entry_table[gate_id].gateID != MAX_GATE_COUNT;
+    uint8_t entry_gate_id = target_state_entry_table[gate_id].gateID;
+    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
 }
 
 static int is_is_state_entry_present_internal(uint8_t gate_id) {
     if (gate_id >= MAX_GATE_COUNT) {
         return 0;
     }
-    return is_state_entry_table[gate_id].gateID != MAX_GATE_COUNT;
+    uint8_t entry_gate_id = is_state_entry_table[gate_id].gateID;
+    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
 }
 
 static int is_seen_status_entry_present_internal(uint8_t gate_id) {
     if (gate_id >= MAX_GATE_COUNT) {
         return 0;
     }
-    return seen_status_entry_table[gate_id].gateID != MAX_GATE_COUNT;
+    uint8_t entry_gate_id = seen_status_entry_table[gate_id].gateID;
+    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
 }
 
 static int is_jobs_entry_present_internal(uint8_t gate_id) {
     if (gate_id >= MAX_GATE_COUNT) {
         return 0;
     }
-    return jobs_entry_table[gate_id].gateID != MAX_GATE_COUNT;
+    uint8_t entry_gate_id = jobs_entry_table[gate_id].gateID;
+    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
 }
 
 static int is_timestamp_entry_present_internal(uint8_t gate_id) {
     if (gate_id >= MAX_GATE_COUNT) {
         return 0;
     }
-    return timestamp_table[gate_id].gateID != MAX_GATE_COUNT;
+    uint8_t entry_gate_id = timestamp_table[gate_id].gateID;
+    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
 }
 
 
