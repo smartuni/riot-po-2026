@@ -121,6 +121,15 @@ static void send_handler_timeout(event_t *event);
 event_t send_event = { .handler = send_handler };
 event_t send_event_timeout = { .handler = send_handler_timeout };
 
+static void print_hex_arr(const uint8_t *data, unsigned len)
+{
+    printf("{");
+    for (unsigned i = 0; i < len; i++) {
+        printf(" 0x%02x%c", data[i], (i == len-1) ? ' ' : ',');
+    }
+    printf("}\n");
+}
+
 static netif_t *_find_lorawan_network_interface(void)
 {
     netif_t *netif = NULL;
@@ -183,11 +192,11 @@ static int _send_lorawan_packet(const netif_t *netif, int msg_no, int read)
     uint8_t address = 1;
     msg_t msg;
 
-    uint8_t send_msg[(cbor_send_buffer.package_size[msg_no])];
+    //uint8_t send_msg[(cbor_send_buffer.package_size[msg_no])];
 
-    memcpy(send_msg, cbor_send_buffer.buffer + read, cbor_send_buffer.package_size[msg_no]);
-
-    packet = gnrc_pktbuf_add(NULL, send_msg, 8, GNRC_NETTYPE_UNDEF);
+    //memcpy(send_msg, cbor_send_buffer.buffer + read, cbor_send_buffer.package_size[msg_no]);
+    printf("Package size: %d\n", cbor_send_buffer.package_size[msg_no]);
+    packet = gnrc_pktbuf_add(NULL, cbor_send_buffer.buffer + read, cbor_send_buffer.package_size[msg_no], GNRC_NETTYPE_UNDEF);
     if (packet == NULL) {
         puts("Failed to create packet");
         return -1;
@@ -256,6 +265,7 @@ void *rx_thread(void *arg)
 
 static void _handle_received_packet(gnrc_pktsnip_t *pkt)
 {
+    printf("Received package from TTN\n");
     assert(pkt != NULL);
 
     gnrc_pktsnip_t *snip = pkt;
@@ -289,14 +299,13 @@ static void send_handler_timeout(event_t *event){
 static void send_handler(event_t *event){
     (void) event;
 
-     printf("LoRaWAN send_handler started\n");
-    const target_state_entry* table = get_target_state_table();
-    if(table == NULL){
-        printf("LoRaWan received table is null\n");
-       }
-     printf("LoRaWAN table received\n");
-    int pkg_count = target_state_table_to_cbor_many(table, SEND_BUFFER_SIZE, &cbor_send_buffer);
-     printf("LoRaWAN cbor package received\n");
+    printf("LoRaWAN send_handler started\n");
+    int pkg_count = is_state_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
+    if (pkg_count == 0){
+        printf("LoRaWAN nothing to send.\n");
+        return;
+    }
+    print_hex_arr(cbor_send_buffer.buffer, cbor_send_buffer.package_size[0]);
     int read = 0;
     printf("pg_count: %d\n", pkg_count);
     puts("Sending data...");
@@ -367,3 +376,4 @@ int start_lorawan(void)
     event_loop(&lorawan_queue);
     return 0;
 }
+
