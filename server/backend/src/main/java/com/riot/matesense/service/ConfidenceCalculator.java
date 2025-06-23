@@ -13,8 +13,8 @@ public class ConfidenceCalculator //retooled to work within existing framework
     @Getter
     int confidence;
     boolean ignoreGate;
-    Status gateStatusArray[];
-    Status workerStatusArray[];
+    Status[] gateStatusArray = new Status[5];
+    Status[] workerStatusArray = new Status[5];
 
     public ConfidenceCalculator() //initialize an empty list of reports and set confidence to max
     {
