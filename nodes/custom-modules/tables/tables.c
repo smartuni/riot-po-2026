@@ -37,11 +37,13 @@ int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buf
 
     // [Table Entry]
     for(int i = 0; i < 2; i++) {
-        cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-        cbor_encode_int(&singleEntryEncoder, table[i].gateID);
-        cbor_encode_int(&singleEntryEncoder, table[i].state);
-        cbor_encode_int(&singleEntryEncoder, table[i].timestamp);
-        cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        if (table[i].gateID != MAX_GATE_COUNT) {
+            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
+            cbor_encode_int(&singleEntryEncoder, table[i].gateID);
+            cbor_encode_int(&singleEntryEncoder, table[i].state);
+            cbor_encode_int(&singleEntryEncoder, table[i].timestamp);
+            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        }
     }
 
     cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
@@ -59,14 +61,15 @@ int target_state_table_to_cbor(cbor_buffer* buffer) {
     cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
 
-    //TODO hier prüfen ob entry valide
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-        cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].gateID);
-        cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].state);
-        cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].timestamp);
-        cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        if (target_state_entry_table[i].gateID != MAX_GATE_COUNT) {
+            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
+            cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].gateID);
+            cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].state);
+            cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].timestamp);
+            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        }
     }
 
     cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
@@ -84,14 +87,15 @@ int is_state_table_to_cbor(cbor_buffer* buffer) {
     cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
 
-    //TODO hier prüfen ob entry valide
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-        cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].gateID);
-        cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].state);
-        cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].gateTime);
-        cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        if (is_state_entry_table[i].gateID != MAX_GATE_COUNT) {
+            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
+            cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].gateID);
+            cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].state);
+            cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].gateTime);
+            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        }
     }
 
     cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
@@ -109,15 +113,16 @@ int seen_status_table_to_cbor(cbor_buffer* buffer) {
     cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
 
-    //TODO hier prüfen ob entry valide
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-        cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].gateID);
-        cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].gateTime);
-        cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].status);
-        cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].senseMateID);
-        cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        if (seen_status_entry_table[i].gateID != MAX_GATE_COUNT) {
+            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
+            cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].gateID);
+            cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].gateTime);
+            cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].status);
+            cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].senseMateID);
+            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        }
     }
 
     cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
@@ -135,13 +140,14 @@ int jobs_table_to_cbor(cbor_buffer* buffer) {
     cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
 
-    //TODO hier prüfen ob entry valide
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-        cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].gateID);
-        cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].done);
-        cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        if (jobs_entry_table[i].gateID != MAX_GATE_COUNT) {
+            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
+            cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].gateID);
+            cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].done);
+            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        }
     }
 
     cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
@@ -613,7 +619,7 @@ int target_state_table_to_cbor_many_test(target_state_entry table[], int package
         printf("while %d + %d < %d\n", size_of_current_cbor, CBOR_TARGET_STATE_MAX_BYTE_SIZE, package_size);
         while(size_of_current_cbor + CBOR_TARGET_STATE_MAX_BYTE_SIZE < package_size) {
             //validate table entry
-            if(true) {
+            if(table[table_index].gateID != MAX_GATE_COUNT) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, table[table_index].state);
@@ -654,8 +660,7 @@ int target_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_TARGET_STATE_MAX_BYTE_SIZE < package_size) {
-            //TODO: validate table entry
-            if(true) {
+            if (target_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, target_state_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, target_state_entry_table[table_index].state);
@@ -695,8 +700,7 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, IS_STATE_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_IS_STATE_MAX_BYTE_SIZE < package_size) {
-            //TODO: validate table entry
-            if(true) {
+            if (is_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].state);
@@ -736,8 +740,7 @@ int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, SEEN_STATUS_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_SEEN_STATUS_MAX_BYTE_SIZE < package_size) {
-            //TODO: validate table entry
-            if(true) {
+            if(seen_status_entry_table[table_index].gateID != MAX_GATE_COUNT) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 4); // []
                 cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].gateTime);
@@ -778,8 +781,8 @@ int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, JOBS_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_JOBS_MAX_BYTE_SIZE < package_size) {
-            //TODO: validate table entry
-            if(true) {
+            //validate table entry
+            if(jobs_entry_table[table_index].gateID != MAX_GATE_COUNT) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 2); // []
                 cbor_encode_int(&singleEntryEncoder, jobs_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, jobs_entry_table[table_index].done);
