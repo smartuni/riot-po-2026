@@ -262,19 +262,19 @@ int cbor_to_table_test(cbor_buffer* buffer) {
     cbor_value_leave_container(&wrapperValue, &fieldsValue); // ]	
     cbor_value_leave_container(&value, &wrapperValue); // ]	
     
-    // TODO: Funtionen zum Integrieren aufrufen
+    // Integrate local data into global table
     switch(tableType) {
             case TARGET_STATE_KEY:
-                (void) returnTargetTable;
+                merge_target_state_entry_table(returnTargetTable, (length-1));
                 break;
             case IS_STATE_KEY:
-                (void) returnIsTable;
+                merge_is_state_entry_table(returnIsTable, (length-1));
                 break;
             case SEEN_STATUS_KEY:
-                (void) returnSeenTable;
+                merge_seen_status_entry_table(returnSeenTable, (length-1));
                 break;
             case JOBS_KEY:
-                (void) returnJobsTable;
+                merge_jobs_entry_table(returnJobsTable, (length-1));
                 break;
             default:
                 return -1;
