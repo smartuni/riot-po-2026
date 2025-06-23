@@ -76,12 +76,13 @@ class PopulateTestDataRunner implements CommandLineRunner {
 		gateActivityService.addGateActivity(gateActivityEntity4);
 		gateActivityService.addGateActivity(gateActivityEntity5);
 
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 2L, "Baba Nachricht an Worker: " + 2L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 3L, "Baba Nachricht an Worker: " + 3L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 4L, "Baba Nachricht an Worker: " + 4L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 5L, "Baba Nachricht an Worker: " + 5L, false));
 
 		//test commit
 	}

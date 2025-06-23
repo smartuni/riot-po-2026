@@ -73,7 +73,7 @@ const UserPage = () => {
     };
 
     const handleBack = () => {
-        if(role == 'controller') {
+        if(role === 'controller') {
             navigate('/dashboard');
         } else {
             navigate('/dashboard-view');

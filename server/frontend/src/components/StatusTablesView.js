@@ -1,39 +1,31 @@
 import React, {useEffect, useState} from "react";
-import {fetchGates, requestGateStatusChange} from "../services/api";
-import axios from "axios";
-import api from "../services/api";
+import {fetchGates} from "../services/api";
 import {
     TextField,
     MenuItem,
-    IconButton,
     Tabs,
     Tab,
-    Button,
-    Select,
-    FormControl,
-    InputLabel,
-    Box, Tooltip,
+    Tooltip,
 } from "@mui/material";
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
 import CircleIcon from '@mui/icons-material/Circle';
-import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import MapView from "./MapView";
-import StatusChangedDialog from "./StatusChangedDialog";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 function StatusTablesView() {
+    /**
+     * State-Variablen für die Gates, Suchanfrage, Filter, Ansicht und erweiterten Gate-ID.
+     */
     const [gates, setGates] = useState([]);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("");
     const [view, setView] = useState("list");
-    // const [selectedGate, setSelectedGate] = useState(null);
-    // const [dialogOpen, setDialogOpen] = useState(false);
-    // const [bulkRequestedStatus, setBulkRequestedStatus] = useState("");
     const [expandedGateId, setExpandedGateId] = useState(null);
 
-
-
+    /**
+     * Lädt die Gates beim ersten Rendern der Komponente.
+     */
     useEffect(() => {
         const loadGates = async () => {
             try {
@@ -46,47 +38,11 @@ function StatusTablesView() {
         loadGates();
     }, []);
 
-    // Funktion zum Abrufen der Gates
-    // const handleClose = async () => {
-    //     setDialogOpen(false);
-    //     const updated = await fetchGates();
-    //     setGates(updated);
-    // };
-
-    // Funktion zum Ändern des angeforderten Status für mehrere Gates
-    // const handleBulkRequestedStatusChange = async () => {
-    //     if (!bulkRequestedStatus) return;
-
-    //     const statusToSend = bulkRequestedStatus === "NONE" ? null : bulkRequestedStatus;
-
-    //     const gatesToUpdate = filteredGates.filter(gate => {
-    //         const currentRequested = gate.requestedStatus || null;
-    //         const currentStatus = gate.status;
-
-    //         // Gleicher Request? Ignorieren
-    //         if (currentRequested === statusToSend) return false;
-
-    //         // Status passt schon zum Ziel? Ignorieren
-    //         return !((statusToSend === "REQUESTED_OPEN" && currentStatus === "OPENED") ||
-    //             (statusToSend === "REQUESTED_CLOSE" && currentStatus === "CLOSED"));
-
-
-    //     });
-
-    //     const promises = gatesToUpdate.map(async (gate) => {
-    //         try {
-    //             await requestGateStatusChange(gate.id, statusToSend);
-    //         } catch (error) {
-    //             console.error(`Fehler beim Aktualisieren von Gate ${gate.id}`, error);
-    //         }
-    //     });
-
-    //     await Promise.all(promises);
-    //     const updated = await fetchGates();
-    //     setGates(updated);
-    // };
-
-    // Funktion zum Rendern des angeforderten Status
+    /**
+     * Rendern des angeforderten Status für die Gates.
+     * @param status
+     * @returns {Element}
+     */
     const renderRequestedStatus = (status) => {
         switch (status) {
             case "REQUESTED_OPEN":
@@ -98,7 +54,10 @@ function StatusTablesView() {
         }
     };
 
-    // Filtere die Gates basierend auf der Suche und dem Statusfilter
+    /**
+     * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
+     * @type {Array}
+     */
     const filteredGates = gates.filter(gate =>
         (gate.id.toString().includes(search) || gate.location.toLowerCase().includes(search.toLowerCase())) &&
         (
@@ -107,36 +66,6 @@ function StatusTablesView() {
             (gate.requestedStatus && gate.requestedStatus.toLowerCase().includes(filter.toLowerCase()))
         )
     );
-
-    // const sendManualDownlink = async () => {
-    //     const statusIntMap = {
-    //         "REQUESTED_OPEN": 1,
-    //         "REQUESTED_CLOSE": 0
-    //     };
-
-    //     const payload = [
-    //         1, // Type
-    //         Math.floor(Date.now() / 1000), // Unix Timestamp
-    //         filteredGates
-    //             .filter(g => g.requestedStatus in statusIntMap)
-    //             .map(g => [g.id, statusIntMap[g.requestedStatus]])
-    //     ];
-
-    //     if (payload[2].length === 0) {
-    //         alert("No gates with requested OPEN or CLOSE status.");
-    //         return;
-    //     }
-
-    //     try {
-    //         const response = await api.post("api/downlink", JSON.stringify(payload));
-    //         alert("Downlink sent.");
-    //     } catch (error) {
-    //         console.error("Error sending downlink:", error);
-    //         alert("Failed to send downlink.");
-    //     }
-    // };
-
-
 
     return (
         <div className="gate-status-container">
@@ -177,40 +106,6 @@ function StatusTablesView() {
 
             {view === "list" ? (
                 <>
-                    {/* <Box display="flex" alignItems="center" gap={2} mb={2}>
-                        <FormControl size="small">
-                            <InputLabel>Bulk Requested Status</InputLabel>
-                            <Select
-                                value={bulkRequestedStatus}
-                                label="Bulk Requested Status"
-                                onChange={(e) => setBulkRequestedStatus(e.target.value)}
-                                style={{ minWidth: 160 }}
-                            >
-                                <MenuItem value="">None</MenuItem>
-                                <MenuItem value="REQUESTED_OPEN">Request Open</MenuItem>
-                                <MenuItem value="REQUESTED_CLOSE">Request Close</MenuItem>
-                                <MenuItem value="REQUESTED_NONE">Clear Request</MenuItem>
-                            </Select>
-                        </FormControl>
-
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={handleBulkRequestedStatusChange}
-                            disabled={!bulkRequestedStatus}
-                        >
-                            Apply to Filtered
-                        </Button>
-
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            onClick={sendManualDownlink}
-                        >
-                            Send Downlink
-                        </Button>
-                    </Box> */}
-
                     <table className="status-table">
                         <thead>
                         <tr>
@@ -270,19 +165,6 @@ function StatusTablesView() {
                                             />
                                         </Tooltip>
                                     </td>
-                                    {/* <td>
-                                        <IconButton
-                                            color="warning"
-                                            size="small"
-                                            onClick={(e) => {
-                                                e.stopPropagation();  // verhindert dass Zeilen-Click auch getriggert wird
-                                                setSelectedGate(gate);
-                                                setDialogOpen(true);
-                                            }}
-                                        >
-                                            <SyncAltIcon/>
-                                        </IconButton>
-                                    </td> */}
                                 </tr>
 
                                 {expandedGateId === gate.id && (
@@ -311,12 +193,6 @@ function StatusTablesView() {
             ) : (
                 <MapView search={search} statusFilter={filter}/>
             )}
-
-            {/* <StatusChangedDialog
-                open={dialogOpen}
-                gate={selectedGate}
-                onClose={() => handleClose()}
-            /> */}
         </div>
     );
 }

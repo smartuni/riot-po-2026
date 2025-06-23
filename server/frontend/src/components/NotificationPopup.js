@@ -1,5 +1,6 @@
 import React from 'react';
 import { Typography, Paper, List, ListItemButton, ListItemText } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check'; // Optional: Icon für "gelesen"
 
 const NotificationPopup = ({ notifications, onNotificationClick }) => {
     return (
@@ -22,9 +23,27 @@ const NotificationPopup = ({ notifications, onNotificationClick }) => {
             <List dense>
                 {notifications.length > 0 ? (
                     notifications.map((note, index) => (
-                        <ListItemButton key={index} onClick={() => onNotificationClick(index)}>
+                        <ListItemButton
+                            key={index}
+                            onClick={() => onNotificationClick(index)}
+                            sx={{
+                                opacity: note.read ? 0.6 : 1, // Gelesene sind "blasser"
+                                alignItems: 'flex-start'
+                            }}
+                        >
                             <ListItemText
-                                primary={note.message}
+                                primary={
+                                    <Typography
+                                        sx={{
+                                            fontWeight: note.read ? 'normal' : 'bold',
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}
+                                    >
+                                        {note.message}
+                                        {note.read && <CheckIcon sx={{ fontSize: 16, ml: 1 }} />}
+                                    </Typography>
+                                }
                                 secondary={new Date(note.lastTimeStamp).toLocaleString()}
                             />
                         </ListItemButton>

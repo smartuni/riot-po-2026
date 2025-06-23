@@ -73,7 +73,6 @@ public class AuthService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-
         return Long.parseLong(claims.getSubject());
     }
 

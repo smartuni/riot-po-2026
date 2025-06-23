@@ -33,7 +33,9 @@ function StatusTables() {
     const [expandedGateId, setExpandedGateId] = useState(null);
     const [activities, setActivities] = useState([]);
 
-
+    /**
+     * Lädt die Gates beim ersten Rendern der Komponente.
+     */
     useEffect(() => {
         const loadGates = async () => {
             try {
@@ -46,6 +48,9 @@ function StatusTables() {
         loadGates();
     }, []);
 
+    /**
+     * Lädt die Aktivitäten beim ersten Rendern der Komponente.
+     */
     useEffect(() => {
         const loadActivities = async () => {
             try {
@@ -58,14 +63,20 @@ function StatusTables() {
         loadActivities();
     }, []);
 
-    // Funktion zum Abrufen der Gates
+    /**
+     * Schließt den Dialog und aktualisiert die Gates.
+     * @returns {Promise<void>}
+     */
     const handleClose = async () => {
         setDialogOpen(false);
         const updated = await fetchGates();
         setGates(updated);
     };
 
-    // Funktion zum Ändern des angeforderten Status für mehrere Gates
+    /**
+     * Verarbeitet die Massenänderung des angeforderten Status für die gefilterten Gates.
+     * @returns {Promise<void>}
+     */
     const handleBulkRequestedStatusChange = async () => {
         if (!bulkRequestedStatus) return;
 
@@ -98,7 +109,11 @@ function StatusTables() {
         setGates(updated);
     };
 
-    // Funktion zum Rendern des angeforderten Status
+    /**
+     * Rendert den angeforderten Status für ein Gate.
+     * @param status
+     * @returns {Element}
+     */
     const renderRequestedStatus = (status) => {
         switch (status) {
             case "REQUESTED_OPEN":
@@ -110,7 +125,10 @@ function StatusTables() {
         }
     };
 
-    // Filtere die Gates basierend auf der Suche und dem Statusfilter
+    /**
+     * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
+     * @type {*[]}
+     */
     const filteredGates = gates.filter(gate =>
         (gate.id.toString().includes(search) || gate.location.toLowerCase().includes(search.toLowerCase())) &&
         (
@@ -120,6 +138,10 @@ function StatusTables() {
         )
     );
 
+    /**
+     * Sendet eine manuelle Downlink-Anfrage für die gefilterten Gates.
+     * @returns {Promise<void>}
+     */
     const sendManualDownlink = async () => {
         const statusIntMap = {
             "REQUESTED_OPEN": 1,
@@ -148,6 +170,11 @@ function StatusTables() {
         }
     };
 
+    /**
+     * Berechnet die Zeit seit dem letzten Update eines Gates in einem lesbaren Format.
+     * @param timestamp
+     * @returns {string}
+     */
     function getTimeAgo(timestamp) {
         const date = new Date(timestamp);
         const now = new Date();
@@ -163,7 +190,6 @@ function StatusTables() {
         if (days < 7) return `${days} days ago`;
         return date.toLocaleDateString(); // fallback to a readable date
     }
-
 
     return (
         <div className="gate-status-container">

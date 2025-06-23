@@ -13,8 +13,6 @@ import java.sql.Timestamp;
 @Table(name = "notifications")
 @Entity
 public class NotificationEntity {
-	@Getter
-	@Setter
     @Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -22,16 +20,27 @@ public class NotificationEntity {
 	private Timestamp lastTimeStamp;
 	private Long workerId;
 	private String message;
+	@Getter
+	private boolean read;
 
 
-	public NotificationEntity(Status status, Long workerId, String message) {
+	public NotificationEntity(Status status, Long workerId, String message, boolean read) {
 		this.status = status;
 		this.lastTimeStamp = new Timestamp(System.currentTimeMillis());
 		this.workerId = workerId;
 		this.message = message;
+		this.read = read; // Default value for read status
 	}
 
 	public NotificationEntity() {
 
+	}
+
+	public boolean isRead() {
+		return read;
+	}
+
+	public void setRead(boolean read) {
+		this.read = read;
 	}
 }

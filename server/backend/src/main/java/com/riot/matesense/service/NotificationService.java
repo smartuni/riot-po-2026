@@ -10,6 +10,7 @@ import com.riot.matesense.model.GateForDownlink;
 import com.riot.matesense.model.Notification;
 import com.riot.matesense.repository.GateRepository;
 import com.riot.matesense.repository.NotificationRepository;
+import jakarta.transaction.Transactional;
 import org.aspectj.weaver.ast.Not;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class NotificationService {
         List<NotificationEntity> notificationEntities = notificationRepository.findAll();
         List<Notification> customNotifications = new ArrayList<>();
         notificationEntities.forEach(e -> {
-            Notification notification = new Notification(e.getId(), e.getStatus(), e.getLastTimeStamp(), e.getWorkerId(), e.getMessage());
+            Notification notification = new Notification(e.getId(), e.getStatus(), e.getLastTimeStamp(), e.getWorkerId(), e.getMessage(), e.isRead());
             customNotifications.add(notification);
         });
         return customNotifications;
@@ -47,9 +48,18 @@ public class NotificationService {
     public List<Notification> getNotificationByWorkerId(Long id) {
         List<Notification> notifications = new ArrayList<>();
         for (NotificationEntity notification : notificationRepository.getByWorkerId(id)) {
-            notifications.add(new Notification(notification.getId(), notification.getStatus(), notification.getLastTimeStamp(), notification.getWorkerId(), notification.getMessage()));
+            notifications.add(new Notification(notification.getId(), notification.getStatus(), notification.getLastTimeStamp(), notification.getWorkerId(), notification.getMessage(), notification.isRead()));
         }
         return notifications;
+    }
+
+    @Transactional
+    public void requestNotificationReadChange(Long id, Boolean read) throws GateNotFoundException {
+        NotificationEntity notification = notificationRepository.getById(id);
+        System.out.println("NotificationService: requestNotificationReadChange: " + notification);
+        notification.setRead(true);
+        notificationRepository.save(notification);
+        System.out.println(notificationRepository.getById(id).isRead());
     }
 
 
