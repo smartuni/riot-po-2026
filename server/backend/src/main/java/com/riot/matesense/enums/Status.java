@@ -1,7 +1,7 @@
 package com.riot.matesense.enums;
 
 public enum Status {
-    OPEN, CLOSED, UNKNOWN;
+    OPEN, CLOSED, UNKNOWN, NONE;
 
     public static Status fromCode(int code) {
         return switch (code) {
