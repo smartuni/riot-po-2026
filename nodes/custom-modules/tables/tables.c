@@ -726,8 +726,6 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count); 
         while((size_of_current_cbor + CBOR_IS_STATE_MAX_BYTE_SIZE < package_size) && (table_index < MAX_GATE_COUNT)) {
             if (is_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
-                printf("Adding entry to buffer: %d\n", table_index);
-                printf("GateID: %d, State: %d, GateTime: %d\n", is_state_entry_table[table_index].gateID, is_state_entry_table[table_index].state, is_state_entry_table[table_index].gateTime);
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].state);
@@ -736,14 +734,12 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
             }
             table_index++;
             size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
-            printf("Size of current cbor: %d\n", size_of_current_cbor);
         }
         cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
         cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
         cbor_stream_index += size_of_current_cbor;
         buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
         no_cbor_packages++;
-        printf("no_cbor_packages: %d\n", no_cbor_packages);
         size_of_current_cbor = 0;
     }
     buffer->cbor_size = no_cbor_packages;

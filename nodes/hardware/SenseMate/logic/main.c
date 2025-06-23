@@ -38,17 +38,12 @@ int main(void) {
 
     (void) test_merge;
     //(void) hallo;
-    const is_state_entry* table = get_is_state_table();
-    for (int i = 0; i < 255; i++){
-        printf("ID: %d, State: %d, Time: %d\n", table[i].gateID, table[i].state, table[i].gateTime);
-    }
+    // const is_state_entry* table = get_is_state_table();
+    // for (int i = 0; i < 255; i++){
+    //     printf("ID: %d, State: %d, Time: %d\n", table[i].gateID, table[i].state, table[i].gateTime);
+    // }
 
     start_lorawan();
-
-    const is_state_entry* table2 = get_is_state_table();
-    for (int i = 0; i < 255; i++){
-        printf("ID: %d, State: %d, Time: %d\n", table2[i].gateID, table2[i].state, table2[i].gateTime);
-    }
 
     while (1)
     {
