@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {fetchGates, requestGateStatusChange} from "../services/api";
+import {fetchActivities, fetchGates, requestGateStatusChange} from "../services/api";
 import axios from "axios";
 import api from "../services/api";
 import {
@@ -31,7 +31,7 @@ function StatusTables() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [bulkRequestedStatus, setBulkRequestedStatus] = useState("");
     const [expandedGateId, setExpandedGateId] = useState(null);
-
+    const [activities, setActivities] = useState([]);
 
 
     useEffect(() => {
@@ -44,6 +44,18 @@ function StatusTables() {
             }
         };
         loadGates();
+    }, []);
+
+    useEffect(() => {
+        const loadActivities = async () => {
+            try {
+                const data = await fetchActivities();
+                setActivities(data);
+            } catch (error) {
+                console.error('Fehler beim Laden der Aktivitäten', error);
+            }
+        };
+        loadActivities();
     }, []);
 
     // Funktion zum Abrufen der Gates
@@ -137,7 +149,6 @@ function StatusTables() {
     };
 
 
-
     return (
         <div className="gate-status-container">
             <div className="gate-status-header">
@@ -185,7 +196,7 @@ function StatusTables() {
                                 value={bulkRequestedStatus}
                                 label="Bulk Requested Status"
                                 onChange={(e) => setBulkRequestedStatus(e.target.value)}
-                                style={{ minWidth: 160 }}
+                                style={{minWidth: 160}}
                             >
                                 <MenuItem value="">None</MenuItem>
                                 <MenuItem value="REQUESTED_OPEN">Request Open</MenuItem>
@@ -238,17 +249,17 @@ function StatusTables() {
                                         <span className="coords">{gate.latitude}, {gate.longitude}</span>
                                     </td>
                                     <td>
-          <span className={`badge ${gate.status.toLowerCase()}`}>
-            {gate.status === "OPENED"
-                ? <LockOpenIcon fontSize="small"/>
-                : <LockIcon fontSize="small"/>
-            } {gate.status}
-          </span>
+                                        <span className={`badge ${gate.status.toLowerCase()}`}>
+                                            {gate.status === "OPENED"
+                                                ? <LockOpenIcon fontSize="small"/>
+                                                : <LockIcon fontSize="small"/>
+                                            } {gate.status}
+                                        </span>
                                     </td>
                                     <td>
-          <span className={`badge ${gate.requestedStatus ? gate.requestedStatus.toLowerCase() : 'none'}`}>
-            {renderRequestedStatus(gate.requestedStatus)}
-          </span>
+                                        <span className={`badge ${gate.requestedStatus ? gate.requestedStatus.toLowerCase() : 'none'}`}>
+                                            {renderRequestedStatus(gate.requestedStatus)}
+                                        </span>
                                     </td>
                                     <td>{gate.deviceId}</td>
                                     <td>
@@ -256,7 +267,8 @@ function StatusTables() {
                                         <div className="date">{gate.lastUpdate}</div>
                                     </td>
                                     <td>
-                                        100%<br/>
+                                        {gate.confidence}
+                                        <br/>
                                         <Tooltip
                                             title="Confidence reflects agreement between sensor and worker. 100% means both match.">
                                             <HelpOutlineIcon
@@ -285,21 +297,22 @@ function StatusTables() {
                                         </IconButton>
                                     </td>
                                 </tr>
-
                                 {expandedGateId === gate.id && (
                                     <tr className="expanded-row">
-                                        <td colSpan={8} style={{backgroundColor: "#f9f9f9"}}>
+                                        <td colSpan={8} style={{ backgroundColor: "#f9f9f9" }}>
                                             <div>
                                                 <strong>Activities</strong>
-                                                <p>
-                                                    Worker with id: 4 has closed the gate
-                                                </p>
-                                                <p>
-                                                    Sensor with id: 2 has opened the gate
-                                                </p>
-                                                <p>
-                                                    Worker with id: 3 has requested to open the gate
-                                                </p>
+                                                {activities
+                                                    .filter(activity => activity.gateId === gate.id)
+                                                    .slice(-4) // Optional: nur die letzten 4 zeigen
+                                                    .map((activity, index) => (
+                                                        <p key={activity.id}>
+                                                            <strong>{activity.lastTimeStamp}:</strong> {activity.message}
+                                                        </p>
+                                                    ))}
+                                                {activities.filter(a => a.gateId === gate.id).length === 0 && (
+                                                    <p>No activities available for this gate.</p>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

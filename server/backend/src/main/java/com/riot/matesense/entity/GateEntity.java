@@ -28,12 +28,13 @@ public class GateEntity {
 	private Boolean sensorConfidence;
 	@Column(name = "requested_status")
 	private String requestedStatus;
+	private String confidence;
 
 
 	public GateEntity(Status status, Timestamp lastTimeStamp,
 					  Long deviceId, Double latitude, Double longitude,
 					  String location, Boolean workerConfidence,
-					  Boolean sensorConfidence, String requestedStatus) {
+					  Boolean sensorConfidence, String requestedStatus,  String confidence) {
 		this.status = status;
 		this.lastTimeStamp = lastTimeStamp;
 		this.deviceId = deviceId;
@@ -43,6 +44,7 @@ public class GateEntity {
 		this.requestedStatus = requestedStatus;
 		this.latitude = latitude;
 		this.longitude = longitude;
+		this.confidence = confidence;
 	}
 
 	public GateEntity() {

@@ -24,6 +24,18 @@ export const fetchGates = async () => {
     }
 };
 
+export const fetchActivities = async () => {
+    try {
+        const response = await api.get('/gate-activities');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching gate-activities:', error);
+        throw error;
+    }
+};
+
+
+
 // Gate-Update mit besserer Fehlerbehandlung
 export const updateGate = async (gateId, gate) => {
     try {
