@@ -1,7 +1,6 @@
 import logo from './logo.svg';
 import './styles/App.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import './styles/App.css';
 import LandingPage from './components/LandingPage'
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
@@ -10,8 +9,7 @@ import RegisterPage from './components/RegisterPage';
 import MapPage from './components/MapPage';
 import EventLogs from "./components/EventLogs";
 import UserPage from './components/UserPage';
-import {useEffect, useState} from "react";
-import {fetchGates} from "./services/api";
+import DashboardView from './components/DashboardView';
 
 function App() {
   return (
@@ -25,6 +23,7 @@ function App() {
         <Route path='/map-view' element={<MapPage />}></Route>
         <Route path='/event-logs' element={<EventLogs />}></Route>
         <Route path='/userpage' element={<UserPage />}></Route>
+        <Route path='/dashboard-view' element={<DashboardView />}></Route>
       </Routes>
     </BrowserRouter>
   );

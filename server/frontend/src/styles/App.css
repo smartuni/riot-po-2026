@@ -114,7 +114,7 @@
     font-weight: 500;
 }
 
-.badge.open {
+.badge.opened {
     background: #e6f4ea;
     color: #1a7f37;
 }
@@ -125,6 +125,21 @@
 }
 
 .badge.none {
+    background: #f0f4f8;
+    color: #666;
+}
+
+.badge.requested_open {
+    background: #e6f4ea;
+    color: #1a7f37;
+}
+
+.badge.requested_close {
+    background: #fdecea;
+    color: #b3261e;
+}
+
+.badge.requested_none {
     background: #f0f4f8;
     color: #666;
 }
@@ -142,5 +157,17 @@
 .confidence-icons td{
 
 }
+
+.expanded-row td {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+
+.help-icon:hover {
+    color: #1976d2;
+}
+
 
 

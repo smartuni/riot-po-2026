@@ -3,7 +3,7 @@ package com.riot.matesense.mqtt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.riot.matesense.config.MqttProperties;
-import com.riot.matesense.service.Base64ToJsonConverter;
+import com.riot.matesense.service.Base64ToList;
 import com.riot.matesense.service.JsonFormatter;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.*;
@@ -17,14 +17,14 @@ public class TTNMqttListener {
 
     private final MqttProperties mqttProperties;
     private final ObjectMapper mapper = new ObjectMapper();
-    private final Base64ToJsonConverter converter;
+    private final Base64ToList converter;
     private final JsonFormatter jsonFormatter;
     private final MqttMessageHandler mqttMessageHandler;
 
     @Autowired
     public TTNMqttListener(
             MqttProperties mqttProperties,
-            Base64ToJsonConverter converter,
+            Base64ToList converter,
             JsonFormatter jsonFormatter,
             MqttMessageHandler mqttMessageHandler) {
         this.mqttProperties = mqttProperties;

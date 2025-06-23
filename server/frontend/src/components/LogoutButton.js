@@ -13,15 +13,9 @@ const LogoutButton = () => {
         throw new Error('Request failed with status code ' + response.status);
       }
       if (response.status === 200) {
-        api.interceptors.request.use(
-          config => {
-            config.headers['Authorization'] = ``;
-            return config;
-          },
-          error => {
-            return Promise.reject(error);
-          }
-        )
+        // console.log('success logout');
+        delete api.defaults.headers.common['Authorization'];
+
       }
 
     }

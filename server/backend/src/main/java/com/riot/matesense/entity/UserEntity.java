@@ -18,13 +18,16 @@ public class UserEntity {
 
     private String name;
 
+    private String role;
+
     // Constructors
     public UserEntity() {}
 
-    public UserEntity(String email, String password, String name) {
+    public UserEntity(String email, String password, String name, String role) {
         this.email = email;
         this.password = password;
         this.name = name;
+        this.role = role;
     }
 
     // Getters and setters
@@ -39,4 +42,7 @@ public class UserEntity {
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 }

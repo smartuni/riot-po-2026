@@ -38,18 +38,23 @@ const LoginPage = () => {
 
       //api call should return a token that is then used in the header
       const { token } = response.data;
+      // console.log(token);
       if (response.status === 200) {
-        api.interceptors.request.use(
-          config => {
-            config.headers['Authorization'] = `Bearer ${token}`;
-            return config;
-          },
-          error => {
-            return Promise.reject(error);
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        try {
+          const response = await api.get('auth/user-details');
+          const {name, email, role} = response.data;
+          if (role === 'controller') {
+            navigate('/dashboard');
+          } else {
+            navigate('/dashboard-view');
           }
-        )
-        localStorage.clear()
-        navigate('/dashboard');
+        } catch (error) {
+          setErrorMessage(error.response.data.error || 'Sorry, an unexpected error occurred');
+          setIsErrorDialogOpen(true);
+        }
+
+        // navigate('/dashboard');
       }
 
     } catch (error) {

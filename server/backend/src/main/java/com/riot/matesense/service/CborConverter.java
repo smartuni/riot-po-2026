@@ -3,7 +3,7 @@ package com.riot.matesense.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import org.springframework.stereotype.Component;
-
+//TODO check it again
 @Component
 public class CborConverter {
 

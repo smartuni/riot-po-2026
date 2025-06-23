@@ -1,6 +1,9 @@
 package com.riot.matesense.controller;
 
+import com.riot.matesense.config.DownPayload;
 import com.riot.matesense.service.DownlinkService;
+//import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,10 +16,10 @@ public class DownlinkController {
         this.downlinkService = downlinkService;
     }
 
-    @PostMapping("/send")
-    public String sende() {
-        downlinkService.sendeDownlink();
-        return "Downlink gesendet";
+    @PostMapping
+    public ResponseEntity<String> sendDownlink(
+            @RequestBody DownPayload payload){
+        downlinkService.sendDownlinkToDevice(payload);
+        return ResponseEntity.ok("Downlink vorbereitet.");
     }
 }
-

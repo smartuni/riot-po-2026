@@ -38,11 +38,6 @@ export const updateGate = async (gateId, gate) => {
 // Status-Änderung mit Token-Validierung
 export const requestGateStatusChange = async (gateId, status) => {
     try {
-        // const token = getValidToken();
-        // if (!token) {
-        //     throw new Error('No valid authentication token available');
-        // }
-
         const response = await api.post(
             `/${gateId}/request-status-change`,
             { requestedStatus: status }

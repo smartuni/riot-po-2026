@@ -1,10 +1,10 @@
 import InfoBoxes from './InfoBoxes';
-import StatusTables from './StatusTables';
 import RecentActivity from "./RecentActivity";
 import HeaderBar from "./HeaderBar";
+import StatusTablesView from './StatusTablesView';
 
 
-const Dashboard = () => {
+const DashboardView = () => {
 
     return (
         <div>
@@ -13,7 +13,7 @@ const Dashboard = () => {
                 <div className="main">
                     <InfoBoxes />
                     <div className="content">
-                            <StatusTables />
+                            <StatusTablesView />
                         <RecentActivity />
                     </div>
                 </div>
@@ -22,4 +22,4 @@ const Dashboard = () => {
     )
 }
 
-export default Dashboard
+export default DashboardView

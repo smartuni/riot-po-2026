@@ -1,14 +1,11 @@
 package com.riot.matesense.entity;
 
-import com.riot.matesense.datatypes.Coordinate;
 import com.riot.matesense.enums.Status;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Timestamp;
-import java.util.List;
 
 
 @Getter
@@ -19,7 +16,7 @@ public class GateEntity {
 	@Getter
 	@Setter
     @Id
-	//@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private Status status;
 	private Timestamp lastTimeStamp;

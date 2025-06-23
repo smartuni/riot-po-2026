@@ -1,13 +1,10 @@
 package com.riot.matesense.model;
 
-import com.riot.matesense.datatypes.Coordinate;
 import com.riot.matesense.enums.Status;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
 
 @Setter
 @Getter
