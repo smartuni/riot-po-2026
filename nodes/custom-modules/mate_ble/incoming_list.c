@@ -76,6 +76,5 @@ int wait_for_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet,
     while ((result = remove_message(message_type, cbor_packet, metadata)) == BLE_ERROR_INTERNAL_NO_MESSAGE_FOUND) {
         ztimer_sleep(ZTIMER_MSEC, 100); // Sleep for a short time before trying again
     }
-
     return result;
 }

@@ -80,19 +80,15 @@ static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payloa
                       sizeof(_custom_msd_marker_pattern) + len;
     uint8_t data_type = BLE_GAP_AD_VENDOR;
 
-    /* set the size field */
+    // set the size field
     ad_append(ad, &msd_len, sizeof(msd_len));
-
-    /* set the data type */
+    // set the data type
     ad_append(ad, &data_type, sizeof(data_type));
-
-    /* set the company id code */
+    // set the company id code
     ad_append(ad, _company_id_code, sizeof(_company_id_code));
-
-    /* set the marker */
+    // set the marker
     ad_append(ad, _custom_msd_marker_pattern, sizeof(_custom_msd_marker_pattern));
-
-    /* set the payload */
+    // set the payload
     ad_append(ad, payload, len);
 }
 
@@ -102,17 +98,16 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     (void)payload;
     (void)payload_len;
 
-    /* Initialize data structures and configure advertisement parameters */
-    /* buffer for the advertisement */
+    // Initialize data structures and configure advertisement parameters buffer for the advertisement
     static uint8_t adv_buf[MATE_BLE_ADV_PKT_BUFFER_SIZE];
     struct os_mbuf *data;
     int rc;
     struct ble_gap_ext_adv_params params;
 
-    /* advertising data struct */
+    // advertising data struct
     static bluetil_ad_t ad;
 
-    /* use defaults for non-set params */
+    // use defaults for non-set params
     memset (&params, 0, sizeof(params));
 
     /* advertise using ID addr */
@@ -122,16 +117,15 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     params.secondary_phy = BLE_HCI_LE_PHY_1M;
     params.tx_power = MATE_BLE_TX_POWER_UNDEF;
     params.sid = 0;
-    /* min/max advertising interval converted from ms to 0.625ms units */
+    // min/max advertising interval converted from ms to 0.625ms units
     params.itvl_min = BLE_GAP_ADV_ITVL_MS(600);
     params.itvl_max = BLE_GAP_ADV_ITVL_MS(800);
 
-    /* configure the nimble instance */
+    // configure the nimble instance */
     rc = ble_gap_ext_adv_configure(MATE_BLE_NIMBLE_INSTANCE, &params, NULL, NULL, NULL);
     assert (rc == 0);
 
-    /* Create a new advertisement packet */
-    /* get mbuf for adv data */
+    // Create a new advertisement packet get mbuf for adv data
     data = os_msys_get_pkthdr(MATE_BLE_ADV_PKT_BUFFER_SIZE, 0);
     assert(data);
 
@@ -142,22 +136,21 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
             BLE_GAP_FLAG_BREDR_NOTSUP);
     assert(rc == BLUETIL_AD_OK);
 
-    /* give the device a name that is included in the advertisements */
+    // give the device a name that is included in the advertisements
     rc = bluetil_ad_add_name(&ad, adv_name);
     assert(rc == BLUETIL_AD_OK);
 
-    /* Append a manufacturer specific data type */
-    /* Add a manufacturer specific data entry with custom marker. */
+    // Append a manufacturer specific data type. Add a manufacturer specific data entry with custom marker.
     ad_append_marked_msd_payload(&ad, payload, payload_len);
 
-    /* fill mbuf with adv data */
+    // fill mbuf with adv data
     rc = os_mbuf_append(data, ad.buf, ad.pos);
     assert(rc == 0);
 
     rc = ble_gap_ext_adv_set_data(MATE_BLE_NIMBLE_INSTANCE, data);
     assert (rc == 0);
 
-    /* Start advertising */
+    // Start advertising
     rc = ble_gap_ext_adv_start(MATE_BLE_NIMBLE_INSTANCE, 0, 0);
     assert (rc == 0);
 
@@ -182,22 +175,22 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
     (void)ad;
     (void)len;
 
-    /* ignore legacy advertisements */
+    // ignore legacy advertisements
     if (!(type & NIMBLE_SCANNER_EXT_ADV)) {
         return;
     }
 
-    /* parse the name of advertised devices */
+    // parse the name of advertised devices
     bluetil_ad_t rec_ad;
 
-    /* drop const of ad with cast. Ensure read-only access! */
+    // drop const of ad with cast. Ensure read-only access!
     uint8_t *ad_ro = (uint8_t*)ad;
     bluetil_ad_init(&rec_ad, ad_ro, len, len);
 
     char name[BLE_ADV_PDU_LEN + 1] = {0};
     int res = bluetil_ad_find_str(&rec_ad, BLE_GAP_AD_NAME,
                                 name, sizeof(name));
-    /* Output name, address, and data of the advertisement */
+    // Output name, address, and data of the advertisement
     if (res == BLUETIL_AD_OK) {
         printf("\n\"%s\" @", name);
     }
@@ -205,7 +198,7 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
     printf("sent %d bytes:\n", len);
     print_hex_arr(ad, len);
 
-    /* output our payload marked by our custom byte pattern */
+    // output our payload marked by our custom byte pattern
     bluetil_ad_data_t msd;
     res = bluetil_ad_find(&rec_ad, BLE_GAP_AD_VENDOR, &msd);
     if (res == BLUETIL_AD_OK) {
@@ -229,22 +222,22 @@ int ble_init(void)
 {
     puts("Initializing BLE extended advertisement!");
 
-    /* Make sure we have proper identity address set (public preferred) */
+    // Make sure we have proper identity address set (public preferred)
     int rc = ble_hs_util_ensure_addr(0);
     assert(rc == 0);
-    /* configure global address */
+    // configure global address
     rc = ble_hs_id_infer_auto(0, &id_addr_type);
     assert(rc == 0);
 
-    /* Initialize the nimble scanner */
+    // Initialize the nimble scanner
     nimble_scanner_cfg_t params = {
         .itvl_ms = MATE_BLE_SCAN_INTERVAL_MS,
         .win_ms = MATE_BLE_SCAN_WINDOW_MS,
         .flags = NIMBLE_SCANNER_PHY_1M,
     };
-    /* initialize the scanner and set up our own callback */
+    // initialize the scanner and set up our own callback
     nimble_scanner_init(&params, nimble_scan_evt_cb);
-    /* start the scanner */
+    // start the scanner
     nimble_scanner_start();
 
     return BLE_SUCCESS;
@@ -263,9 +256,8 @@ int ble_send(cbor_buffer* cbor_packet)
         ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
     }
 
-    /* update the payload with the given message */
+    // update the payload with the given message
     memcpy(_payload_buf, cbor_packet->buffer, cbor_packet->cbor_size);
-
     start_adv(_payload_buf, cbor_packet->cbor_size);
 
     return BLE_SUCCESS;
