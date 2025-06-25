@@ -13,6 +13,7 @@ public class ConfidenceCalculator //retooled to work within existing framework
     @Getter
     int confidence;
     boolean ignoreGate;
+    boolean gateDetector;
     Status[] gateStatusArray = new Status[5];
     Status[] workerStatusArray = new Status[5];
 
@@ -20,6 +21,7 @@ public class ConfidenceCalculator //retooled to work within existing framework
     {
         confidence = 100;
         ignoreGate = false;
+        gateDetector = false;
         for(int i = 0; i < 5; i++)
         {
             gateStatusArray[i] = Status.NONE;
@@ -49,16 +51,19 @@ public class ConfidenceCalculator //retooled to work within existing framework
         {
             for(int i = 0; i < 5; i++)
             {
-                int gateDelta = ignoreGate ? 0 : 10 - (2 * i); // if gate is flagged as faulty, ignore its reports
+                int gateDelta = 10 - (2 * i); // if gate is flagged as faulty, ignore its reports
                 int workerDelta = 20 - (4 * i);
 
-                if (status == gateStatusArray[i] && gateStatusArray[i] != Status.NONE)
+                if (!ignoreGate) 
                 {
-                    confidence += gateDelta; // if new a report matches an older report, increase confidence
-                }
-                else
-                {
-                    confidence -= gateDelta; // otherwise, decrease confidence
+                    if (status == gateStatusArray[i] && gateStatusArray[i] != Status.NONE)
+                    {
+                        confidence += gateDelta; // if new a report matches an older report, increase confidence
+                    }
+                    else
+                    {
+                        confidence -= gateDelta; // otherwise, decrease confidence
+                    }
                 }
 
                 if (status == workerStatusArray[i] && workerStatusArray[i] != Status.NONE)
@@ -109,4 +114,29 @@ public class ConfidenceCalculator //retooled to work within existing framework
         }
 
     }
+
+    public boolean isGateFaulty () 
+    {
+        if (gateStatusArray[0] == workerStatusArray [0] && gateStatusArray [1] == workerStatusArray [0])
+        {
+            gateDetector = false;
+        }
+
+        else 
+        {
+             gateDetector = true;
+        }
+        return gateDetector;
+
+    }
+
+    public void receiveReports (boolean command) 
+    {
+        ignoreGate = command;
+    }
+
 }
+
+
+
+
