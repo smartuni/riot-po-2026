@@ -99,4 +99,4 @@ coverage/
 *.key
 
 nodes/lab_workarounds.mk
-nodes/key-distro/secrets
+nodes/key-distro/include/secrets
