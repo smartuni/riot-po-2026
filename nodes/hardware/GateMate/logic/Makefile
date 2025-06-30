@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = logic
+APPLICATION = sensegate
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= feather-nrf52840-sense

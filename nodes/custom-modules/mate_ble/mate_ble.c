@@ -18,6 +18,7 @@
 #include "ztimer.h"
 #include "cbor.h"
 #include "semaphore.h"
+#include "cose-service.h"
 
 #include "incoming_list.h"
 
@@ -65,7 +66,10 @@ static const uint8_t _custom_msd_marker_pattern[] = {
 
 /* buffer to store the advertised data in */
 static uint8_t _payload_buf[MATE_BLE_ADV_PKT_BUFFER_SIZE];
-//static unsigned _pl_len = 0;
+static uint8_t encode_outbuf[BLE_MAX_PAYLOAD_SIZE + 64];
+static uint8_t send_buffer[BLE_MAX_PAYLOAD_SIZE * 10];
+static uint8_t recv_buffer[BLE_MAX_PAYLOAD_SIZE * 10];
+uint8_t verify_outbuf[BLE_MAX_PAYLOAD_SIZE];  // ausreichend groß dimensionieren
 
 static sem_t adv_done_sem;
 
@@ -109,7 +113,6 @@ static int ble_gap_event_cb(struct ble_gap_event *event, void *arg)
     (void)arg;
 switch (event->type) {
     case BLE_GAP_EVENT_ADV_COMPLETE:
-        puts("Advertisement completed.\n");
         sem_post(&adv_done_sem);
         break;
     default:
@@ -240,7 +243,18 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
             ble_metadata_t metadata = {};
             metadata.message_type = 187;
             metadata.rssi = info->rssi;
-            insert_message(payload, pl, metadata);
+
+            
+            size_t verify_payload_len = 0;
+            int verify_result = verify_decode(payload, pl,
+            verify_outbuf, sizeof(verify_outbuf),
+            &verify_payload_len);
+            if(verify_result == 0) {
+                insert_message(verify_outbuf, verify_payload_len, metadata);
+            } else {
+                printf("Failed to verify: %.*s\n", pl, payload);
+            }
+            
         }
     }
 }
@@ -286,9 +300,15 @@ int ble_send(cbor_buffer* cbor_packet)
     }
 
     for (int i = 0; i < cbor_packet->cbor_size; i++) {
-        // update the payload with the given message
         memcpy(_payload_buf, cbor_packet->buffer, cbor_packet->package_size[i]);
-        start_adv(_payload_buf, cbor_packet->package_size[i]);
+
+        // --- Encode code ---
+        uint8_t *encoded_ptr = NULL;
+        size_t encoded_len = 0;
+        sign_payload(_payload_buf, cbor_packet->package_size[i],encode_outbuf,&encoded_ptr, &encoded_len);
+        // update the payload with the given message
+        
+        start_adv(encoded_ptr, encoded_len);
 
         /* Block here until the ADV_COMPLETE event posts the sem */
         sem_wait(&adv_done_sem);
@@ -305,11 +325,10 @@ void* ble_send_loop(void* arg)
     if (init == 0) {
         return NULL;
     }
-    uint8_t stack_buffer[BLE_MAX_PAYLOAD_SIZE];
-    uint8_t stack_package_size[BLE_MAX_PAYLOAD_SIZE];
+    uint8_t stack_package_size[10];
     cbor_buffer buffer;
-    buffer.buffer = stack_buffer;
-    buffer.capacity = BLE_MAX_PAYLOAD_SIZE;
+    buffer.buffer = send_buffer;
+    buffer.capacity = BLE_MAX_PAYLOAD_SIZE * 10;
     buffer.package_size = stack_package_size;
 
     while (true) {
@@ -342,10 +361,10 @@ void* ble_receive_loop(void* args)
     if (init == 0) {
         return NULL;
     }
-    uint8_t stack_buffer[BLE_MAX_PAYLOAD_SIZE];
+    
     cbor_buffer buffer;
-    buffer.buffer = stack_buffer;
-    buffer.capacity = BLE_MAX_PAYLOAD_SIZE;
+    buffer.buffer = recv_buffer;
+    buffer.capacity = BLE_MAX_PAYLOAD_SIZE * 10;
     ble_metadata_t metadata;
     ble_received_thread_args_t* thr_args = (ble_received_thread_args_t *)args; 
     while (true) {
