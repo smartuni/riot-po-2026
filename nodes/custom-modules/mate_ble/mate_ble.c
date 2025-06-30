@@ -32,6 +32,9 @@
  * MATE_BLE_SCAN_INTERVAL_MS = MATE_BLE_SCAN_WINDOW_MS results in continuous scanning.*/
 #define MATE_BLE_SCAN_INTERVAL_MS    30
 
+#define MATE_BLE_THRESHOLD_MAX  (-100)
+#define MATE_BLE_THRESHOLD_MIN  (0)
+
 static uint8_t id_addr_type;
 
 static const char adv_name[] = BLE_ADVERTISE_NAME;
@@ -326,6 +329,21 @@ void ble_send_loop(void)
             for (int i = 0; i < count; i++) {
                 ble_send(&buffer);
             }
+        }
+    }
+}
+
+void ble_receive_loop(void)
+{
+    uint8_t stack_buffer[BLE_MAX_PAYLOAD_SIZE];
+    cbor_buffer buffer;
+    buffer.buffer = stack_buffer;
+    buffer.capacity = BLE_MAX_PAYLOAD_SIZE;
+    ble_metadata_t metadata;
+
+    while (true) {
+        if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
+            continue;
         }
     }
 }
