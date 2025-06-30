@@ -21,8 +21,9 @@ int main(void)
 
     // --- Encode code ---
     uint8_t *encoded_ptr = NULL;
+    uint8_t encode_outbuf[256];
     size_t encoded_len = 0;
-    BENCHMARK_FUNC("Signieren:", 5, sign_payload(payload, sizeof(payload), &encoded_ptr, &encoded_len));
+    BENCHMARK_FUNC("Signieren:", 5, sign_payload(payload, sizeof(payload),encode_outbuf,&encoded_ptr, &encoded_len));
 
     // --- Verify code ---
     uint8_t verify_outbuf[256];  // ausreichend groß dimensionieren
@@ -31,7 +32,7 @@ int main(void)
     BENCHMARK_FUNC("Validieren:", 5,verify_decode(encoded_ptr, encoded_len,verify_outbuf, sizeof(verify_outbuf),&verify_payload_len));
 
     // --- Auswertung ---
-    int sign_result = sign_payload(payload, sizeof(payload), &encoded_ptr, &encoded_len);
+    int sign_result = sign_payload(payload, sizeof(payload),encode_outbuf,&encoded_ptr, &encoded_len);
     if (sign_result != 0) {
         printf("❌ Signing fehlgeschlagen mit Fehlercode: %d\n", sign_result);
     }

@@ -42,26 +42,28 @@ extern "C" {
 #endif
 
 /**
- * Signiert einen Null-terminierten Payload mit Ed25519
- * und liefert die CBOR-codierte COSE_Sign1-Struktur zurück.
+ * Signiert einen Payload mit Ed25519 und erzeugt eine CBOR-codierte COSE_Sign1-Struktur.
  *
- * @param payload    Eingabe-String (Null-terminiert)
- * @param out_buf    Pointer auf den Ausgabebuffer (wird intern gesetzt, ggf. malloc)
- * @param out_len    Ausgabelänge des Buffers
- * @return           COSE_SIGN_SUCCESS bei Erfolg, sonst Fehlercode (z.B. COSE_SIGN_ERR_*)
+ * @param payload         Pointer auf den zu signierenden Binärdaten-Buffer
+ * @param payload_len     Länge des Payloads in Bytes
+ * @param encoding_buf    Interner Arbeits-/Zwischenpuffer zur Kodierung (vom Aufrufer bereitgestellt)
+ *                        Muss ausreichend groß sein, z. B. 2048 Bytes.
+ * @param out_buf_ptr     Pointer auf den Ausgabepuffer (wird intern gesetzt; zeigt auf encoding_buf oder intern allokiert)
+ * @param out_len         Ausgabelänge des Puffers nach erfolgreicher Kodierung
+ * @return                COSE_SIGN_SUCCESS bei Erfolg, sonst Fehlercode (z. B. COSE_SIGN_ERR_*)
  */
-    int sign_payload(const uint8_t *payload, size_t payload_len,
-                     uint8_t **out_buf, size_t *out_len);
+int sign_payload(const uint8_t *payload, size_t payload_len, uint8_t *encoding_buf,
+                 uint8_t **out_buf_ptr, size_t *out_len);
 
 
 /**
- * Verifiziert und dekodiert eine COSE_Sign1 Nachricht.
+ * Verifiziert und dekodiert eine COSE_Sign1-Nachricht.
  *
- * @param encodedMsg     Eingabepuffer mit COSE_Sign1
+ * @param encodedMsg     Eingabepuffer mit COSE_Sign1-Daten
  * @param len            Länge des Eingabepuffers
- * @param outbuf         Ausgabepuffer für Payload
- * @param outbuf_len     Länge des Ausgabepuffers
- * @param payload_len    tatsächliche Länge des Payloads nach Decodierung
+ * @param outbuf         Ausgabepuffer für den extrahierten Payload
+ * @param outbuf_len     Größe des Ausgabepuffers
+ * @param payload_len    Tatsächliche Länge des extrahierten Payloads
  * @return               COSE_VERIFY_SUCCESS bei Erfolg, sonst Fehlercode (COSE_VERIFY_ERR_*)
  */
 int verify_decode(uint8_t *encodedMsg, size_t len,
@@ -69,13 +71,18 @@ int verify_decode(uint8_t *encodedMsg, size_t len,
 
 
 /**
- * Extrahiert das KID (Key ID) aus dem Unprotected Header einer COSE_Sign1 Signatur.
+ * Extrahiert das KID (Key ID) aus dem ungeschützten Header einer COSE_Sign1-Signatur.
  *
- * @param sig         Pointer auf COSE Signatur-Decoder Struktur
- * @param kid_buf     Zielpuffer für KID (max. MAX_KEY_ID_SIZE)
- * @param kid_len     Ein-/Ausgabeparameter mit Pufferlänge / gefundener Länge
- * @return            COSE_KID_SUCCESS bei Erfolg, sonst Fehlercode (COSE_KID_ERR_*)
+ * @param sig         Pointer auf COSE-Signatur-Decoder-Struktur
+ * @param kid_buf     Zielpuffer für das extrahierte KID (max. MAX_KEY_ID_SIZE Bytes)
+ * @param kid_len     Ein-/Ausgabeparameter: Eingabe = Größe von kid_buf, Ausgabe = Länge des extrahierten KID
+ * @return            KID_OK bei Erfolg, sonst Fehlercode (z. B. KID_ERR_*)
  */
 int extract_kid_from_unprotected(cose_signature_dec_t *sig,
                                  uint8_t *kid_buf, size_t *kid_len);
-#endif //COSE_SERVICE_H
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // COSE_SERVICE_H
