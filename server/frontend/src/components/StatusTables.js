@@ -84,6 +84,11 @@ function StatusTables() {
             }
         };
         loadActivities();
+        const intervalId = setInterval(() => {
+            loadActivities();
+        }, 300);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     /**
@@ -369,12 +374,13 @@ function StatusTables() {
                                                 <strong>Activities</strong>
                                                 {activities
                                                     .filter(activity => activity.gateId === gate.id)
-                                                    .slice(-4) // Optional: nur die letzten 4 zeigen
-                                                    .map((activity, index) => (
+                                                    .slice(-4)
+                                                    .map(activity => (
                                                         <p key={activity.id}>
-                                                            <strong>{activity.lastTimeStamp}:</strong> {activity.message}
+                                                            <strong>{new Date(activity.lastTimeStamp).toLocaleString()}:</strong> {activity.message}
                                                         </p>
-                                                    ))}
+                                                    ))
+                                                }
                                                 {activities.filter(a => a.gateId === gate.id).length === 0 && (
                                                     <p>No activities available for this gate.</p>
                                                 )}
