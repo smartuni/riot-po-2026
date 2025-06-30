@@ -14,8 +14,7 @@
 #include "random.h"
 
 #include "cose-service.h"
-#include "public_keys.h"
-#include "private_key.h"
+#include "key_config.h"
 
 
 /* COSE structs */
@@ -51,7 +50,7 @@ int sign_payload(const uint8_t *payload, size_t payload_len,uint8_t *encoding_bu
     cose_sign_set_payload(&sign, payload, payload_len);
     cose_sign_add_signer(&sign, &signature1, &signer1);
 
-    ssize_t len = cose_sign_encode(&sign,encoded_buf, sizeof(encoded_buf), out_buf);
+    ssize_t len = cose_sign_encode(&sign,encoding_buf, sizeof(encoding_buf), out_buf);
     if (len < 0)
     {
         printf("Signing faild with: %i",len);
