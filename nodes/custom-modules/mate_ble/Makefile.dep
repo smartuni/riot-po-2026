@@ -13,6 +13,7 @@ USEMODULE += nimble_addr
 USEMODULE += bluetil_ad
 
 USEMODULE += tables
+USEMODULE += posix_semaphore
 
 # Add the tinycbor package
 USEPKG += tinycbor

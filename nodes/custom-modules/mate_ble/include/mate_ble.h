@@ -19,6 +19,7 @@
 #ifndef MATE_BLE_H
 #define MATE_BLE_H
 
+#include "event.h"
 #include "tables.h"
 
 #define BLE_SUCCESS (0)
@@ -32,14 +33,19 @@
 
 typedef uint8_t cbor_message_type_t;
 
-#define CBOR_MESSAGE_TYPE_UNKNOWN (-1)
-#define CBOR_MESSAGE_TYPE_WILDCARD (-2)
+#define CBOR_MESSAGE_TYPE_UNKNOWN ((uint8_t)-1)
+#define CBOR_MESSAGE_TYPE_WILDCARD ((uint8_t)-2)
 
 typedef struct {
    cbor_message_type_t message_type;
    int8_t rssi;
-
 } ble_metadata_t;
+
+typedef struct {
+   event_queue_t* receive_queue;
+   event_t* receive_event;
+} ble_received_thread_args_t;
+
 
 /**
  * @brief           Loop that manages the propagation of state tables via ble
@@ -72,11 +78,11 @@ int ble_init(void);
  * @brief           Sender loop of the BLE module. Propagates the state tables
  *                  via BLE advertisements.
  */
-void ble_send_loop(void);
+void* ble_send_loop(void*);
 
 /**
  * @brief           Receiver loop of the BLE module. Receives the propagated state tables
  */
-void ble_receive_loop(void);
+void* ble_receive_loop(void* args);
 
 #endif /* MATE_BLE_H */

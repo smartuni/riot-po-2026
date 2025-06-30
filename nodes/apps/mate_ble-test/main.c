@@ -3,7 +3,7 @@
 #include <string.h>
 #include "ztimer.h"
 #include "mate_ble.h"
-
+#include "semaphore.h"
 int main(void) 
 {
     int status = ble_init();

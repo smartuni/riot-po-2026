@@ -1,8 +1,11 @@
 #include "mate_ble.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/_intsup.h>
 
+#include "event.h"
 #include "host/util/util.h"
 #include "host/ble_hs.h"
 #include "nimble_scanner.h"
@@ -37,6 +40,7 @@
 #define MATE_BLE_THRESHOLD_MIN  (0)
 
 static uint8_t id_addr_type;
+static uint8_t init = 0;
 
 static const char adv_name[] = BLE_ADVERTISE_NAME;
 
@@ -102,6 +106,7 @@ static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payloa
 
 static int ble_gap_event_cb(struct ble_gap_event *event, void *arg) 
 {
+    (void)arg;
 switch (event->type) {
     case BLE_GAP_EVENT_ADV_COMPLETE:
         puts("Advertisement completed.\n");
@@ -262,7 +267,7 @@ int ble_init(void)
     nimble_scanner_init(&params, nimble_scan_evt_cb);
     // start the scanner
     nimble_scanner_start();
-
+    init = 1;
     return BLE_SUCCESS;
 }
 
@@ -293,12 +298,11 @@ int ble_send(cbor_buffer* cbor_packet)
     return BLE_SUCCESS;
 }
 
-void ble_send_loop(void)
+void* ble_send_loop(void*)
 {
-    if (ble_init() != BLE_SUCCESS) {
-        return;
+    if (init == 0) {
+        return NULL;
     }
-
     uint8_t stack_buffer[BLE_MAX_PAYLOAD_SIZE];
     uint8_t stack_package_size[BLE_MAX_PAYLOAD_SIZE];
     cbor_buffer buffer;
@@ -330,14 +334,17 @@ void ble_send_loop(void)
     }
 }
 
-void ble_receive_loop(void)
+void* ble_receive_loop(void* args)
 {
+    if (init == 0) {
+        return NULL;
+    }
     uint8_t stack_buffer[BLE_MAX_PAYLOAD_SIZE];
     cbor_buffer buffer;
     buffer.buffer = stack_buffer;
     buffer.capacity = BLE_MAX_PAYLOAD_SIZE;
     ble_metadata_t metadata;
-
+    ble_received_thread_args_t* thr_args = (ble_received_thread_args_t *)args; 
     while (true) {
         if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
             continue;
@@ -346,8 +353,9 @@ void ble_receive_loop(void)
         if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
             continue;
         }
-        if (TABLE_UPDATED == res) {
-            //notify 
+        if (thr_args->receive_queue != NULL && TABLE_UPDATED == res) {
+            event_post(thr_args->receive_queue, thr_args->receive_event);
         }
     }
+    return NULL;
 }
