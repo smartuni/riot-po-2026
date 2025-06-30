@@ -180,7 +180,8 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     rc = ble_gap_ext_adv_start(MATE_BLE_NIMBLE_INSTANCE, 0, 1);
     assert (rc == 0);
 
-    printf("Now advertising \"%s\"\n", payload);
+    printf("Now advertising\n");
+    print_hex_arr(payload, payload_len);
 }
 
 static void print_hex_arr(const uint8_t *data, unsigned len)
