@@ -64,6 +64,18 @@ export const addActivities = async (newActivities) => {
     }
 }
 
+export const loadWorkerId = async () => {
+    try {
+        const response = await api.get('/auth/user-details');
+        if (response.status !== 200) {
+            throw new Error('Request failed with status code ' + response.status);
+        }
+        return response.data.workerId;
+    } catch (e) {
+        console.error("Fehler beim Laden der User-Details:", e);
+    }
+};
+
 
 
 // Gate-Update mit besserer Fehlerbehandlung
@@ -78,10 +90,10 @@ export const updateGate = async (gateId, gate) => {
 };
 
 // Status-Änderung mit Token-Validierung
-export const requestGateStatusChange = async (gateId, status) => {
+export const requestGateStatusChange = async (gateId, workerId,status) => {
     try {
         const response = await api.post(
-            `/${gateId}/request-status-change`,
+            `/${gateId}/${workerId}/request-status-change/`,
             { requestedStatus: status }
         );
         await addActivities(response);

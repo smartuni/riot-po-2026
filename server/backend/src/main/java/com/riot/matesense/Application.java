@@ -64,6 +64,7 @@ class PopulateTestDataRunner implements CommandLineRunner {
  		gateService.addGate(gate3);
 
 
+/*
 		GateActivityEntity gateActivityEntity1 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has Requested Status: " + gate.getRequestedStatus().toLowerCase(), 1L);
 		GateActivityEntity gateActivityEntity2 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate2.getId() +" has Requested Status: " + gate.getRequestedStatus().toLowerCase(), 1L);
 		GateActivityEntity gateActivityEntity3 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate2.getId(), gate.getRequestedStatus(), "The Gate " +gate3.getId() +" has Requested Status: " + gate.getRequestedStatus().toLowerCase(), 1L);
@@ -75,6 +76,7 @@ class PopulateTestDataRunner implements CommandLineRunner {
 		gateActivityService.addGateActivity(gateActivityEntity3);
 		gateActivityService.addGateActivity(gateActivityEntity4);
 		gateActivityService.addGateActivity(gateActivityEntity5);
+*/
 
 		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Worker with ID: " + 1L + " shall close the Gate with ID: " + gate.getId(), false));
 		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Worker with ID: " + 1L + " shall open the Gate with ID: " + gate.getId(), false));
