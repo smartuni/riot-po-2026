@@ -37,10 +37,10 @@ int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buf
     cbor_encoder_init(&encoder, buffer->buffer, sizeof(uint8_t) * 100, 0);
     cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
     cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
-    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, 2); // Entry 2
+    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, 4); // Entry 2
 
     // [Table Entry]
-    for(int i = 0; i < 2; i++) {
+    for(int i = 0; i < 4; i++) {
         if (table[i].gateID != MAX_GATE_COUNT) {
             cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
             cbor_encode_int(&singleEntryEncoder, table[i].gateID);
@@ -203,8 +203,8 @@ int cbor_to_table_test(cbor_buffer* buffer) {
 
     int id, s, sID, d, ts, gt;
     size_t length = 0;
-    cbor_value_get_array_length(&fieldsValue, &length); 	
-    for(size_t i = 0; i < (length - 1); i++) {
+    cbor_value_get_array_length(&wrapperValue, &length); 	
+    for(size_t i = 0; i < length; i++) {
         cbor_value_enter_container(&fieldsValue, &entryValue); // [
         switch(tableType) {
             case TARGET_STATE_KEY:
@@ -277,7 +277,14 @@ int cbor_to_table_test(cbor_buffer* buffer) {
 
     cbor_value_leave_container(&wrapperValue, &fieldsValue); // ]	
     cbor_value_leave_container(&value, &wrapperValue); // ]	
-    
+
+    for(int i = 0; i < 4; i++) {
+        printf("Eintrag %d: \n", i);
+        printf("Gate: %d\n", returnTargetTable[i].gateID);
+        printf("State: %d\n", returnTargetTable[i].state);
+        printf("Timestamp: %d\n", returnTargetTable[i].timestamp);
+    }
+
     // Integrate local data into global table
     switch(tableType) {
             case TARGET_STATE_KEY:

@@ -4,9 +4,9 @@
 #include "tables.h"
 #include <string.h>
 
-//#define TEST_TABLE_TO_CBOR
-//#define TEST_CBOR_TO_TABLE
-#define TEST_TABLE_TO_MANY_CBOR
+#define TEST_TABLE_TO_CBOR
+#define TEST_CBOR_TO_TABLE
+//#define TEST_TABLE_TO_MANY_CBOR
 
 int main(void) 
 {
@@ -25,7 +25,8 @@ int main(void)
         target_state_entry e1 = {4, 2, 2000};
         target_state_entry e2 = {5, 0, 2801};
         target_state_entry e3 = {3, 1, 2051};
-        target_state_entry e4 = {8, 0, 2401};
+        target_state_entry e4 = {8 , 0, 2401};
+        
         target_state_entry test[] = {e1, e2, e3, e4};
         puts("Made test object");
 
