@@ -303,11 +303,13 @@ void* ble_send_loop(void*)
     if (init == 0) {
         return NULL;
     }
-    uint8_t stack_buffer[BLE_MAX_PAYLOAD_SIZE];
-    uint8_t stack_package_size[BLE_MAX_PAYLOAD_SIZE];
+
+    uint8_t stack_buffer[BLE_MAX_PAYLOAD_SIZE * 10];
+    uint8_t stack_package_size[sizeof(uint8_t) * 10];
+
     cbor_buffer buffer;
     buffer.buffer = stack_buffer;
-    buffer.capacity = BLE_MAX_PAYLOAD_SIZE;
+    buffer.capacity = BLE_MAX_PAYLOAD_SIZE * 10;
     buffer.package_size = stack_package_size;
 
     while (true) {
@@ -331,6 +333,8 @@ void* ble_send_loop(void*)
         if (count > 0) {
             ble_send(&buffer);
         }
+
+        ztimer_sleep(ZTIMER_MSEC, BLE_SEND_INTERVAL);
     }
 }
 
@@ -339,10 +343,15 @@ void* ble_receive_loop(void* args)
     if (init == 0) {
         return NULL;
     }
-    uint8_t stack_buffer[BLE_MAX_PAYLOAD_SIZE];
+
+    uint8_t stack_buffer[BLE_MAX_PAYLOAD_SIZE * 10];
+    uint8_t stack_package_size[sizeof(uint8_t) * 10];
+    
     cbor_buffer buffer;
     buffer.buffer = stack_buffer;
-    buffer.capacity = BLE_MAX_PAYLOAD_SIZE;
+    buffer.capacity = BLE_MAX_PAYLOAD_SIZE * 10;
+    buffer.package_size = stack_package_size;
+
     ble_metadata_t metadata;
     ble_received_thread_args_t* thr_args = (ble_received_thread_args_t *)args; 
     while (true) {

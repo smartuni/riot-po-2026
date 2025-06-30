@@ -22,6 +22,8 @@
 #include "event.h"
 #include "tables.h"
 
+#define BLE_SEND_INTERVAL (10000) // in milliseconds
+
 #define BLE_SUCCESS (0)
 #define BLE_ERROR (-1)
 #define BLE_ERROR_INTERNAL_MESSAGE_BUFFER_FULL (-2)
