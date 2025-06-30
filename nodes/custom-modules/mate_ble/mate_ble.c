@@ -298,8 +298,9 @@ int ble_send(cbor_buffer* cbor_packet)
     return BLE_SUCCESS;
 }
 
-void* ble_send_loop(void*)
+void* ble_send_loop(void* arg)
 {
+    (void) arg;
     if (init == 0) {
         return NULL;
     }
@@ -331,6 +332,7 @@ void* ble_send_loop(void*)
         if (count > 0) {
             ble_send(&buffer);
         }
+        ztimer_sleep(ZTIMER_MSEC, 10000);
     }
 }
 

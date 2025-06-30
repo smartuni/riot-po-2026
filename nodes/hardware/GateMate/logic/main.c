@@ -14,7 +14,8 @@
 
 
 char lorawan_stack[THREAD_STACKSIZE_DEFAULT];
-char ble_stack[THREAD_STACKSIZE_DEFAULT];
+char ble_send_stack[2*THREAD_STACKSIZE_DEFAULT];
+char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
 int main(void){
 
@@ -77,17 +78,35 @@ int main(void){
         return -1;
     }
 
-    //start thread init bluetooth
-    puts("starting ble");
-    thread_create(
-        ble_stack,
-        sizeof(ble_stack),
-        THREAD_PRIORITY_MAIN - 1,
-        THREAD_CREATE_STACKTEST,
-        ble_run_propagation,
-        NULL,
-       "ble");
+
+        //start thread init bluetooth
+    // puts("starting ble");
+    // if (BLE_SUCCESS == ble_init()){
+    //     puts("Ble init complete");
+    // } else {
+    //     puts("BLE not started");
+    // }
+
+
+    // thread_create(
+    //     ble_send_stack,
+    //     sizeof(ble_send_stack),
+    //     THREAD_PRIORITY_MAIN - 1,
+    //     THREAD_CREATE_STACKTEST,
+    //     ble_send_loop,
+    //     NULL,
+    //    "bleSend"
+    // );
     
+    // thread_create(
+    //     ble_reicv_stack,
+    //     sizeof(ble_reicv_stack),
+    //     THREAD_PRIORITY_MAIN - 1,
+    //     THREAD_CREATE_STACKTEST,
+    //     ble_receive_loop,
+    //     NULL,
+    //    "bleRecv"
+    // );
 
 
     puts("main loop");
