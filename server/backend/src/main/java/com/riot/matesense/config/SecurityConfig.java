@@ -32,9 +32,10 @@ public class SecurityConfig {
                 .and()
                 .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
-                    .anyRequest().permitAll()
-                    //.requestMatchers("/auth/**").permitAll()
-                    //.anyRequest().authenticated()
+                    // .anyRequest().permitAll()
+                    .requestMatchers("/auth/**").permitAll()
+                    .requestMatchers("/gates").permitAll()
+                    .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
