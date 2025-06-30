@@ -118,6 +118,8 @@ static void send_handler(event_t *event);
 
 static void send_handler_timeout(event_t *event);
 
+event_t send_is_state = { .handler = send_handler};
+event_t send_seen_state = { .handler = send_handler};
 event_t send_event = { .handler = send_handler };
 event_t send_event_timeout = { .handler = send_handler_timeout };
 
@@ -305,8 +307,8 @@ static void send_handler_timeout(event_t *event){
 }
 
 static void send_handler(event_t *event){
-    (void) event;
 
+    (void) event;
     printf("LoRaWAN send_handler started\n");
     int pkg_count = is_state_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
     if (pkg_count == 0){

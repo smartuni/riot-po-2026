@@ -792,24 +792,23 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
     int table_index = 0;
     int is_states_entry_processed = 0;
     int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_IS_STATE_MAX_BYTE_SIZE;
-    printf("calculated_array_entries: %d\n", calculated_array_entries);
+  
     while((is_state_entry_count > 0) && (table_index < MAX_GATE_COUNT) && (is_state_entry_count - is_states_entry_processed) > 0) {
         CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
         uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
-        while( ((is_states_entry_processed % calculated_array_entries) < calculated_array_entries)&& (table_index < MAX_GATE_COUNT) && (is_state_entry_count - is_states_entry_processed) > 0) {
-            printf("is_states_entry_processed modulo calculated_array_entries: %d\n", (is_states_entry_processed % calculated_array_entries));
-            printf("package size: %d\n", package_size);
-            printf("size_of_current_cbor + CBOR_IS_STATE_MAX_BYTE_SIZE + BASE_CBOR_BYTE_SIZE: %d\n", size_of_current_cbor + CBOR_IS_STATE_MAX_BYTE_SIZE + BASE_CBOR_BYTE_SIZE);
+        int i = 0;
+        while( (i < calculated_array_entries) && (table_index < MAX_GATE_COUNT) && (is_state_entry_count - is_states_entry_processed) > 0) {
+
             if(size_of_current_cbor == 0 ){
-                printf("Creating new cbor\n");
+            
                 cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
                 cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
                 cbor_encode_int(&arrayEncoder, IS_STATE_KEY);
                 if(is_state_entry_count - is_states_entry_processed < calculated_array_entries){
-                    printf("Rest of entries smaller than max sendable entries\n");
+                 
                     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);  
                 }else{
-                    printf("Rest of entries bigger than max sendable entries\n");
+                  
                     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder,calculated_array_entries); 
                 }
             } // Entry 1
@@ -821,12 +820,14 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].gateTime);
                 cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
                 is_states_entry_processed++;
+                i++;
             }
-            printf("table index: %d\n",table_index);
+            
             table_index++;
+          
             
             size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
-            printf("size_of_current_cbor: %d\n",size_of_current_cbor);
+        
         }
         cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
         cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
