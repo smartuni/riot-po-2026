@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <kernel_sem.h>
 
 #include "host/util/util.h"
 #include "host/ble_hs.h"
@@ -14,6 +13,7 @@
 #include "timex.h"
 #include "ztimer.h"
 #include "cbor.h"
+#include "semaphore.h"
 
 #include "incoming_list.h"
 
