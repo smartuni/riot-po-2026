@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.Status;
+import com.riot.matesense.enums.ConfidenceQuality;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
 import com.riot.matesense.model.Gate;
@@ -30,7 +31,7 @@ public class GateService {
         gates.forEach(e -> {
             Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), e.getSensorConfidence(),
-                    e.getWorkerConfidence(), e.getRequestedStatus(), e.getConfidence());
+                    e.getWorkerConfidence(), e.getRequestedStatus(), e.getCalculator().determineQuality());
             customGates.add(gate);
         });
         return customGates;
@@ -40,7 +41,6 @@ public class GateService {
         gateRepository.save(gate);
         return gate.toString();
     }
-
 
     public void removeGate(GateEntity gate) throws GateNotFoundException {
         gateRepository.delete(gate);
@@ -57,6 +57,7 @@ public class GateService {
             gateEntity.setStatus(gate.getStatus());
             gateEntity.setSensorConfidence(gate.getSensorConfidence());
             gateEntity.setWorkerConfidence(gate.getWorkerConfidence());
+            gateEntity.getCalculator().updateConfidence(gateEntity.getStatus());
             gateEntity.setLocation(gate.getLocation());
             gateRepository.save(gateEntity);
         }
@@ -67,8 +68,23 @@ public class GateService {
         GateEntity gate = gateRepository.getById(id);
         return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
-                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence());
+                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getCalculator().determineQuality());
     }
+
+    public void changeConfidence()
+    {
+        ConfidenceQuality quality = ConfidenceQuality.HIGH;
+    }
+
+    /*@Scheduled(fixedRate = 10000)
+    public void periodicSubtractConfidence()
+    {
+        List<GateEntity> gates = gateRepository.findAll();
+        gates.forEach(e -> {
+            e.getCalculator().subtractConfidence();
+            updateGate(e);
+        });
+    }*/
 
     public void requestGateStatusChange(Long gateId, String targetStatus) throws GateNotFoundException {
         GateEntity gate = gateRepository.getById(gateId);
