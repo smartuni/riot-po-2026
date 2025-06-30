@@ -15,7 +15,7 @@
  *
  * @file
  *
- * @author
+ * @author     Nico
  */
 
 #ifndef MATE_BLE_H
@@ -27,15 +27,25 @@
 #define BLE_ERROR (-1)
 #define BLE_ERROR_INTERNAL_MESSAGE_BUFFER_FULL (-2)
 #define BLE_ERROR_INTERNAL_NO_MESSAGE_FOUND (-3)
+#define BLE_ERROR_INTERNAL_CBOR_PARSING_ISSUE (-4)
+#define BLE_ERROR_INTERNAL_INSUFFICIENT_CAPACITY (-5)
 
 #define BLE_MAX_PAYLOAD_SIZE (300)
 
 typedef uint8_t cbor_message_type_t;
 
+#define CBOR_MESSAGE_TYPE_UNKNOWN (-1)
+#define CBOR_MESSAGE_TYPE_WILDCARD (-2)
+
 typedef struct {
    cbor_message_type_t message_type;
    int8_t rssi;
 } ble_metadata_t;
+
+/**
+ * @brief           Loop that manages the propagation of state tables via ble
+ */
+void ble_run_propagation(void);
 
 /**
  * @brief           Blocking function to receive data over BLE
@@ -47,15 +57,15 @@ typedef struct {
 int ble_receive(cbor_message_type_t type, cbor_buffer* cbor_packet, ble_metadata_t* metadata);
 
 /**
- * @brief       Function to send data over BLE
- * @param[in]   data    Pointer to the data to send
- * @return      0 on success, negative error code on failure
+ * @brief           Function to send data over BLE
+ * @param[in]       data    Pointer to the data to send
+ * @return          0 on success, negative error code on failure
  */
 int ble_send(cbor_buffer* cbor_packet);
 
 /**
- * @brief       Function to initialize the BLE module
- * @return      0 on success, negative error code on failure
+ * @brief           Function to initialize the BLE module
+ * @return          0 on success, negative error code on failure
  */
 int ble_init(void);
 

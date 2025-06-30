@@ -801,3 +801,128 @@ int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
     buffer->cbor_size = no_cbor_packages;
     return no_cbor_packages;
 }
+
+int merge_cbor_into_table(cbor_buffer* buffer, metadata) {
+    CborParser parser;
+    CborValue value;
+    CborValue wrapperValue;
+    CborValue fieldsValue;
+    CborValue entryValue;
+
+    int tableType;
+    target_state_entry returnTargetTable[buffer->cbor_size];
+    is_state_entry returnIsTable[buffer->cbor_size];
+    seen_status_entry returnSeenTable[buffer->cbor_size];
+    jobs_entry returnJobsTable[buffer->cbor_size];
+
+    cbor_parser_init(buffer->buffer, buffer->cbor_size, 0, &parser, &value);
+    if(cbor_value_enter_container(&value, &wrapperValue) != CborNoError) {
+        return -1;
+    }
+    if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &tableType) != CborNoError) {
+        return -1;
+    } // get type of table
+
+    // [ enter second container
+    cbor_value_advance(&wrapperValue);
+    if(cbor_value_enter_container(&wrapperValue, &fieldsValue) != CborNoError) {
+        return -1;
+    }
+
+    int id, s, sID, d, ts, gt;
+    size_t length = 0;
+    cbor_value_get_array_length(&fieldsValue, &length); 	
+    for(size_t i = 0; i < (length - 1); i++) {
+        cbor_value_enter_container(&fieldsValue, &entryValue); // [
+        switch(tableType) {
+            case TARGET_STATE_KEY:
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &ts) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                target_state_entry newTargetEntry = {id, s, ts};
+                returnTargetTable[i] = newTargetEntry;
+                break;
+            case IS_STATE_KEY:
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                is_state_entry newIsEntry = {id, s, gt};
+                returnIsTable[i] = newIsEntry;
+                break;
+            case SEEN_STATUS_KEY:
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &sID) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                seen_status_entry newSeenEntry = {id, gt, s, sID};
+                returnSeenTable[i] = newSeenEntry;
+                break;
+            case JOBS_KEY:
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &d) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                jobs_entry newJobsEntry = {id, d};
+                returnJobsTable[i] = newJobsEntry;
+                break;
+        }
+        cbor_value_leave_container(&fieldsValue,&entryValue); // ]
+    }
+
+    cbor_value_leave_container(&wrapperValue, &fieldsValue); // ]	
+    cbor_value_leave_container(&value, &wrapperValue); // ]	
+    
+    // Integrate local data into global table
+    switch(tableType) {
+            case TARGET_STATE_KEY:
+                merge_target_state_entry_table(returnTargetTable, (length-1));
+                break;
+            case IS_STATE_KEY:
+                merge_is_state_entry_table(returnIsTable, (length-1));
+                break;
+            case SEEN_STATUS_KEY:
+                merge_seen_status_entry_table(returnSeenTable, (length-1));
+                break;
+            case JOBS_KEY:
+                merge_jobs_entry_table(returnJobsTable, (length-1));
+                break;
+            default:
+                return -1;
+    }
+
+    return 0;
+}
