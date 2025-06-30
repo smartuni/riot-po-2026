@@ -35,9 +35,10 @@ static mutex_t jobs_mutex = MUTEX_INIT;
 int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buffer) {
     CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
     cbor_encoder_init(&encoder, buffer->buffer, sizeof(uint8_t) * 100, 0);
-    cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
+    cbor_encoder_create_array(&encoder, &arrayEncoder, 3); // [
     cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
-    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, 4); // Entry 2
+    cbor_encode_int(&arrayEncoder, 2008); // Entry 2
+    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, 4); // Entry 3
 
     // [Table Entry]
     for(int i = 0; i < 4; i++) {
@@ -181,19 +182,27 @@ int cbor_to_table_test(cbor_buffer* buffer) {
     CborValue fieldsValue;
     CborValue entryValue;
 
-    int tableType;
+    int tableType, timeStamp;
     target_state_entry returnTargetTable[buffer->cbor_size];
     is_state_entry returnIsTable[buffer->cbor_size];
     seen_status_entry returnSeenTable[buffer->cbor_size];
     jobs_entry returnJobsTable[buffer->cbor_size];
 
     cbor_parser_init(buffer->buffer, buffer->cbor_size, 0, &parser, &value);
+    
     if(cbor_value_enter_container(&value, &wrapperValue) != CborNoError) {
         return -1;
     }
+
     if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &tableType) != CborNoError) {
         return -1;
     } // get type of table
+    if(tableType == TARGET_STATE_KEY) {
+        cbor_value_advance(&wrapperValue);
+        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
+            return -1;
+        } // get timestamp
+    }
 
     // [ enter second container
     cbor_value_advance(&wrapperValue);
@@ -201,7 +210,7 @@ int cbor_to_table_test(cbor_buffer* buffer) {
         return -1;
     }
 
-    int id, s, sID, d, ts, gt;
+    int id, s, sID, p, gt;
     size_t length = 0;
     cbor_value_get_array_length(&wrapperValue, &length); 	
     for(size_t i = 0; i < length; i++) {
@@ -216,11 +225,7 @@ int cbor_to_table_test(cbor_buffer* buffer) {
                     return -1;
                 }
                 cbor_value_advance(&entryValue);
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &ts) != CborNoError) {
-                    return -1;
-                }
-                cbor_value_advance(&entryValue);
-                target_state_entry newTargetEntry = {id, s, ts};
+                target_state_entry newTargetEntry = {id, s, timeStamp};
                 returnTargetTable[i] = newTargetEntry;
                 break;
             case IS_STATE_KEY:
@@ -264,11 +269,11 @@ int cbor_to_table_test(cbor_buffer* buffer) {
                     return -1;
                 }
                 cbor_value_advance(&entryValue);
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &d) != CborNoError) {
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &p) != CborNoError) {
                     return -1;
                 }
                 cbor_value_advance(&entryValue);
-                jobs_entry newJobsEntry = {id, d};
+                jobs_entry newJobsEntry = {id, JOB_IN_PROGRESS, p};
                 returnJobsTable[i] = newJobsEntry;
                 break;
         }
@@ -277,13 +282,6 @@ int cbor_to_table_test(cbor_buffer* buffer) {
 
     cbor_value_leave_container(&wrapperValue, &fieldsValue); // ]	
     cbor_value_leave_container(&value, &wrapperValue); // ]	
-
-    for(int i = 0; i < 4; i++) {
-        printf("Eintrag %d: \n", i);
-        printf("Gate: %d\n", returnTargetTable[i].gateID);
-        printf("State: %d\n", returnTargetTable[i].state);
-        printf("Timestamp: %d\n", returnTargetTable[i].timestamp);
-    }
 
     // Integrate local data into global table
     switch(tableType) {

@@ -17,6 +17,9 @@
     #define SEEN_STATUS_KEY 0x02
     #define JOBS_KEY 0x03
 
+    #define JOB_DONE 0x01
+    #define JOB_IN_PROGRESS 0x00
+
     #define TABLE_SUCCESS               0
     #define TABLE_ERROR_SIZE_TOO_BIG   -1
     #define TABLE_ERROR_INVALID_GATE_ID -2
@@ -50,6 +53,7 @@
     typedef struct {
         uint8_t gateID;
         uint8_t done;
+        uint8_t priority;
     } jobs_entry;
 
     typedef struct {
