@@ -38,7 +38,7 @@ public class MqttMessageHandler {
                 System.out.println("Unbekannter Nachrichtentyp: " + typeCode);
                 return;
             }
-
+            System.out.printf("MessageType: %s",type);
             switch (type) {
                 case IST_STATE -> {
                     for (JsonNode statusNode : root.get("statuses")) {
@@ -50,12 +50,13 @@ public class MqttMessageHandler {
                         newGate.setId(gateId);
                         newGate.setStatus(status);
 
-                        try {
-                            gateService.addGate(newGate);
+                            gateService.updateGate(newGate);
                             System.out.println("Gate hinzugefügt: ID=" + gateId + ", Status=" + status);
+                            /*
                         } catch (GateAlreadyExistingException e) {
                             System.out.println("Gate existiert bereits: ID=" + gateId);
                         }
+                            */
                     }
                 }
                 default -> System.out.println("Unhandled type: " + type);

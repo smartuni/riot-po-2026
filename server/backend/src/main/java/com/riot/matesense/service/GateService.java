@@ -29,7 +29,8 @@ public class GateService {
         List<GateEntity> gates = gateRepository.findAll();
         List<Gate> customGates = new ArrayList<>();
         gates.forEach(e -> {
-            changeConfidence(e, e.getConfidence());
+            System.out.println("getAll");
+            // changeConfidence(e, (int)(Math.random() * 100));
             Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), e.getSensorConfidence(),
                     e.getWorkerConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getQuality());
@@ -61,6 +62,7 @@ public class GateService {
             gateEntity.setLocation(gate.getLocation());
             gateEntity.setGateStatusArray(gate.getGateStatusArray());
             gateEntity.setWorkerStatusArray(gate.getWorkerStatusArray());
+            System.out.println("update");
             changeConfidence(gateEntity, gate.getConfidence());
             gateRepository.save(gateEntity);
         }
@@ -76,6 +78,7 @@ public class GateService {
 
     public void changeConfidence(GateEntity entity, int passedConfidence)
     {
+        System.out.println("Passed confidence:" + passedConfidence);
         int confidence;
         Status gateStatus = entity.getStatus();
         Status[] gateArray = entity.getGateStatusArray();
@@ -135,6 +138,7 @@ public class GateService {
             entity.setQuality(ConfidenceQuality.LOW);
         }
 
+        System.out.println("Calculated confidence:" + passedConfidence + "\n");
     }
 
     /*@Scheduled(fixedRate = 10000)
