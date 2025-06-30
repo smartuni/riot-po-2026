@@ -31,7 +31,7 @@ public class GateService {
         gates.forEach(e -> {
             Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), e.getSensorConfidence(),
-                    e.getWorkerConfidence(), e.getRequestedStatus(), e.getCalculator().determineQuality());
+                    e.getWorkerConfidence(), e.getRequestedStatus());
             customGates.add(gate);
         });
         return customGates;
@@ -57,7 +57,6 @@ public class GateService {
             gateEntity.setStatus(gate.getStatus());
             gateEntity.setSensorConfidence(gate.getSensorConfidence());
             gateEntity.setWorkerConfidence(gate.getWorkerConfidence());
-            gateEntity.getCalculator().updateConfidence(gateEntity.getStatus());
             gateEntity.setLocation(gate.getLocation());
             gateRepository.save(gateEntity);
         }
@@ -68,7 +67,7 @@ public class GateService {
         GateEntity gate = gateRepository.getById(id);
         return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
-                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getCalculator().determineQuality());
+                gate.getSensorConfidence(), gate.getRequestedStatus());
     }
 
     public void changeConfidence()

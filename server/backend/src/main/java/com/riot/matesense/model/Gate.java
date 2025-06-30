@@ -25,7 +25,7 @@ public class Gate {
 
 	public Gate(Long id , Long deviceId, Timestamp lastTimeStamp, Status status, Double latitude, Double longitude,String location,
 				 Boolean workerConfidence, Boolean sensorConfidence,
-				String requestedStatus,  ConfidenceQuality confidence) {
+				String requestedStatus) {
 		this.id = id;
 		this.location = location;
 		this.deviceId = deviceId;
