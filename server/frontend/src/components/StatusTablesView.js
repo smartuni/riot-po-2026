@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {fetchGates} from "../services/api";
+import {fetchActivities, fetchGates} from "../services/api";
 import {
     TextField,
     MenuItem,
@@ -22,6 +22,7 @@ function StatusTablesView() {
     const [filter, setFilter] = useState("");
     const [view, setView] = useState("list");
     const [expandedGateId, setExpandedGateId] = useState(null);
+    const [activities, setActivities] = useState([]);
 
     /**
      * Lädt die Gates beim ersten Rendern der Komponente.
@@ -36,6 +37,23 @@ function StatusTablesView() {
             }
         };
         loadGates();
+        const intervalId = setInterval(() => {
+            loadGates();
+        }, 300);
+
+        return () => clearInterval(intervalId);
+    }, []);
+
+    useEffect(() => {
+        const loadActivities = async () => {
+            try {
+                const data = await fetchActivities();
+                setActivities(data);
+            } catch (error) {
+                console.error('Fehler beim Laden der Aktivitäten', error);
+            }
+        };
+        loadActivities();
     }, []);
 
     /**
@@ -172,15 +190,17 @@ function StatusTablesView() {
                                         <td colSpan={8} style={{backgroundColor: "#f9f9f9"}}>
                                             <div>
                                                 <strong>Activities</strong>
-                                                <p>
-                                                    Worker with id: 4 has closed the gate
-                                                </p>
-                                                <p>
-                                                    Sensor with id: 2 has opened the gate
-                                                </p>
-                                                <p>
-                                                    Worker with id: 3 has requested to open the gate
-                                                </p>
+                                                {activities
+                                                    .filter(activity => activity.gateId === gate.id)
+                                                    .slice(-4) // Optional: nur die letzten 4 zeigen
+                                                    .map((activity, index) => (
+                                                        <p key={activity.id}>
+                                                            <strong>{activity.lastTimeStamp}:</strong> {activity.message}
+                                                        </p>
+                                                    ))}
+                                                {activities.filter(a => a.gateId === gate.id).length === 0 && (
+                                                    <p>No activities available for this gate.</p>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
