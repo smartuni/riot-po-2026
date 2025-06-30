@@ -60,7 +60,7 @@ static uint8_t _payload_buf[MATE_BLE_ADV_PKT_BUFFER_SIZE];
 
 static volatile int adv_send_count = 0;
 
-static int ble_gap_event_fn(struct ble_gap_event *event, void *arg);
+static int ble_gap_event(struct ble_gap_event *event, void *arg);
 static void ad_append(bluetil_ad_t *ad, const uint8_t *data, unsigned len);
 static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payload, unsigned len);
 static void start_adv(uint8_t *payload, unsigned payload_len);
@@ -95,9 +95,12 @@ static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payloa
     ad_append(ad, payload, len);
 }
 
-static int ble_gap_event_fn(struct ble_gap_event *event, void *arg) 
+static int ble_gap_event(struct ble_gap_event *event, void *arg) 
 {
+    (void) event;
+    (void) arg;
     // todo todo todo: hier muss der callback benutzt werden, damit der nächste buffer zum advertisen ausgewählt werden kann oder damit gewartet werden kann bis geschickt wurde.
+    return 0;
 }
 
 /* add function to configure advertisements with a custom payload */
@@ -279,6 +282,9 @@ int ble_send(cbor_buffer* cbor_packet)
 
 void ble_run_propagation(void)
 {
+
+    (void) ble_gap_event; 
+
     if (ble_init() != BLE_SUCCESS) {
         return;
     }
@@ -287,14 +293,14 @@ void ble_run_propagation(void)
     cbor_buffer buffer;
     buffer.buffer = stack_buffer;
     buffer.capacity = BLE_MAX_PAYLOAD_SIZE;
-    ble_metadata metadata;
+    ble_metadata_t metadata;
 
     while (true) {
         if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
             continue;
         }
 
-        switch (metadata.type) {
+        switch (metadata.message_type) {
             case TARGET_STATE_KEY:
                 break;
             case IS_STATE_KEY:
@@ -308,28 +314,28 @@ void ble_run_propagation(void)
         int count = target_state_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
             for (int i = 0; i < count; i++) {
-                ble_send(buffer);
+                ble_send(&buffer);
             }
         }
 
         count = is_state_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
             for (int i = 0; i < count; i++) {
-                ble_send(buffer);
+                ble_send(&buffer);
             }
         }
         
-        int count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
+        count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
             for (int i = 0; i < count; i++) {
-                ble_send(buffer);
+                ble_send(&buffer);
             }
         }
 
         count = jobs_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
             for (int i = 0; i < count; i++) {
-                ble_send(buffer);
+                ble_send(&buffer);
             }
         }
     }

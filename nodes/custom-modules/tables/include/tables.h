@@ -18,6 +18,8 @@
     #define JOBS_KEY 0x03
 
     #define TABLE_SUCCESS               0
+    #define TABLE_UPDATED               1
+    #define TABLE_NO_UPDATES            2
     #define TABLE_ERROR_SIZE_TOO_BIG   -1
     #define TABLE_ERROR_INVALID_GATE_ID -2
     #define TABLE_ERROR_NOT_FOUND      -3
@@ -185,10 +187,7 @@ int get_target_state_entry(uint8_t gate_id, target_state_entry* entry);
  * @param entry Pointer to is_state_entry to store result
  * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
  */
-int get_is_state_entry(uint8_t gate_id, is_state_entry* entry);
-
-/**
- * Get a single seen status entry by gate ID
+int get_is_state_entry(uint8_t gate_id, is_state_entry* en0
  * @param gate_id Gate ID to look up
  * @param entry Pointer to seen_status_entry to store result
  * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure

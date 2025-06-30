@@ -5,6 +5,7 @@
 #include "thread.h"
 #include "tables.h"
 #include "mate_lorawan.h"
+#include "mate_ble.h"
 
 #include <stdio.h>
 
@@ -16,15 +17,20 @@ char lorawan_stack[THREAD_STACKSIZE_DEFAULT];
 char ble_stack[THREAD_STACKSIZE_DEFAULT];
 
 int main(void){
+
+    puts("starting");
     init__door_interrupt();
+    puts("init tables");
     init_tables();
     setTimestamp(0);
     
+    puts("reading initial door state");
     uint8_t inital_door_state = initial_door_state();
     // write initial_door_state to table
     update_status(inital_door_state);
 
     // write to table
+    puts("write to table");
     int timestamp = getTimestamp();
 
     is_state_entry table_entry;
@@ -34,7 +40,7 @@ int main(void){
     setTimestamp(timestamp);
 
     // if (TABLE_SUCCESS == set_is_state_entry()){
-    if (0 == set_is_state_entry(&table_entry)){
+     if (TABLE_UPDATED == set_is_state_entry(&table_entry)){
         
 
         // TODO REMOVE LATER #1
@@ -49,6 +55,7 @@ int main(void){
         }
     // ----------------------------------------------
     } else {
+        puts("could not write to table");
         //err = -1;
     }
 
@@ -63,23 +70,28 @@ int main(void){
     }
 
     // start lorawan
-
+    puts("starting lorawan");
     if (!start_lorawan()){
         printf("starting lorawan failed");
         return -1;
     }
 
-    // start thread init bluetooth
-    // thread_create(
-    //     ble_stack,
-    //     sizeof(lorawan_stack),
-    //     THREAD_PRIORITY_MAIN - 1,
-    //     THREAD_CREATE_STACKTEST,
-    //     ble_init,
-    //     NULL,
-    //    "ble"
-    // };
+    //start thread init bluetooth
+    puts("starting ble");
+    thread_create(
+        ble_stack,
+        sizeof(ble_stack),
+        THREAD_PRIORITY_MAIN - 1,
+        THREAD_CREATE_STACKTEST,
+        (thread_task_func_t) ble_run_propagation,
+        NULL,
+       "ble");
+    
+
+
+    puts("main loop");
     while(1){
+        
         // TODO  error detection
         // err = check_door_status();
 

@@ -25,6 +25,7 @@ USEMODULE += event_thread
 USEMODULE += event_timeout
 USEMODULE += tables
 USEMODULE += mate_lorawan
+USEMODULE += mate_ble
 
 
 CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=1024

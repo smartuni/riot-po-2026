@@ -34,8 +34,8 @@
 
 typedef uint8_t cbor_message_type_t;
 
-#define CBOR_MESSAGE_TYPE_UNKNOWN (-1)
-#define CBOR_MESSAGE_TYPE_WILDCARD (-2)
+#define CBOR_MESSAGE_TYPE_UNKNOWN (uint8_t)(-1)
+#define CBOR_MESSAGE_TYPE_WILDCARD (uint8_t)(-2)
 
 typedef struct {
    cbor_message_type_t message_type;
