@@ -213,6 +213,14 @@ const LandingPage = () => {
             >
               Sign Up
             </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => navigate('/dashboard-guest')}
+              sx={{ borderRadius: 20, flex: 1, maxWidth: 160 }}
+            >
+              Continue as Guest
+            </Button>
           </Box>
         </Box>
       </Grid2>
