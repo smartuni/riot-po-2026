@@ -27,6 +27,11 @@ public class GateEntity {
 	private Double longitude;
 	private Boolean workerConfidence;
 	private Boolean sensorConfidence;
+	private int confidence;
+    private boolean ignoreGate;
+    private boolean gateDetector;
+    private Status[] gateStatusArray = new Status[5];
+    private Status[] workerStatusArray = new Status[5];
 	@Column(name = "requested_status")
 	private String requestedStatus;
 

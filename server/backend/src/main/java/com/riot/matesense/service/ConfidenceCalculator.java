@@ -12,7 +12,6 @@ public class ConfidenceCalculator //retooled to work within existing framework
 {
     @Getter
     int confidence;
-    ConfidenceQuality quality;
     boolean ignoreGate;
     boolean gateDetector;
     Status[] gateStatusArray = new Status[5];
@@ -20,14 +19,13 @@ public class ConfidenceCalculator //retooled to work within existing framework
 
     public ConfidenceCalculator() //initialize an empty list of reports and set confidence to max
     {
-        this.confidence = 100;
-        this.quality = determineQuality();
-        this.ignoreGate = false;
-        this.gateDetector = false;
+        confidence = 100;
+        ignoreGate = false;
+        gateDetector = false;
         for(int i = 0; i < 5; i++)
         {
-            this.gateStatusArray[i] = Status.NONE;
-            this.workerStatusArray[i] = Status.NONE;
+            gateStatusArray[i] = Status.NONE;
+            workerStatusArray[i] = Status.NONE;
         }
     }
 
@@ -43,7 +41,7 @@ public class ConfidenceCalculator //retooled to work within existing framework
         workerStatusArray[0] = status;
     }
 
-    public ConfidenceQuality updateConfidence(Status status)
+    public int updateConfidence(Status status)
     {
         if (status == Status.UNKNOWN || status == Status.NONE) //set confidence to max if status doesn't exist or is reported as unknown
         {
@@ -84,12 +82,13 @@ public class ConfidenceCalculator //retooled to work within existing framework
         confidence = Math.max(0, confidence); // normalize confidence, between 0 and 100
         confidence = Math.min(100, confidence);
 
-        return determineQuality();
+        return confidence;
     }
 
+    @Scheduled(fixedRate = 21600000) // six hours in milliseconds
     public void subtractConfidence()
     {
-        confidence -= 20; //subtract five percent every six hours
+        confidence -= 5; //subtract five percent every six hours
     }
 
     public ConfidenceQuality determineQuality() { // given a confidence number, report a keyword for the confidence (Qualitative, not just a number)
@@ -128,6 +127,7 @@ public class ConfidenceCalculator //retooled to work within existing framework
              gateDetector = true;
         }
         return gateDetector;
+
     }
 
     public void receiveReports (boolean command) 
