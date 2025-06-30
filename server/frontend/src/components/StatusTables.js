@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {fetchActivities, fetchGates, loadWorkerId, requestGateStatusChange} from "../services/api";
-import axios from "axios";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import api from "../services/api";
 import {
     TextField,
@@ -153,6 +154,17 @@ function StatusTables() {
         }
     };
 
+    const renderPendingJobs = (status) => {
+        switch (status) {
+            case "REQUESTED_OPEN":
+                return <><LockOpenIcon fontSize="small"/> OPEN</>;
+            case "REQUESTED_CLOSE":
+                return <><LockIcon fontSize="small"/> CLOSE</>;
+            default:
+                return <><CircleIcon fontSize="small"/> NONE</>;
+        }
+    };
+
     /**
      * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
      * @type {*[]}
@@ -197,6 +209,23 @@ function StatusTables() {
             alert("Failed to send downlink.");
         }
     };
+
+    const handlePriorityChange = async (gateId, newPriority) => {
+        try {
+            // Optional: call backend API here if needed
+            await api.put(`/update-priority/${gateId}`, { priority: newPriority });
+
+            // Locally update the state for immediate feedback
+            setGates(prevGates =>
+                prevGates.map(g =>
+                    g.id === gateId ? { ...g, priority: newPriority } : g
+                )
+            );
+        } catch (error) {
+            console.error("Error updating priority:", error);
+        }
+    };
+
 
     /**
      * Berechnet die Zeit seit dem letzten Update eines Gates in einem lesbaren Format.
@@ -299,8 +328,9 @@ function StatusTables() {
                             <th>Gate ID</th>
                             <th>Location</th>
                             <th>Status</th>
+                            <th>Pending Jobs</th>
                             <th>Requested Status</th>
-                            <th>Device ID</th>
+                            <th>Priority</th>
                             <th>Last Update</th>
                             <th>Confidence</th>
                             <th>Actions</th>
@@ -331,7 +361,27 @@ function StatusTables() {
                                             {renderRequestedStatus(gate.requestedStatus)}
                                         </span>
                                     </td>
-                                    <td>{gate.deviceId}</td>
+                                    <td>
+                                        <span className={`badge ${gate.requestedStatus ? gate.requestedStatus.toLowerCase() : 'none'}`}>
+                                            {renderPendingJobs(gate.requestedStatus)}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {gate.priority}
+                                            <FormControl size="small" variant="outlined" fullWidth>
+                                                <Select
+                                                    value={gate.priority ?? 0}
+                                                    onChange={(e) => handlePriorityChange(gate.id, parseInt(e.target.value))}
+                                                >
+                                                    {[0, 1, 2, 3].map((level) => (
+                                                        <MenuItem key={level} value={level}>
+                                                            Priority {level}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                    </td>
+
                                     <td>
                                         <div>{getTimeAgo(gate.lastTimeStamp)}</div>
                                         <div className="date">{gate.lastUpdate}</div>

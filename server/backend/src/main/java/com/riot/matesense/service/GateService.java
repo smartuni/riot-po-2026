@@ -31,7 +31,7 @@ public class GateService {
         gates.forEach(e -> {
             Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), e.getSensorConfidence(),
-                    e.getWorkerConfidence(), e.getRequestedStatus(), e.getConfidence());
+                    e.getWorkerConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getPendingJob(), e.getPriority());
             customGates.add(gate);
         });
         return customGates;
@@ -68,7 +68,7 @@ public class GateService {
         GateEntity gate = gateRepository.getById(id);
         return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
-                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence());
+                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getPendingJob(), gate.getPriority());
     }
 
     public void requestGateStatusChange(Long gateId, String targetStatus) throws GateNotFoundException {
@@ -82,12 +82,15 @@ public class GateService {
             targetStatus = null;
         }
         gate.setRequestedStatus(targetStatus);
+        gate.setPendingJob(targetStatus);
         gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
 
         System.out.println(gate.getRequestedStatus());
 
         gateRepository.save(gate);
     }
+
+
 
     public List<GateForDownlink> getAllGatesForDownlink() {
         List<GateEntity> gates = gateRepository.findAll();
