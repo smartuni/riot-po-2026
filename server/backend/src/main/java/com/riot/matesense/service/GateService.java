@@ -29,9 +29,10 @@ public class GateService {
         List<GateEntity> gates = gateRepository.findAll();
         List<Gate> customGates = new ArrayList<>();
         gates.forEach(e -> {
+            changeConfidence(e, e.getConfidence());
             Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), e.getSensorConfidence(),
-                    e.getWorkerConfidence(), e.getRequestedStatus());
+                    e.getWorkerConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getQuality());
             customGates.add(gate);
         });
         return customGates;
@@ -58,6 +59,9 @@ public class GateService {
             gateEntity.setSensorConfidence(gate.getSensorConfidence());
             gateEntity.setWorkerConfidence(gate.getWorkerConfidence());
             gateEntity.setLocation(gate.getLocation());
+            gateEntity.setGateStatusArray(gate.getGateStatusArray());
+            gateEntity.setWorkerStatusArray(gate.getWorkerStatusArray());
+            changeConfidence(gateEntity, gate.getConfidence());
             gateRepository.save(gateEntity);
         }
 
@@ -67,12 +71,70 @@ public class GateService {
         GateEntity gate = gateRepository.getById(id);
         return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
-                gate.getSensorConfidence(), gate.getRequestedStatus());
+                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality());
     }
 
-    public void changeConfidence()
+    public void changeConfidence(GateEntity entity, int passedConfidence)
     {
-        ConfidenceQuality quality = ConfidenceQuality.HIGH;
+        int confidence;
+        Status gateStatus = entity.getStatus();
+        Status[] gateArray = entity.getGateStatusArray();
+        Status[] workerArray = entity.getWorkerStatusArray();
+
+        if (gateStatus == Status.UNKNOWN || gateStatus == Status.NONE) //set confidence to max if status doesn't exist or is reported as unknown
+        {
+            confidence = 100; //(if we don't know, we're sure that we don't know)
+        }
+        else
+        {
+            confidence = passedConfidence;
+            for(int i = 0; i < 5; i++)
+            {
+                int gateDelta = 10 - (2 * i);
+                int workerDelta = 20 - (4 * i);
+
+                if (gateStatus == gateArray[i] && gateArray[i] != Status.NONE)
+                {
+                    confidence += gateDelta; // if new a report matches an older report, increase confidence
+                }
+                else if (gateArray[i] != Status.NONE)
+                {
+                    confidence -= gateDelta; // otherwise, decrease confidence
+                }
+
+                if (gateStatus == workerArray[i] && workerArray[i] != Status.NONE)
+                {
+                    confidence += workerDelta;
+                }
+                else if (workerArray[i] != Status.NONE)
+                {
+                    confidence -= workerDelta;
+                }
+            }
+        }
+        
+        entity.setConfidence(confidence);
+        entity.shuffleReports(gateStatus);
+
+        confidence = Math.max(0, confidence); // normalize confidence, between 0 and 100
+        confidence = Math.min(100, confidence);
+
+        if (confidence >= 90){
+            entity.setQuality(ConfidenceQuality.HIGH);
+        }
+        else if (confidence >= 80 && confidence < 90){
+            entity.setQuality(ConfidenceQuality.MED_HIGH);
+        }
+        else if (confidence >= 70 && confidence < 80){
+            entity.setQuality(ConfidenceQuality.MED);
+        }
+        else if (confidence >= 60 && confidence < 70){
+            entity.setQuality(ConfidenceQuality.MED_LOW);
+        }
+        else {
+            entity.setQuality(ConfidenceQuality.LOW);
+        }
+
     }
 
     /*@Scheduled(fixedRate = 10000)

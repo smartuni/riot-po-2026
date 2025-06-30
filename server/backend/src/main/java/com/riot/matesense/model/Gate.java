@@ -21,11 +21,12 @@ public class Gate {
 	private Boolean workerConfidence;
 	private Boolean sensorConfidence;
 	private String requestedStatus;
-	private ConfidenceQuality confidence;
+	private int actualConfidence;
+	private ConfidenceQuality quality;
 
 	public Gate(Long id , Long deviceId, Timestamp lastTimeStamp, Status status, Double latitude, Double longitude,String location,
 				 Boolean workerConfidence, Boolean sensorConfidence,
-				String requestedStatus) {
+				String requestedStatus, int actualConfidence, ConfidenceQuality quality) {
 		this.id = id;
 		this.location = location;
 		this.deviceId = deviceId;
@@ -36,6 +37,7 @@ public class Gate {
 		this.requestedStatus = requestedStatus;
 		this.latitude = latitude;
 		this.longitude = longitude;
-		this.confidence = confidence;
+		this.actualConfidence = actualConfidence;
+		this.quality = quality;
 	}
 }

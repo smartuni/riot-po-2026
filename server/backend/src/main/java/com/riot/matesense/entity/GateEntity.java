@@ -1,5 +1,6 @@
 package com.riot.matesense.entity;
 
+import com.riot.matesense.enums.ConfidenceQuality;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.service.ConfidenceCalculator;
 import jakarta.persistence.*;
@@ -28,6 +29,7 @@ public class GateEntity {
 	private Boolean workerConfidence;
 	private Boolean sensorConfidence;
 	private int confidence;
+	private ConfidenceQuality quality;
     private boolean ignoreGate;
     private boolean gateDetector;
     private Status[] gateStatusArray = new Status[5];
@@ -49,6 +51,23 @@ public class GateEntity {
 		this.requestedStatus = requestedStatus;
 		this.latitude = latitude;
 		this.longitude = longitude;
+		for(int i = 0; i < 5; i++)
+		{
+			this.gateStatusArray[i] = Status.NONE;
+			this.workerStatusArray[i] = Status.NONE;
+		}
+	}
+
+	public void shuffleReports(Status gateStatus)
+	{
+		for(int i = 1; i < 5; i++)
+        {
+            this.gateStatusArray[i] = this.gateStatusArray[i-1]; // push older reports to the back of the array
+            this.workerStatusArray[i] = this.workerStatusArray[i-1];
+        }
+
+        gateStatusArray[0] = gateStatus; // insert most recent report to the front of the array
+        workerStatusArray[0] = gateStatus;
 	}
 
 	public GateEntity() {
