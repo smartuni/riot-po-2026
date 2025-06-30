@@ -275,14 +275,16 @@ int ble_send(cbor_buffer* cbor_packet)
         ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
     }
 
-    // update the payload with the given message
-    memcpy(_payload_buf, cbor_packet->buffer, cbor_packet->cbor_size);
-    start_adv(_payload_buf, cbor_packet->cbor_size);
+    for (int i = 0; i < cbor_packet->cbor_size; i++) {
+        // update the payload with the given message
+        memcpy(_payload_buf, cbor_packet->buffer, cbor_packet->package_size[i]);
+        start_adv(_payload_buf, cbor_packet->package_size[i]);
 
-    /* Block here until the ADV_COMPLETE event posts the sem */
-    sem_wait(&adv_done_sem);
+        /* Block here until the ADV_COMPLETE event posts the sem */
+        sem_wait(&adv_done_sem);
 
-    ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
+        ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
+    }
 
     return BLE_SUCCESS;
 }
@@ -294,38 +296,32 @@ void ble_send_loop(void)
     }
 
     uint8_t stack_buffer[BLE_MAX_PAYLOAD_SIZE];
+    uint8_t stack_package_size[BLE_MAX_PAYLOAD_SIZE];
     cbor_buffer buffer;
     buffer.buffer = stack_buffer;
     buffer.capacity = BLE_MAX_PAYLOAD_SIZE;
-    ble_metadata metadata;
+    buffer.package_size = stack_package_size;
+    ble_metadata_t metadata;
 
     while (true) {
         int count = target_state_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
-            for (int i = 0; i < count; i++) {
-                ble_send(&buffer);
-            }
+            ble_send(&buffer);
         }
 
         count = is_state_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
-            for (int i = 0; i < count; i++) {
-                ble_send(&buffer);
-            }
+            ble_send(&buffer);
         }
         
-        int count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
+        count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
-            for (int i = 0; i < count; i++) {
-                ble_send(&buffer);
-            }
+            ble_send(&buffer);
         }
 
         count = jobs_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
-            for (int i = 0; i < count; i++) {
-                ble_send(&buffer);
-            }
+            ble_send(&buffer);
         }
     }
 }
