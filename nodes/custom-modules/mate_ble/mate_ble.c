@@ -58,6 +58,9 @@ static const uint8_t _custom_msd_marker_pattern[] = {
 static uint8_t _payload_buf[MATE_BLE_ADV_PKT_BUFFER_SIZE];
 //static unsigned _pl_len = 0;
 
+static volatile int adv_send_count = 0;
+
+static int ble_gap_event_fn(struct ble_gap_event *event, void *arg);
 static void ad_append(bluetil_ad_t *ad, const uint8_t *data, unsigned len);
 static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payload, unsigned len);
 static void start_adv(uint8_t *payload, unsigned payload_len);
@@ -92,6 +95,11 @@ static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payloa
     ad_append(ad, payload, len);
 }
 
+static int ble_gap_event_fn(struct ble_gap_event *event, void *arg) 
+{
+    // todo todo todo: hier muss der callback benutzt werden, damit der nächste buffer zum advertisen ausgewählt werden kann oder damit gewartet werden kann bis geschickt wurde.
+}
+
 /* add function to configure advertisements with a custom payload */
 static void start_adv(uint8_t *payload, unsigned payload_len)
 {
@@ -108,7 +116,7 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     static bluetil_ad_t ad;
 
     // use defaults for non-set params
-    memset (&params, 0, sizeof(params));
+    memset(&params, 0, sizeof(params));
 
     /* advertise using ID addr */
     params.own_addr_type = id_addr_type;
@@ -121,7 +129,7 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     params.itvl_min = BLE_GAP_ADV_ITVL_MS(600);
     params.itvl_max = BLE_GAP_ADV_ITVL_MS(800);
 
-    // configure the nimble instance */
+    // configure the nimble instance
     rc = ble_gap_ext_adv_configure(MATE_BLE_NIMBLE_INSTANCE, &params, NULL, NULL, NULL);
     assert (rc == 0);
 
@@ -260,5 +268,69 @@ int ble_send(cbor_buffer* cbor_packet)
     memcpy(_payload_buf, cbor_packet->buffer, cbor_packet->cbor_size);
     start_adv(_payload_buf, cbor_packet->cbor_size);
 
+    // todo: use better method instead of spinning
+    int prev_send_count = adv_send_count;
+    while (adv_send_count == prev_send_count) {
+        ztimer_sleep(ZTIMER_MSEC, 1); // Sleep until message is send
+    }
+
     return BLE_SUCCESS;
+}
+
+void ble_run_propagation(void)
+{
+    if (ble_init() != BLE_SUCCESS) {
+        return;
+    }
+
+    uint8_t stack_buffer[BLE_MAX_PAYLOAD_SIZE];
+    cbor_buffer buffer;
+    buffer.buffer = stack_buffer;
+    buffer.capacity = BLE_MAX_PAYLOAD_SIZE;
+    ble_metadata metadata;
+
+    while (true) {
+        if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
+            continue;
+        }
+
+        switch (metadata.type) {
+            case TARGET_STATE_KEY:
+                break;
+            case IS_STATE_KEY:
+                break;
+            case SEEN_STATUS_KEY:
+                break;
+            case JOBS_KEY:
+                break;
+        }
+        
+        int count = target_state_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
+        if (count > 0) {
+            for (int i = 0; i < count; i++) {
+                ble_send(buffer);
+            }
+        }
+
+        count = is_state_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
+        if (count > 0) {
+            for (int i = 0; i < count; i++) {
+                ble_send(buffer);
+            }
+        }
+        
+        int count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
+        if (count > 0) {
+            for (int i = 0; i < count; i++) {
+                ble_send(buffer);
+            }
+        }
+
+        count = jobs_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
+        if (count > 0) {
+            for (int i = 0; i < count; i++) {
+                ble_send(buffer);
+            }
+        }
+    }
 }

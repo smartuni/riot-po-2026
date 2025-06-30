@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "ztimer.h"
+#include "cbor.h"
 
 #define MATE_BLE_INCOMING_LIST_SIZE (4)
 
@@ -18,20 +19,25 @@ static mutex_t list_mutex = MUTEX_INIT;
 
 int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata) 
 {
-    CborParser parser;
-    CborValue value;
-    cbor_parser_init(data, data_len, 0, &parser, &value);
+    CborParser cobr_parser;
+    CborValue cbor_iter;
+    cbor_parser_init(data, data_len, 0, &cobr_parser, &cbor_iter);
 
-    CborValue wrapper_value;
-    if(cbor_value_enter_container(&value, &wrapper_value) != CborNoError) {
-        return -1;
+    CborValue cbor_type;
+    if(cbor_value_enter_container(&cbor_iter, &cbor_type) != CborNoError) {
+        return BLE_ERROR_INTERNAL_CBOR_PARSING_ISSUE;
     }
 
-    int table_type = -1;
-    if(!cbor_value_is_integer(&wrapper_value) || 
-        cbor_value_get_int(&wrapper_value, &table_type) != CborNoError) {
-        return -1;
+    int table_type = CBOR_MESSAGE_TYPE_UNKNOWN;
+    if(!cbor_value_is_integer(&cbor_type) || 
+        cbor_value_get_int(&cbor_type, &table_type) != CborNoError) {
+        return BLE_ERROR_INTERNAL_CBOR_PARSING_ISSUE;
     }
+
+    if (table_type == CBOR_MESSAGE_TYPE_UNKNOWN) {
+        return BLE_ERROR_INTERNAL_CBOR_PARSING_ISSUE;
+    }
+    metadata.message_type = table_type;
 
     // Lock the mutex before accessing the shared data structure
     mutex_lock(&list_mutex);
@@ -52,13 +58,19 @@ int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata)
 
 int remove_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, ble_metadata_t* metadata) 
 {
-    // Lock the mutex before accessing the shared data structure
+    bool any_type = message_type == CBOR_MESSAGE_TYPE_WILDCARD;
+
+    // Lock the mutex before accessing the message list
     mutex_lock(&list_mutex);
     for (int i = 0; i < MATE_BLE_INCOMING_LIST_SIZE; i++) {
-        if (incoming_messages[i].metadata.message_type == message_type && 
+        bool type_match = incoming_messages[i].metadata.message_type == message_type;
+        if ((type_match || any_type) && 
             incoming_messages[i].cbor_packet.buffer != NULL) {
             cbor_packet->cbor_size = incoming_messages[i].cbor_packet.cbor_size;
-            cbor_packet->capacity = incoming_messages[i].cbor_packet.capacity;
+            if (cbor_packet->capacity < incoming_messages[i].cbor_packet.capacity) {
+                mutex_unlock(&list_mutex);
+                return BLE_ERROR_INTERNAL_INSUFFICIENT_CAPACITY;
+            }
             memcpy(cbor_packet->buffer, incoming_messages[i].cbor_packet.buffer, incoming_messages[i].cbor_packet.cbor_size);
             *metadata = incoming_messages[i].metadata;
             memset(&incoming_messages[i], 0, sizeof(incoming_messages[i]));
@@ -76,5 +88,6 @@ int wait_for_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet,
     while ((result = remove_message(message_type, cbor_packet, metadata)) == BLE_ERROR_INTERNAL_NO_MESSAGE_FOUND) {
         ztimer_sleep(ZTIMER_MSEC, 100); // Sleep for a short time before trying again
     }
+
     return result;
 }

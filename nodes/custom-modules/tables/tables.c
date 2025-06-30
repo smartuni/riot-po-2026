@@ -21,12 +21,82 @@ static target_state_entry target_state_entry_table[MAX_GATE_COUNT];
 static is_state_entry is_state_entry_table[MAX_GATE_COUNT];
 static seen_status_entry seen_status_entry_table[MAX_GATE_COUNT];
 static jobs_entry jobs_entry_table[MAX_GATE_COUNT];
+static timestamp_entry timestamp_table[MAX_GATE_COUNT];
 
 // Mutexes for thread safety
 static mutex_t target_state_mutex = MUTEX_INIT;
 static mutex_t is_state_mutex = MUTEX_INIT;
 static mutex_t seen_status_mutex = MUTEX_INIT;
 static mutex_t jobs_mutex = MUTEX_INIT;
+static mutex_t timestamp_mutex = MUTEX_INIT;
+
+/**
+ * Initialize all tables with default values
+ */
+int init_tables(void) {
+    mutex_lock(&target_state_mutex);
+    mutex_lock(&is_state_mutex);
+    mutex_lock(&seen_status_mutex);
+    mutex_lock(&jobs_mutex);
+    mutex_lock(&timestamp_mutex);
+    
+    for (int i = 0; i < MAX_GATE_COUNT; i++) {
+        target_state_entry_table[i].gateID = MAX_GATE_COUNT;  // Mark as empty
+        is_state_entry_table[i].gateID = MAX_GATE_COUNT;
+        seen_status_entry_table[i].gateID = MAX_GATE_COUNT;
+        jobs_entry_table[i].gateID = MAX_GATE_COUNT;
+        timestamp_table[i].gateID = MAX_GATE_COUNT;
+    }
+    
+    mutex_unlock(&timestamp_mutex);
+    mutex_unlock(&jobs_mutex);
+
+
+static int is_target_state_entry_present_internal(uint8_t gate_id) {
+    if (gate_id >= MAX_GATE_COUNT) {
+        return 0;  // Invalid gate_id = not present
+    }
+    uint8_t entry_gate_id = target_state_entry_table[gate_id].gateID;
+    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
+}
+
+static int is_is_state_entry_present_internal(uint8_t gate_id) {
+    if (gate_id >= MAX_GATE_COUNT) {
+        return 0;
+    }
+    uint8_t entry_gate_id = is_state_entry_table[gate_id].gateID;
+    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
+}
+
+static int is_seen_status_entry_present_internal(uint8_t gate_id) {
+    if (gate_id >= MAX_GATE_COUNT) {
+        return 0;
+    }
+    uint8_t entry_gate_id = seen_status_entry_table[gate_id].gateID;
+    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
+}
+
+static int is_jobs_entry_present_internal(uint8_t gate_id) {
+    if (gate_id >= MAX_GATE_COUNT) {
+        return 0;
+    }
+    uint8_t entry_gate_id = jobs_entry_table[gate_id].gateID;
+    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
+}
+
+static int is_timestamp_entry_present_internal(uint8_t gate_id) {
+    if (gate_id >= MAX_GATE_COUNT) {
+        return 0;
+    }
+    uint8_t entry_gate_id = timestamp_table[gate_id].gateID;
+    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
+}
+
+
+
+static inline int is_valid_gate_id(uint8_t gate_id) {
+    return gate_id < MAX_GATE_COUNT;
+}
 
 int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buffer) {
     CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
@@ -63,7 +133,7 @@ int target_state_table_to_cbor(cbor_buffer* buffer) {
 
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (target_state_entry_table[i].gateID != MAX_GATE_COUNT) {
+        if (is_target_state_entry_present_internal(i)) {
             cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
             cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].gateID);
             cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].state);
@@ -89,7 +159,7 @@ int is_state_table_to_cbor(cbor_buffer* buffer) {
 
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (is_state_entry_table[i].gateID != MAX_GATE_COUNT) {
+        if(is_is_state_entry_present_internal(i)) {
             cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
             cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].gateID);
             cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].state);
@@ -115,7 +185,7 @@ int seen_status_table_to_cbor(cbor_buffer* buffer) {
 
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (seen_status_entry_table[i].gateID != MAX_GATE_COUNT) {
+        if(is_seen_status_entry_present_internal(i)) {
             cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
             cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].gateID);
             cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].gateTime);
@@ -142,7 +212,7 @@ int jobs_table_to_cbor(cbor_buffer* buffer) {
 
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (jobs_entry_table[i].gateID != MAX_GATE_COUNT) {
+        if (is_jobs_entry_present_internal(i)) {
             cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
             cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].gateID);
             cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].done);
@@ -158,21 +228,14 @@ int jobs_table_to_cbor(cbor_buffer* buffer) {
     return 0;
 }
 
-<<<<<<< HEAD
-int cbor_to_table(cbor_buffer* buffer) {
-=======
 int cbor_to_table_test(cbor_buffer* buffer) {
->>>>>>> origin/ble/communication/node
     CborParser parser;
     CborValue value;
     CborValue wrapperValue;
     CborValue fieldsValue;
     CborValue entryValue;
 
-<<<<<<< HEAD
-=======
     int tableType;
->>>>>>> origin/ble/communication/node
     target_state_entry returnTargetTable[buffer->cbor_size];
     is_state_entry returnIsTable[buffer->cbor_size];
     seen_status_entry returnSeenTable[buffer->cbor_size];
@@ -290,7 +353,6 @@ int cbor_to_table_test(cbor_buffer* buffer) {
     return 0;
 }
 
-<<<<<<< HEAD
 int target_state_table_to_cbor_many(target_state_entry table[], int package_size, cbor_buffer* buffer) {
     int no_entries_in_cbor = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_TARGET_STATE_MAX_BYTE_SIZE;
     if(no_entries_in_cbor <= 0) {
@@ -336,8 +398,6 @@ int target_state_table_to_cbor_many(target_state_entry table[], int package_size
     return no_cbor_streams;
 }
 
-=======
->>>>>>> origin/ble/communication/node
 /**
  * Initialize all tables with default values
  */
@@ -362,37 +422,7 @@ int init_tables(void) {
     return TABLE_SUCCESS;
 }
 
-static int is_target_state_entry_present_internal(uint8_t gate_id) {
-    if (gate_id >= MAX_GATE_COUNT) {
-        return 0;  // Invalid gate_id = not present
-    }
-    return target_state_entry_table[gate_id].gateID != MAX_GATE_COUNT;
-}
 
-static int is_is_state_entry_present_internal(uint8_t gate_id) {
-    if (gate_id >= MAX_GATE_COUNT) {
-        return 0;
-    }
-    return is_state_entry_table[gate_id].gateID != MAX_GATE_COUNT;
-}
-
-static int is_seen_status_entry_present_internal(uint8_t gate_id) {
-    if (gate_id >= MAX_GATE_COUNT) {
-        return 0;
-    }
-    return seen_status_entry_table[gate_id].gateID != MAX_GATE_COUNT;
-}
-
-static int is_jobs_entry_present_internal(uint8_t gate_id) {
-    if (gate_id >= MAX_GATE_COUNT) {
-        return 0;
-    }
-    return jobs_entry_table[gate_id].gateID != MAX_GATE_COUNT;
-}
-
-static inline int is_valid_gate_id(uint8_t gate_id) {
-    return gate_id < MAX_GATE_COUNT;
-}
 
 int set_target_state_entry(const target_state_entry* entry) {
     if (entry == NULL) {
@@ -482,6 +512,23 @@ int set_jobs_entry(const jobs_entry* entry) {
     mutex_lock(&jobs_mutex);
     jobs_entry_table[gate_id] = *entry;
     mutex_unlock(&jobs_mutex);
+    
+    return TABLE_SUCCESS;
+}
+
+int set_timestamp_entry(const timestamp_entry* entry) {
+    if (entry == NULL) {
+        return TABLE_ERROR_INVALID_GATE_ID;
+    }
+    
+    uint8_t gate_id = entry->gateID;
+    if (!is_valid_gate_id(gate_id)) {
+        return TABLE_ERROR_INVALID_GATE_ID;
+    }
+    
+    mutex_lock(&timestamp_mutex);
+    timestamp_table[gate_id] = *entry;
+    mutex_unlock(&timestamp_mutex);
     
     return TABLE_SUCCESS;
 }
@@ -631,6 +678,24 @@ int get_jobs_entry(uint8_t gate_id, jobs_entry* entry) {
     return TABLE_SUCCESS;
 }
 
+int get_timestamp_entry(uint8_t gate_id, timestamp_entry* entry) {
+    if (entry == NULL || !is_valid_gate_id(gate_id)) {
+        return TABLE_ERROR_INVALID_GATE_ID;
+    }
+    
+    mutex_lock(&timestamp_mutex);
+    
+    if (!is_timestamp_entry_present_internal(gate_id)) {
+        mutex_unlock(&timestamp_mutex);
+        return TABLE_ERROR_NOT_FOUND;
+    }
+    
+    *entry = timestamp_table[gate_id];
+    mutex_unlock(&timestamp_mutex);
+    
+    return TABLE_SUCCESS;
+}
+
 const target_state_entry* get_target_state_table(void) {
     return target_state_entry_table;
 }
@@ -645,10 +710,12 @@ const seen_status_entry* get_seen_status_table(void) {
 
 const jobs_entry* get_jobs_table(void) {
     return jobs_entry_table;
-<<<<<<< HEAD
-=======
 }
-  
+ 
+const timestamp_entry* get_timestamp_table(void) {
+    return timestamp_table;
+}
+
 int target_state_table_to_cbor_many_test(target_state_entry table[], int package_size, cbor_buffer* buffer) {
     printf("Entered function\n");
     // Assert: given package_size big enough
@@ -717,7 +784,7 @@ int target_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_TARGET_STATE_MAX_BYTE_SIZE < package_size) {
-            if (target_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
+            if(is_target_state_entry_present_internal(table_index)) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, target_state_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, target_state_entry_table[table_index].state);
@@ -757,7 +824,7 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, IS_STATE_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_IS_STATE_MAX_BYTE_SIZE < package_size) {
-            if (is_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
+            if(is_is_state_entry_present_internal(table_index)) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].state);
@@ -797,7 +864,7 @@ int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, SEEN_STATUS_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_SEEN_STATUS_MAX_BYTE_SIZE < package_size) {
-            if(seen_status_entry_table[table_index].gateID != MAX_GATE_COUNT) {
+            if(is_seen_status_entry_present_internal(table_index)) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 4); // []
                 cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].gateTime);
@@ -838,8 +905,7 @@ int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, JOBS_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, MAX_GATE_COUNT); // Entry 2
         while(size_of_current_cbor + CBOR_JOBS_MAX_BYTE_SIZE < package_size) {
-            //validate table entry
-            if(jobs_entry_table[table_index].gateID != MAX_GATE_COUNT) {
+            if(is_jobs_entry_present_internal(table_index)) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 2); // []
                 cbor_encode_int(&singleEntryEncoder, jobs_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, jobs_entry_table[table_index].done);
@@ -857,5 +923,129 @@ int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
     }
     buffer->cbor_size = no_cbor_packages;
     return no_cbor_packages;
->>>>>>> origin/ble/communication/node
+}
+
+int merge_cbor_into_table(cbor_buffer* buffer, metadata) {
+    CborParser parser;
+    CborValue value;
+    CborValue wrapperValue;
+    CborValue fieldsValue;
+    CborValue entryValue;
+
+    int tableType;
+    target_state_entry returnTargetTable[buffer->cbor_size];
+    is_state_entry returnIsTable[buffer->cbor_size];
+    seen_status_entry returnSeenTable[buffer->cbor_size];
+    jobs_entry returnJobsTable[buffer->cbor_size];
+
+    cbor_parser_init(buffer->buffer, buffer->cbor_size, 0, &parser, &value);
+    if(cbor_value_enter_container(&value, &wrapperValue) != CborNoError) {
+        return -1;
+    }
+    if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &tableType) != CborNoError) {
+        return -1;
+    } // get type of table
+
+    // [ enter second container
+    cbor_value_advance(&wrapperValue);
+    if(cbor_value_enter_container(&wrapperValue, &fieldsValue) != CborNoError) {
+        return -1;
+    }
+
+    int id, s, sID, d, ts, gt;
+    size_t length = 0;
+    cbor_value_get_array_length(&fieldsValue, &length); 	
+    for(size_t i = 0; i < (length - 1); i++) {
+        cbor_value_enter_container(&fieldsValue, &entryValue); // [
+        switch(tableType) {
+            case TARGET_STATE_KEY:
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &ts) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                target_state_entry newTargetEntry = {id, s, ts};
+                returnTargetTable[i] = newTargetEntry;
+                break;
+            case IS_STATE_KEY:
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                is_state_entry newIsEntry = {id, s, gt};
+                returnIsTable[i] = newIsEntry;
+                break;
+            case SEEN_STATUS_KEY:
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &sID) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                seen_status_entry newSeenEntry = {id, gt, s, sID};
+                returnSeenTable[i] = newSeenEntry;
+                break;
+            case JOBS_KEY:
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &d) != CborNoError) {
+                    return -1;
+                }
+                cbor_value_advance(&entryValue);
+                jobs_entry newJobsEntry = {id, d};
+                returnJobsTable[i] = newJobsEntry;
+                break;
+        }
+        cbor_value_leave_container(&fieldsValue,&entryValue); // ]
+    }
+
+    cbor_value_leave_container(&wrapperValue, &fieldsValue); // ]	
+    cbor_value_leave_container(&value, &wrapperValue); // ]	
+    
+    // Integrate local data into global table
+    switch(tableType) {
+            case TARGET_STATE_KEY:
+                merge_target_state_entry_table(returnTargetTable, (length-1));
+                break;
+            case IS_STATE_KEY:
+                merge_is_state_entry_table(returnIsTable, (length-1));
+                break;
+            case SEEN_STATUS_KEY:
+                merge_seen_status_entry_table(returnSeenTable, (length-1));
+                break;
+            case JOBS_KEY:
+                merge_jobs_entry_table(returnJobsTable, (length-1));
+                break;
+            default:
+                return -1;
+    }
+
+    return 0;
 }
