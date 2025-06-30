@@ -3,8 +3,9 @@
 #include "ztimer.h"
 #include "tables.h"
 #include <string.h>
+#include "cbor.h"
 
-#define TEST_TABLE_TO_CBOR
+//#define TEST_TABLE_TO_CBOR
 #define TEST_CBOR_TO_TABLE
 //#define TEST_TABLE_TO_MANY_CBOR
 
@@ -49,6 +50,28 @@ int main(void)
     */
     #ifdef TEST_CBOR_TO_TABLE
         puts("Starting decode CBOR Test");
+
+        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
+        cbor_encoder_init(&encoder, buf->buffer, sizeof(uint8_t) * 100, 0);
+        cbor_encoder_create_array(&encoder, &arrayEncoder, 3); // [
+        cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
+        cbor_encode_int(&arrayEncoder, 2008); // Entry 2
+        cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, 2); // Entry 3
+
+        cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 2); // []
+        cbor_encode_int(&singleEntryEncoder, 13);
+        cbor_encode_int(&singleEntryEncoder, 1);
+        cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+
+        cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 2); // []
+        cbor_encode_int(&singleEntryEncoder, 7);
+        cbor_encode_int(&singleEntryEncoder, 0);
+        cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+
+        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
+        cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
+
+        buf->cbor_size = (uint8_t) cbor_encoder_get_buffer_size (&encoder, buf->buffer);
 
         puts("Entering function");
         cbor_to_table_test(buf);

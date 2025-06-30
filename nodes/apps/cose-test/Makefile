@@ -24,11 +24,6 @@ DEVELHELP ?= 1
 USEMODULE += xtimer
 USEMODULE += ztimer_sec
 USEMODULE += benchmark
-USEPKG += tinycbor
-USEPKG += libcose
-USEMODULE += libcose_crypt_monocypher
-
-CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096
 
 
 # Change this to 0 show compiler invocation lines by default:
