@@ -7,11 +7,9 @@
  */
 
 /**
- * @defgroup    
+ * @defgroup    mate_ble
  * @ingroup     sys
  * @brief       BLE send and receive functionality for the sense mate / gate mate project
- *
- * @{
  *
  * @file
  *
@@ -40,6 +38,7 @@ typedef uint8_t cbor_message_type_t;
 typedef struct {
    cbor_message_type_t message_type;
    int8_t rssi;
+   
 } ble_metadata_t;
 
 /**
@@ -76,4 +75,3 @@ int ble_init(void);
 void ble_run_propagation(void);
 
 #endif /* MATE_BLE_H */
-/** @} */

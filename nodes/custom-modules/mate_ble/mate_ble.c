@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <kernel_sem.h>
 
 #include "host/util/util.h"
 #include "host/ble_hs.h"
@@ -58,9 +59,9 @@ static const uint8_t _custom_msd_marker_pattern[] = {
 static uint8_t _payload_buf[MATE_BLE_ADV_PKT_BUFFER_SIZE];
 //static unsigned _pl_len = 0;
 
-static volatile int adv_send_count = 0;
+static sem_t adv_done_sem;
 
-static int ble_gap_event_fn(struct ble_gap_event *event, void *arg);
+static int ble_gap_event_cb(struct ble_gap_event *event, void *arg);
 static void ad_append(bluetil_ad_t *ad, const uint8_t *data, unsigned len);
 static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payload, unsigned len);
 static void start_adv(uint8_t *payload, unsigned payload_len);
@@ -95,9 +96,17 @@ static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payloa
     ad_append(ad, payload, len);
 }
 
-static int ble_gap_event_fn(struct ble_gap_event *event, void *arg) 
+static int ble_gap_event_cb(struct ble_gap_event *event, void *arg) 
 {
-    // todo todo todo: hier muss der callback benutzt werden, damit der nächste buffer zum advertisen ausgewählt werden kann oder damit gewartet werden kann bis geschickt wurde.
+switch (event->type) {
+    case BLE_GAP_EVENT_ADV_COMPLETE:
+        puts("Advertisement completed.\n");
+        sem_post(&adv_done_sem);
+        break;
+    default:
+        break;
+    }
+    return 0;
 }
 
 /* add function to configure advertisements with a custom payload */
@@ -126,11 +135,11 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     params.tx_power = MATE_BLE_TX_POWER_UNDEF;
     params.sid = 0;
     // min/max advertising interval converted from ms to 0.625ms units
-    params.itvl_min = BLE_GAP_ADV_ITVL_MS(600);
-    params.itvl_max = BLE_GAP_ADV_ITVL_MS(800);
+    params.itvl_min = BLE_GAP_ADV_ITVL_MS(20);
+    params.itvl_max = BLE_GAP_ADV_ITVL_MS(20);
 
     // configure the nimble instance
-    rc = ble_gap_ext_adv_configure(MATE_BLE_NIMBLE_INSTANCE, &params, NULL, NULL, NULL);
+    rc = ble_gap_ext_adv_configure(MATE_BLE_NIMBLE_INSTANCE, &params, NULL, ble_gap_event_cb, NULL);
     assert (rc == 0);
 
     // Create a new advertisement packet get mbuf for adv data
@@ -159,7 +168,7 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     assert (rc == 0);
 
     // Start advertising
-    rc = ble_gap_ext_adv_start(MATE_BLE_NIMBLE_INSTANCE, 0, 0);
+    rc = ble_gap_ext_adv_start(MATE_BLE_NIMBLE_INSTANCE, 0, 1);
     assert (rc == 0);
 
     printf("Now advertising \"%s\"\n", payload);
@@ -230,6 +239,8 @@ int ble_init(void)
 {
     puts("Initializing BLE extended advertisement!");
 
+    sem_init(&adv_done_sem, 0, 0);
+
     // Make sure we have proper identity address set (public preferred)
     int rc = ble_hs_util_ensure_addr(0);
     assert(rc == 0);
@@ -268,11 +279,10 @@ int ble_send(cbor_buffer* cbor_packet)
     memcpy(_payload_buf, cbor_packet->buffer, cbor_packet->cbor_size);
     start_adv(_payload_buf, cbor_packet->cbor_size);
 
-    // todo: use better method instead of spinning
-    int prev_send_count = adv_send_count;
-    while (adv_send_count == prev_send_count) {
-        ztimer_sleep(ZTIMER_MSEC, 1); // Sleep until message is send
-    }
+    /* Block here until the ADV_COMPLETE event posts the sem */
+    sem_wait(&adv_done_sem);
+
+    ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
 
     return BLE_SUCCESS;
 }
