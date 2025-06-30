@@ -69,7 +69,7 @@ static uint8_t _payload_buf[MATE_BLE_ADV_PKT_BUFFER_SIZE];
 static uint8_t encode_outbuf[BLE_MAX_PAYLOAD_SIZE + 64];
 static uint8_t send_buffer[BLE_MAX_PAYLOAD_SIZE * 10];
 static uint8_t recv_buffer[BLE_MAX_PAYLOAD_SIZE * 10];
-uint8_t verify_outbuf[BLE_MAX_PAYLOAD_SIZE];  // ausreichend groß dimensionieren
+uint8_t verify_outbuf[1024];  // ausreichend groß dimensionieren //TODO
 
 static sem_t adv_done_sem;
 
@@ -228,7 +228,7 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
     printf("sent %d bytes:\n", len);
     print_hex_arr(ad, len);
 
-    // output our payload marked by our custom byte pattern
+    // output our payload marke# BUILD_IN_DOCKER ?= 1d by our custom byte pattern
     bluetil_ad_data_t msd;
     res = bluetil_ad_find(&rec_ad, BLE_GAP_AD_VENDOR, &msd);
     if (res == BLUETIL_AD_OK) {
@@ -246,9 +246,8 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
 
             
             size_t verify_payload_len = 0;
-            int verify_result = verify_decode(payload, pl,
-            verify_outbuf, sizeof(verify_outbuf),
-            &verify_payload_len);
+            int verify_result = verify_decode(payload, pl,verify_outbuf, sizeof(verify_outbuf),&verify_payload_len);
+            printf("done with decoing");
             if(verify_result == 0) {
                 insert_message(verify_outbuf, verify_payload_len, metadata);
             } else {
