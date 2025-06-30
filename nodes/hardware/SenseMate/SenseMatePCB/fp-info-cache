@@ -1,4 +1,4 @@
-25606329352111601
+25615882296220888
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -93750,41 +93750,6 @@ Adafruit Feather
 0
 28
 28
-SenseMate_Pwr_Button_
-OS102011MA1QN1
-
-
-0
-5
-5
-SenseMate_Switch
-SW_COM-08184
-
-
-0
-0
-0
-SenseMate_dido
-1N4148
-
-
-0
-2
-2
-SenseMate_sound
-PS1240P02BT
-
-
-0
-2
-2
-SenseMate_sw_fp
-COM08184
-COM-08184-5
-Switch
-0
-5
-5
 Sensor
 ASAIR_AM2302_P2.54mm_Lead2.75mm_TabDown
 Temperature and humidity module, http://akizukidenshi.com/download/ds/aosong/AM2302.pdf
