@@ -69,5 +69,11 @@ int ble_send(cbor_buffer* cbor_packet);
  */
 int ble_init(void);
 
+/**
+ * @brief           Super loop of the BLE module. Propagates the state tables
+ *                  via BLE advertisements.
+ */
+void ble_run_propagation(void);
+
 #endif /* MATE_BLE_H */
 /** @} */
