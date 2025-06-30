@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from "react";
-import {fetchActivities, fetchGates, loadWorkerId, requestGateStatusChange} from "../services/api";
+import React, { useEffect, useState } from "react";
+import { fetchActivities, fetchGates, loadWorkerId, requestGateStatusChange } from "../services/api";
 import axios from "axios";
 import api from "../services/api";
 import {
@@ -21,6 +21,8 @@ import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import MapView from "../components/MapView";
 import StatusChangedDialog from "../components/StatusChangedDialog";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import SockJS from 'sockjs-client';
+import { Stomp } from '@stomp/stompjs';
 
 function StatusTables() {
     const [gates, setGates] = useState([]);
@@ -64,12 +66,33 @@ function StatusTables() {
             }
         };
         loadGates();
-        const intervalId = setInterval(() => {
-            loadGates();
-        }, 300);
+        // const intervalId = setInterval(() => {
+        //     loadGates();
+        // }, 300);
 
-        return () => clearInterval(intervalId);
+        // return () => clearInterval(intervalId);
     }, []);
+
+    useEffect(() => {
+            const socket = new SockJS('http://localhost:8080/ws');
+            const stompClient = Stomp.over(socket);
+    
+            stompClient.connect({}, () => {
+                stompClient.subscribe('/topic/gate-activities', (message) => {
+                    const activity = JSON.parse(message.body);
+                    setActivities(prev => [...prev, activity]);
+                });
+    
+                stompClient.subscribe('/topic/gate-activities/delete', (message) => {
+                    const id = parseInt(message.body);
+                    setActivities(prev => prev.filter(a => a.id !== id));
+                });
+            });
+    
+            return () => {
+                stompClient.disconnect();
+            };
+        }, []);
 
     /**
      * Lädt die Aktivitäten beim ersten Rendern der Komponente.
@@ -85,6 +108,9 @@ function StatusTables() {
         };
         loadActivities();
     }, []);
+
+
+
 
     /**
      * Schließt den Dialog und aktualisiert die Gates.
@@ -140,11 +166,11 @@ function StatusTables() {
     const renderRequestedStatus = (status) => {
         switch (status) {
             case "REQUESTED_OPEN":
-                return <><LockOpenIcon fontSize="small"/> OPEN</>;
+                return <><LockOpenIcon fontSize="small" /> OPEN</>;
             case "REQUESTED_CLOSE":
-                return <><LockIcon fontSize="small"/> CLOSE</>;
+                return <><LockIcon fontSize="small" /> CLOSE</>;
             default:
-                return <><CircleIcon fontSize="small"/> NONE</>;
+                return <><CircleIcon fontSize="small" /> NONE</>;
         }
     };
 
@@ -224,7 +250,7 @@ function StatusTables() {
                         placeholder="Search gates..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        style={{marginRight: "1rem"}}
+                        style={{ marginRight: "1rem" }}
                     />
                     <TextField
                         size="small"
@@ -245,10 +271,10 @@ function StatusTables() {
             <Tabs
                 value={view}
                 onChange={(e, newValue) => setView(newValue)}
-                style={{marginTop: "1rem", marginBottom: "1rem"}}
+                style={{ marginTop: "1rem", marginBottom: "1rem" }}
             >
-                <Tab label="List View" value="list"/>
-                <Tab label="Map View" value="map"/>
+                <Tab label="List View" value="list" />
+                <Tab label="Map View" value="map" />
             </Tabs>
 
             {view === "list" ? (
@@ -261,7 +287,7 @@ function StatusTables() {
                                 value={bulkRequestedStatus}
                                 label="Bulk Requested Status"
                                 onChange={(e) => setBulkRequestedStatus(e.target.value)}
-                                style={{minWidth: 160}}
+                                style={{ minWidth: 160 }}
                             >
                                 <MenuItem value="">None</MenuItem>
                                 <MenuItem value="REQUESTED_OPEN">Request Open</MenuItem>
@@ -290,105 +316,105 @@ function StatusTables() {
 
                     <table className="status-table">
                         <thead>
-                        <tr>
-                            <th>Gate ID</th>
-                            <th>Location</th>
-                            <th>Status</th>
-                            <th>Requested Status</th>
-                            <th>Device ID</th>
-                            <th>Last Update</th>
-                            <th>Confidence</th>
-                            <th>Actions</th>
-                        </tr>
+                            <tr>
+                                <th>Gate ID</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th>Requested Status</th>
+                                <th>Device ID</th>
+                                <th>Last Update</th>
+                                <th>Confidence</th>
+                                <th>Actions</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        {filteredGates.map((gate) => (
-                            <React.Fragment key={gate.id}>
-                                <tr
-                                    onClick={() => setExpandedGateId(expandedGateId === gate.id ? null : gate.id)}
-                                    style={{cursor: "pointer"}}
-                                >
-                                    <td>{gate.id}</td>
-                                    <td>
-                                        {gate.location}<br/>
-                                        <span className="coords">{gate.latitude}, {gate.longitude}</span>
-                                    </td>
-                                    <td>
-                                        <span className={`badge ${gate.status.toLowerCase()}`}>
-                                            {gate.status === "OPENED"
-                                                ? <LockOpenIcon fontSize="small"/>
-                                                : <LockIcon fontSize="small"/>
-                                            } {gate.status}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span className={`badge ${gate.requestedStatus ? gate.requestedStatus.toLowerCase() : 'none'}`}>
-                                            {renderRequestedStatus(gate.requestedStatus)}
-                                        </span>
-                                    </td>
-                                    <td>{gate.deviceId}</td>
-                                    <td>
-                                        <div>{getTimeAgo(gate.lastTimeStamp)}</div>
-                                        <div className="date">{gate.lastUpdate}</div>
-                                    </td>
-                                    <td>
-                                        {gate.confidence}
-                                        <br/>
-                                        <Tooltip
-                                            title="Confidence reflects agreement between sensor and worker. 100% means both match.">
-                                            <HelpOutlineIcon
-                                                fontSize="small"
-                                                className="help-icon"
-                                                style={{
-                                                    marginLeft: 4,
-                                                    cursor: "help",
-                                                    verticalAlign: "middle",
-                                                    color: "#888"
+                            {filteredGates.map((gate) => (
+                                <React.Fragment key={gate.id}>
+                                    <tr
+                                        onClick={() => setExpandedGateId(expandedGateId === gate.id ? null : gate.id)}
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        <td>{gate.id}</td>
+                                        <td>
+                                            {gate.location}<br />
+                                            <span className="coords">{gate.latitude}, {gate.longitude}</span>
+                                        </td>
+                                        <td>
+                                            <span className={`badge ${gate.status.toLowerCase()}`}>
+                                                {gate.status === "OPENED"
+                                                    ? <LockOpenIcon fontSize="small" />
+                                                    : <LockIcon fontSize="small" />
+                                                } {gate.status}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className={`badge ${gate.requestedStatus ? gate.requestedStatus.toLowerCase() : 'none'}`}>
+                                                {renderRequestedStatus(gate.requestedStatus)}
+                                            </span>
+                                        </td>
+                                        <td>{gate.deviceId}</td>
+                                        <td>
+                                            <div>{getTimeAgo(gate.lastTimeStamp)}</div>
+                                            <div className="date">{gate.lastUpdate}</div>
+                                        </td>
+                                        <td>
+                                            {gate.confidence}
+                                            <br />
+                                            <Tooltip
+                                                title="Confidence reflects agreement between sensor and worker. 100% means both match.">
+                                                <HelpOutlineIcon
+                                                    fontSize="small"
+                                                    className="help-icon"
+                                                    style={{
+                                                        marginLeft: 4,
+                                                        cursor: "help",
+                                                        verticalAlign: "middle",
+                                                        color: "#888"
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                        </td>
+                                        <td>
+                                            <IconButton
+                                                color="warning"
+                                                size="small"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();  // verhindert dass Zeilen-Click auch getriggert wird
+                                                    setSelectedGate(gate);
+                                                    setDialogOpen(true);
                                                 }}
-                                            />
-                                        </Tooltip>
-                                    </td>
-                                    <td>
-                                        <IconButton
-                                            color="warning"
-                                            size="small"
-                                            onClick={(e) => {
-                                                e.stopPropagation();  // verhindert dass Zeilen-Click auch getriggert wird
-                                                setSelectedGate(gate);
-                                                setDialogOpen(true);
-                                            }}
-                                        >
-                                            <SyncAltIcon/>
-                                        </IconButton>
-                                    </td>
-                                </tr>
-                                {expandedGateId === gate.id && (
-                                    <tr className="expanded-row">
-                                        <td colSpan={8} style={{ backgroundColor: "#f9f9f9" }}>
-                                            <div>
-                                                <strong>Activities</strong>
-                                                {activities
-                                                    .filter(activity => activity.gateId === gate.id)
-                                                    .slice(-4) // Optional: nur die letzten 4 zeigen
-                                                    .map((activity, index) => (
-                                                        <p key={activity.id}>
-                                                            <strong>{activity.lastTimeStamp}:</strong> {activity.message}
-                                                        </p>
-                                                    ))}
-                                                {activities.filter(a => a.gateId === gate.id).length === 0 && (
-                                                    <p>No activities available for this gate.</p>
-                                                )}
-                                            </div>
+                                            >
+                                                <SyncAltIcon />
+                                            </IconButton>
                                         </td>
                                     </tr>
-                                )}
-                            </React.Fragment>
-                        ))}
+                                    {expandedGateId === gate.id && (
+                                        <tr className="expanded-row">
+                                            <td colSpan={8} style={{ backgroundColor: "#f9f9f9" }}>
+                                                <div>
+                                                    <strong>Activities</strong>
+                                                    {activities
+                                                        .filter(activity => activity.gateId === gate.id)
+                                                        .slice(-4) // Optional: nur die letzten 4 zeigen
+                                                        .map((activity, index) => (
+                                                            <p key={activity.id}>
+                                                                <strong>{activity.lastTimeStamp}:</strong> {activity.message}
+                                                            </p>
+                                                        ))}
+                                                    {activities.filter(a => a.gateId === gate.id).length === 0 && (
+                                                        <p>No activities available for this gate.</p>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            ))}
                         </tbody>
                     </table>
                 </>
             ) : (
-                <MapView search={search} statusFilter={filter}/>
+                <MapView search={search} statusFilter={filter} />
             )}
 
             <StatusChangedDialog

@@ -8,6 +8,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import NotificationPopup from './NotificationPopup';
 import api, { fetchNotificationByWorkerId, markNotificationAsRead } from "../services/api";
+import SockJS from 'sockjs-client';
+import { Stomp } from '@stomp/stompjs';
 
 function HeaderBar() {
     const navigate = useNavigate();
@@ -20,6 +22,35 @@ function HeaderBar() {
     const [selectedNotification, setSelectedNotification] = useState(null);
 
     const numberOfUnreadNotifications = notifications.filter(n => !n.read).length;
+
+
+
+    // useEffect(() => {
+    //     const socket = new SockJS('http://localhost:8080/ws');
+    //     const stompClient = Stomp.over(socket);
+
+    //     stompClient.connect({}, () => {
+    //         stompClient.subscribe('/topic/notifications', (message) => {
+    //             const newNotification = JSON.parse(message.body);
+    //             setNotifications(prev => [...prev, newNotification]);
+    //         });
+
+    //         stompClient.subscribe('/topic/notifications/delete', (message) => {
+    //             const deletedId = message.body;
+    //             setNotifications(prev => prev.filter(n => n.id !== parseInt(deletedId)));
+    //         });
+
+    //         stompClient.subscribe('/topic/notifications/read-change', (message) => {
+    //             const updated = JSON.parse(message.body);
+    //             setNotifications(prev =>
+    //                 prev.map(n => n.id === updated.id ? updated : n)
+    //             );
+    //         });
+    //     });
+
+    //     return () => stompClient.disconnect();
+    // }, []);
+
 
     useEffect(() => {
         const loadDetails = async () => {
