@@ -19,13 +19,15 @@ public class GateActivityEntity {
 	private Long gateId;
 	private String requestedStatus;
     private String message;
+	private Long workerId;
 
-	public GateActivityEntity(Timestamp lastTimeStamp, Long gateId, String requestedStatus, String message) {
+	public GateActivityEntity(Timestamp lastTimeStamp, Long gateId, String requestedStatus, String message,  Long workerId) {
 
 		this.lastTimeStamp = lastTimeStamp;
 		this.gateId = gateId;
 		this.requestedStatus = requestedStatus;
         this.message = message;
+		this.workerId = workerId;
 	}
 
 	public GateActivityEntity() {

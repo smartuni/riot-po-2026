@@ -54,6 +54,16 @@ export const fetchActivities = async () => {
     }
 };
 
+export const addActivities = async (newActivities) => {
+    try {
+        const response = await api.post(`/add-activities/`, newActivities);
+        return response.data;
+    } catch (error) {
+        console.error('Error adding activities:', error);
+        throw error;
+    }
+}
+
 
 
 // Gate-Update mit besserer Fehlerbehandlung
@@ -74,6 +84,7 @@ export const requestGateStatusChange = async (gateId, status) => {
             `/${gateId}/request-status-change`,
             { requestedStatus: status }
         );
+        await addActivities(response);
         return response.data;
     } catch (error) {
         console.error('Error requesting gate status change:', error);

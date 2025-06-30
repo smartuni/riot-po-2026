@@ -83,6 +83,7 @@ public class GateService {
         gate.setRequestedStatus(targetStatus);
 
         System.out.println(gate.getRequestedStatus());
+
         gateRepository.save(gate);
     }
 

@@ -32,6 +32,11 @@ public class GateActivityController {
 	public String addGate(@RequestBody GateActivityEntity gateActivityEntity){
 		return gateActivityService.addGateActivity(gateActivityEntity);
 	}
+
+	@RequestMapping(value = "add-activities", method = RequestMethod.POST)
+	public void addGate(@RequestBody List<GateActivityEntity> gateActivityEntity){
+		gateActivityService.addGateActivities(gateActivityEntity);
+	}
 	
 	@RequestMapping(value = "delete-activitiy", method = RequestMethod.DELETE)
 	public void removeCustomer(@RequestBody GateActivityEntity gateActivityEntity){

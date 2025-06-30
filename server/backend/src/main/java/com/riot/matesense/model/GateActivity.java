@@ -12,15 +12,16 @@ public class GateActivity {
 	private Timestamp lastTimeStamp;
 	private String requestedStatus;
 	private Long gateId;
+	private Long workerId;
     @Getter
     private String message;
 
-	public GateActivity(Timestamp lastTimeStamp, Long gateId, String requestedStatus, String message, Long id) {
+	public GateActivity(Timestamp lastTimeStamp, Long gateId, String requestedStatus, String message, Long id, Long workerId) {
         this.id = id;
 		this.lastTimeStamp = lastTimeStamp;
 		this.gateId = gateId;
 		this.requestedStatus = requestedStatus;
         this.message = message;
-
+		this.workerId = workerId;
 	}
 }
