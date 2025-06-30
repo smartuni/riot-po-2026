@@ -7,7 +7,5 @@ int main (void){
     
     if(start_lorawan() < 0){
         printf("Error");
-    }
-
-    
+    }    
 }

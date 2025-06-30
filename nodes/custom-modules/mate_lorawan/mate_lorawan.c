@@ -196,6 +196,7 @@ static int _send_lorawan_packet(const netif_t *netif, int msg_no, int read)
 
     //memcpy(send_msg, cbor_send_buffer.buffer + read, cbor_send_buffer.package_size[msg_no]);
     printf("Package size: %d\n", cbor_send_buffer.package_size[msg_no]);
+    print_hex_arr(cbor_send_buffer.buffer + read, cbor_send_buffer.package_size[msg_no]);
     packet = gnrc_pktbuf_add(NULL, cbor_send_buffer.buffer + read, cbor_send_buffer.package_size[msg_no], GNRC_NETTYPE_UNDEF);
     if (packet == NULL) {
         puts("Failed to create packet");
