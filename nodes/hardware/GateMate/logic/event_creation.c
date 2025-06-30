@@ -48,18 +48,20 @@ void event_handler_reactivate(event_t *event)
     table_entry.gateID = GATE_ID;
     table_entry.state = event_status;
     table_entry.gateTime = timestamp++;
-    if(!set_is_state_entry(&table_entry)){
-
+    puts("In event reactivate handler");
+    if( TABLE_UPDATED == set_is_state_entry(&table_entry)){
+        puts("In event reactivate handler IF");
         // TEST
         is_state_entry test_table_entry;
         if (!get_is_state_entry(GATE_ID, &test_table_entry)) {
+            puts("In event reactivate handler GET");
             printf("TEST ENTRY Time %d\n", test_table_entry.gateTime);
             printf("TEST ENTRY State %d\n", test_table_entry.state);
         } else {
-            printf("test failed");
+            puts("test failed");
         } 
     } else {
-        printf("writing to oabel failed!");
+        puts("writing to table failed!");
     }
     
     

@@ -56,6 +56,7 @@ int main(void){
     // ----------------------------------------------
     } else {
         puts("could not write to table");
+       
         //err = -1;
     }
 
@@ -83,7 +84,7 @@ int main(void){
         sizeof(ble_stack),
         THREAD_PRIORITY_MAIN - 1,
         THREAD_CREATE_STACKTEST,
-        (thread_task_func_t) ble_run_propagation,
+        ble_run_propagation,
         NULL,
        "ble");
     
