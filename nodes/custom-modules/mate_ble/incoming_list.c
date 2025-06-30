@@ -12,6 +12,7 @@ typedef struct {
     cbor_buffer cbor_packet;
     ble_metadata_t metadata;
     uint8_t data[BLE_MAX_PAYLOAD_SIZE]; // Buffer to store the actual data
+    
 } incoming_message_t;
 
 static incoming_message_t incoming_messages[MATE_BLE_INCOMING_LIST_SIZE];

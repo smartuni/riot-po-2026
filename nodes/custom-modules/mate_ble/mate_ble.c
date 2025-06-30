@@ -287,7 +287,7 @@ int ble_send(cbor_buffer* cbor_packet)
     return BLE_SUCCESS;
 }
 
-void ble_run_propagation(void)
+void ble_send_loop(void)
 {
     if (ble_init() != BLE_SUCCESS) {
         return;
@@ -300,46 +300,31 @@ void ble_run_propagation(void)
     ble_metadata metadata;
 
     while (true) {
-        if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
-            continue;
-        }
-
-        switch (metadata.type) {
-            case TARGET_STATE_KEY:
-                break;
-            case IS_STATE_KEY:
-                break;
-            case SEEN_STATUS_KEY:
-                break;
-            case JOBS_KEY:
-                break;
-        }
-        
         int count = target_state_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
             for (int i = 0; i < count; i++) {
-                ble_send(buffer);
+                ble_send(&buffer);
             }
         }
 
         count = is_state_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
             for (int i = 0; i < count; i++) {
-                ble_send(buffer);
+                ble_send(&buffer);
             }
         }
         
         int count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
             for (int i = 0; i < count; i++) {
-                ble_send(buffer);
+                ble_send(&buffer);
             }
         }
 
         count = jobs_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
             for (int i = 0; i < count; i++) {
-                ble_send(buffer);
+                ble_send(&buffer);
             }
         }
     }

@@ -38,7 +38,7 @@ typedef uint8_t cbor_message_type_t;
 typedef struct {
    cbor_message_type_t message_type;
    int8_t rssi;
-   
+
 } ble_metadata_t;
 
 /**
@@ -69,9 +69,14 @@ int ble_send(cbor_buffer* cbor_packet);
 int ble_init(void);
 
 /**
- * @brief           Super loop of the BLE module. Propagates the state tables
+ * @brief           Sender loop of the BLE module. Propagates the state tables
  *                  via BLE advertisements.
  */
-void ble_run_propagation(void);
+void ble_send_loop(void);
+
+/**
+ * @brief           Receiver loop of the BLE module. Receives the propagated state tables
+ */
+void ble_receive_loop(void);
 
 #endif /* MATE_BLE_H */
