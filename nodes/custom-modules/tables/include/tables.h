@@ -18,6 +18,8 @@
     #define JOBS_KEY 0x03
 
     #define TABLE_SUCCESS               0
+    #define TABLE_UPDATED               1
+    #define TABLE_NO_UPDATES            2
     #define TABLE_ERROR_SIZE_TOO_BIG   -1
     #define TABLE_ERROR_INVALID_GATE_ID -2
     #define TABLE_ERROR_NOT_FOUND      -3
