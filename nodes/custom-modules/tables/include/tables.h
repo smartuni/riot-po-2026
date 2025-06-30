@@ -49,6 +49,12 @@
 
     typedef struct {
         uint8_t gateID;
+        int timestamp;
+        char rssi;
+    } timestamp_entry;
+
+    typedef struct {
+        uint8_t gateID;
         uint8_t done;
     } jobs_entry;
 
