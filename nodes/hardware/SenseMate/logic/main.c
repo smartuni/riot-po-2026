@@ -56,6 +56,7 @@ int main(void) {
     test.state = 1;
     test.gateTime = 20000;
     test_merge = set_is_state_entry(&test);
+   
 
     //is_state_entry receiveide_is_state;
     //int hallo = get_is_state_entry(1, &receiveide_is_state);
