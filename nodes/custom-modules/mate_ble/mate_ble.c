@@ -11,6 +11,7 @@
 #include "nimble/ble.h"
 #include "net/bluetil/ad.h"
 #include "shell.h"
+#include "tables.h"
 #include "timex.h"
 #include "ztimer.h"
 #include "cbor.h"
@@ -300,7 +301,6 @@ void ble_send_loop(void)
     cbor_buffer buffer;
     buffer.buffer = stack_buffer;
     buffer.capacity = BLE_MAX_PAYLOAD_SIZE;
-    ble_metadata metadata;
 
     while (true) {
         int count = target_state_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
@@ -317,7 +317,7 @@ void ble_send_loop(void)
             }
         }
         
-        int count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
+        count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
             for (int i = 0; i < count; i++) {
                 ble_send(&buffer);
@@ -344,6 +344,13 @@ void ble_receive_loop(void)
     while (true) {
         if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
             continue;
+        }
+        int res = cbor_to_table_test(&buffer);
+        if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
+            continue;
+        }
+        if (TABLE_UPDATED == res) {
+            //notify 
         }
     }
 }
