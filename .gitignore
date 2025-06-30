@@ -100,3 +100,4 @@ coverage/
 *.key
 
 nodes/lab_workarounds.mk
+*.d
