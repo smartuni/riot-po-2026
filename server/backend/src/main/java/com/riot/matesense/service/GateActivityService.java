@@ -27,7 +27,7 @@ public class GateActivityService {
         List<GateActivityEntity> gates = gateActivityRepository.findAll();
         List<GateActivity> customGateActivities = new ArrayList<>();
         gates.forEach(e -> {
-            GateActivity gateActivity = new GateActivity(e.getLastTimeStamp(), e.getGateId(), e.getRequestedStatus(), e.getMessage(), e.getId());
+            GateActivity gateActivity = new GateActivity(e.getLastTimeStamp(), e.getGateId(), e.getRequestedStatus(), e.getMessage(), e.getId(), e.getWorkerId());
             customGateActivities.add(gateActivity);
         });
         return customGateActivities;
@@ -36,6 +36,12 @@ public class GateActivityService {
     public String addGateActivity(GateActivityEntity gateActivity) {
         gateActivityRepository.save(gateActivity);
         return gateActivity.toString();
+    }
+
+    public void addGateActivities(List<GateActivityEntity> gates) {
+        for (GateActivityEntity gate : gates) {
+            addGateActivity(gate);
+        }
     }
 
 
@@ -48,7 +54,7 @@ public class GateActivityService {
         List<GateActivityEntity> gateActivities = gateActivityRepository.findAll().stream().filter(e -> e.getGateId().equals(gateId)).collect(Collectors.toList());
         List<GateActivity> customGateActivities = new ArrayList<>();
         for (GateActivityEntity gateActivityEntity : gateActivities) {
-            GateActivity gateActivity = new GateActivity(gateActivityEntity.getLastTimeStamp(), gateActivityEntity.getGateId(), gateActivityEntity.getRequestedStatus(), gateActivityEntity.getMessage(), gateActivityEntity.getId());
+            GateActivity gateActivity = new GateActivity(gateActivityEntity.getLastTimeStamp(), gateActivityEntity.getGateId(), gateActivityEntity.getRequestedStatus(), gateActivityEntity.getMessage(), gateActivityEntity.getId(), gateActivityEntity.getWorkerId());
             customGateActivities.add(gateActivity);
         }
         return customGateActivities;

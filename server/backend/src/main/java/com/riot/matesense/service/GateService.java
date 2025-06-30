@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.tools.Diagnostic;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -81,8 +82,10 @@ public class GateService {
             targetStatus = null;
         }
         gate.setRequestedStatus(targetStatus);
+        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
 
         System.out.println(gate.getRequestedStatus());
+
         gateRepository.save(gate);
     }
 

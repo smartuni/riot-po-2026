@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {fetchActivities, fetchGates, requestGateStatusChange} from "../services/api";
+import {fetchActivities, fetchGates, loadWorkerId, requestGateStatusChange} from "../services/api";
 import axios from "axios";
 import api from "../services/api";
 import {
@@ -32,6 +32,24 @@ function StatusTables() {
     const [bulkRequestedStatus, setBulkRequestedStatus] = useState("");
     const [expandedGateId, setExpandedGateId] = useState(null);
     const [activities, setActivities] = useState([]);
+    const [workerId, setWorkerId] = useState(null);
+
+    useEffect(() => {
+        const loadDetails = async () => {
+            try {
+                const response = await api.get('/auth/user-details');
+                if (response.status !== 200) {
+                    throw new Error('Request failed with status code ' + response.status);
+                }
+                setWorkerId(response.data.workerId);
+            } catch (e) {
+                console.error("Fehler beim Laden der User-Details:", e);
+            }
+        };
+
+        loadDetails();
+    }, []);
+
 
     /**
      * Lädt die Gates beim ersten Rendern der Komponente.
@@ -46,6 +64,11 @@ function StatusTables() {
             }
         };
         loadGates();
+        const intervalId = setInterval(() => {
+            loadGates();
+        }, 300);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     /**
@@ -98,7 +121,7 @@ function StatusTables() {
 
         const promises = gatesToUpdate.map(async (gate) => {
             try {
-                await requestGateStatusChange(gate.id, statusToSend);
+                await requestGateStatusChange(gate.id, workerId, statusToSend);
             } catch (error) {
                 console.error(`Fehler beim Aktualisieren von Gate ${gate.id}`, error);
             }
@@ -149,7 +172,7 @@ function StatusTables() {
         };
 
         const payload = [
-            1, // Type
+            0, // Type
             Math.floor(Date.now() / 1000), // Unix Timestamp
             filteredGates
                 .filter(g => g.requestedStatus in statusIntMap)

@@ -64,25 +64,30 @@ class PopulateTestDataRunner implements CommandLineRunner {
  		gateService.addGate(gate3);
 
 
-		GateActivityEntity gateActivityEntity1 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
-		GateActivityEntity gateActivityEntity2 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate2.getId() +" has " + gate.getRequestedStatus().toLowerCase());
-		GateActivityEntity gateActivityEntity3 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate2.getId(), gate.getRequestedStatus(), "The Gate " +gate3.getId() +" has " + gate.getRequestedStatus().toLowerCase());
-		GateActivityEntity gateActivityEntity4 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate3.getId(), gate.getRequestedStatus(), "The Gate " +gate.getId() +" has " + gate.getRequestedStatus().toLowerCase());
-		GateActivityEntity gateActivityEntity5 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has " + gate.getRequestedStatus().toLowerCase());
+/*
+		GateActivityEntity gateActivityEntity1 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has Requested Status: " + gate.getRequestedStatus().toLowerCase(), 1L);
+		GateActivityEntity gateActivityEntity2 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate1.getId(), gate.getRequestedStatus(), "The Gate " +gate2.getId() +" has Requested Status: " + gate.getRequestedStatus().toLowerCase(), 1L);
+		GateActivityEntity gateActivityEntity3 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate2.getId(), gate.getRequestedStatus(), "The Gate " +gate3.getId() +" has Requested Status: " + gate.getRequestedStatus().toLowerCase(), 1L);
+		GateActivityEntity gateActivityEntity4 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate3.getId(), gate.getRequestedStatus(), "The Gate " +gate.getId() +" has Requested Status: " + gate.getRequestedStatus().toLowerCase(), 1L);
+		GateActivityEntity gateActivityEntity5 = new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gate.getId(), gate.getRequestedStatus(), "The Gate " +gate1.getId() +" has Requested Status: " + gate.getRequestedStatus().toLowerCase(), 1L);
 
 		gateActivityService.addGateActivity(gateActivityEntity1);
 		gateActivityService.addGateActivity(gateActivityEntity2);
 		gateActivityService.addGateActivity(gateActivityEntity3);
 		gateActivityService.addGateActivity(gateActivityEntity4);
 		gateActivityService.addGateActivity(gateActivityEntity5);
+*/
 
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L, false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L, false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Baba Nachricht an Worker: " + 1L, false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 2L, "Baba Nachricht an Worker: " + 2L, false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 3L, "Baba Nachricht an Worker: " + 3L, false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 4L, "Baba Nachricht an Worker: " + 4L, false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 5L, "Baba Nachricht an Worker: " + 5L, false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Worker with ID: " + 1L + " shall close the Gate with ID: " + gate.getId(), false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Worker with ID: " + 1L + " shall open the Gate with ID: " + gate.getId(), false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 2L, "Worker with ID: " + 2L + " shall close the Gate with ID: " + gate.getId(), false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 2L, "Worker with ID: " + 2L + " shall close the Gate with ID: " + gate.getId(), false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 3L, "Worker with ID: " + 3L + " shall close the Gate with ID: " + gate.getId(), false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 3L, "Worker with ID: " + 3L + " shall close the Gate with ID: " + gate.getId(), false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 4L, "Worker with ID: " + 4L + " shall close the Gate with ID: " + gate.getId(), false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 4L, "Worker with ID: " + 4L + " shall close the Gate with ID: " + gate.getId(), false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 5L, "Worker with ID: " + 5L + " shall close the Gate with ID: " + gate.getId(), false));
+		notificationService.addNotification(new NotificationEntity(Status.OPENED, 5L, "Worker with ID: " + 5L + " shall close the Gate with ID: " + gate.getId(), false));
 
 		//test commit
 	}

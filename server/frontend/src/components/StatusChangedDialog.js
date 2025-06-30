@@ -1,14 +1,31 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     Button, MenuItem, TextField, Typography
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
-import { requestGateStatusChange } from "../services/api";
+import api, { requestGateStatusChange } from "../services/api";
 
-function StatusChangeDialog({ open, gate, onClose }) {
+function StatusChangeDialog({ open, gate, onClose}) {
     const [requestedStatus, setRequestedStatus] = useState("");
+    const [workerId, setWorkerId] = useState(null);
+
+    useEffect(() => {
+        const loadDetails = async () => {
+            try {
+                const response = await api.get('/auth/user-details');
+                if (response.status !== 200) {
+                    throw new Error('Request failed with status code ' + response.status);
+                }
+                setWorkerId(response.data.workerId);
+            } catch (e) {
+                console.error("Fehler beim Laden der User-Details:", e);
+            }
+        };
+
+        loadDetails();
+    }, []);
 
     if (!gate) return null;
 
@@ -28,7 +45,7 @@ function StatusChangeDialog({ open, gate, onClose }) {
             return;
         }
         try {
-            await requestGateStatusChange(gate.id, requestedStatus)
+            await requestGateStatusChange(gate.id, workerId ,requestedStatus)
         } catch (err) {
             console.error("Fehler beim Update:", err);
         }

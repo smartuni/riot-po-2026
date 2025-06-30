@@ -1,28 +1,53 @@
 .recent-activity {
-    /* width: 50%; */
-    margin-top: 20px;
-    padding: 16px;
-    background: #fff;
+    width: 100%;
+    max-width: 600px;
+    background: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 0 6px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    font-family: 'Segoe UI', sans-serif;
 }
 
 .recent-title {
-    font-weight: bold;
-    color: black;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #1a202c;
 }
 
 .activity-list {
     list-style: none;
     padding: 0;
+    margin: 0;
 }
 
 .activity-item {
     display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #e2e8f0;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #edf2f7;
 }
-.logo{
+
+.activity-icon {
+    margin-top: 4px;
+    color: #3182ce;
+}
+
+.activity-content {
     display: flex;
+    flex-direction: column;
+}
+
+.activity-message {
+    font-size: 16px;
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.activity-time {
+    font-size: 14px;
+    color: #718096;
+    margin-top: 4px;
 }

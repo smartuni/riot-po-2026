@@ -1,14 +1,17 @@
 package com.riot.matesense.controller;
 
+import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
 import com.riot.matesense.model.Gate;
 import com.riot.matesense.model.GateForDownlink;
+import com.riot.matesense.service.GateActivityService;
 import com.riot.matesense.service.GateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +23,8 @@ public class GateController {
 
     @Autowired
     GateService gateService;
+    @Autowired
+    GateActivityService gateActivityService;
 
     @RequestMapping(value = "gates", method = RequestMethod.GET)
     public List<Gate> getAllGates() {
@@ -41,11 +46,13 @@ public class GateController {
         gateService.removeGate(gate);
     }
 
-    @PostMapping("/{gateId}/request-status-change")
-    public void requestGateStatusChange(@PathVariable Long gateId, @RequestBody Map<String, String> body)
+    @PostMapping("/{gateId}/{workerId}/request-status-change/")
+    public void requestGateStatusChange(@PathVariable Long gateId, @PathVariable Long workerId,  @RequestBody Map<String, String> body)
             throws GateNotFoundException {
         String targetStatus = body.get("requestedStatus");
         gateService.requestGateStatusChange(gateId, targetStatus);
+        gateActivityService.addGateActivity(new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gateId, targetStatus, "The worker with ID: " + workerId + " requested the Status: "+ targetStatus + " to the gate with Gate-ID: " +gateId, workerId));
+
     }
 
     @RequestMapping(value = "gates_for_downlink", method = RequestMethod.GET)
