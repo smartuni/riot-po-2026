@@ -1,9 +1,13 @@
 #include "new_menu.h"
 #include <string.h>
 #include <tables.h>
+#include <stdio.h>
+#include "displayDemo.h"
 #define MAX_GATES MAX_GATE_COUNT
+#define MAX_SENSE_MATES 10
 #define MIN_SIGNAL_STRENGTH 100
 #define MIN_JOB_PRIO 1
+#define SENSEMATE_ID 7
 
 /*sorted by gate_id*/
 gate_entry all_entries [MAX_GATES];
@@ -31,19 +35,204 @@ jobs_entry jobs_tbl_entry_buf;
 timestamp_entry timestamp_tbl_entry_buf;
 
 
-void in_tables_mark_gate_open_closed(int gate_id, gate_state state){
-    //TODO getter to gateTime
+void in_tables_set_gate_open_closed(int gate_id, gate_state state){
+    if(get_timestamp_entry(gate_id, &timestamp_tbl_entry_buf) != TABLE_SUCCESS){
+        return; //no timestamp entry found
+    }
+
     set_seen_status_entry(&(seen_status_entry){
         .gateID = gate_id,
         .status = state,
-        .senseMateID = 7,
-        .gateTime = 2
+        .senseMateID = SENSEMATE_ID,
+        .gateTime = timestamp_tbl_entry_buf.timestamp
     });
 };
 
-void update_menu_from_tables(void){
+void in_tables_set_gate_job_done(int gate_id, bool done){
+    if(get_jobs_entry(gate_id, &jobs_tbl_entry_buf) != TABLE_SUCCESS){
+        return; //no jobs entry found
+    }
 
+    set_jobs_entry(&(jobs_entry){
+        .gateID = gate_id,
+        .done = done ? JOB_DONE : JOB_IN_PROGRESS,
+        .priority = jobs_tbl_entry_buf.priority
+    });
+};
+
+void update_with_target(int potential_id){
+    if(get_target_state_entry(potential_id, &target_state_tbl_entry_buf) == TABLE_SUCCESS){
+        //check if gate already there
+        if(!gate_listed(target_state_tbl_entry_buf.gateID)){
+            add_gate(&(gate_entry){
+                .gate_id = target_state_tbl_entry_buf.gateID,
+                .gate_is_state = UNKNOWN,
+                .gate_requested_state = target_state_tbl_entry_buf.state,
+                .job_is_todo = false,
+                .job_prio = 0,
+                .sig_strength = 0
+            });
+        }else{
+            //update requested state
+            set_requested_state(target_state_tbl_entry_buf.gateID, target_state_tbl_entry_buf.state);
+        }
+    }
 }
+
+void update_with_is_state(int potential_id){
+    if(get_is_state_entry(potential_id, &is_state_tbl_entry_buf) == TABLE_SUCCESS){
+        //check if gate already there
+        if(!gate_listed(is_state_tbl_entry_buf.gateID)){
+            add_gate(&(gate_entry){
+                .gate_id = is_state_tbl_entry_buf.gateID,
+                .gate_is_state = is_state_tbl_entry_buf.state,
+                .gate_requested_state = UNKNOWN,
+                .job_is_todo = false,
+                .job_prio = 0,
+                .sig_strength = 0
+            });
+        }else{
+            //update is state
+            set_is_state(is_state_tbl_entry_buf.gateID, is_state_tbl_entry_buf.state);
+        }
+    }
+}
+
+void update_with_seen_status(int potential_id){
+    int timestamp = 0; 
+    uint8_t state = 0;
+    bool success = false;
+    //get the latest seen status entry
+    for (int i = 0; i < MAX_SENSE_MATES; i++){
+        if(get_seen_status_entry(potential_id, &seen_status_tbl_entry_buf) == TABLE_SUCCESS){
+            if(timestamp < seen_status_tbl_entry_buf.gateTime){
+                timestamp = seen_status_tbl_entry_buf.gateTime;
+                state = seen_status_tbl_entry_buf.status;
+            }
+        }
+    }
+
+    if(!success){
+        return; //no seen status entry found
+    }
+    //check if gate already there
+    if(!gate_listed(seen_status_tbl_entry_buf.gateID)){
+        add_gate(&(gate_entry){
+            .gate_id = seen_status_tbl_entry_buf.gateID,
+            .gate_is_state = state,
+            .gate_requested_state = UNKNOWN,
+            .job_is_todo = false,
+            .job_prio = 0,
+            .sig_strength = 0
+        });
+    }else{
+        //update is state
+        set_is_state(seen_status_tbl_entry_buf.gateID, state);
+    }
+}
+
+void update_with_latest_status(int potential_id){
+    int timestamp = 0; 
+    uint8_t state = 0;
+    bool success = false;
+    //get the latest seen status entry
+    for (int i = 0; i < MAX_SENSE_MATES; i++){
+        if(get_seen_status_entry(potential_id, &seen_status_tbl_entry_buf) == TABLE_SUCCESS){
+            if(timestamp < seen_status_tbl_entry_buf.gateTime){
+                timestamp = seen_status_tbl_entry_buf.gateTime;
+                state = seen_status_tbl_entry_buf.status;
+                success = true;
+            }
+        }
+    }
+    if(get_is_state_entry(potential_id, &is_state_tbl_entry_buf) == TABLE_SUCCESS){
+        //check if seen status is newer than is state
+        if(timestamp < is_state_tbl_entry_buf.gateTime){
+            state = is_state_tbl_entry_buf.state;
+            success = true;
+        }
+    }
+
+    if(!success){
+        return; //no seen or is status entry found
+    }
+
+    //check if gate already there
+    if(!gate_listed(potential_id)){
+        add_gate(&(gate_entry){
+            .gate_id = potential_id,
+            .gate_is_state = state,
+            .gate_requested_state = UNKNOWN,
+            .job_is_todo = false,
+            .job_prio = 0,
+            .sig_strength = 0
+        });
+    }else{
+        //update is state
+        set_is_state(potential_id, state);
+    }
+}
+
+void update_with_jobs(int potential_id){
+    if(get_jobs_entry(potential_id, &jobs_tbl_entry_buf) == TABLE_SUCCESS){
+        //check if gate already there
+        if(!gate_listed(jobs_tbl_entry_buf.gateID)){
+            add_gate(&(gate_entry){
+                .gate_id = jobs_tbl_entry_buf.gateID,
+                .gate_is_state = UNKNOWN,
+                .gate_requested_state = UNKNOWN,
+                .job_is_todo = true,
+                .job_prio = jobs_tbl_entry_buf.priority,
+                .sig_strength = 0
+            });
+        }else{
+            //update job prio and todo state
+            set_job_prio(jobs_tbl_entry_buf.gateID, jobs_tbl_entry_buf.priority);
+            set_job_done(jobs_tbl_entry_buf.gateID, !jobs_tbl_entry_buf.done);
+        }
+    }
+}
+
+void update_with_timestamp(int potential_id){
+    if(get_timestamp_entry(potential_id, &timestamp_tbl_entry_buf) == TABLE_SUCCESS){
+        //check if gate already there
+        if(!gate_listed(timestamp_tbl_entry_buf.gateID)){
+            add_gate(&(gate_entry){
+                .gate_id = timestamp_tbl_entry_buf.gateID,
+                .gate_is_state = UNKNOWN,
+                .gate_requested_state = UNKNOWN,
+                .job_is_todo = false,
+                .job_prio = 0,
+                .sig_strength = timestamp_tbl_entry_buf.rssi
+            });
+        }else{
+            //update signal strength
+            set_sig_strength(timestamp_tbl_entry_buf.gateID, timestamp_tbl_entry_buf.rssi);
+        }
+    }
+}
+
+void update_menu_from_tables(void){
+    for(int i = 0; i< MAX_GATES; i++){
+        update_with_target(i);
+        //update_with_is_state(i); //alternative
+        //update_with_seen_status(i); //alternative
+        update_with_latest_status(i); //alternative
+        update_with_jobs(i);
+        update_with_timestamp(i);
+    }
+}
+
+/* 
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    UNTIL HERE FUNCTIONS TO WORK WITH TABLES
+
+    ------------------------------
+
+    FROM HERE FUNCTIONS TO WORK IN THE MENU
+    vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+*/
+
 
 void main_menu_entry_view(void){
     upper_entry.menu = MAIN;
@@ -209,6 +398,15 @@ int get_num_gates(void){
     return current_num_gates;
 }
 
+bool gate_listed(int gate_id){
+    for(int i = 0; i< current_num_gates; i++){
+        if(all_entries[i].gate_id == gate_id){
+            return true;
+        }
+    }
+    return false;
+}
+
 //get to gate overview menu to header
 void main_to_gate_overview(void){
     upper_entry.menu = GATE_OVERVIEW;
@@ -328,6 +526,12 @@ void cancel_to_close_by(void){
     }
     lower_entry.selected = false;
 }
+
+
+/*
+    FROM HERE INPUT HANDLING FUNCTIONS
+    vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+*/
 
 void main_menu_input(input input){
     switch (input){
@@ -783,23 +987,29 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                 
                 if(state == OPEN){
                     set_requested_state(upper_entry.current_gate->gate_id, OPEN);
+                    in_tables_set_gate_open_closed(upper_entry.current_gate->gate_id, OPEN);
                 }else if (state == CLOSED){
                     set_requested_state(upper_entry.current_gate->gate_id, CLOSED);
+                    in_tables_set_gate_open_closed(upper_entry.current_gate->gate_id, CLOSED);
                 }
                 
                 if(upper_entry.current_gate->gate_is_state == upper_entry.current_gate->gate_requested_state){
                     set_job_done(upper_entry.current_gate->gate_id, true);
+                    in_tables_set_gate_job_done(upper_entry.current_gate->gate_id, true);
                 }
             } else if (lower_entry.selected && lower_entry.subentry == CONFIRM){
 
                 if(state == OPEN){
                     set_requested_state(lower_entry.current_gate->gate_id, OPEN);
+                    in_tables_set_gate_open_closed(lower_entry.current_gate->gate_id, OPEN);
                 }else if (state == CLOSED){
                     set_requested_state(lower_entry.current_gate->gate_id, CLOSED);
+                    in_tables_set_gate_open_closed(lower_entry.current_gate->gate_id, CLOSED);
                 }
                 
                 if(lower_entry.current_gate->gate_is_state == lower_entry.current_gate->gate_requested_state){
                     set_job_done(lower_entry.current_gate->gate_id, true);
+                    in_tables_set_gate_job_done(lower_entry.current_gate->gate_id, true);
                 }
             }
 
@@ -876,3 +1086,57 @@ void menu_input(input input){
     
 }
 
+
+
+/*
+    FROM HERE FUNCTIONS TO DISPLAY THE MENU
+    vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+*/
+
+void display_header(display_entry *entry){
+    if(entry == NULL){
+        return;
+    }
+
+    switch(entry->menu){
+        case MAIN:
+            display_menu_header("Menu SenseMate ", SENSEMATE_ID, true);
+            break;
+        case GATE_OVERVIEW:
+            display_menu_header("all Gates ", current_num_gates, true);
+            break;
+        case JOB_PRIOS:
+            display_menu_header("Jobs ", current_num_jobs, true);
+            break;
+        case CLOSE_BY_MENU:
+            display_menu_header("Close By ", current_num_close_by, true);
+            break;
+        case SELECTED_GATE:
+        case SELECTED_JOB:
+        case SELECTED_CLOSE_BY:
+            display_menu_header("set Gate ", entry->current_gate->gate_id, true);
+            break;
+        case CONFIRMATION_GATE_OPEN:
+        case CONFIRMATION_JOB_OPEN:
+        case CONFIRMATION_CLOSE_BY_OPEN:
+            display_menu_header("Open Gate ", entry->current_gate->gate_id, true);
+            break;
+        case CONFIRMATION_GATE_CLOSE:
+        case CONFIRMATION_JOB_CLOSE:
+        case CONFIRMATION_CLOSE_BY_CLOSE:
+            display_menu_header("Close Gate ", entry->current_gate->gate_id, true);
+            break;
+        default:
+            printf("display_header: Unknown menu type %d\n", entry->menu);
+            break;
+
+    }
+}
+
+void update_menu_display(void){
+    new_page();
+
+    if(upper_entry.subentry == HEADER){
+        display_header(&upper_entry);
+    }
+}
