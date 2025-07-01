@@ -64,7 +64,7 @@ typedef struct {
     bool selected;
 } display_entry;
 
-extern void init_menue(void);
+extern void init_new_menu(void);
 
 extern void add_gate(gate_entry *new_entry);
 
@@ -85,6 +85,8 @@ extern int get_num_gates(void);
 extern void menu_input(input input);
 
 bool gate_listed(int gate_id);
+
+extern void update_menu_from_tables(void);
 
 void update_menu_display(void);
 #endif

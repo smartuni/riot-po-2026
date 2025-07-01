@@ -1,9 +1,10 @@
 #include "events_creation.h"
 #include <stdio.h>
-#include "menu.h"
+//#include "menu.h"
 #include "ztimer.h"
 #include "board.h"
 #include "event/timeout.h"
+#include "new_menu.h"
 
 
 bool event_accepted = true;
@@ -34,11 +35,12 @@ void event_handlerA0(event_t *event)
     (void) event;   /* Not used */
     if(event_accepted){
         event_accepted = false; // Prevent further calls until reset
-        set_current_meustate(DOWN);
+        menu_input(DOWN);
+        //set_current_meustate(DOWN);
         puts("A0 event handler was called.");
 
         event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-        refresh_display();
+        //refresh_display();
     }else{
         puts("event A0 ignored");
     }
@@ -50,10 +52,11 @@ void event_handlerA1(event_t *event)
     (void) event;   /* Not used */
     if(event_accepted){
         event_accepted = false; // Prevent further calls until reset
-        set_current_meustate(SELECT);
+        //set_current_meustate(SELECT);
+        menu_input(SELECT);
         puts("A1 event handler was called.");
         event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-        refresh_display();
+        ///refresh_display();
     }else{
         puts("event A1 ignored");
     }
@@ -64,10 +67,11 @@ void event_handlerA3(event_t *event)
     (void) event;   /* Not used */
     if(event_accepted){
         event_accepted = false; // Prevent further calls until reset
-        set_current_meustate(UP);
+        //set_current_meustate(UP);
+        menu_input(UP);
         puts("A3 event handler was called.");
         event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-        refresh_display();
+        //refresh_display();
     }else{
         puts("event A3 ignored");
     }

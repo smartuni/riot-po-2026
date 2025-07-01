@@ -246,7 +246,7 @@ void main_menu_entry_view(void){
     lower_entry.selected = true;
 }
 
-void init_menue(void){
+void init_new_menu(void){
     main_menu_entry_view();
 }
 
@@ -438,7 +438,7 @@ void cancel_to_gate_overview(void){
         lower_entry.current_gate = NULL;
     }else{
         lower_entry.subentry = OTHER;
-        lower_entry.current_gate = &all_entries[current_num_gates -1];
+        lower_entry.current_gate = upper_entry.current_gate + 1;
     }
     lower_entry.selected = false;
 }
@@ -946,7 +946,23 @@ void selected_input(input input, menu_type menu){
                     }
                 }
             }else{
+                if(lower_entry.subentry == MARK_OPEN){
+                    to_confirmation_open(menu);
 
+                }else if (lower_entry.subentry == MARK_CLOSED){
+                    to_confirmation_closed(menu);
+
+                }else if (lower_entry.subentry == CANCEL){
+                    if(menu == SELECTED_GATE){
+                        cancel_to_gate_overview();
+                        
+                    }else if (menu == SELECTED_JOB){
+                        cancel_to_job_prios();
+
+                    }else if (menu == SELECTED_CLOSE_BY){
+                        cancel_to_close_by();
+                    }
+                }
             }
     }
 }
@@ -986,10 +1002,10 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
             if(upper_entry.selected && upper_entry.subentry == CONFIRM){
                 
                 if(state == OPEN){
-                    set_requested_state(upper_entry.current_gate->gate_id, OPEN);
+                    set_is_state(upper_entry.current_gate->gate_id, OPEN);
                     in_tables_set_gate_open_closed(upper_entry.current_gate->gate_id, OPEN);
                 }else if (state == CLOSED){
-                    set_requested_state(upper_entry.current_gate->gate_id, CLOSED);
+                    set_is_state(upper_entry.current_gate->gate_id, CLOSED);
                     in_tables_set_gate_open_closed(upper_entry.current_gate->gate_id, CLOSED);
                 }
                 
@@ -1000,10 +1016,10 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
             } else if (lower_entry.selected && lower_entry.subentry == CONFIRM){
 
                 if(state == OPEN){
-                    set_requested_state(lower_entry.current_gate->gate_id, OPEN);
+                    set_is_state(lower_entry.current_gate->gate_id, OPEN);
                     in_tables_set_gate_open_closed(lower_entry.current_gate->gate_id, OPEN);
                 }else if (state == CLOSED){
-                    set_requested_state(lower_entry.current_gate->gate_id, CLOSED);
+                    set_is_state(lower_entry.current_gate->gate_id, CLOSED);
                     in_tables_set_gate_open_closed(lower_entry.current_gate->gate_id, CLOSED);
                 }
                 
@@ -1013,11 +1029,11 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                 }
             }
 
-            if(menu == CONFIRMATION_GATE_OPEN){
+            if(menu == CONFIRMATION_GATE_OPEN || menu == CONFIRMATION_GATE_CLOSE){
                 cancel_to_gate_overview();
-            }else if (menu == CONFIRMATION_JOB_OPEN){
+            }else if (menu == CONFIRMATION_JOB_OPEN || menu == CONFIRMATION_JOB_CLOSE){
                 cancel_to_job_prios();
-            }else if (menu == CONFIRMATION_CLOSE_BY_OPEN){
+            }else if (menu == CONFIRMATION_CLOSE_BY_OPEN || menu == CONFIRMATION_CLOSE_BY_CLOSE){
                 cancel_to_close_by();
             }
         break; 
@@ -1100,7 +1116,7 @@ void display_header(display_entry *entry){
 
     switch(entry->menu){
         case MAIN:
-            display_menu_header("Menu SenseMate: ", SENSEMATE_ID, true);
+            display_menu_header("SenseMate ID ", SENSEMATE_ID, true);
             break;
         case GATE_OVERVIEW:
             display_menu_header("all Gates: ", current_num_gates, true);
@@ -1164,6 +1180,10 @@ void display_main(display_entry *entry, bool upper){
 }
 
 void display_gate(display_entry *entry, bool upper){
+    if(entry->subentry == CANCEL){
+        display_ordinary_menu("cancel", 0, false, upper, entry->selected, false);
+        return;
+    }
     display_gate_menu_box("Gate ", //text
             entry->current_gate->gate_id, //num_after_text
             upper, //if upper

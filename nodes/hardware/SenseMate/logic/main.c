@@ -6,10 +6,11 @@
 #include "periph/gpio.h"
 #include "ztimer.h"
 #include "interrupts.h"
-#include "menu.h"
+//#include "menu.h"
 #include "events_creation.h"
 #include "tables.h"
 #include "mate_lorawan.h"
+#include "new_menu.h"
 
 
 
@@ -22,9 +23,10 @@ int main(void) {
     init_display();
     printf("Display initialized.\n");
     //display_demo();
-    init_menu();
-    set_current_meustate(INIT);
-    refresh_display();
+    //init_menu();
+    init_new_menu();
+    //set_current_meustate(INIT);
+    update_menu_display();
     init_event();
     init_tables();
     is_state_entry test;
@@ -56,7 +58,7 @@ int main(void) {
     test.state = 1;
     test.gateTime = 20000;
     test_merge = set_is_state_entry(&test);
-   
+    update_menu_from_tables();
 
     //is_state_entry receiveide_is_state;
     //int hallo = get_is_state_entry(1, &receiveide_is_state);
