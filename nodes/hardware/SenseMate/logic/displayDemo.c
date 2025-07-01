@@ -38,7 +38,7 @@ void init_display(void){
     } while (u8g2_NextPage(&u8g2));
     ztimer_sleep(ZTIMER_MSEC, 1000);
 
-
+    u8g2_SetFlipMode(&u8g2, 1); // flip mode
     u8g2_ClearDisplay(&u8g2);
     printf("Display initialized. --\n");
 }
@@ -282,24 +282,53 @@ void display_gate_state(int pos_x, int pos_y, bool gate_state_open, int relative
 
 }
 
+void display_job_state(int pos_x, int pos_y, bool job_state_done, int relative_size){
+    int size_scaler = 2;
+    u8g2_DrawFrame(&u8g2, pos_x, pos_y, size_scaler*relative_size, size_scaler*relative_size);
+    if(job_state_done){
+        u8g2_DrawLine(&u8g2, pos_x, pos_y, pos_x + size_scaler*relative_size, pos_y + size_scaler*relative_size);
+        u8g2_DrawLine(&u8g2, pos_x, pos_y + size_scaler*relative_size, pos_x + size_scaler*relative_size, pos_y);
+    }
+}
+
+void display_job_target(int pos_x, int pos_y, bool job_target_gate_open, int relative_size){
+
+    u8g2_DrawBox(&u8g2, pos_x, pos_y + relative_size, relative_size/2, relative_size/2);
+    u8g2_DrawBox(&u8g2, pos_x+relative_size+relative_size/2, pos_y + relative_size, relative_size/2, relative_size/2);
+    if(job_target_gate_open){
+        for (int i = 0; i < relative_size/2; i++){
+            u8g2_DrawLine(&u8g2, pos_x + relative_size/2, pos_y+relative_size -(relative_size/2-i), pos_x+1*relative_size+i, pos_y+i);
+        }
+    }else{
+        u8g2_DrawBox(&u8g2, pos_x + relative_size/2, pos_y + relative_size, relative_size, relative_size/2);
+    }
+}
+
+void display_more_content(bool upper){
+    if(upper){
+        u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
+        u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 + DISPLAY_WIDTH/32, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
+        u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 - DISPLAY_WIDTH/32, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
+    }else{
+        u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
+        u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 + DISPLAY_WIDTH/32, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
+        u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 - DISPLAY_WIDTH/32, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
+    }
+}
+
 void display_ordinary_menu(char *text, int num_after_text, bool use_num, bool upper, bool selected, bool more_content){
     do{
 
         if(upper){
             display_menu_box(text, num_after_text, use_num, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
-            if(more_content){
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 + DISPLAY_WIDTH/32, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 - DISPLAY_WIDTH/32, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-            }
         }else{
-            display_menu_box(text, num_after_text, use_num, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
-            if(more_content){
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 + DISPLAY_WIDTH/32, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 - DISPLAY_WIDTH/32, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-            }
+            display_menu_box(text, num_after_text, use_num, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);    
         }
+
+        if(more_content){
+                display_more_content(upper);
+        }
+
     } while (u8g2_NextPage(&u8g2));
 }
 
@@ -317,20 +346,42 @@ void display_gate_menu_box(char* text, int num_after_text, bool upper, bool sele
         if(upper){
             display_menu_box(text, num_after_text, true, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
             display_gate_state(23*(DISPLAY_WIDTH/32), 3*DISPLAY_HEIGHT/16, gate_state_open, DISPLAY_HEIGHT/16);
-            if(more_content){
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 + DISPLAY_WIDTH/32, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 - DISPLAY_WIDTH/32, (DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-            }
 
         }else{
             display_menu_box(text, num_after_text, true, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
             display_gate_state(23*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*10, gate_state_open, DISPLAY_HEIGHT/16);
-            if(more_content){
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 + DISPLAY_WIDTH/32, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-                u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2 - DISPLAY_WIDTH/32, DISPLAY_HEIGHT-(DISPLAY_HEIGHT/16)/2, DISPLAY_HEIGHT/64, U8G2_DRAW_ALL);
-            }
+        }
+
+        if(more_content){
+                display_more_content(upper);
+        }
+
+    } while (u8g2_NextPage(&u8g2));
+}
+
+void display_job_menu_box(char* text, int num_after_text, bool upper, bool selected, bool job_state_done, bool job_target_state_open, bool more_content){
+    do{
+        char my_text[11];
+        u8g2_uint_t str_width = u8g2_GetStrWidth(&u8g2, text);
+        if (str_width > 23*(DISPLAY_WIDTH/32)-3*(DISPLAY_WIDTH/32)){
+            //int text_len = strlen(text);
+            strncpy(my_text, text, 10);
+            my_text[10] = '\0';
+            text = my_text;
+        }
+
+        display_job_target(23*(DISPLAY_WIDTH/32), 5*DISPLAY_HEIGHT/16, job_target_state_open, DISPLAY_HEIGHT/16);
+
+        if(upper){
+            display_menu_box(text, num_after_text, true, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
+            display_job_state(28*(DISPLAY_WIDTH/32), 3*DISPLAY_HEIGHT/16, job_state_done, DISPLAY_HEIGHT/16);
+        }else{
+            display_menu_box(text, num_after_text, true, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
+            display_job_state(28*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*10, job_state_done, DISPLAY_HEIGHT/16);
+        }
+
+        if(more_content){
+                display_more_content(upper);
         }
     } while (u8g2_NextPage(&u8g2));
 }

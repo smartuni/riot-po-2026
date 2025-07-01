@@ -34,7 +34,7 @@ void event_handlerA0(event_t *event)
     (void) event;   /* Not used */
     if(event_accepted){
         event_accepted = false; // Prevent further calls until reset
-        set_current_meustate(UP);
+        set_current_meustate(DOWN);
         puts("A0 event handler was called.");
 
         event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
@@ -64,7 +64,7 @@ void event_handlerA3(event_t *event)
     (void) event;   /* Not used */
     if(event_accepted){
         event_accepted = false; // Prevent further calls until reset
-        set_current_meustate(DOWN);
+        set_current_meustate(UP);
         puts("A3 event handler was called.");
         event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
         refresh_display();

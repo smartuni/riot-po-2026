@@ -32,4 +32,6 @@ extern void refresh_display(void);
 
 extern void refresh_menu(void);
 
+void add_job(int id, uint8_t expected_state);
+
 #endif
