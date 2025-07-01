@@ -104,7 +104,7 @@ void update_with_seen_status(int potential_id){
     bool success = false;
     //get the latest seen status entry
     for (int i = 0; i < MAX_SENSE_MATES; i++){
-        if(get_seen_status_entry(potential_id, &seen_status_tbl_entry_buf) == TABLE_SUCCESS){
+        if(get_seen_status_entry(potential_id, i, &seen_status_tbl_entry_buf) == TABLE_SUCCESS){
             if(timestamp < seen_status_tbl_entry_buf.gateTime){
                 timestamp = seen_status_tbl_entry_buf.gateTime;
                 state = seen_status_tbl_entry_buf.status;
@@ -137,7 +137,7 @@ void update_with_latest_status(int potential_id){
     bool success = false;
     //get the latest seen status entry
     for (int i = 0; i < MAX_SENSE_MATES; i++){
-        if(get_seen_status_entry(potential_id, &seen_status_tbl_entry_buf) == TABLE_SUCCESS){
+        if(get_seen_status_entry(potential_id, i, &seen_status_tbl_entry_buf) == TABLE_SUCCESS){
             if(timestamp < seen_status_tbl_entry_buf.gateTime){
                 timestamp = seen_status_tbl_entry_buf.gateTime;
                 state = seen_status_tbl_entry_buf.status;

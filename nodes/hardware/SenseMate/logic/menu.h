@@ -1,3 +1,4 @@
+#ifdef USE_OLD_MENU
 #ifndef _MY_MENU_H
 #define _MY_MENU_H
 #include <stdbool.h>
@@ -34,4 +35,5 @@ extern void refresh_menu(void);
 
 void add_job(int id, uint8_t expected_state);
 
+#endif
 #endif

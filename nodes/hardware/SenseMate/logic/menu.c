@@ -1,3 +1,4 @@
+#ifdef USE_OLD_MENU
 #include <stdio.h>
 #include "menu.h"
 #include "displayDemo.h"
@@ -511,3 +512,4 @@ void refresh_display(void) {
     
     
 }
+#endif // 0
