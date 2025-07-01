@@ -97,7 +97,7 @@ void test_all_table_types(void) {
     printf("set_seen_status_entry(): %d\n", result);
     
     seen_status_entry retrieved_seen;
-    result = get_seen_status_entry(25, &retrieved_seen);
+    result = get_seen_status_entry(25, 0, &retrieved_seen);
     printf("get_seen_status_entry(): %d, gateID=%d, gateTime=%d, status=%d, senseMateID=%d\n", 
            result, retrieved_seen.gateID, retrieved_seen.gateTime, 
            retrieved_seen.status, retrieved_seen.senseMateID);
