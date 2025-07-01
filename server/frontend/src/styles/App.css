@@ -144,6 +144,21 @@
     color: #666;
 }
 
+.badge.pending_open {
+    background: #e6f4ea;
+    color: #1a7f37;
+}
+
+.badge.pending_close {
+    background: #fdecea;
+    color: #b3261e;
+}
+
+.badge.pending_none {
+    background: #f0f4f8;
+    color: #666;
+}
+
 .date {
     font-size: 0.75rem;
     color: #888;

@@ -96,7 +96,6 @@ export const requestGateStatusChange = async (gateId, workerId,status) => {
             `/${gateId}/${workerId}/request-status-change/`,
             { requestedStatus: status }
         );
-        await addActivities(response);
         return response.data;
     } catch (error) {
         console.error('Error requesting gate status change:', error);
@@ -113,6 +112,14 @@ export const markNotificationAsRead = async (notificationId) => {
         throw error;
     }
 };
+
+export const updateGatePriority = async (gateId, newPriority) => {
+    return await api.put(`/update-priority/${gateId}`, {
+        priority: newPriority
+    });
+};
+
+
 
 
 

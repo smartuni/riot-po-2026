@@ -7,9 +7,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import "../styles/FloodGatePopup.css";
 import api from "../services/api";
 
-const FloodGatePopup = ({ gate, onClose, onStatusChange }) => {
+const FloodGatePopup = ({ gate, workerId, onClose, onStatusChange }) => {
     const [loading, setLoading] = useState(false);
-    const [requested, setRequested] = useState(false);
 
     const getStatusIcon = (status) => {
         switch (status?.toUpperCase()) {
@@ -24,22 +23,19 @@ const FloodGatePopup = ({ gate, onClose, onStatusChange }) => {
 
     const normalizedStatus = gate.status?.toLowerCase();
     const requestedStatus = gate.requestedStatus?.toLowerCase();
-    const oppositeStatus = normalizedStatus === "requested_open" ? "requested_close" : "requested_open";
-    const alreadyRequested =
-        requestedStatus === oppositeStatus.toUpperCase() ||
-        gate.status === oppositeStatus.replace("requested_", "").toUpperCase();
 
+    // Zielstatus bestimmen: Toggle von aktuellem Status
+    const targetStatus = normalizedStatus === "closed"
+        ? "REQUESTED_OPEN"
+        : "REQUESTED_CLOSE";
 
     const requestGateAction = async () => {
-        if (loading || alreadyRequested) return;
-
         setLoading(true);
         try {
-            // Fix 1: Use correct HTTP method (POST instead of PUT)
-            // Fix 2: Send oppositeStatus instead of requestedStatus
-            await axios.post(`/${gate.id}/request-status-change`, { requestedStatus: oppositeStatus }, // Fixed: use oppositeStatus
-            );
-            setRequested(true);
+            await api.post(`/${gate.id}/${workerId}/request-status-change/`, {
+                requestedStatus: targetStatus
+            });
+
             if (onStatusChange) onStatusChange();
         } catch (error) {
             console.error("Fehler bei Statusanfrage:", error);
@@ -70,10 +66,10 @@ const FloodGatePopup = ({ gate, onClose, onStatusChange }) => {
 
                 <button
                     onClick={requestGateAction}
-                    disabled={loading || alreadyRequested}
-                    className={oppositeStatus === "requested_close" ? "close-button" : "open-button"}
+                    disabled={loading}
+                    className={targetStatus === "REQUESTED_CLOSE" ? "close-button" : "open-button"}
                 >
-                    {loading ? "Senden..." : `Request ${oppositeStatus.toUpperCase()}`}
+                    {loading ? "Senden..." : `Request ${targetStatus.replace("REQUESTED_", "")}`}
                 </button>
             </div>
         </div>

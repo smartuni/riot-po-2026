@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {fetchActivities, fetchGates, loadWorkerId, requestGateStatusChange} from "../services/api";
+import {fetchActivities, fetchGates, loadWorkerId, requestGateStatusChange, updateGatePriority} from "../services/api";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import api from "../services/api";
@@ -34,6 +34,8 @@ function StatusTables() {
     const [expandedGateId, setExpandedGateId] = useState(null);
     const [activities, setActivities] = useState([]);
     const [workerId, setWorkerId] = useState(null);
+    const [selectedPriorities, setSelectedPriorities] = useState({});
+
 
     useEffect(() => {
         const loadDetails = async () => {
@@ -111,23 +113,9 @@ function StatusTables() {
 
         const statusToSend = bulkRequestedStatus === "NONE" ? null : bulkRequestedStatus;
 
-        const gatesToUpdate = filteredGates.filter(gate => {
-            const currentRequested = gate.requestedStatus || null;
-            const currentStatus = gate.status;
-
-            // Gleicher Request? Ignorieren
-            if (currentRequested === statusToSend) return false;
-
-            // Status passt schon zum Ziel? Ignorieren
-            return !((statusToSend === "REQUESTED_OPEN" && currentStatus === "OPENED") ||
-                (statusToSend === "REQUESTED_CLOSE" && currentStatus === "CLOSED"));
-
-
-        });
-
-        const promises = gatesToUpdate.map(async (gate) => {
+        const promises = filteredGates.map(async (gate) => {
             try {
-                await requestGateStatusChange(gate.id, workerId, statusToSend);
+                await requestGateStatusChange(gate.id, workerId, bulkRequestedStatus);
             } catch (error) {
                 console.error(`Fehler beim Aktualisieren von Gate ${gate.id}`, error);
             }
@@ -137,6 +125,10 @@ function StatusTables() {
         const updated = await fetchGates();
         setGates(updated);
     };
+
+
+
+
 
     /**
      * Rendert den angeforderten Status für ein Gate.
@@ -156,9 +148,9 @@ function StatusTables() {
 
     const renderPendingJobs = (status) => {
         switch (status) {
-            case "REQUESTED_OPEN":
+            case "PENDING_OPEN":
                 return <><LockOpenIcon fontSize="small"/> OPEN</>;
-            case "REQUESTED_CLOSE":
+            case "PENDING_CLOSE":
                 return <><LockIcon fontSize="small"/> CLOSE</>;
             default:
                 return <><CircleIcon fontSize="small"/> NONE</>;
@@ -212,19 +204,26 @@ function StatusTables() {
 
     const handlePriorityChange = async (gateId, newPriority) => {
         try {
-            // Optional: call backend API here if needed
-            await api.put(`/update-priority/${gateId}`, { priority: newPriority });
+            await updateGatePriority(gateId, newPriority);
 
-            // Locally update the state for immediate feedback
+            // Update die Anzeige sofort im Frontend
             setGates(prevGates =>
                 prevGates.map(g =>
                     g.id === gateId ? { ...g, priority: newPriority } : g
                 )
             );
+
+            // Optional: selectedPriorities mitziehen, falls du das brauchst
+            setSelectedPriorities(prev => ({
+                ...prev,
+                [gateId]: newPriority
+            }));
         } catch (error) {
-            console.error("Error updating priority:", error);
+            console.error("Fehler beim Aktualisieren der Priorität:", error);
+            alert("Fehler beim Aktualisieren der Priorität.");
         }
     };
+
 
 
     /**
@@ -300,7 +299,7 @@ function StatusTables() {
                                 <MenuItem value="">None</MenuItem>
                                 <MenuItem value="REQUESTED_OPEN">Request Open</MenuItem>
                                 <MenuItem value="REQUESTED_CLOSE">Request Close</MenuItem>
-                                <MenuItem value="REQUESTED_NONE">Clear Request</MenuItem>
+                                <MenuItem value="REQUESTED_NONE">Clear All Requests</MenuItem>
                             </Select>
                         </FormControl>
 
@@ -328,21 +327,19 @@ function StatusTables() {
                             <th>Gate ID</th>
                             <th>Location</th>
                             <th>Status</th>
-                            <th>Pending Jobs</th>
                             <th>Requested Status</th>
+                            <th>Pending Jobs</th>
                             <th>Priority</th>
                             <th>Last Update</th>
                             <th>Confidence</th>
                             <th>Actions</th>
+                            <th>Activities</th>
                         </tr>
                         </thead>
                         <tbody>
                         {filteredGates.map((gate) => (
                             <React.Fragment key={gate.id}>
-                                <tr
-                                    onClick={() => setExpandedGateId(expandedGateId === gate.id ? null : gate.id)}
-                                    style={{cursor: "pointer"}}
-                                >
+                                <tr>
                                     <td>{gate.id}</td>
                                     <td>
                                         {gate.location}<br/>
@@ -362,26 +359,28 @@ function StatusTables() {
                                         </span>
                                     </td>
                                     <td>
-                                        <span className={`badge ${gate.requestedStatus ? gate.requestedStatus.toLowerCase() : 'none'}`}>
-                                            {renderPendingJobs(gate.requestedStatus)}
+                                        <span className={`badge ${gate.pendingJob ? gate.pendingJob.toLowerCase() : 'none'}`}>
+                                            {renderPendingJobs(gate.pendingJob)}
                                         </span>
                                     </td>
                                     <td>
-                                        {gate.priority}
-                                            <FormControl size="small" variant="outlined" fullWidth>
-                                                <Select
-                                                    value={gate.priority ?? 0}
-                                                    onChange={(e) => handlePriorityChange(gate.id, parseInt(e.target.value))}
-                                                >
-                                                    {[0, 1, 2, 3].map((level) => (
-                                                        <MenuItem key={level} value={level}>
-                                                            Priority {level}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-                                    </td>
+                                        <FormControl size="small" variant="outlined">
+                                            <Select
+                                                value={gate.priority ?? 0}
+                                                onChange={(e) => {
+                                                    const newPriority = parseInt(e.target.value);
+                                                    handlePriorityChange(gate.id, newPriority);
+                                                }}
+                                             variant="outlined">
+                                                {[0, 1, 2, 3].map((level) => (
+                                                    <MenuItem key={level} value={level}>
+                                                        {level}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
 
+                                    </td>
                                     <td>
                                         <div>{getTimeAgo(gate.lastTimeStamp)}</div>
                                         <div className="date">{gate.lastUpdate}</div>
@@ -408,7 +407,7 @@ function StatusTables() {
                                             color="warning"
                                             size="small"
                                             onClick={(e) => {
-                                                e.stopPropagation();  // verhindert dass Zeilen-Click auch getriggert wird
+                                                e.stopPropagation();
                                                 setSelectedGate(gate);
                                                 setDialogOpen(true);
                                             }}
@@ -416,6 +415,18 @@ function StatusTables() {
                                             <SyncAltIcon/>
                                         </IconButton>
                                     </td>
+                                    <td>
+                                        <IconButton
+                                            onClick={() =>
+                                                setExpandedGateId(expandedGateId === gate.id ? null : gate.id)
+                                            }
+                                            size="small"
+                                            aria-label="expand row"
+                                        >
+                                            {expandedGateId === gate.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                        </IconButton>
+                                    </td>
+
                                 </tr>
                                 {expandedGateId === gate.id && (
                                     <tr className="expanded-row">

@@ -52,7 +52,6 @@ public class GateController {
         String targetStatus = body.get("requestedStatus");
         gateService.requestGateStatusChange(gateId, targetStatus);
         gateActivityService.addGateActivity(new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gateId, targetStatus, "The worker with ID: " + workerId + " requested the Status: "+ targetStatus + " to the gate with Gate-ID: " +gateId, workerId));
-
     }
 
     @RequestMapping(value = "gates_for_downlink", method = RequestMethod.GET)
@@ -60,5 +59,13 @@ public class GateController {
         return gateService.getAllGatesForDownlink();
     }
 
+    @PutMapping("/update-priority/{gateId}")
+    public void updatePriority(
+            @PathVariable Long gateId,
+            @RequestBody Map<String, Integer> request
+    ) {
+        Integer priority = request.get("priority");
+        gateService.updatePriority(gateId, priority);
+    }
 
 }
