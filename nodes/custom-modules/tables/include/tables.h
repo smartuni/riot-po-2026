@@ -10,7 +10,8 @@
     #include <stdint.h>
 
     #define INVALID_GATE_ID (0xFF)
-    #define MAX_GATE_COUNT (0xFF)
+    #define MAX_GATE_COUNT (64)
+    #define MAX_SENSE_COUNT (64)
 
     #define TARGET_STATE_KEY 0x00
     #define IS_STATE_KEY 0x01
@@ -214,7 +215,7 @@ int get_is_state_entry(uint8_t gate_id, is_state_entry* entry);
  * @param entry Pointer to seen_status_entry to store result
  * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
  */
-int get_seen_status_entry(uint8_t gate_id, seen_status_entry* entry);
+int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, seen_status_entry* entry);
 
 /**
  * Get a single jobs entry by gate ID
