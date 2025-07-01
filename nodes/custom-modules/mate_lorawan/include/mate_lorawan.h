@@ -35,6 +35,9 @@ int start_lorawan(void);
 extern event_queue_t lorawan_queue;
 
 extern event_t send_event;
+extern event_t send_is_state;
+extern event_t send_seen_state;
+
 
 
 #endif /* MATE_LORAWAN_H */

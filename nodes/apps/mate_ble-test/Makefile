@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = tables-test
+APPLICATION = mate_ble-test
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= feather-nrf52840-sense
@@ -21,11 +21,7 @@ DEVELHELP ?= 1
 # This board requires a start sleep to actually catch the printed output
 USEMODULE += ztimer_sec
 
-USEMODULE += tables
-EXTERNAL_MODULE_DIRS += ../../tables
-
-
-USEMODULE += tables
+USEMODULE += mate_ble
 
 # Include other packages here e.g.
 # include ../../other_package/other_package.inc.mk
@@ -35,7 +31,5 @@ USEMODULE += shell
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
-
-CFLAGS += -DDEBUG_ASSERT_VERBOSE
 
 include $(RIOTBASE)/Makefile.include

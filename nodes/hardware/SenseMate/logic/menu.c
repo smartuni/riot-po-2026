@@ -16,8 +16,7 @@
 
 #define CLOSED 0
 #define OPEN 1
-#define JOB_DONE 0
-#define JOB_TODO 2
+
 #define SENSEMATE_ID 7
 
 #define TABLE_SUCCESS           0
@@ -181,10 +180,10 @@ void add_job(int id, uint8_t expected_state) {
         jobs[jobs_header.num_entries-1].id = id;
         jobs[jobs_header.num_entries-1].state = 0;
         jobs[jobs_header.num_entries-1].state |= expected_state;
-        jobs[jobs_header.num_entries-1].state |= JOB_TODO;
+        jobs[jobs_header.num_entries-1].state |= JOB_IN_PROGRESS;
         jobs_header.num_entries++;
 
-        gate_states[id -1].state |= JOB_TODO;
+        gate_states[id -1].state |= JOB_IN_PROGRESS;
     }
 }
 
@@ -195,8 +194,8 @@ void mark_job_done(int id) {
     
     for (int i = 0; i < jobs_header.num_entries; i++) {
         if (jobs[i].id == id) {
-            jobs[i].state &= ~JOB_TODO; // Clear the JOB_TODO bit
-            gate_states[id - 1].state &= ~JOB_TODO; // Clear the JOB_TODO bit in gate state
+            jobs[i].state &= ~JOB_IN_PROGRESS; // Clear the JOB_IN_PROGRESS bit
+            gate_states[id - 1].state &= ~JOB_IN_PROGRESS; // Clear the JOB_IN_PROGRESS bit in gate state
             break;
         }
     }
@@ -209,8 +208,8 @@ void mark_job_todo(int id) {
     
     for (int i = 0; i < jobs_header.num_entries; i++) {
         if (jobs[i].id == id) {
-            jobs[i].state |= JOB_TODO; // Set the JOB_TODO bit
-            gate_states[id - 1].state |= JOB_TODO; // Set the JOB_TODO bit in gate state
+            jobs[i].state |= JOB_IN_PROGRESS; // Set the JOB_IN_PROGRESS bit
+            gate_states[id - 1].state |= JOB_IN_PROGRESS; // Set the JOB_IN_PROGRESS bit in gate state
             break;
         }
     }
