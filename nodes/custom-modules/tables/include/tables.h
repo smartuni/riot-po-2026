@@ -30,7 +30,7 @@
     #define BASE_CBOR_BYTE_SIZE 0x03
     #define CBOR_TARGET_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
     #define CBOR_IS_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
-    #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x0C + 0x01 + 0x01)
+    #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x0C + 0x01)
     #define CBOR_JOBS_MAX_BYTE_SIZE (0x05 + 0x01)
 
     typedef struct {
@@ -50,7 +50,6 @@
         int gateTime;
         uint8_t status;
         uint8_t senseMateID;
-        int8_t rssi;
     } seen_status_entry;
 
     typedef struct {
@@ -138,6 +137,14 @@ int merge_seen_status_entry_table(const seen_status_entry* other, uint8_t size);
 int merge_jobs_entry_table(const jobs_entry* other, uint8_t size);
 
 /**
+ * Merge seen timestamp entries from another table
+ * @param other Pointer to array of timestamp_entry
+ * @param size Number of timestamp in other array
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int merge_timestamp_entry_table(const timestamp_entry* other, uint8_t size);
+
+/**
  * Set/update a single target state entry
  * Updates only if new entry has newer timestamp
  * @param entry Pointer to target_state_entry to set
@@ -168,6 +175,13 @@ int set_seen_status_entry(const seen_status_entry* entry);
  * @return TABLE_SUCCESS on success, error code on failure
  */
 int set_jobs_entry(const jobs_entry* entry);
+
+/**
+ * Set/update a single timestamp entry
+ * @param entry Pointer to timestamp_entry to set
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int set_timestamp_entry(const timestamp_entry* entry);
 
 /**
  * Force set a target state entry (ignore timestamp)
@@ -211,6 +225,14 @@ int get_seen_status_entry(uint8_t gate_id, seen_status_entry* entry);
 int get_jobs_entry(uint8_t gate_id, jobs_entry* entry);
 
 /**
+ * Get a single timestamp entry by gate ID
+ * @param gate_id Gate ID to look up
+ * @param entry Pointer to timestamp_entry to store result
+ * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
+ */
+int get_timestamp_entry(uint8_t gate_id, timestamp_entry* entry);
+
+/**
  * Get direct pointer to target state table 
  * @return Pointer to internal table array
  */
@@ -233,6 +255,12 @@ const seen_status_entry* get_seen_status_table(void);
  * @return Pointer to internal table array
  */
 const jobs_entry* get_jobs_table(void);
+
+/**
+ * Get direct pointer to jobs table 
+ * @return Pointer to internal table array
+ */
+const timestamp_entry* get_timestamp_table(void);
 
     /**
      * only for testing purposes
