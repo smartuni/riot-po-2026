@@ -84,7 +84,7 @@ extern int get_num_gates(void);
 
 extern void menu_input(input input);
 
-
 bool gate_listed(int gate_id);
 
+void update_menu_display(void);
 #endif

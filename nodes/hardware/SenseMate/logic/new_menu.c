@@ -1083,7 +1083,7 @@ void menu_input(input input){
         default:
         break;
     }
-    
+    update_menu_display();
 }
 
 
@@ -1100,31 +1100,31 @@ void display_header(display_entry *entry){
 
     switch(entry->menu){
         case MAIN:
-            display_menu_header("Menu SenseMate ", SENSEMATE_ID, true);
+            display_menu_header("Menu SenseMate: ", SENSEMATE_ID, true);
             break;
         case GATE_OVERVIEW:
-            display_menu_header("all Gates ", current_num_gates, true);
+            display_menu_header("all Gates: ", current_num_gates, true);
             break;
         case JOB_PRIOS:
-            display_menu_header("Jobs ", current_num_jobs, true);
+            display_menu_header("Jobs: ", current_num_jobs, true);
             break;
         case CLOSE_BY_MENU:
-            display_menu_header("Close By ", current_num_close_by, true);
+            display_menu_header("Close By: ", current_num_close_by, true);
             break;
         case SELECTED_GATE:
         case SELECTED_JOB:
         case SELECTED_CLOSE_BY:
-            display_menu_header("set Gate ", entry->current_gate->gate_id, true);
+            display_menu_header("set Gate: ", entry->current_gate->gate_id, true);
             break;
         case CONFIRMATION_GATE_OPEN:
         case CONFIRMATION_JOB_OPEN:
         case CONFIRMATION_CLOSE_BY_OPEN:
-            display_menu_header("Open Gate ", entry->current_gate->gate_id, true);
+            display_menu_header("Open Gate: ", entry->current_gate->gate_id, true);
             break;
         case CONFIRMATION_GATE_CLOSE:
         case CONFIRMATION_JOB_CLOSE:
         case CONFIRMATION_CLOSE_BY_CLOSE:
-            display_menu_header("Close Gate ", entry->current_gate->gate_id, true);
+            display_menu_header("Close Gate: ", entry->current_gate->gate_id, true);
             break;
         default:
             printf("display_header: Unknown menu type %d\n", entry->menu);
@@ -1133,10 +1133,114 @@ void display_header(display_entry *entry){
     }
 }
 
+void display_main(display_entry *entry, bool upper){
+    char *text = NULL;
+    bool more_content = false;
+    int displayed_num = 0;
+    bool use_num = true;
+    switch (entry->subentry){
+        case GATES:
+            text = "all Gates: ";
+            displayed_num = current_num_gates;
+            more_content = !upper;
+            break;
+        case JOBS:
+            text = "Jobs: ";
+            displayed_num = current_num_jobs;
+            more_content = true;
+            break;
+        case CLOSE_BY:
+            text = "Close By: ";
+            displayed_num = current_num_close_by;
+            break;
+        default:
+            printf("display_main: Unknown subentry type %d\n", entry->subentry);
+            text = "ERROR IN CODE";
+            use_num = false;
+            break;
+    }
+
+    display_ordinary_menu(text, displayed_num, use_num, upper, entry->selected, more_content);
+}
+
+void display_gate(display_entry *entry, bool upper){
+    display_gate_menu_box("Gate ", //text
+            entry->current_gate->gate_id, //num_after_text
+            upper, //if upper
+            entry->selected, // if selected
+            entry->current_gate->gate_is_state == OPEN, // gate_state_open
+            (!upper || (entry->current_gate->gate_id != all_entries[0].gate_id)) // if more content
+        );
+}
+
+void display_selected(display_entry *entry, bool upper){
+    char *text = NULL;
+    bool more_content = false;
+    switch(entry->subentry){
+        case MARK_OPEN:
+            text = "seen open";
+            if(!upper){
+                more_content = true;
+            }
+            break;
+        case MARK_CLOSED:
+            text = "seen closed";
+            more_content = true;
+            break;
+        case CANCEL:
+            text = "cancel";
+            break;
+        default:
+            printf("display_selected: Unknown subentry type %d\n", entry->subentry);
+            text = "ERROR IN CODE";
+            return;
+    }
+    display_ordinary_menu(text, 0, false, upper, entry->selected, more_content);
+}
+
+void display_confirmation(display_entry *entry, bool upper){
+    char *text = NULL;
+    bool more_content = false;
+    switch(entry->subentry){
+        case CONFIRM:
+            text = "confirm";
+            if(!upper){
+                more_content = true;
+            }
+            break;
+        case CANCEL:
+            text = "cancel";
+            break;
+        default:
+            printf("display_confirmation: Unknown subentry type %d\n", entry->subentry);
+            text = "ERROR IN CODE";
+            return;
+    }
+    display_ordinary_menu(text, 0, false, upper, entry->selected, more_content);
+}
+
 void update_menu_display(void){
     new_page();
 
     if(upper_entry.subentry == HEADER){
         display_header(&upper_entry);
+    }else if(upper_entry.menu == MAIN){
+        display_main(&upper_entry, true);
+    }else if(upper_entry.menu == GATE_OVERVIEW || upper_entry.menu == JOB_PRIOS || upper_entry.menu == CLOSE_BY_MENU){
+        display_gate(&upper_entry, true);
+    }else if(upper_entry.menu == SELECTED_GATE || upper_entry.menu == SELECTED_JOB || upper_entry.menu == SELECTED_CLOSE_BY){
+        display_selected(&upper_entry, true);
+    }else{
+        display_confirmation(&upper_entry, true);
+    }
+
+    if(lower_entry.menu == MAIN){
+        display_main(&lower_entry, false);
+    }else if(lower_entry.menu == GATE_OVERVIEW || lower_entry.menu == JOB_PRIOS || lower_entry.menu == CLOSE_BY_MENU){
+        display_gate(&lower_entry, false);
+    }else if(lower_entry.menu == SELECTED_GATE || lower_entry.menu == SELECTED_JOB || lower_entry.menu == SELECTED_CLOSE_BY){
+        display_selected(&lower_entry, false);
+    }else{
+        display_confirmation(&lower_entry, false);
     }
 }
