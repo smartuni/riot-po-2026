@@ -1,25 +1,49 @@
 #include "new_menu.h"
 #include <string.h>
-#define MAX_GATES 128
+#include <tables.h>
+#define MAX_GATES MAX_GATE_COUNT
 #define MIN_SIGNAL_STRENGTH 100
 #define MIN_JOB_PRIO 1
 
 /*sorted by gate_id*/
 gate_entry all_entries [MAX_GATES];
+int current_num_gates = 0;
 
 /*sorted by sig_strength, high to low*/
 gate_entry *close_by_order [MAX_GATES];
+int current_num_close_by = 0;
 
 /*sorted by job_prio high to low*/
 gate_entry *jobs_order [MAX_GATES];
-
-int current_num_gates = 0;
 int current_num_jobs = 0;
-int current_num_close_by = 0;
 
+
+//upper and lower field on Display
 display_entry upper_entry;
-
 display_entry lower_entry;
+
+
+//tables module buffer:
+target_state_entry target_state_tbl_entry_buf;
+is_state_entry is_state_tbl_entry_buf;
+seen_status_entry seen_status_tbl_entry_buf;
+jobs_entry jobs_tbl_entry_buf;
+timestamp_entry timestamp_tbl_entry_buf;
+
+
+void in_tables_mark_gate_open_closed(int gate_id, gate_state state){
+    //TODO getter to gateTime
+    set_seen_status_entry(&(seen_status_entry){
+        .gateID = gate_id,
+        .status = state,
+        .senseMateID = 7,
+        .gateTime = 2
+    });
+};
+
+void update_menu_from_tables(void){
+
+}
 
 void main_menu_entry_view(void){
     upper_entry.menu = MAIN;

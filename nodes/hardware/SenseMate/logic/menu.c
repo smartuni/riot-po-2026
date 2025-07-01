@@ -17,6 +17,8 @@
 #define CLOSED 0
 #define OPEN 1
 
+#define JOB_TODO 2 //BIT_FLAG
+
 #define SENSEMATE_ID 7
 
 #define TABLE_SUCCESS           0

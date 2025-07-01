@@ -13,9 +13,9 @@ typedef enum{
 
 
 typedef enum{
-    UNKNOWN,
+    CLOSED = 0,
     OPEN,
-    CLOSED
+    UNKNOWN
 } gate_state;
 
 typedef enum {
@@ -49,12 +49,12 @@ typedef enum {
 }subentry;
 
 typedef struct {
-    int gate_id;
-    int gate_is_state;
-    int gate_requested_state;
+    uint8_t gate_id;
+    uint8_t gate_is_state;
+    uint8_t gate_requested_state;
     bool job_is_todo;
-    int job_prio;
-    int sig_strength;
+    uint8_t job_prio;
+    uint8_t sig_strength;
 } gate_entry;
 
 typedef struct {
