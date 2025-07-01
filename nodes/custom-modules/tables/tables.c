@@ -21,7 +21,7 @@ static target_state_entry target_state_entry_table[MAX_GATE_COUNT];
 static int target_state_entry_count = 0;
 static is_state_entry is_state_entry_table[MAX_GATE_COUNT];
 static int is_state_entry_count = 0;
-static seen_status_entry seen_status_entry_table[MAX_GATE_COUNT];
+static seen_status_entry seen_status_entry_table[MAX_GATE_COUNT][MAX_SENSE_COUNT];
 static int seen_status_entry_count = 0;
 static jobs_entry jobs_entry_table[MAX_GATE_COUNT];
 static timestamp_entry timestamp_table[MAX_GATE_COUNT];
@@ -47,9 +47,15 @@ int init_tables(void) {
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
         target_state_entry_table[i].gateID = MAX_GATE_COUNT;  // Mark as empty
         is_state_entry_table[i].gateID = MAX_GATE_COUNT;
-        seen_status_entry_table[i].gateID = MAX_GATE_COUNT;
         jobs_entry_table[i].gateID = MAX_GATE_COUNT;
         timestamp_table[i].gateID = MAX_GATE_COUNT;
+    }
+
+    for (int i = 0; i < MAX_GATE_COUNT; i++) {
+        for (int j = 0; j < MAX_SENSE_COUNT; j++) {
+            seen_status_entry_table[i][j].gateID = MAX_GATE_COUNT;
+            seen_status_entry_table[i][j].senseMateID = MAX_SENSE_COUNT;
+        }
     }
     
     mutex_unlock(&timestamp_mutex);
@@ -77,12 +83,15 @@ static int is_is_state_entry_present_internal(uint8_t gate_id) {
     return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
 }
 
-static int is_seen_status_entry_present_internal(uint8_t gate_id) {
-    if (gate_id >= MAX_GATE_COUNT) {
+static int is_seen_status_entry_present_internal(uint8_t gate_id, uint8_t sense_id) {
+    if (gate_id >= MAX_GATE_COUNT || sense_id >= MAX_SENSE_COUNT) {
         return 0;
     }
-    uint8_t entry_gate_id = seen_status_entry_table[gate_id].gateID;
-    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
+    seen_status_entry entry = seen_status_entry_table[gate_id][sense_id];
+    return entry.gateID != MAX_GATE_COUNT 
+            && entry.gateID == gate_id 
+            && entry.senseMateID != MAX_SENSE_COUNT 
+            && entry.senseMateID == sense_id;
 }
 
 static int is_jobs_entry_present_internal(uint8_t gate_id) {
@@ -204,13 +213,15 @@ int seen_status_table_to_cbor(cbor_buffer* buffer) {
 
     // [Table Entry]
     for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        if(is_seen_status_entry_present_internal(i)) {
-            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-            cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].gateID);
-            cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].gateTime);
-            cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].status);
-            cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].senseMateID);
-            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        for (int j = 0; j < MAX_SENSE_COUNT; j++) {
+            if(is_seen_status_entry_present_internal(i, j)) {
+                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
+                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].gateID);
+                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].gateTime);
+                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].status);
+                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].senseMateID);
+                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+            }
         }
     }
 
@@ -444,21 +455,22 @@ int set_seen_status_entry(const seen_status_entry* entry) {
     }
     
     uint8_t gate_id = entry->gateID;
+    uint8_t sense_id = entry->senseMateID;
     if (!is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
     
     mutex_lock(&seen_status_mutex);
     int res = TABLE_NO_UPDATES;
-    if (!is_seen_status_entry_present_internal(gate_id)) {
+    if (!is_seen_status_entry_present_internal(gate_id, sense_id)) {
         // Entry doesn't exist yet, add it
         seen_status_entry_count++;
-        seen_status_entry_table[gate_id] = *entry;
+        seen_status_entry_table[gate_id][sense_id] = *entry;
         res = TABLE_UPDATED;
     }
-    else if (seen_status_entry_table[gate_id].gateTime < entry->gateTime) {
+    else if (seen_status_entry_table[gate_id][sense_id].gateTime < entry->gateTime) {
         // New entry is newer, update ours
-        seen_status_entry_table[gate_id] = *entry;
+        seen_status_entry_table[gate_id][sense_id] = *entry;
         res = TABLE_UPDATED;
     }
     
@@ -626,19 +638,19 @@ int get_is_state_entry(uint8_t gate_id, is_state_entry* entry) {
     return TABLE_SUCCESS;
 }
 
-int get_seen_status_entry(uint8_t gate_id, seen_status_entry* entry) {
+int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, seen_status_entry* entry) {
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
     
     mutex_lock(&seen_status_mutex);
     
-    if (!is_seen_status_entry_present_internal(gate_id)) {
+    if (!is_seen_status_entry_present_internal(gate_id, sense_id)) {
         mutex_unlock(&seen_status_mutex);
         return TABLE_ERROR_NOT_FOUND;
     }
     
-    *entry = seen_status_entry_table[gate_id];
+    *entry = seen_status_entry_table[gate_id][sense_id];
     mutex_unlock(&seen_status_mutex);
     
     return TABLE_SUCCESS;
@@ -689,7 +701,7 @@ const is_state_entry* get_is_state_table(void) {
 }
 
 const seen_status_entry* get_seen_status_table(void) {
-    return seen_status_entry_table;
+    return &seen_status_entry_table[0][0];
 }
 
 const jobs_entry* get_jobs_table(void) {
@@ -871,16 +883,20 @@ int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encode_int(&arrayEncoder, SEEN_STATUS_KEY); // Entry 1
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, seen_status_entry_count); // Entry 2
         while((size_of_current_cbor + CBOR_SEEN_STATUS_MAX_BYTE_SIZE < package_size) && (table_index < MAX_GATE_COUNT)) {
-            if(seen_status_entry_table[table_index].gateID != MAX_GATE_COUNT) {
-                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 4); // []
-                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].gateID);
-                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].gateTime);
-                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].senseMateID);
-                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].status);
-                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+            uint8_t sense_index = 0;
+            while((size_of_current_cbor + CBOR_SEEN_STATUS_MAX_BYTE_SIZE < package_size) && (sense_index < MAX_SENSE_COUNT)) {
+                if(seen_status_entry_table[table_index][sense_index].gateID != MAX_GATE_COUNT) {
+                    cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 4); // []
+                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].gateID);
+                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].gateTime);
+                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].senseMateID);
+                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].status);
+                    cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+                }
+                sense_index++;
+                size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
             }
             table_index++;
-            size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
         }
         cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
         cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
