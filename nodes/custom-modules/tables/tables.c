@@ -210,7 +210,6 @@ int seen_status_table_to_cbor(cbor_buffer* buffer) {
             cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].gateTime);
             cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].status);
             cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].senseMateID);
-            cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i].rssi);
             cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
         }
     }
@@ -286,7 +285,7 @@ int cbor_to_table_test(cbor_buffer* buffer) {
         return -1;
     }
 
-    int id, s, sID, p, gt, rssi;
+    int id, s, sID, p, gt;
     size_t length = 0;
     cbor_value_get_array_length(&wrapperValue, &length); 	
     for(size_t i = 0; i < length; i++) {
@@ -337,11 +336,7 @@ int cbor_to_table_test(cbor_buffer* buffer) {
                     return -1;
                 }
                 cbor_value_advance(&entryValue);
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &rssi) != CborNoError) {
-                    return -1;
-                }
-                cbor_value_advance(&entryValue);
-                seen_status_entry newSeenEntry = {id, gt, s, sID, rssi};
+                seen_status_entry newSeenEntry = {id, gt, s, sID};
                 returnSeenTable[i] = newSeenEntry;
                 break;
             case JOBS_KEY:
@@ -560,6 +555,20 @@ int merge_seen_status_entry_table(const seen_status_entry* other, uint8_t size) 
     int merge_result = TABLE_NO_UPDATES;
     for (int i = 0; i < size; i++) {
         int result = set_seen_status_entry(&other[i]);
+        if (TABLE_UPDATED == result) {
+            merge_result = result; // Propagate unexpected errors
+        }
+    }
+    return merge_result;
+}
+
+int merge_timestamp_entry_table(const timestamp_entry* other, uint8_t size) {
+    if (size >= MAX_GATE_COUNT) {
+        return TABLE_ERROR_SIZE_TOO_BIG;
+    }
+    int merge_result = TABLE_NO_UPDATES;
+    for (int i = 0; i < size; i++) {
+        int result = set_timestamp_entry(&other[i]);
         if (TABLE_UPDATED == result) {
             merge_result = result; // Propagate unexpected errors
         }
@@ -868,7 +877,6 @@ int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].gateTime);
                 cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].senseMateID);
                 cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].status);
-                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index].rssi);
                 cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
             }
             table_index++;
