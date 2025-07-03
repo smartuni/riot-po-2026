@@ -7,6 +7,8 @@ import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
+import com.riot.matesense.exceptions.GateNotFoundException;
+import com.riot.matesense.model.Gate;
 import com.riot.matesense.service.GateService;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +40,9 @@ public class MqttMessageHandler {
                 System.out.println("Unbekannter Nachrichtentyp: " + typeCode);
                 return;
             }
-            System.out.printf("MessageType: %s",type);
+            //Problem Fixed - A new gate got created everytime we tried to update it
+            //Exception beeing used here.
+
             switch (type) {
                 case IST_STATE -> {
                     for (JsonNode statusNode : root.get("statuses")) {
@@ -46,17 +50,21 @@ public class MqttMessageHandler {
                         int statusCode = statusNode.get("status").asInt();
                         Status status = Status.fromCode(statusCode);
 
-                        GateEntity newGate = new GateEntity();
-                        newGate.setId(gateId);
-                        newGate.setStatus(status);
+                        try {
+                            //update Existing Gate
+                            GateEntity existingGate = gateService.getGateEntityById(gateId);
+                            existingGate.setStatus(status);
 
-                            gateService.updateGate(newGate);
-                            System.out.println("Gate hinzugefügt: ID=" + gateId + ", Status=" + status);
-                            /*
-                        } catch (GateAlreadyExistingException e) {
-                            System.out.println("Gate existiert bereits: ID=" + gateId);
+                            gateService.updateGate(existingGate);
+                            System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
+                        } catch (GateNotFoundException e) {
+                            //add new Gate
+                            GateEntity newGate = new GateEntity(); //Need to be changed
+
+
+                            gateService.addGate(newGate);
+                            System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
                         }
-                            */
                     }
                 }
                 default -> System.out.println("Unhandled type: " + type);

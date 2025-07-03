@@ -18,7 +18,7 @@ public class GateEntity {
 	@Getter
 	@Setter
     @Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	//@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private Status status;
 	private Timestamp lastTimeStamp;
@@ -37,17 +37,16 @@ public class GateEntity {
 	@Column(name = "requested_status")
 	private String requestedStatus;
 
-
-	public GateEntity(Status status, Timestamp lastTimeStamp,
-					  Long deviceId, Double latitude, Double longitude,
-					  String location, Boolean workerConfidence,
-					  Boolean sensorConfidence, String requestedStatus) {
+	// Uplink from IS_TABLE
+	public GateEntity(Status status, Timestamp lastTimeStamp, Double latitude, Double longitude,
+					  String location, /*Boolean workerConfidence,
+					  /*Boolean sensorConfidence,*/ String requestedStatus) {
 		this.status = status;
 		this.lastTimeStamp = lastTimeStamp;
 		this.deviceId = deviceId;
 		this.location = location;
-		this.workerConfidence = workerConfidence;
-		this.sensorConfidence = sensorConfidence;
+//		this.workerConfidence = workerConfidence;
+//		this.sensorConfidence = sensorConfidence;
 		this.requestedStatus = requestedStatus;
 		this.latitude = latitude;
 		this.longitude = longitude;
@@ -57,6 +56,11 @@ public class GateEntity {
 			this.workerStatusArray[i] = Status.NONE;
 		}
 	}
+
+	public GateEntity() {
+
+	}
+
 
 	public void shuffleReports(Status gateStatus)
 	{
@@ -69,8 +73,15 @@ public class GateEntity {
         gateStatusArray[0] = gateStatus; // insert most recent report to the front of the array
         workerStatusArray[0] = gateStatus;
 	}
+	//Uplink from SEEN_TABLE
+	public GateEntity(Status status, Timestamp lastTimeStamp,
+					  Long deviceId) {
 
-	public GateEntity() {
+	}
+	// HARD Coded
+	public GateEntity(Status status, Timestamp lastTimeStamp,
+					  Long deviceId, Double latitude, Double longitude,
+					  String location, String requestedStatus){
 
 	}
 }

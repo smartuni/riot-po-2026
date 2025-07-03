@@ -49,40 +49,66 @@ public class GateService {
     }
 
     public void updateGate(GateEntity gate) {
-        GateEntity gateEntity = new GateEntity();
-        if (gateRepository.getById(gate.getId()) == null) {
-            gateRepository.save(gate);
-        } else {
-            gateEntity.setRequestedStatus(gate.getRequestedStatus());
-            gateEntity.setLastTimeStamp(gate.getLastTimeStamp());
-            gateEntity.setDeviceId(gate.getDeviceId());
-            gateEntity.setStatus(gate.getStatus());
-            gateEntity.setSensorConfidence(gate.getSensorConfidence());
-            gateEntity.setWorkerConfidence(gate.getWorkerConfidence());
-            gateEntity.setLocation(gate.getLocation());
-            gateEntity.setGateStatusArray(gate.getGateStatusArray());
-            gateEntity.setWorkerStatusArray(gate.getWorkerStatusArray());
-            System.out.println("update");
-            changeConfidence(gateEntity, gate.getConfidence());
-            gateRepository.save(gateEntity);
-        }
+        //Hole das Gate
+        //GateEntity existingGate = gateRepository.findById(Math.toIntExact(gate.getId())).orElse(null);
+       //Existiert das Gate schon
+//        if (existingGate == null) {
+//            System.out.println("Gate nicht gefunden. Füge neues Gate hinzu.");
+//            gateRepository.save(gate);
+//            return;
+//        }
+        gate.setRequestedStatus(gate.getRequestedStatus());
+        gate.setLastTimeStamp(gate.getLastTimeStamp());
+        gate.setDeviceId(gate.getDeviceId());
+        gate.setStatus(gate.getStatus());
+        //Set confidence
+        gate.setSensorConfidence(gate.getSensorConfidence());
+        gate.setWorkerConfidence(gate.getWorkerConfidence());
+        //get location from gates
+        gate.setLocation(gate.getLocation());
+        //Set Arraylist for worker and Gates
+        gate.setGateStatusArray(gate.getGateStatusArray());
+        gate.setWorkerStatusArray(gate.getWorkerStatusArray());
+
+        changeConfidence(gate, gate.getConfidence());
+        gate.setConfidence(gate.getConfidence());
+        gateRepository.save(gate);
 
     }
 
-    public Gate getGateById(Long id) {
-        GateEntity gate = gateRepository.getById(id);
+    public boolean existsGateById(Long id) {
+        return gateRepository.existsById(Math.toIntExact(id));
+    }
+
+    public GateEntity getGateEntityById(Long id) throws GateNotFoundException {
+        return gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
+    }
+
+
+    public Gate getGateById(Long id) throws GateNotFoundException {
+        GateEntity gate = gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
         return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
                 gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality());
     }
+
+
+//    public Gate getGateById(Long id) {
+//        GateEntity gate = gateRepository.getById(id);
+//        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
+//                gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
+//                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality());
+//    }
 
     public void changeConfidence(GateEntity entity, int passedConfidence)
     {
         System.out.println("Passed confidence:" + passedConfidence);
         int confidence;
         Status gateStatus = entity.getStatus();
-        Status[] gateArray = entity.getGateStatusArray();
-        Status[] workerArray = entity.getWorkerStatusArray();
+        //Safety for out of bounds case
+        Status[] gateArray = entity.getGateStatusArray() != null ? entity.getGateStatusArray() : new Status[0];
+        Status[] workerArray = entity.getWorkerStatusArray() != null ? entity.getWorkerStatusArray() : new Status[0];
+
 
         if (gateStatus == Status.UNKNOWN || gateStatus == Status.NONE) //set confidence to max if status doesn't exist or is reported as unknown
         {
@@ -91,7 +117,8 @@ public class GateService {
         else
         {
             confidence = passedConfidence;
-            for(int i = 0; i < 5; i++)
+            int iterations = Math.min(5, Math.min(gateArray.length, workerArray.length));
+            for (int i = 0; i < iterations; i++)
             {
                 int gateDelta = 10 - (2 * i);
                 int workerDelta = 20 - (4 * i);
@@ -122,6 +149,8 @@ public class GateService {
         confidence = Math.max(0, confidence); // normalize confidence, between 0 and 100
         confidence = Math.min(100, confidence);
 
+        entity.setConfidence(confidence);
+
         if (confidence >= 90){
             entity.setQuality(ConfidenceQuality.HIGH);
         }
@@ -138,7 +167,7 @@ public class GateService {
             entity.setQuality(ConfidenceQuality.LOW);
         }
 
-        System.out.println("Calculated confidence:" + passedConfidence + "\n");
+        System.out.println("Calculated confidence:" + confidence + "\n");
     }
 
     /*@Scheduled(fixedRate = 10000)
@@ -190,5 +219,4 @@ public class GateService {
         });
         return customGates;
     }
-
 }
