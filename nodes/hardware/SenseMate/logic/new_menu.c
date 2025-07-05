@@ -5,7 +5,7 @@
 #include "displayDemo.h"
 #define MAX_GATES MAX_GATE_COUNT
 #define MAX_SENSE_MATES 10
-#define MIN_SIGNAL_STRENGTH 100
+#define MIN_SIGNAL_STRENGTH 85
 #define MIN_JOB_PRIO 1
 #define SENSEMATE_ID 7
 
@@ -181,14 +181,14 @@ void update_with_jobs(int potential_id){
                 .gate_id = jobs_tbl_entry_buf.gateID,
                 .gate_is_state = UNKNOWN,
                 .gate_requested_state = UNKNOWN,
-                .job_is_todo = true,
+                .job_is_todo = false,
                 .job_prio = jobs_tbl_entry_buf.priority,
                 .sig_strength = 0
             });
         }else{
             //update job prio and todo state
             set_job_prio(jobs_tbl_entry_buf.gateID, jobs_tbl_entry_buf.priority);
-            set_job_done(jobs_tbl_entry_buf.gateID, !jobs_tbl_entry_buf.done);
+            set_job_done(jobs_tbl_entry_buf.gateID, jobs_tbl_entry_buf.done);
         }
     }
 }
@@ -495,7 +495,7 @@ void main_to_close_by(void){
     lower_entry.menu = CLOSE_BY_MENU;
     if(current_num_close_by > 0){
         lower_entry.subentry = OTHER;
-        lower_entry.current_gate = jobs_order[0];
+        lower_entry.current_gate = close_by_order[0];
     }else{
         lower_entry.subentry = CANCEL;
         lower_entry.current_gate = NULL;
@@ -1184,11 +1184,17 @@ void display_gate(display_entry *entry, bool upper){
         display_ordinary_menu("cancel", 0, false, upper, entry->selected, false);
         return;
     }
+    uint8_t job_prio = 0;
+    if(entry->current_gate->job_is_todo){
+        job_prio = entry->current_gate->job_prio;
+    }
     display_gate_menu_box("Gate ", //text
             entry->current_gate->gate_id, //num_after_text
             upper, //if upper
             entry->selected, // if selected
             entry->current_gate->gate_is_state == OPEN, // gate_state_open
+            entry->current_gate->gate_requested_state == entry->current_gate->gate_is_state, // requested_match
+            job_prio, // job_prio
             (!upper || (entry->current_gate->gate_id != all_entries[0].gate_id)) // if more content
         );
 }

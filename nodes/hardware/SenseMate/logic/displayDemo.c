@@ -10,6 +10,8 @@
 #define DISPLAY_WIDTH (128)
 #define DISPLAY_HEIGHT (64)
 #define Y_OFFSET ((DISPLAY_HEIGHT/16)*3)
+#define MIN_JOB_PRIO (1)
+#define HIGH_JOB_PRIO (3)
 
 u8g2_t u8g2;
 u8x8_riotos_t user_data =
@@ -282,26 +284,30 @@ void display_gate_state(int pos_x, int pos_y, bool gate_state_open, int relative
 
 }
 
-void display_job_state(int pos_x, int pos_y, bool job_state_done, int relative_size){
-    int size_scaler = 2;
-    u8g2_DrawFrame(&u8g2, pos_x, pos_y, size_scaler*relative_size, size_scaler*relative_size);
-    if(job_state_done){
-        u8g2_DrawLine(&u8g2, pos_x, pos_y, pos_x + size_scaler*relative_size, pos_y + size_scaler*relative_size);
-        u8g2_DrawLine(&u8g2, pos_x, pos_y + size_scaler*relative_size, pos_x + size_scaler*relative_size, pos_y);
+void display_gate_target(int pos_x, int pos_y, bool gate_match_target){
+    u8g2_SetFont(&u8g2, u8g2_font_unifont_t_symbols);
+    if(gate_match_target){
+        //u8g2_DrawGlyph(&u8g2, pos_x, pos_y, 0x2713); // check mark symbol
+    }else{
+        u8g2_DrawGlyph(&u8g2, pos_x, pos_y, 0x2715); // cross mark symbol
     }
+
+    u8g2_SetFont(&u8g2, u8g2_font_helvR10_tf);
 }
 
-void display_job_target(int pos_x, int pos_y, bool job_target_gate_open, int relative_size){
-
-    u8g2_DrawBox(&u8g2, pos_x, pos_y + relative_size, relative_size/2, relative_size/2);
-    u8g2_DrawBox(&u8g2, pos_x+relative_size+relative_size/2, pos_y + relative_size, relative_size/2, relative_size/2);
-    if(job_target_gate_open){
-        for (int i = 0; i < relative_size/2; i++){
-            u8g2_DrawLine(&u8g2, pos_x + relative_size/2, pos_y+relative_size -(relative_size/2-i), pos_x+1*relative_size+i, pos_y+i);
-        }
-    }else{
-        u8g2_DrawBox(&u8g2, pos_x + relative_size/2, pos_y + relative_size, relative_size, relative_size/2);
+void display_job_prio(int pos_x, int pos_y, int job_prio){
+    if(job_prio < MIN_JOB_PRIO){
+        return;
     }
+    u8g2_SetFont(&u8g2, u8g2_font_unifont_t_symbols);
+    if(job_prio >= HIGH_JOB_PRIO){
+        u8g2_DrawGlyph(&u8g2, pos_x, pos_y, 0x23eb); // double up arrow symbol
+    }else{
+        u8g2_DrawGlyph(&u8g2, pos_x, pos_y, 0x23f6); // up arrow
+    }
+
+    u8g2_SetFont(&u8g2, u8g2_font_helvR10_tf);
+    
 }
 
 void display_more_content(bool upper){
@@ -332,7 +338,7 @@ void display_ordinary_menu(char *text, int num_after_text, bool use_num, bool up
     } while (u8g2_NextPage(&u8g2));
 }
 
-void display_gate_menu_box(char* text, int num_after_text, bool upper, bool selected, bool gate_state_open, bool more_content){
+void display_gate_menu_box(char* text, int num_after_text, bool upper, bool selected, bool gate_state_open, bool target_match, int job_prio, bool more_content){
     do{
         char my_text[11];
         u8g2_uint_t str_width = u8g2_GetStrWidth(&u8g2, text);
@@ -345,11 +351,15 @@ void display_gate_menu_box(char* text, int num_after_text, bool upper, bool sele
 
         if(upper){
             display_menu_box(text, num_after_text, true, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
-            display_gate_state(23*(DISPLAY_WIDTH/32), 3*DISPLAY_HEIGHT/16, gate_state_open, DISPLAY_HEIGHT/16);
+            display_gate_state(23*(DISPLAY_WIDTH/32), 4*DISPLAY_HEIGHT/16, gate_state_open, DISPLAY_HEIGHT/16);
+            display_gate_target(28*(DISPLAY_WIDTH/32), 5*DISPLAY_HEIGHT/16, target_match);
+            display_job_prio(18*(DISPLAY_WIDTH/32), 6*DISPLAY_HEIGHT/16, job_prio);
 
         }else{
             display_menu_box(text, num_after_text, true, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
-            display_gate_state(23*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*10, gate_state_open, DISPLAY_HEIGHT/16);
+            display_gate_state(23*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*11, gate_state_open, DISPLAY_HEIGHT/16);
+            display_gate_target(28*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*12, target_match);
+            display_job_prio(18*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*13, job_prio);
         }
 
         if(more_content){
@@ -359,32 +369,6 @@ void display_gate_menu_box(char* text, int num_after_text, bool upper, bool sele
     } while (u8g2_NextPage(&u8g2));
 }
 
-void display_job_menu_box(char* text, int num_after_text, bool upper, bool selected, bool job_state_done, bool job_target_state_open, bool more_content){
-    do{
-        char my_text[11];
-        u8g2_uint_t str_width = u8g2_GetStrWidth(&u8g2, text);
-        if (str_width > 23*(DISPLAY_WIDTH/32)-3*(DISPLAY_WIDTH/32)){
-            //int text_len = strlen(text);
-            strncpy(my_text, text, 10);
-            my_text[10] = '\0';
-            text = my_text;
-        }
-
-        display_job_target(23*(DISPLAY_WIDTH/32), 5*DISPLAY_HEIGHT/16, job_target_state_open, DISPLAY_HEIGHT/16);
-
-        if(upper){
-            display_menu_box(text, num_after_text, true, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
-            display_job_state(28*(DISPLAY_WIDTH/32), 3*DISPLAY_HEIGHT/16, job_state_done, DISPLAY_HEIGHT/16);
-        }else{
-            display_menu_box(text, num_after_text, true, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
-            display_job_state(28*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*10, job_state_done, DISPLAY_HEIGHT/16);
-        }
-
-        if(more_content){
-                display_more_content(upper);
-        }
-    } while (u8g2_NextPage(&u8g2));
-}
 
 void new_page(void){
     u8g2_FirstPage(&u8g2);
