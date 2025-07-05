@@ -24,8 +24,9 @@ static int is_state_entry_count = 0;
 static seen_status_entry seen_status_entry_table[MAX_GATE_COUNT][MAX_SENSE_COUNT];
 static int seen_status_entry_count = 0;
 static jobs_entry jobs_entry_table[MAX_GATE_COUNT];
-static timestamp_entry timestamp_table[MAX_GATE_COUNT];
 static int jobs_entry_count = 0;
+static timestamp_entry timestamp_table[MAX_GATE_COUNT];
+static int timestamp_entry_count = 0;
 
 // Mutexes for thread safety
 static mutex_t target_state_mutex = MUTEX_INIT;
@@ -249,6 +250,35 @@ int jobs_table_to_cbor(cbor_buffer* buffer) {
             cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
             cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].gateID);
             cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].done);
+            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+        }
+    }
+
+    cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
+    cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
+
+    buffer->cbor_size =  (uint8_t) cbor_encoder_get_buffer_size (&encoder, buffer->buffer);
+
+    return 0;
+}
+
+int timestamp_table_to_cbor(cbor_buffer* buffer) {
+    if (timestamp_entry_count == 0){
+        return -1; // No jobs in table
+    }
+    CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
+    cbor_encoder_init(&encoder, buffer->buffer, sizeof(uint8_t) * 100, 0);
+    cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
+    cbor_encode_int(&arrayEncoder, TIMESTAMP_KEY); // Entry 1
+    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, timestamp_entry_count); // Entry 2
+
+    // [Table Entry]
+    for(int i = 0; i < MAX_GATE_COUNT; i++) {
+        if (is_jobs_entry_present_internal(i)) {
+            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
+            cbor_encode_int(&singleEntryEncoder, timestamp_table[i].gateID);
+            cbor_encode_int(&singleEntryEncoder, timestamp_table[i].timestamp);
+            cbor_encode_int(&singleEntryEncoder, timestamp_table[i].rssi);
             cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
         }
     }
@@ -933,6 +963,47 @@ int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 2); // []
                 cbor_encode_int(&singleEntryEncoder, jobs_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, jobs_entry_table[table_index].done);
+                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+            }
+            table_index++;
+            size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
+        }
+        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
+        cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
+        cbor_stream_index += size_of_current_cbor;
+        buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
+        no_cbor_packages++;
+        size_of_current_cbor = 0;
+    }
+    buffer->cbor_size = no_cbor_packages;
+    return no_cbor_packages;
+}
+
+int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
+    // Assert: given package_size big enough
+    if(BASE_CBOR_BYTE_SIZE + CBOR_TIMESTAMP_MAX_BYTE_SIZE > package_size) {
+        printf("ASSERT failed. Size passed too small for cbor!\n");
+        return -1;
+    }
+
+    int no_cbor_packages = 0;
+    int cbor_stream_index = 0;
+    int size_of_current_cbor = 0;
+    int table_index = 0;
+    while((timestamp_entry_count > 0) && (table_index < MAX_GATE_COUNT)) {
+        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
+        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
+        cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
+        cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
+        cbor_encode_int(&arrayEncoder, TIMESTAMP_KEY); // Entry 1
+        cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, jobs_entry_count); // Entry 2
+        while((size_of_current_cbor + CBOR_TIMESTAMP_MAX_BYTE_SIZE < package_size) && (table_index < MAX_GATE_COUNT)) {
+            //validate table entry
+            if(timestamp_table[table_index].gateID != MAX_GATE_COUNT) {
+                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
+                cbor_encode_int(&singleEntryEncoder, timestamp_table[table_index].gateID);
+                cbor_encode_int(&singleEntryEncoder, timestamp_table[table_index].timestamp);
+                cbor_encode_int(&singleEntryEncoder, timestamp_table[table_index].rssi);
                 cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
             }
             table_index++;

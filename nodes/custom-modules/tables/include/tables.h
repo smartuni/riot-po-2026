@@ -17,6 +17,7 @@
     #define IS_STATE_KEY 0x01
     #define SEEN_STATUS_KEY 0x02
     #define JOBS_KEY 0x03
+    #define TIMESTAMP_KEY 0x04
 
     #define JOB_DONE 0x01
     #define JOB_IN_PROGRESS 0x00
@@ -33,6 +34,7 @@
     #define CBOR_IS_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
     #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x0C + 0x01)
     #define CBOR_JOBS_MAX_BYTE_SIZE (0x05 + 0x01)
+    #define CBOR_TIMESTAMP_MAX_BYTE_SIZE (0x0A + 0x01)
 
     typedef struct {
         uint8_t gateID;
@@ -81,6 +83,7 @@
     int is_state_table_to_cbor(cbor_buffer* buffer);
     int seen_status_table_to_cbor(cbor_buffer* buffer);
     int jobs_table_to_cbor(cbor_buffer* buffer);
+    int timestamp_table_to_cbor(cbor_buffer* buffer);
     /**
      * @param package_size maximum size of one cbor package
      * @param buffer cbor buffer to write the cbor package into
@@ -91,6 +94,7 @@
     int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer);
     int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer);
     int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+    int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer);
 
     /**
      * @param buffer cbor buffer
