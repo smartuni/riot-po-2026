@@ -181,13 +181,13 @@ void update_with_jobs(int potential_id){
                 .gate_id = jobs_tbl_entry_buf.gateID,
                 .gate_is_state = UNKNOWN,
                 .gate_requested_state = UNKNOWN,
-                .job_is_todo = false,
-                .job_prio = jobs_tbl_entry_buf.priority,
+                .job_is_todo = jobs_tbl_entry_buf.done == JOB_IN_PROGRESS,
+                .job_prio = (jobs_tbl_entry_buf.done == JOB_IN_PROGRESS ? jobs_tbl_entry_buf.priority : 0),
                 .sig_strength = 0
             });
         }else{
             //update job prio and todo state
-            set_job_prio(jobs_tbl_entry_buf.gateID, jobs_tbl_entry_buf.priority);
+            set_job_prio(jobs_tbl_entry_buf.gateID, (jobs_tbl_entry_buf.done == JOB_IN_PROGRESS ? jobs_tbl_entry_buf.priority : 0));
             set_job_done(jobs_tbl_entry_buf.gateID, jobs_tbl_entry_buf.done);
         }
     }
@@ -283,13 +283,21 @@ void reorder_jobs(void){
     while(added_cnt < current_num_gates && last_prio > MIN_JOB_PRIO){
         //find sigstrenght to add
         for (int i=0; i<current_num_gates; i++){
+            if(!all_entries[i].job_is_todo){
+                continue;
+            }
             if(all_entries[i].job_prio < last_prio && all_entries[i].job_prio > curr_prio){
                 curr_prio = all_entries[i].job_prio;
             }
         }
-
+        if(curr_prio < MIN_JOB_PRIO){
+            break; //no more jobs to add
+        }
         //add gates with sigstrengt
         for(int i=0; i<current_num_gates; i++){
+            if(!all_entries[i].job_is_todo){
+                continue;
+            }
             if(all_entries[i].job_prio == curr_prio){
                 jobs_order[added_cnt] = &all_entries[i];
                 added_cnt += 1;
