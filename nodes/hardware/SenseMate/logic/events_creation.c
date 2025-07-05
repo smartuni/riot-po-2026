@@ -5,6 +5,7 @@
 #include "board.h"
 #include "event/timeout.h"
 #include "new_menu.h"
+#include "new_menu.h"
 
 
 bool event_accepted = true;
@@ -78,7 +79,17 @@ void event_handlerA3(event_t *event)
     
 }
 
+void event_handlerNews(event_t *event)
+{
+    (void) event;   /* Not used */
+    menu_input(UP);
+    puts("got news");
+    update_menu_from_tables();
+    
+}
+
 event_t eventA0 = { .handler = event_handlerA0 };
 event_t eventA1 = { .handler = event_handlerA1 };
 event_t eventA3 = { .handler = event_handlerA3 };
+event_t eventNews = { .handler = event_handlerNews };
 event_t event_reactivate = { .handler = event_handler_reactivate };
