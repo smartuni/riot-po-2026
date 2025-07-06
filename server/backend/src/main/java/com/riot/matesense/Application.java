@@ -51,13 +51,27 @@ class PopulateTestDataRunner implements CommandLineRunner {
 	}
 	@Override
 	public void run(String... args) throws Exception {
-		DownPayload downPayload =new DownPayload(1,247,Arrays.asList(Arrays.asList(1,0),Arrays.asList(2,1)));
+		DownPayload downPayload =new DownPayload(1,247,Arrays.asList(Arrays.asList(1,0,1),Arrays.asList(2,1,0)));
 		//[1,247,[[187,0],[69,1]]]
+		// Beispiel für ein größeres DownPayload mit 6 Einträgen
+//		DownPayload downPayload = new DownPayload(
+//				1, // Message Type
+//				247, // Globaler Timestamp
+//				Arrays.asList(
+//						Arrays.asList(1, 0, 3), // GateID 101, Soll-Status 0, Prio 3
+//						Arrays.asList(2, 1, 2), // GateID 102, Soll-Status 1, Prio 2
+//						Arrays.asList(3, 0, 1), // GateID 103, Soll-Status 0, Prio 1
+//						Arrays.asList(4, 1, 3), // GateID 104, Soll-Status 1, Prio 3
+//						Arrays.asList(5, 0, 2), // GateID 105, Soll-Status 0, Prio 2
+//						Arrays.asList(6, 1, 1)  // GateID 106, Soll-Status 1, Prio 1
+//				)
+//		);
+
 		downlinkService.sendDownlinkToDevice(downPayload); // Test call
- 		GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.5408, 9.9654, "St.Pauli", false, true, "REQUESTED_OPEN", "100%");
- 		GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, 53.5409, 9.8674, "Landungsbrücken", false, true, "REQUESTED_OPEN", "75%");
- 		GateEntity gate2 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 3L, 53.5410, 9.8664, "Veddel", true, false, "REQUESTED_CLOSE", "80%");
- 		GateEntity gate3 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 4L, 53.5460, 9.8634, "Hafen", true, true, "REQUESTED_NONE", "60%");
+ 		GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.5408, 9.9654, "St.Pauli", false, true, "REQUESTED_NONE", "100%", "PENDING_NONE", 3);
+ 		GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, 53.5409, 9.8674, "Landungsbrücken", false, true, "REQUESTED_NONE", "75%", "PENDING_NONE", 3);
+ 		GateEntity gate2 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 3L, 53.5410, 9.8664, "Veddel", true, false, "REQUESTED_NONE",  "80%", "PENDING_NONE", 3);
+ 		GateEntity gate3 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 4L, 53.5460, 9.8634, "Hafen", true, true, "REQUESTED_NONE", "60%", "PENDING_NONE", 3);
  		gateService.addGate(gate);
  		gateService.addGate(gate1);
  		gateService.addGate(gate2);

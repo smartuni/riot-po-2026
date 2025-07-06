@@ -62,7 +62,7 @@ function RecentActivity() {
 
     return (
         <div className="recent-activity">
-            <h2 className="recent-title">Letzte Aktivitäten</h2>
+            <h2 className="recent-title">Recent Activities for all Gates</h2>
             <ul className="activity-list">
                 {activitiesRecent.map((activity) => (
                     <li key={activity.id} className="activity-item">

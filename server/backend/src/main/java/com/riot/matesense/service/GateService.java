@@ -31,7 +31,7 @@ public class GateService {
         gates.forEach(e -> {
             Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), e.getSensorConfidence(),
-                    e.getWorkerConfidence(), e.getRequestedStatus(), e.getConfidence());
+                    e.getWorkerConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getPendingJob(), e.getPriority());
             customGates.add(gate);
         });
         return customGates;
@@ -42,8 +42,25 @@ public class GateService {
         return gate.toString();
     }
 
+    public String addGateFromGUI(GateEntity gate) throws GateAlreadyExistingException {
+        gate.setPriority(3);
+        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        //TODO: if confidence calc is done remove this
+        gate.setConfidence("100");
+        gateRepository.save(gate);
+        return gate.toString();
+    }
 
-    public void removeGate(GateEntity gate) throws GateNotFoundException {
+
+    public void removeGate(GateEntity gate){
+        gateRepository.delete(gate);
+    }
+
+    public void removeGateById(Long id) throws GateNotFoundException {
+        GateEntity gate = gateRepository.getById(id);
+        if (gate == null) {
+            throw new GateNotFoundException(id);
+        }
         gateRepository.delete(gate);
     }
 
@@ -61,33 +78,46 @@ public class GateService {
             gateEntity.setLocation(gate.getLocation());
             gateRepository.save(gateEntity);
         }
-
+    }
+    public GateEntity getGateEntityById(Long id) throws GateNotFoundException {
+        return gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
     }
 
-    public Gate getGateById(Long id) {
-        GateEntity gate = gateRepository.getById(id);
-        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
-                gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
-                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence());
-    }
-
-    public void requestGateStatusChange(Long gateId, String targetStatus) throws GateNotFoundException {
+    public void requestGateStatusChange(Long gateId, String targetStatus) {
         GateEntity gate = gateRepository.getById(gateId);
+        System.out.println("Current Status: " + gate.getStatus());
+        System.out.println("Requested Status: " + targetStatus);
+        System.out.println("ID: " + gate.getId());
 
-        if ((gate.getStatus().toString().strip()).equals(targetStatus)) {
-            System.out.println("nothing");
-            return;
+        // Ziel-Status aus requestedStatus ableiten
+        String tmp;
+        switch (targetStatus) {
+            case "REQUESTED_OPEN" -> tmp = "OPENED";
+            case "REQUESTED_CLOSE" -> tmp = "CLOSED";
+            case "REQUESTED_NONE" -> tmp = "NONE";
+            default -> tmp = targetStatus;
         }
-        if (targetStatus.equals("NONE")) {
-            targetStatus = null;
+
+        // 1. Pending-Job **immer setzen**, basierend auf targetStatus
+        switch (targetStatus) {
+            case "REQUESTED_OPEN" -> gate.setPendingJob("PENDING_OPEN");
+            case "REQUESTED_CLOSE" -> gate.setPendingJob("PENDING_CLOSE");
+            case "REQUESTED_NONE" -> gate.setPendingJob("PENDING_NONE");
         }
-        gate.setRequestedStatus(targetStatus);
+
+        // 2. Nur wenn tatsächlicher Status ≠ Ziel, dann requestedStatus setzen
+        if (!tmp.equalsIgnoreCase(gate.getStatus().toString().strip())) {
+            if (targetStatus.equals("REQUESTED_NONE") || targetStatus.equals("NONE")) {
+                gate.setRequestedStatus(null);
+            } else {
+                gate.setRequestedStatus(targetStatus);
+            }
+        }
+
         gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
-
-        System.out.println(gate.getRequestedStatus());
-
         gateRepository.save(gate);
     }
+
 
     public List<GateForDownlink> getAllGatesForDownlink() {
         List<GateEntity> gates = gateRepository.findAll();
@@ -113,4 +143,9 @@ public class GateService {
         return customGates;
     }
 
+    public void updatePriority(Long gateId, int newPriority) {
+        GateEntity gateEntity = gateRepository.getById(gateId);
+        gateEntity.setPriority(newPriority);
+        gateRepository.save(gateEntity);
+    }
 }

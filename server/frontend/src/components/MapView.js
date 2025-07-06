@@ -39,8 +39,6 @@ function MapView({ search, statusFilter }) {
     }, []);
 
 
-    const [selectedGate, setSelectedGate] = useState(null);
-
     const filteredGates = gates.filter(
         (gate) =>
             (gate.id.toString().toLowerCase().includes(search.toLowerCase()) ||
@@ -70,9 +68,10 @@ function MapView({ search, statusFilter }) {
                         <Popup>
                             <strong>{gate.location}</strong><br />
                             Status: {gate.status}<br />
-                            Device: {gate.deviceId}<br />
-                            Last Update: {gate.lastUpdate}<br />
-                            Confidence: 👤 {gate.workerConfidence ? "Yes" : "No"} / 📡 {gate.sensorConfidence ? "Yes" : "No"}
+                            Gate-ID: {gate.id}<br />
+                            Last Update: {new Date(gate.lastTimeStamp).toLocaleString()}<br />
+                            {/*Confidence: 👤 {gate.workerConfidence ? "Yes" : "No"} / 📡 {gate.sensorConfidence ? "Yes" : "No"}*/}
+                            Confidence: {gate.confidence}
                         </Popup>
                     </Marker>
                 ))}

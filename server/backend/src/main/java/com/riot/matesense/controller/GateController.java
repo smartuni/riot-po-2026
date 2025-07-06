@@ -36,15 +36,21 @@ public class GateController {
         return gateService.addGate(gateEntity);
     }
 
+    @RequestMapping(value = "add-gate-ui", method = RequestMethod.POST)
+    public String addGateUI(@RequestBody GateEntity gateEntity) throws GateAlreadyExistingException {
+        return gateService.addGateFromGUI(gateEntity);
+    }
+
     @RequestMapping(value = "update-gate", method = RequestMethod.PUT)
     public void updateGate(@RequestBody GateEntity gate) throws GateNotFoundException {
         gateService.updateGate(gate);
     }
 
-    @RequestMapping(value = "delete-gate", method = RequestMethod.DELETE)
-    public void removeCustomer(@RequestBody GateEntity gate) throws GateNotFoundException {
-        gateService.removeGate(gate);
+    @DeleteMapping("/gates/{id}")
+    public void deleteGate(@PathVariable Long id) throws GateNotFoundException {
+        gateService.removeGateById(id);
     }
+
 
     @PostMapping("/{gateId}/{workerId}/request-status-change/")
     public void requestGateStatusChange(@PathVariable Long gateId, @PathVariable Long workerId,  @RequestBody Map<String, String> body)
@@ -52,7 +58,6 @@ public class GateController {
         String targetStatus = body.get("requestedStatus");
         gateService.requestGateStatusChange(gateId, targetStatus);
         gateActivityService.addGateActivity(new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gateId, targetStatus, "The worker with ID: " + workerId + " requested the Status: "+ targetStatus + " to the gate with Gate-ID: " +gateId, workerId));
-
     }
 
     @RequestMapping(value = "gates_for_downlink", method = RequestMethod.GET)
@@ -60,5 +65,13 @@ public class GateController {
         return gateService.getAllGatesForDownlink();
     }
 
+    @PutMapping("/update-priority/{gateId}")
+    public void updatePriority(
+            @PathVariable Long gateId,
+            @RequestBody Map<String, Integer> request
+    ) {
+        Integer priority = request.get("priority");
+        gateService.updatePriority(gateId, priority);
+    }
 
 }

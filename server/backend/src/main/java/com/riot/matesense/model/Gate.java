@@ -20,11 +20,15 @@ public class Gate {
 	private Boolean workerConfidence;
 	private Boolean sensorConfidence;
 	private String requestedStatus;
+	private String pendingJob;
 	private String confidence;
+	private int priority;
 
-	public Gate(Long id , Long deviceId, Timestamp lastTimeStamp, Status status, Double latitude, Double longitude,String location,
+	public Gate(Long id , Long deviceId, Timestamp lastTimeStamp, Status status,
+				Double latitude, Double longitude,String location,
 				 Boolean workerConfidence, Boolean sensorConfidence,
-				String requestedStatus,  String confidence) {
+				String requestedStatus,  String confidence,
+				String pendingJob, int priority) {
 		this.id = id;
 		this.location = location;
 		this.deviceId = deviceId;
@@ -33,8 +37,10 @@ public class Gate {
 		this.workerConfidence = workerConfidence;
 		this.sensorConfidence = sensorConfidence;
 		this.requestedStatus = requestedStatus;
+		this.pendingJob = pendingJob;
 		this.latitude = latitude;
 		this.longitude = longitude;
 		this.confidence = confidence;
+		this.priority = priority;
 	}
 }
