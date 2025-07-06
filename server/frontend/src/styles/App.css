@@ -169,16 +169,11 @@
     flex-direction: column;
 }
 
-.confidence-icons td{
-
-}
-
 .expanded-row td {
     padding: 10px 20px;
     font-size: 0.9rem;
     color: #333;
 }
-
 
 .help-icon:hover {
     color: #1976d2;

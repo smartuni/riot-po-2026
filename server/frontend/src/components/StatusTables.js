@@ -430,7 +430,7 @@ function StatusTables() {
                                 </tr>
                                 {expandedGateId === gate.id && (
                                     <tr className="expanded-row">
-                                        <td colSpan={8} style={{ backgroundColor: "#f9f9f9" }}>
+                                        <td colSpan={10} style={{ backgroundColor: "#f9f9f9" }}>
                                             <div>
                                                 <strong>Activities</strong>
                                                 {activities
