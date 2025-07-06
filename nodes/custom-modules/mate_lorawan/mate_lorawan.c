@@ -9,8 +9,6 @@
 /**
  * @ingroup     module_mate_lorawan
  * @{
- *
- * @file
  * @brief       Lorawan implementation for SenseMate / GateMate
  *
  * @author      Paul Lange <paul.lange2@haw-hamburg.de>
@@ -25,50 +23,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "board.h"
-
 #include "net/netdev.h"
 #include "net/netif.h"
-
 #include "net/gnrc/pktbuf.h"
 #include "net/gnrc/pkt.h"
 #include "net/gnrc/netreg.h"
 #include "net/gnrc/netif/hdr.h"
-
 #include "saul_reg.h"
 #include "phydat.h"
-
 #include "od.h"
 #include "msg.h"
 #include "thread.h"
-
 #include "ztimer.h"
 #include "event/timeout.h"
-
 #include "cbor.h"
-
 #include "tables.h"
 
 /* Interval between data transmissions, in seconds */
 #define SEND_INTERVAL_SEC 1
-
 /* Size of reception message queue */
 #define QUEUE_SIZE 8
-
 /* Max length of serialized data to send to backend server */
 #define MAX_SEND_BUFFER_SIZE (MAX_GATE_COUNT * (sizeof(is_state_entry)))
-
 /* Size of single LoRaWAN message */
 #define SEND_BUFFER_SIZE 50
 #define MAX_RECEIVE_SIZE 222
-
 /* Duration to trigger send_event */
 #define TIMEOUT_DURATION 600000
-
 /* Stack for reception thread */
 static char _rx_thread_stack[THREAD_STACKSIZE_DEFAULT];
-
 /* Message queue for reception thread] */
 static msg_t _rx_msg_queue[QUEUE_SIZE];
 
@@ -78,9 +62,7 @@ uint8_t send_buffer[MAX_SEND_BUFFER_SIZE];
 uint8_t msg_sizes[MAX_GATE_COUNT];
 
 event_queue_t lorawan_queue;
-
 event_timeout_t event_timeout;
-
 netif_t *netif = NULL;
 
 /**
