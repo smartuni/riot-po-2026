@@ -6,11 +6,11 @@
 #include "periph/gpio.h"
 #include "ztimer.h"
 #include "interrupts.h"
-//#include "menu.h"
 #include "events_creation.h"
 #include "tables.h"
 #include "mate_lorawan.h"
 #include "new_menu.h"
+#include "soundModule.h"
 
 void fill_tables_test(void);
 
@@ -18,6 +18,8 @@ void fill_tables_test(void);
 int main(void) {
     ztimer_sleep(ZTIMER_MSEC, 3000);
     init_interrupt();
+    init_sound_module();
+    startup_sound();
 
     //printf("Display demo started.\n");
     init_display();

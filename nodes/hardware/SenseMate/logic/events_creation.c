@@ -5,7 +5,8 @@
 #include "board.h"
 #include "event/timeout.h"
 #include "new_menu.h"
-#include "new_menu.h"
+#include "soundModule.h"
+
 
 
 bool event_accepted = true;
@@ -82,10 +83,15 @@ void event_handlerA3(event_t *event)
 void event_handlerNews(event_t *event)
 {
     (void) event;   /* Not used */
-    menu_input(UP);
-    puts("got news");
-    update_menu_from_tables();
-    
+    if(event_accepted){
+        puts("got news");
+        update_menu_from_tables();
+        downlink_reveived_sound();
+        //ble_reveived_sound();
+        event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
+    }else{
+        puts("event news ignored");
+    }
 }
 
 event_t eventA0 = { .handler = event_handlerA0 };

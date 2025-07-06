@@ -31,6 +31,7 @@ USEMODULE += periph_gpio_irq
 
 USEMODULE += ztimer
 USEMODULE += ztimer_msec
+USEMODULE += ztimer_usec
 
 USEMODULE += event
 USEMODULE += event_thread_highest
