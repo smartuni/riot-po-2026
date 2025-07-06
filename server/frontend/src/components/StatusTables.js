@@ -619,7 +619,7 @@ function StatusTables() {
     );
 }
 /*
- * StatusTables-Komponente exportieren, damit sie in anderen Teilen der Anwendung verwendet werden kann.
+ * Test for Websockets
  */
 
 export default StatusTables;

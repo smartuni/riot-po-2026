@@ -155,6 +155,7 @@ function StatusTablesView() {
             } {gate.status}
           </span>
                                     </td>
+
                                     <td>
                                         <div>about 1 hour ago</div>
                                         <div className="date">{gate.lastUpdate}</div>
@@ -210,3 +211,5 @@ function StatusTablesView() {
 }
 
 export default StatusTablesView;
+
+
