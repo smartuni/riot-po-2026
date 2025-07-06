@@ -64,6 +64,7 @@ public class TTNMqttListener {
                                 String formattedJson = jsonFormatter.toJsonFormat(decodedList);
 
                                 System.out.println("Dekodiertes JSON: " + formattedJson);
+
                                 mqttMessageHandler.msgHandlerUplinks(formattedJson);
                             }
                         }

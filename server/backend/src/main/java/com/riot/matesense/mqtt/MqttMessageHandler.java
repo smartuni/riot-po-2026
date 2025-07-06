@@ -16,7 +16,6 @@ public class MqttMessageHandler {
     private final ObjectMapper mapper = new ObjectMapper();
     private final GateService gateService;
 
-
     public MqttMessageHandler(GateService gateService) {
         this.gateService = gateService;
     }
@@ -39,9 +38,11 @@ public class MqttMessageHandler {
                 return;
             }
 
+            System.out.println("Verarbeiteter Nachrichtentyp: " + type + " mit Code: " + type.getCode());
+
             switch (type) {
                 case IST_STATE -> {
-                    for (JsonNode statusNode : root.get("statuses")) {
+                    for (JsonNode statusNode : payload) {
                         long gateId = statusNode.get("gateId").asLong();
                         int statusCode = statusNode.get("status").asInt();
                         Status status = Status.fromCode(statusCode);
@@ -58,6 +59,25 @@ public class MqttMessageHandler {
                         }
                     }
                 }
+                case SEEN_TABLE_STATE -> {
+                    for (JsonNode statusNode : payload) {
+                        long gateId = statusNode.get("gateId").asLong();        // GateID
+                        long gateTime = statusNode.get("gateTime").asLong();    // GateTime
+                        int statusCode = statusNode.get("status").asInt();      // Status
+                        int senseMateId = statusNode.get("senseMateId").asInt(); // SenseMateID
+
+                        Status status = Status.fromCode(statusCode);
+
+                        System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
+                                ", GateTime: " + gateTime +
+                                ", Status: " + status +
+                                ", SenseMateID: " + senseMateId);
+
+                        // Hier könnte z.B. eine Confidence-Berechnung folgen
+                    }
+                }
+
+
                 default -> System.out.println("Unhandled type: " + type);
             }
 
@@ -67,7 +87,4 @@ public class MqttMessageHandler {
             System.err.println("Fehler in msgHandler: " + e.getMessage());
         }
     }
-
-
 }
-

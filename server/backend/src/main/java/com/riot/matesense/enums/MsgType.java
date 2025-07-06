@@ -1,10 +1,9 @@
 package com.riot.matesense.enums;
-
 public enum MsgType {
-    SET_STATE(1),   // target Status Table (BLE)
-
-    IST_STATE(2);   // Is Status Table (BLE)
-
+    SET_STATE(0),   // target Status Table (BLE)
+    IST_STATE(1),   // Is Status Table (BLE)
+    JOB_TABLE(2),   // Seen table for the Pilots user
+    SEEN_TABLE_STATE(3);
 
     private final int code;
 
@@ -12,7 +11,7 @@ public enum MsgType {
         this.code = code;
     }
 
-    public int getCode(Status status) {
+    public int getCode() {
         return code;
     }
 
