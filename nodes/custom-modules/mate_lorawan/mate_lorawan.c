@@ -11,9 +11,10 @@
  * @{
  *
  * @file
- * @brief       mate_lorawan implementation
+ * @brief       Lorawan implementation for SenseMate / GateMate
  *
  * @author      Paul Lange <paul.lange2@haw-hamburg.de>
+ * @author      Jannik Schön
  *
  * @}
  */
@@ -60,7 +61,6 @@
 
 /* Size of single LoRaWAN message */
 #define SEND_BUFFER_SIZE 50
-
 #define MAX_RECEIVE_SIZE 222
 
 /* Duration to trigger send_event */
@@ -115,12 +115,14 @@ static int _send_lorawan_packet(const netif_t *netif, int msg_no, int read);
 static void _handle_received_packet(gnrc_pktsnip_t *pkt);
 
 static void send_handler(event_t *event);
-
 static void send_handler_timeout(event_t *event);
 
-event_t send_is_state = { .handler = send_handler};
-event_t send_seen_state = { .handler = send_handler};
 event_t send_event = { .handler = send_handler };
+event_t send_is_state_table = { .handler = send_handler};
+event_t send_target_state_table = { .handler = send_handler};
+event_t send_seen_status_table = { .handler = send_handler};
+event_t send_jobs_table = { .handler = send_handler};
+event_t send_timestamp_table = { .handler = send_handler};
 event_t send_event_timeout = { .handler = send_handler_timeout };
 
 static void print_hex_arr(const uint8_t *data, unsigned len)
@@ -287,28 +289,48 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
 
 static void send_handler_timeout(event_t *event){
     event_timeout_set(&event_timeout, TIMEOUT_DURATION); // reset timer
-    send_handler(event);
+    event_post(&lorawan_queue, &send_is_state);
+    event_post(&lorawan_queue, &send_seen_state);
 }
 
 static void send_handler(event_t *event){
-    (void) event;
-    printf("LoRaWAN send_handler started\n");
-    int pkg_count = is_state_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
-    if (pkg_count == 0){
-        printf("LoRaWAN nothing to send.\n");
+    printf("[LoRaWAN]: send_handler started\n");
+    int pkg_count = 0;
+    if (event == &send_is_state_table) {
+        printf("[LoRaWAN]: Sending is_state_table\n");
+        pkg_count = is_state_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
+    } else if (event == &send_target_state_table) {
+        printf("[LoRaWAN]: Sending target_state_table\n");
+        pkg_count = target_state_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
+    } else if (event == &send_seen_status_table) {
+        printf("[LoRaWAN]: Sending seen_status_table\n");
+        pkg_count = seen_status_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
+    } else if (event == &send_jobs_table) {
+        printf("[LoRaWAN]: Sending jobs_table\n");
+        pkg_count = jobs_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
+    } else if (event == &send_timestamp_table) {
+        printf("[LoRaWAN]: Sending timestamp_table\n");
+        pkg_count = timestamp_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
+    } else {
+        puts("[LoRaWAN]: Unknown event type in send_handler");
         return;
     }
-    print_hex_arr(cbor_send_buffer.buffer, cbor_send_buffer.package_size[0]);
+
+    if (pkg_count == 0){
+        printf("[LoRaWAN]: Nothing to send.\n");
+        return;
+    }
+
     int read = 0;
-    printf("pg_count: %d\n", pkg_count);
-    puts("Sending data...");
+    printf("[LoRaWAN]: Sending %d packages ...\n", pkg_count);
+    puts("");
     int result = 0;
     for (int msg_no = 0; msg_no < pkg_count; msg_no++){
         result = _send_lorawan_packet(netif, msg_no, read);
         if (result != 0) {
-            puts("Failed to send LoRaWAN packet");
+            puts("[LoRaWAN]: Failed to send packet");
         } else {
-            printf("Sent LoRaWAN packet successfully\n");
+            printf("[LoRaWAN]: Sent packet successfully\n");
         }
         read += cbor_send_buffer.package_size[msg_no];
     }
