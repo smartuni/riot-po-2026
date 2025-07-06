@@ -152,7 +152,6 @@ static netif_t *_find_lorawan_network_interface(void)
 static void _join_lorawan_network(const netif_t *netif)
 {
     assert(netif != NULL);
-
     netopt_enable_t status;
     uint8_t data_rate = 5;
 
@@ -169,10 +168,8 @@ static void _join_lorawan_network(const netif_t *netif)
             netif_get_opt(netif, NETOPT_LINK, 0, &status, sizeof(status));
             if (status == NETOPT_ENABLE) {
                 printf("Joined LoRaWAN network successfully\n");
-
                 /* Set the data rate */
                 netif_set_opt(netif, NETOPT_LORAWAN_DR, 0, &data_rate, sizeof(data_rate));
-
                 /* Disable uplink confirmation requests */
                 status = NETOPT_DISABLE;
                 netif_set_opt(netif, NETOPT_ACK_REQ, 0, &status, sizeof(status));
