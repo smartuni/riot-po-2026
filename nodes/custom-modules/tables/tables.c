@@ -833,7 +833,6 @@ int target_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
 }
 
 int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
-    printf("Called: is_state_table_to_cbor_many\n");
     // Assert: given package_size big enough
     if(BASE_CBOR_BYTE_SIZE + CBOR_IS_STATE_MAX_BYTE_SIZE > package_size) {
         printf("ASSERT failed. Size passed too small for cbor!\n");
@@ -846,27 +845,23 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
     int table_index = 0;
     int is_states_entry_processed = 0;
     int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_IS_STATE_MAX_BYTE_SIZE;
-  
+
     while((is_state_entry_count > 0) && (table_index < MAX_GATE_COUNT) && (is_state_entry_count - is_states_entry_processed) > 0) {
         CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
         uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
         int i = 0;
         while( (i < calculated_array_entries) && (table_index < MAX_GATE_COUNT) && (is_state_entry_count - is_states_entry_processed) > 0) {
-
+            // Create new package if needed
             if(size_of_current_cbor == 0 ){
-            
                 cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
                 cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
                 cbor_encode_int(&arrayEncoder, IS_STATE_KEY);
                 if(is_state_entry_count - is_states_entry_processed < calculated_array_entries){
-                 
                     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);  
                 }else{
-                  
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder,calculated_array_entries); 
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries); 
                 }
             } // Entry 1
-               
             if (is_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].gateID);
@@ -876,12 +871,8 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 is_states_entry_processed++;
                 i++;
             }
-            
             table_index++;
-          
-            
             size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
-        
         }
         cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
         cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
@@ -895,7 +886,7 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
 }
 
 int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
-    // Assert: given package_size big enough
+    /* Assert: given package_size big enough */
     if(BASE_CBOR_BYTE_SIZE + CBOR_SEEN_STATUS_MAX_BYTE_SIZE > package_size) {
         printf("ASSERT failed. Size passed too small for cbor!\n");
         return -1;
@@ -904,44 +895,71 @@ int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
     int no_cbor_packages = 0;
     int cbor_stream_index = 0;
     int size_of_current_cbor = 0;
-    int table_index = 0;
-    while((seen_status_entry_count > 0) && (table_index < MAX_GATE_COUNT)) {
+    int table_index = 0; // GateMate index
+    int sense_index = 0; // SenseMate index
+    int seen_status_entry_processed = 0;
+    int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_SEEN_STATUS_MAX_BYTE_SIZE;
+
+    while((seen_status_entry_count > 0) && (table_index < MAX_GATE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
         CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
         uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
-        cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
-        cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
-        cbor_encode_int(&arrayEncoder, SEEN_STATUS_KEY); // Entry 1
-        cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, seen_status_entry_count); // Entry 2
-        while((size_of_current_cbor + CBOR_SEEN_STATUS_MAX_BYTE_SIZE < package_size) && (table_index < MAX_GATE_COUNT)) {
-            uint8_t sense_index = 0;
-            while((size_of_current_cbor + CBOR_SEEN_STATUS_MAX_BYTE_SIZE < package_size) && (sense_index < MAX_SENSE_COUNT)) {
+        int entry_index = 0;
+        while((entry_index < calculated_array_entries) && (table_index < MAX_GATE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
+            // Create new package if needed
+            if(size_of_current_cbor == 0) {
+                cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
+                cbor_encoder_create_array(&encoder, &arrayEncoder, 2);        // [
+                cbor_encode_int(&arrayEncoder, SEEN_STATUS_KEY);              // Entry 1
+                if(seen_status_entry_count - seen_status_entry_processed < calculated_array_entries) {
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, seen_status_entry_count - seen_status_entry_processed);
+                }else {
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
+                }
+            }
+            // Check all SenseMates of the current GateMate
+            while((entry_index < calculated_array_entries) && (sense_index < MAX_SENSE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
                 if(seen_status_entry_table[table_index][sense_index].gateID != MAX_GATE_COUNT) {
                     cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 4); // []
                     cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].gateID);
                     cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].gateTime);
-                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].senseMateID);
                     cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].status);
-                    cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].senseMateID);
+                    cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder);   // ]
+                    seen_status_entry_processed++;
+                    entry_index++;
                 }
                 sense_index++;
+
+                // Get current size of CBOR package, if the package is full, break out of SenseMate loop
                 size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
+                if(size_of_current_cbor + CBOR_SEEN_STATUS_MAX_BYTE_SIZE >= package_size) {
+                    break; // Paket full, break out of SenseMate loop
+                }
+            } /* while sense_index */
+
+            if(sense_index == MAX_SENSE_COUNT) {
+                table_index++; // Next GateMate
+                sense_index = 0; // Reset SenseMate index
             }
-            table_index++;
-        }
+        } /* while entry_index */
+
+        // Close CBOR containers, write size to buffer and prepare for next package
         cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-        cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
+        cbor_encoder_close_container(&encoder, &arrayEncoder);        // ]
         cbor_stream_index += size_of_current_cbor;
         buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
         no_cbor_packages++;
         size_of_current_cbor = 0;
-    }
+    } /* while table_index */
+
     buffer->cbor_size = no_cbor_packages;
     return no_cbor_packages;
 }
 
+
 int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
-    // Assert: given package_size big enough
-    if(BASE_CBOR_BYTE_SIZE + CBOR_JOBS_MAX_BYTE_SIZE> package_size) {
+    /* Assert: package_size big enough for at least one element */
+    if (BASE_CBOR_BYTE_SIZE + CBOR_JOBS_MAX_BYTE_SIZE > package_size) {
         printf("ASSERT failed. Size passed too small for cbor!\n");
         return -1;
     }
@@ -950,29 +968,42 @@ int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
     int cbor_stream_index = 0;
     int size_of_current_cbor = 0;
     int table_index = 0;
-    while((jobs_entry_count > 0) && (table_index < MAX_GATE_COUNT)) {
+    int jobs_entry_processed = 0;
+    const int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_JOBS_MAX_BYTE_SIZE;
+
+    while ((jobs_entry_count > 0) && (table_index < MAX_GATE_COUNT) && (jobs_entry_count - jobs_entry_processed) > 0) {
         CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
-        cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
-        cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
-        cbor_encode_int(&arrayEncoder, JOBS_KEY); // Entry 1
-        cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, jobs_entry_count); // Entry 2
-        while((size_of_current_cbor + CBOR_JOBS_MAX_BYTE_SIZE < package_size) && (table_index < MAX_GATE_COUNT)) {
-            //validate table entry
-            if(jobs_entry_table[table_index].gateID != MAX_GATE_COUNT) {
+        uint8_t* space = buffer->buffer + cbor_stream_index;
+        int entry_index = 0;
+        while ((entry_index < calculated_array_entries) && (table_index < MAX_GATE_COUNT) && (jobs_entry_count - jobs_entry_processed) > 0) {
+            // Create new package if needed
+            if (size_of_current_cbor == 0) {
+                cbor_encoder_init(&encoder, space, package_size, 0);
+                cbor_encoder_create_array(&encoder, &arrayEncoder, 2);          // [
+                cbor_encode_int(&arrayEncoder, JOBS_KEY);                       // Entry 1
+                if(jobs_entry_count - jobs_entry_processed < calculated_array_entries){
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, jobs_entry_count - jobs_entry_processed);  
+                }else{
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries); 
+                }
+            }
+            if (jobs_entry_table[table_index].gateID != MAX_GATE_COUNT) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 2); // []
                 cbor_encode_int(&singleEntryEncoder, jobs_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, jobs_entry_table[table_index].done);
                 cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+                jobs_entry_processed++;
+                entry_index++;
             }
             table_index++;
-            size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
-        }
+            size_of_current_cbor = (uint8_t)cbor_encoder_get_buffer_size(&entriesEncoder, space);
+        } /* while entry_index */
+
+        // Close package
         cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-        cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
+        cbor_encoder_close_container(&encoder,      &arrayEncoder);   // ]
         cbor_stream_index += size_of_current_cbor;
-        buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
-        no_cbor_packages++;
+        buffer->package_size[no_cbor_packages++] = (uint8_t)size_of_current_cbor;
         size_of_current_cbor = 0;
     }
     buffer->cbor_size = no_cbor_packages;
@@ -1014,6 +1045,60 @@ int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_stream_index += size_of_current_cbor;
         buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
         no_cbor_packages++;
+        size_of_current_cbor = 0;
+    }
+    buffer->cbor_size = no_cbor_packages;
+    return no_cbor_packages;
+}
+
+int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
+    /* Assert: package_size big enough for at least one element */
+    if (BASE_CBOR_BYTE_SIZE + CBOR_TIMESTAMP_MAX_BYTE_SIZE > package_size) {
+        printf("ASSERT failed. Size passed too small for cbor!\n");
+        return -1;
+    }
+
+    int no_cbor_packages = 0;
+    int cbor_stream_index = 0;
+    int size_of_current_cbor = 0;
+    int table_index = 0;
+    int timestamp_entry_processed = 0;
+    const int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_TIMESTAMP_MAX_BYTE_SIZE;
+
+    while ((timestamp_entry_count > 0) && (table_index  < MAX_GATE_COUNT) && (timestamp_entry_count - timestamp_entry_processed) > 0) {
+        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
+        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
+        int entry_index = 0;
+        while ((entry_index < calculated_array_entries) && (table_index  < MAX_GATE_COUNT) && (timestamp_entry_count - timestamp_entry_processed) > 0) {
+            // Create new package if needed
+            if (size_of_current_cbor == 0) {
+                cbor_encoder_init(&encoder, space, package_size, 0);
+                cbor_encoder_create_array(&encoder, &arrayEncoder, 2);           // [
+                cbor_encode_int(&arrayEncoder, TIMESTAMP_KEY);                  // Entry 1
+                if(timestamp_entry_count - timestamp_entry_processed < calculated_array_entries){
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, timestamp_entry_count - timestamp_entry_processed);  
+                }else{
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries); 
+                }
+            }
+            if (timestamp_table[table_index].gateID != MAX_GATE_COUNT) {
+                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
+                cbor_encode_int(&singleEntryEncoder, timestamp_table[table_index].gateID);
+                cbor_encode_int(&singleEntryEncoder, timestamp_table[table_index].timestamp);
+                cbor_encode_int(&singleEntryEncoder, timestamp_table[table_index].rssi);
+                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+                timestamp_entry_processed++;
+                entry_index++;
+            }
+            table_index++;
+            size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size(&entriesEncoder, space);
+        } /* while entry_index */
+
+       // Close package
+        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
+        cbor_encoder_close_container(&encoder,      &arrayEncoder);   // ]
+        cbor_stream_index += size_of_current_cbor;
+        buffer->package_size[no_cbor_packages++] = (uint8_t) size_of_current_cbor;
         size_of_current_cbor = 0;
     }
     buffer->cbor_size = no_cbor_packages;
