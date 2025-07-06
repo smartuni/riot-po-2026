@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/RecentActivity.css';
-import { fetchActivities } from "../services/api";
+import { fetchActivities, fetchGates } from "../services/api";
 import { FiClock } from 'react-icons/fi';
+import SockJS from 'sockjs-client';
+import { Stomp } from '@stomp/stompjs';
 
 function RecentActivity() {
     const [activities, setActivities] = useState([]);
@@ -17,11 +19,32 @@ function RecentActivity() {
         };
         loadActivities();
 
-        const intervalId = setInterval(() => {
-            loadActivities();
-        }, 300);
+        // const intervalId = setInterval(() => {
+        //     loadActivities();
+        // }, 300);
 
-        return () => clearInterval(intervalId);
+        // return () => clearInterval(intervalId);
+    }, []);
+
+    useEffect(() => {
+        const socket = new SockJS('http://localhost:8080/ws');
+        const stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, () => {
+            stompClient.subscribe('/topic/gate-activities', (message) => {
+                const activity = JSON.parse(message.body);
+                setActivities(prev => [...prev, activity]);
+            });
+
+            stompClient.subscribe('/topic/gate-activities/delete', (message) => {
+                const id = parseInt(message.body);
+                setActivities(prev => prev.filter(a => a.id !== id));
+            });
+        });
+
+        return () => {
+            stompClient.disconnect();
+        };
     }, []);
 
     const formatTime = (timestamp) => {

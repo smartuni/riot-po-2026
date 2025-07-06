@@ -23,6 +23,8 @@ import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import MapView from "../components/MapView";
 import StatusChangedDialog from "../components/StatusChangedDialog";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import SockJS from 'sockjs-client';
+import { Stomp } from '@stomp/stompjs';
 
 function StatusTables() {
     const [gates, setGates] = useState([]);
@@ -80,12 +82,33 @@ function StatusTables() {
             }
         };
         loadGates();
-        const intervalId = setInterval(() => {
-            loadGates();
-        }, 300);
+        // const intervalId = setInterval(() => {
+        //     loadGates();
+        // }, 300);
 
-        return () => clearInterval(intervalId);
+        // return () => clearInterval(intervalId);
     }, []);
+
+    useEffect(() => {
+            const socket = new SockJS('http://localhost:8080/ws');
+            const stompClient = Stomp.over(socket);
+    
+            stompClient.connect({}, () => {
+                stompClient.subscribe('/topic/gate-activities', (message) => {
+                    const activity = JSON.parse(message.body);
+                    setActivities(prev => [...prev, activity]);
+                });
+    
+                stompClient.subscribe('/topic/gate-activities/delete', (message) => {
+                    const id = parseInt(message.body);
+                    setActivities(prev => prev.filter(a => a.id !== id));
+                });
+            });
+    
+            return () => {
+                stompClient.disconnect();
+            };
+        }, []);
 
     /**
      * For deleting a gate.
@@ -124,6 +147,9 @@ function StatusTables() {
 
         return () => clearInterval(intervalId);
     }, []);
+
+
+
 
     /**
      * Schließt den Dialog und aktualisiert die Gates.
@@ -169,11 +195,11 @@ function StatusTables() {
     const renderRequestedStatus = (status) => {
         switch (status) {
             case "REQUESTED_OPEN":
-                return <><LockOpenIcon fontSize="small"/> OPEN</>;
+                return <><LockOpenIcon fontSize="small" /> OPEN</>;
             case "REQUESTED_CLOSE":
-                return <><LockIcon fontSize="small"/> CLOSE</>;
+                return <><LockIcon fontSize="small" /> CLOSE</>;
             default:
-                return <><CircleIcon fontSize="small"/> NONE</>;
+                return <><CircleIcon fontSize="small" /> NONE</>;
         }
     };
 
@@ -296,7 +322,7 @@ function StatusTables() {
                         placeholder="Search gates..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        style={{marginRight: "1rem"}}
+                        style={{ marginRight: "1rem" }}
                     />
 
                     <TextField
@@ -318,10 +344,10 @@ function StatusTables() {
             <Tabs
                 value={view}
                 onChange={(e, newValue) => setView(newValue)}
-                style={{marginTop: "1rem", marginBottom: "1rem"}}
+                style={{ marginTop: "1rem", marginBottom: "1rem" }}
             >
-                <Tab label="List View" value="list"/>
-                <Tab label="Map View" value="map"/>
+                <Tab label="List View" value="list" />
+                <Tab label="Map View" value="map" />
             </Tabs>
 
             {view === "list" ? (
@@ -334,7 +360,7 @@ function StatusTables() {
                                 value={bulkRequestedStatus}
                                 label="Bulk Requested Status"
                                 onChange={(e) => setBulkRequestedStatus(e.target.value)}
-                                style={{minWidth: 160}}
+                                style={{ minWidth: 160 }}
                             >
                                 <MenuItem value="">None</MenuItem>
                                 <MenuItem value="REQUESTED_OPEN">Request Open</MenuItem>
@@ -508,14 +534,33 @@ function StatusTables() {
                                             </div>
                                         </td>
                                     </tr>
-                                )}
-                            </React.Fragment>
-                        ))}
+                                    {expandedGateId === gate.id && (
+                                        <tr className="expanded-row">
+                                            <td colSpan={8} style={{ backgroundColor: "#f9f9f9" }}>
+                                                <div>
+                                                    <strong>Activities</strong>
+                                                    {activities
+                                                        .filter(activity => activity.gateId === gate.id)
+                                                        .slice(-4) // Optional: nur die letzten 4 zeigen
+                                                        .map((activity, index) => (
+                                                            <p key={activity.id}>
+                                                                <strong>{activity.lastTimeStamp}:</strong> {activity.message}
+                                                            </p>
+                                                        ))}
+                                                    {activities.filter(a => a.gateId === gate.id).length === 0 && (
+                                                        <p>No activities available for this gate.</p>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            ))}
                         </tbody>
                     </table>
                 </>
             ) : (
-                <MapView search={search} statusFilter={filter}/>
+                <MapView search={search} statusFilter={filter} />
             )}
 
             <StatusChangedDialog

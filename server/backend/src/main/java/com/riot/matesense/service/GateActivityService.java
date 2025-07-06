@@ -10,7 +10,10 @@ import com.riot.matesense.model.GateActivity;
 import com.riot.matesense.model.GateForDownlink;
 import com.riot.matesense.repository.GateActivityRepository;
 import com.riot.matesense.repository.GateRepository;
+import com.riot.matesense.repository.NotificationRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,6 +25,13 @@ public class GateActivityService {
 
     @Autowired
     GateActivityRepository gateActivityRepository;
+    private SimpMessagingTemplate messagingTemplate;
+
+    public GateActivityService(GateActivityRepository gateActivityRepository,
+                               SimpMessagingTemplate messagingTemplate) {
+        this.gateActivityRepository = gateActivityRepository;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     public List<GateActivity> getAllGateActivities() {
         List<GateActivityEntity> gates = gateActivityRepository.findAll();
@@ -34,7 +44,8 @@ public class GateActivityService {
     }
 
     public String addGateActivity(GateActivityEntity gateActivity) {
-        gateActivityRepository.save(gateActivity);
+        GateActivityEntity saved = gateActivityRepository.save(gateActivity);
+        messagingTemplate.convertAndSend("/topic/gate-activities", saved);
         return gateActivity.toString();
     }
 
@@ -47,6 +58,7 @@ public class GateActivityService {
 
     public void removeGateActivity(GateActivityEntity gateActivityEntity) {
         gateActivityRepository.delete(gateActivityEntity);
+        messagingTemplate.convertAndSend("/topic/gate-activities/delete", gateActivityEntity.getId());
     }
 
 

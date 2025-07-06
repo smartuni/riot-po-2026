@@ -13,6 +13,7 @@ import com.riot.matesense.repository.NotificationRepository;
 import jakarta.transaction.Transactional;
 import org.aspectj.weaver.ast.Not;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -23,7 +24,14 @@ public class NotificationService {
 
     @Autowired
     NotificationRepository notificationRepository;
+    private SimpMessagingTemplate messagingTemplate;
     MsgType msgType;
+
+    public NotificationService(NotificationRepository notificationRepository,
+                               SimpMessagingTemplate messagingTemplate) {
+        this.notificationRepository = notificationRepository;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     public List<Notification> getAllNotifications() {
         List<NotificationEntity> notificationEntities = notificationRepository.findAll();
@@ -36,13 +44,15 @@ public class NotificationService {
     }
 
     public String addNotification(NotificationEntity notification) throws GateAlreadyExistingException {
-        notificationRepository.save(notification);
+        NotificationEntity created = notificationRepository.save(notification);
+        messagingTemplate.convertAndSend("/topic/notifications", created);
         return notification.toString();
     }
 
 
     public void removeNotification(NotificationEntity notification) throws GateNotFoundException {
         notificationRepository.delete(notification);
+        messagingTemplate.convertAndSend("/topic/notifications/delete", notification.getId());
     }
 
     public List<Notification> getNotificationByWorkerId(Long id) {
@@ -59,6 +69,7 @@ public class NotificationService {
         System.out.println("NotificationService: requestNotificationReadChange: " + notification);
         notification.setRead(true);
         notificationRepository.save(notification);
+        messagingTemplate.convertAndSend("/topic/notifications/read-change", notification);
         System.out.println(notificationRepository.getById(id).isRead());
     }
 
