@@ -63,12 +63,8 @@ public class GateService {
         }
 
     }
-
-    public Gate getGateById(Long id) {
-        GateEntity gate = gateRepository.getById(id);
-        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
-                gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
-                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getPendingJob(), gate.getPriority());
+    public GateEntity getGateEntityById(Long id) throws GateNotFoundException {
+        return gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
     }
 
     public void requestGateStatusChange(Long gateId, String targetStatus) {
@@ -137,6 +133,4 @@ public class GateService {
         gateEntity.setPriority(newPriority);
         gateRepository.save(gateEntity);
     }
-
-
 }
