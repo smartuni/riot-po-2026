@@ -36,15 +36,21 @@ public class GateController {
         return gateService.addGate(gateEntity);
     }
 
+    @RequestMapping(value = "add-gate-ui", method = RequestMethod.POST)
+    public String addGateUI(@RequestBody GateEntity gateEntity) throws GateAlreadyExistingException {
+        return gateService.addGateFromGUI(gateEntity);
+    }
+
     @RequestMapping(value = "update-gate", method = RequestMethod.PUT)
     public void updateGate(@RequestBody GateEntity gate) throws GateNotFoundException {
         gateService.updateGate(gate);
     }
 
-    @RequestMapping(value = "delete-gate", method = RequestMethod.DELETE)
-    public void removeCustomer(@RequestBody GateEntity gate) throws GateNotFoundException {
-        gateService.removeGate(gate);
+    @DeleteMapping("/gates/{id}")
+    public void deleteGate(@PathVariable Long id) throws GateNotFoundException {
+        gateService.removeGateById(id);
     }
+
 
     @PostMapping("/{gateId}/{workerId}/request-status-change/")
     public void requestGateStatusChange(@PathVariable Long gateId, @PathVariable Long workerId,  @RequestBody Map<String, String> body)

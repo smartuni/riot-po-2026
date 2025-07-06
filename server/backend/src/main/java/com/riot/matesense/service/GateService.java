@@ -42,8 +42,25 @@ public class GateService {
         return gate.toString();
     }
 
+    public String addGateFromGUI(GateEntity gate) throws GateAlreadyExistingException {
+        gate.setPriority(3);
+        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        //TODO: if confidence calc is done remove this
+        gate.setConfidence("100");
+        gateRepository.save(gate);
+        return gate.toString();
+    }
+
 
     public void removeGate(GateEntity gate){
+        gateRepository.delete(gate);
+    }
+
+    public void removeGateById(Long id) throws GateNotFoundException {
+        GateEntity gate = gateRepository.getById(id);
+        if (gate == null) {
+            throw new GateNotFoundException(id);
+        }
         gateRepository.delete(gate);
     }
 
@@ -61,7 +78,6 @@ public class GateService {
             gateEntity.setLocation(gate.getLocation());
             gateRepository.save(gateEntity);
         }
-
     }
     public GateEntity getGateEntityById(Long id) throws GateNotFoundException {
         return gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
@@ -69,7 +85,6 @@ public class GateService {
 
     public void requestGateStatusChange(Long gateId, String targetStatus) {
         GateEntity gate = gateRepository.getById(gateId);
-
         System.out.println("Current Status: " + gate.getStatus());
         System.out.println("Requested Status: " + targetStatus);
         System.out.println("ID: " + gate.getId());

@@ -68,10 +68,10 @@ class PopulateTestDataRunner implements CommandLineRunner {
 //		);
 
 		downlinkService.sendDownlinkToDevice(downPayload); // Test call
- 		GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.5408, 9.9654, "St.Pauli", false, true, "REQUESTED_NONE", "100%", "PENDING_NONE", 0);
- 		GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, 53.5409, 9.8674, "Landungsbrücken", false, true, "REQUESTED_NONE", "75%", "PENDING_NONE", 0);
- 		GateEntity gate2 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 3L, 53.5410, 9.8664, "Veddel", true, false, "REQUESTED_NONE",  "80%", "PENDING_NONE", 0);
- 		GateEntity gate3 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 4L, 53.5460, 9.8634, "Hafen", true, true, "REQUESTED_NONE", "60%", "PENDING_NONE", 0);
+ 		GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.5408, 9.9654, "St.Pauli", false, true, "REQUESTED_NONE", "100%", "PENDING_NONE", 3);
+ 		GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, 53.5409, 9.8674, "Landungsbrücken", false, true, "REQUESTED_NONE", "75%", "PENDING_NONE", 3);
+ 		GateEntity gate2 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 3L, 53.5410, 9.8664, "Veddel", true, false, "REQUESTED_NONE",  "80%", "PENDING_NONE", 3);
+ 		GateEntity gate3 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 4L, 53.5460, 9.8634, "Hafen", true, true, "REQUESTED_NONE", "60%", "PENDING_NONE", 3);
  		gateService.addGate(gate);
  		gateService.addGate(gate1);
  		gateService.addGate(gate2);

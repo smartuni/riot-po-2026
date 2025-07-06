@@ -130,8 +130,6 @@ function StatusTablesView() {
                             <th>Gate ID</th>
                             <th>Location</th>
                             <th>Status</th>
-                            <th>Requested Status</th>
-                            <th>Device ID</th>
                             <th>Last Update</th>
                             <th>Confidence</th>
                             {/* <th>Actions</th> */}
@@ -157,12 +155,6 @@ function StatusTablesView() {
             } {gate.status}
           </span>
                                     </td>
-                                    <td>
-          <span className={`badge ${gate.requestedStatus ? gate.requestedStatus.toLowerCase() : 'none'}`}>
-            {renderRequestedStatus(gate.requestedStatus)}
-          </span>
-                                    </td>
-                                    <td>{gate.deviceId}</td>
                                     <td>
                                         <div>about 1 hour ago</div>
                                         <div className="date">{gate.lastUpdate}</div>
