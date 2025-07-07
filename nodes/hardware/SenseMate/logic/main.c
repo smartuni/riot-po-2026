@@ -17,7 +17,7 @@ void fill_tables_test(void);
 
 
 int main(void) {
-    ztimer_sleep(ZTIMER_MSEC, 3000);
+    //ztimer_sleep(ZTIMER_MSEC, 3000);
     init_interrupt();
     init_sound_module();
     init_vibration_module();
@@ -36,7 +36,7 @@ int main(void) {
     //is_state_entry receiveide_is_state;
     //int hallo = get_is_state_entry(1, &receiveide_is_state);
     //printf("Gate Id %d\n", receiveide_is_state.gateID);
-    fill_tables_test();
+    //fill_tables_test();
     
     update_menu_from_tables();
     //(void) test_merge;
