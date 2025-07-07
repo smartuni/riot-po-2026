@@ -43,7 +43,6 @@ public class GateEntity {
 					  /*Boolean sensorConfidence,*/ String requestedStatus) {
 		this.status = status;
 		this.lastTimeStamp = lastTimeStamp;
-		this.deviceId = deviceId;
 		this.location = location;
 //		this.workerConfidence = workerConfidence;
 //		this.sensorConfidence = sensorConfidence;
@@ -64,7 +63,7 @@ public class GateEntity {
 
 	public void shuffleReports(Status gateStatus, int reportType)
 	{
-		if(reportType == 1) // IST STATE
+		if(reportType == 1) // IST STATE (report from gates)
 		{
 			for(int i = 1; i < 5; i++)
 			{
@@ -72,7 +71,7 @@ public class GateEntity {
 			}
 			gateStatusArray[0] = gateStatus; // insert most recent report to the front of the array
 		}
-		else if(reportType == 2) // SEEN STATE
+		else if(reportType == 2) // SEEN STATE (report from workers)
 		{
 			for(int i = 1; i < 5; i++)
 			{
@@ -87,14 +86,16 @@ public class GateEntity {
 	}
 	
 	//Uplink from SEEN_TABLE
-	public GateEntity(Status status, Timestamp lastTimeStamp,
-					  Long deviceId) {
-
+	public GateEntity(Status status, Timestamp lastTimeStamp, Long deviceId) {
+		this.status = status;
+		this.lastTimeStamp = lastTimeStamp;
+		this.deviceId = deviceId;
 	}
 	// HARD Coded
 	public GateEntity(Status status, Timestamp lastTimeStamp,
 					  Long deviceId, Double latitude, Double longitude,
 					  String location, String requestedStatus){
+		
 
 	}
 }

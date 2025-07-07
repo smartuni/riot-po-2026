@@ -1,7 +1,7 @@
 package com.riot.matesense.service;
 
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Component; // ignore this file
 
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.enums.ConfidenceQuality;
