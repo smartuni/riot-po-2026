@@ -103,6 +103,5 @@ public class GateEntity {
 		this.longitude = longitude;
 		this.location = location;
 		this.requestedStatus = requestedStatus;
-
 	}
 }
