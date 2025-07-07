@@ -8,6 +8,7 @@ import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
+import com.riot.matesense.model.Gate;
 import com.riot.matesense.service.GateService;
 
 import java.sql.Timestamp;

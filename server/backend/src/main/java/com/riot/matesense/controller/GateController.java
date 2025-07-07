@@ -43,7 +43,7 @@ public class GateController {
 
     @RequestMapping(value = "update-gate", method = RequestMethod.PUT)
     public void updateGate(@RequestBody GateEntity gate) throws GateNotFoundException {
-        gateService.updateGate(gate);
+        gateService.updateGate(gate, 3);
     }
 
     @DeleteMapping("/gates/{id}")

@@ -1,8 +1,8 @@
 mqtt:
   broker: ssl://eu1.cloud.thethings.network:8883
   clientId: mqtt-client-1234
-  username: testing-area-1@ttn
-  applicationId: testing-area-1
+  username: 79857987987@ttn
+  applicationId: 79857987987
   password: NNSXS.VKMASX5X3WED37I7GU3DYXUVOMYZ64WI74PJRMI.LX7X2UY63XQNJUOKBTJ42A5VTDXRIGZ426PTI7CPYSVU2VMU2CZQ
-  subscribeTopic: v3/testing-area-1@ttn/devices/+/up
-  publishTopic: v3/testing-area-1@ttn/devices/test-mqtt-1/down/push
+  subscribeTopic: v3/79857987987@ttn/devices/+/up
+  publishTopic: v3/79857987987@ttn/devices/goodname/down/push

@@ -1,6 +1,8 @@
 package com.riot.matesense.entity;
 
+import com.riot.matesense.enums.ConfidenceQuality;
 import com.riot.matesense.enums.Status;
+import com.riot.matesense.service.ConfidenceCalculator;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +18,7 @@ public class GateEntity {
 	@Getter
 	@Setter
     @Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	//@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private Status status;
 	private Timestamp lastTimeStamp;
@@ -26,6 +28,12 @@ public class GateEntity {
 	private Double longitude;
 	private Boolean workerConfidence;
 	private Boolean sensorConfidence;
+	private int confidence;
+	private ConfidenceQuality quality;
+    private boolean ignoreGate;
+    private boolean gateDetector;
+    private Status[] gateStatusArray = new Status[5];
+    private Status[] workerStatusArray = new Status[5];
 	@Column(name = "requested_status")
 	private String requestedStatus;
 	private String pendingJob;
@@ -46,12 +54,61 @@ public class GateEntity {
 		this.requestedStatus = requestedStatus;
 		this.latitude = latitude;
 		this.longitude = longitude;
-		this.confidence = confidence;
+		for(int i = 0; i < 5; i++)
+		{
+			this.gateStatusArray[i] = Status.NONE;
+			this.workerStatusArray[i] = Status.NONE;
+		}
 		this.pendingJob = pendingJob;
 		this.priority = priority;
 	}
 
 	public GateEntity() {
 
+	}
+
+
+	public void shuffleReports(Status gateStatus, int reportType)
+	{
+		if(reportType == 1) // IST STATE (report from gates)
+		{
+			for(int i = 1; i < 5; i++)
+			{
+				this.gateStatusArray[i] = this.gateStatusArray[i-1]; // push older reports to the back of the array
+			}
+			gateStatusArray[0] = gateStatus; // insert most recent report to the front of the array
+		}
+		else if(reportType == 2) // SEEN STATE (report from workers)
+		{
+			for(int i = 1; i < 5; i++)
+			{
+				this.workerStatusArray[i] = this.workerStatusArray[i-1];
+			}
+			workerStatusArray[0] = gateStatus;
+		}
+		else // update not originating from a gate or worker
+		{
+			return;
+		}
+	}
+	
+	//Uplink from SEEN_TABLE
+	public GateEntity(Status status, Timestamp lastTimeStamp, Long deviceId) {
+		this.status = status;
+		this.lastTimeStamp = lastTimeStamp;
+		this.deviceId = deviceId;
+	}
+	// HARD Coded
+	public GateEntity(Status status, Timestamp lastTimeStamp,
+					  Long deviceId, Double latitude, Double longitude,
+					  String location, String requestedStatus){
+
+		this.status = status;
+		this.lastTimeStamp = lastTimeStamp;
+		this.deviceId = deviceId;
+		this.latitude = latitude;
+		this.longitude = longitude;
+		this.location = location;
+		this.requestedStatus = requestedStatus;
 	}
 }

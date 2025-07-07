@@ -1,6 +1,7 @@
 package com.riot.matesense.model;
 
 import com.riot.matesense.enums.Status;
+import com.riot.matesense.enums.ConfidenceQuality;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,14 +22,13 @@ public class Gate {
 	private Boolean sensorConfidence;
 	private String requestedStatus;
 	private String pendingJob;
-	private int confidence;
-	private int priority;
+	private int actualConfidence;
+	private ConfidenceQuality quality;
 
 	public Gate(Long id , Long deviceId, Timestamp lastTimeStamp, Status status,
 				Double latitude, Double longitude,String location,
 				 Boolean workerConfidence, Boolean sensorConfidence,
-				String requestedStatus,  int confidence,
-				String pendingJob, int priority) {
+				String requestedStatus, int actualConfidence, ConfidenceQuality quality, String pendingJob, int priority) {
 		this.id = id;
 		this.location = location;
 		this.deviceId = deviceId;
@@ -40,7 +40,8 @@ public class Gate {
 		this.pendingJob = pendingJob;
 		this.latitude = latitude;
 		this.longitude = longitude;
-		this.confidence = confidence;
+		this.actualConfidence = actualConfidence;
+		this.quality = quality;
 		this.priority = priority;
 	}
 }
