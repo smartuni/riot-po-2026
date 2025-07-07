@@ -30,11 +30,13 @@
     #define TABLE_ERROR_NOT_FOUND      -3
     
     #define BASE_CBOR_BYTE_SIZE 0x03
-    #define CBOR_TARGET_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
-    #define CBOR_IS_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
-    #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x0C + 0x01)
-    #define CBOR_JOBS_MAX_BYTE_SIZE (0x05 + 0x01)
-    #define CBOR_TIMESTAMP_MAX_BYTE_SIZE (0x0A + 0x01)
+    #define CBOR_TARGET_STATE_MAX_BYTE_SIZE (0x06)
+    //#define CBOR_IS_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
+    #define CBOR_IS_STATE_MAX_BYTE_SIZE (0x06)
+    //#define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x0C + 0x01)
+    #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x07)
+    #define CBOR_JOBS_MAX_BYTE_SIZE (0x03)
+    #define CBOR_TIMESTAMP_MAX_BYTE_SIZE (0x06)
 
     typedef struct {
         uint8_t gateID;

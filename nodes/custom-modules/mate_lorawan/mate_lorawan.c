@@ -50,7 +50,7 @@
 #define SEND_BUFFER_SIZE 50
 #define MAX_RECEIVE_SIZE 222
 /* Duration to trigger send_event */
-#define TIMEOUT_DURATION 600000
+#define TIMEOUT_DURATION 60000000
 /* Stack for reception thread */
 static char _rx_thread_stack[THREAD_STACKSIZE_DEFAULT];
 /* Message queue for reception thread] */
@@ -270,9 +270,10 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
 }
 
 static void send_handler_timeout(event_t *event){
+    (void) event;
     event_timeout_set(&event_timeout, TIMEOUT_DURATION); // reset timer
-    event_post(&lorawan_queue, &send_is_state);
-    event_post(&lorawan_queue, &send_seen_state);
+    event_post(&lorawan_queue, &send_is_state_table);
+    event_post(&lorawan_queue, &send_seen_status_table);
 }
 
 static void send_handler(event_t *event){
