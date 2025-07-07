@@ -324,12 +324,6 @@ void* ble_send_loop(void*)
         }
         
         count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
-        count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
-        if (count > 0) {
-            ble_send(&buffer);
-        }
-
-        count = jobs_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
             ble_send(&buffer);
         }
