@@ -18,7 +18,7 @@ public class GateEntity {
 	@Getter
 	@Setter
     @Id
-	//@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private Status status;
 	private Timestamp lastTimeStamp;

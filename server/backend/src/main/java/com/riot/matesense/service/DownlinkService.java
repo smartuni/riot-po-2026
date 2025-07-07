@@ -20,13 +20,13 @@ public class DownlinkService {
     private final TTNMqttPublisher mqttPublisher;
     private final CborConverter cborConverter;
     private final MqttProperties mqttProperties;
-    private final JobTableService jobTableService;
+    // private final JobTableService jobTableService;
 
-    public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter, MqttProperties mqttProperties, JobTableService jobTableService) {
+    public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter, MqttProperties mqttProperties) {
         this.mqttPublisher = mqttPublisher;
         this.cborConverter = cborConverter;
         this.mqttProperties = mqttProperties;
-        this.jobTableService = jobTableService;
+        // this.jobTableService = jobTableService;
     }
 
     public void sendDownlinkToDevice(DownPayload payloadData) {
