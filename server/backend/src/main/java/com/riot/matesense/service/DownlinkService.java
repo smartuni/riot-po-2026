@@ -26,6 +26,7 @@ public class DownlinkService {
         this.mqttPublisher = mqttPublisher;
         this.cborConverter = cborConverter;
         this.mqttProperties = mqttProperties;
+        this.jobTableService = jobTableService;
     }
 
     public void sendDownlinkToDevice(DownPayload payloadData) {

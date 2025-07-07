@@ -24,6 +24,7 @@ public class Gate {
 	private String pendingJob;
 	private int actualConfidence;
 	private ConfidenceQuality quality;
+	private int priority;
 
 	public Gate(Long id , Long deviceId, Timestamp lastTimeStamp, Status status,
 				Double latitude, Double longitude,String location,

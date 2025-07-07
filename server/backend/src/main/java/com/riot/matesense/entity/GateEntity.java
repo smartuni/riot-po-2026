@@ -28,7 +28,6 @@ public class GateEntity {
 	private Double longitude;
 	private Boolean workerConfidence;
 	private Boolean sensorConfidence;
-	private int confidence;
 	private ConfidenceQuality quality;
     private boolean ignoreGate;
     private boolean gateDetector;
