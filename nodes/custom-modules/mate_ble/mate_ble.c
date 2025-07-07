@@ -37,8 +37,8 @@
  * MATE_BLE_SCAN_INTERVAL_MS = MATE_BLE_SCAN_WINDOW_MS results in continuous scanning.*/
 #define MATE_BLE_SCAN_INTERVAL_MS    30
 
-#define MATE_BLE_THRESHOLD_MAX  (-100)
-#define MATE_BLE_THRESHOLD_MIN  (0)
+#define MATE_BLE_THRESHOLD_MAX  (128)
+#define MATE_BLE_THRESHOLD_MIN  (-100)
 
 static uint8_t id_addr_type;
 static uint8_t init = 0;
@@ -364,7 +364,7 @@ void* ble_receive_loop(void* args)
         if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
             continue;
         }
-        int res = cbor_to_table_test(&buffer);
+        int res = cbor_to_table_test(&buffer, metadata.rssi);
         if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
             continue;
         }

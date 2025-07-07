@@ -303,7 +303,7 @@ int timestamp_table_to_cbor(cbor_buffer* buffer) {
 }
 
 
-int cbor_to_table_test(cbor_buffer* buffer) {
+int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     
     CborParser parser;
     CborValue value;
