@@ -56,28 +56,40 @@ public class MqttMessageHandler {
                         long gateId = statusNode.get("gateId").asLong();
                         int statusCode = statusNode.get("status").asInt();
                         Timestamp timestamp = new Timestamp(statusNode.get("timestamp").asLong());    // GateTime
-                        Status status = Status.fromCode(statusCode);
+
+                        Status status;
+                            switch (statusCode) {
+                                case 0:
+                                    status = Status.CLOSED;
+                                break;
+                                case 1:
+                                    status = Status.OPENED;
+                                break;
+                                case 2:
+                                    status = Status.UNKNOWN;
+                                break;
+                                default:
+                                    status = Status.NONE;
+                                break;
+                            }
 
                         try {
                             //update Existing Gate
                             GateEntity existingGate = gateService.getGateEntityById(gateId);
                             int confidence = existingGate.getConfidence();
                             // existingGate.setStatus(status);
-                            if(status == null) {
-                                status = Status.CLOSED;
-                            }
 
-                            gateService.changeGateStatus(gateId, confidence, 1);
+
+                            gateService.changeGateStatus(gateId,status, 1);
                             gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "Gate has changed to status " + status.toString(), null));
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
                             //add new Gate
+
                             // GateEntity newGate = new GateEntity(); //Need to be changed
                             GateEntity newGate = new GateEntity(status, timestamp, 93.044, 51.222, "HAW", "none", 100, "none", 3  ); //Need to be changed
 
-                            if(status == null) {
-                                status = Status.CLOSED;
-                            }
+
 
                             gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
@@ -92,14 +104,28 @@ public class MqttMessageHandler {
                         int statusCode = statusNode.get("status").asInt();      // Status
                         int senseMateId = statusNode.get("senseMateId").asInt(); // SenseMateID
 
-                        Status status = Status.fromCode(statusCode);
+                        Status status;
+                        switch (statusCode) {
+                            case 0:
+                                status = Status.CLOSED;
+                                break;
+                            case 1:
+                                status = Status.OPENED;
+                                break;
+                            case 2:
+                                status = Status.UNKNOWN;
+                                break;
+                            default:
+                                status = Status.NONE;
+                                break;
+                        }
 
                         GateEntity existingGate = gateService.getGateEntityById(gateId);
 
                         int confidence = existingGate.getConfidence();
                         // existingGate.setStatus(status);
 
-                        gateService.changeGateStatus(gateId, confidence, 2);
+                        gateService.changeGateStatus(gateId, status, 2);
 
                         System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
                                 ", GateTime: " + gateTime +
