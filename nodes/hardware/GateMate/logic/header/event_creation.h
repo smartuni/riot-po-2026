@@ -14,7 +14,7 @@
 #include "mate_lorawan.h"
 
 #define GATE_ID 1
-#define DEBOUNCE_TIME 10000
+#define DEBOUNCE_TIME 5000
 
 
 

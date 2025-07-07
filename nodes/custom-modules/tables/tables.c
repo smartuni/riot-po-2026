@@ -312,20 +312,20 @@ int cbor_to_table_test(cbor_buffer* buffer) {
 
     if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &tableType) != CborNoError) {
         return -1;
-    } // get type of table
+    }
+     // get type of table
     if(tableType == TARGET_STATE_KEY) {
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
             return -1;
         } // get timestamp
     }
-
     // [ enter second container
     cbor_value_advance(&wrapperValue);
     if(cbor_value_enter_container(&wrapperValue, &fieldsValue) != CborNoError) {
         return -1;
     }
-
+    
     int id, s, sID, p, gt;
     size_t length = 0;
     cbor_value_get_array_length(&wrapperValue, &length); 	

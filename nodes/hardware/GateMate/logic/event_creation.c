@@ -66,7 +66,7 @@ void event_handler_reactivate(event_t *event)
         } 
 
         // TELL LORAWAN
-        event_post(&lorawan_queue, &send_event);
+        event_post(&lorawan_queue, &send_is_state_table);
 
     } else {
         puts("writing to table failed!");
