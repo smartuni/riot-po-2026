@@ -62,17 +62,30 @@ public class GateEntity {
 	}
 
 
-	public void shuffleReports(Status gateStatus)
+	public void shuffleReports(Status gateStatus, int reportType)
 	{
-		for(int i = 1; i < 5; i++)
-        {
-            this.gateStatusArray[i] = this.gateStatusArray[i-1]; // push older reports to the back of the array
-            this.workerStatusArray[i] = this.workerStatusArray[i-1];
-        }
-
-        gateStatusArray[0] = gateStatus; // insert most recent report to the front of the array
-        workerStatusArray[0] = gateStatus;
+		if(reportType == 1) // IST STATE
+		{
+			for(int i = 1; i < 5; i++)
+			{
+				this.gateStatusArray[i] = this.gateStatusArray[i-1]; // push older reports to the back of the array
+			}
+			gateStatusArray[0] = gateStatus; // insert most recent report to the front of the array
+		}
+		else if(reportType == 2) // SEEN STATE
+		{
+			for(int i = 1; i < 5; i++)
+			{
+				this.workerStatusArray[i] = this.workerStatusArray[i-1];
+			}
+			workerStatusArray[0] = gateStatus;
+		}
+		else // update not originating from a gate or worker
+		{
+			return;
+		}
 	}
+	
 	//Uplink from SEEN_TABLE
 	public GateEntity(Status status, Timestamp lastTimeStamp,
 					  Long deviceId) {

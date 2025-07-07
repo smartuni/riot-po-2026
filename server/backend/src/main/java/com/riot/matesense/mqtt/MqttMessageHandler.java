@@ -55,8 +55,33 @@ public class MqttMessageHandler {
                             GateEntity existingGate = gateService.getGateEntityById(gateId);
                             existingGate.setStatus(status);
 
-                            gateService.updateGate(existingGate);
+                            gateService.updateGate(existingGate, 1);
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
+                        } catch (GateNotFoundException e) {
+                            //add new Gate
+                            GateEntity newGate = new GateEntity(); //Need to be changed
+
+
+                            gateService.addGate(newGate);
+                            System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
+                        }
+                    }
+                }
+                case SEEN_TABLE_STATE -> {
+                    for (JsonNode statusNode : root.get("statuses")) {
+                        long gateId = statusNode.get("gateId").asLong();
+                        int statusCode = statusNode.get("status").asInt();
+                        Status status = Status.fromCode(statusCode);
+                        long deviceId = statusNode.get("deviceId").asLong();
+
+                        try {
+                            //update Existing Gate
+                            GateEntity existingGate = gateService.getGateEntityById(gateId);
+                            existingGate.setStatus(status);
+                            existingGate.setDeviceId(deviceId);
+
+                            gateService.updateGate(existingGate, 2);
+                            System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status + ", Sensemate ID=" + deviceId);
                         } catch (GateNotFoundException e) {
                             //add new Gate
                             GateEntity newGate = new GateEntity(); //Need to be changed

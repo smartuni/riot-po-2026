@@ -48,7 +48,7 @@ public class GateService {
         gateRepository.delete(gate);
     }
 
-    public void updateGate(GateEntity gate) {
+    public void updateGate(GateEntity gate, int reportType) {
         //Hole das Gate
         //GateEntity existingGate = gateRepository.findById(Math.toIntExact(gate.getId())).orElse(null);
        //Existiert das Gate schon
@@ -70,7 +70,7 @@ public class GateService {
         gate.setGateStatusArray(gate.getGateStatusArray());
         gate.setWorkerStatusArray(gate.getWorkerStatusArray());
 
-        changeConfidence(gate, gate.getConfidence());
+        changeConfidence(gate, gate.getConfidence(), reportType);
         gate.setConfidence(gate.getConfidence());
         gateRepository.save(gate);
 
@@ -83,7 +83,6 @@ public class GateService {
     public GateEntity getGateEntityById(Long id) throws GateNotFoundException {
         return gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
     }
-
 
     public Gate getGateById(Long id) throws GateNotFoundException {
         GateEntity gate = gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
@@ -100,7 +99,7 @@ public class GateService {
 //                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality());
 //    }
 
-    public void changeConfidence(GateEntity entity, int passedConfidence)
+    public void changeConfidence(GateEntity entity, int passedConfidence, int reportType)
     {
         System.out.println("Passed confidence:" + passedConfidence);
         int confidence;
@@ -118,33 +117,41 @@ public class GateService {
         {
             confidence = passedConfidence;
             int iterations = Math.min(5, Math.min(gateArray.length, workerArray.length));
+
             for (int i = 0; i < iterations; i++)
             {
-                int gateDelta = 10 - (2 * i);
-                int workerDelta = 20 - (4 * i);
-
-                if (gateStatus == gateArray[i] && gateArray[i] != Status.NONE)
+                if(reportType == 1) // IST STATE
                 {
-                    confidence += gateDelta; // if new a report matches an older report, increase confidence
+                    int delta = 10 - (2 * i);
+                    if (gateStatus == gateArray[i] && gateArray[i] != Status.NONE)
+                    {
+                        confidence += delta; // if new a report matches an older report, increase confidence
+                    }
+                    else if (gateArray[i] != Status.NONE)
+                    {
+                        confidence -= delta; // otherwise, decrease confidence
+                    }
                 }
-                else if (gateArray[i] != Status.NONE)
+                else if(reportType == 2) // SEEN STATE
                 {
-                    confidence -= gateDelta; // otherwise, decrease confidence
+                    int delta = 20 - (4 * i);
+                    if (gateStatus == workerArray[i] && workerArray[i] != Status.NONE)
+                    {
+                        confidence += delta;
+                    }
+                    else if (workerArray[i] != Status.NONE)
+                    {
+                        confidence -= delta;
+                    }
                 }
-
-                if (gateStatus == workerArray[i] && workerArray[i] != Status.NONE)
+                else // update not originating from a gate or worker
                 {
-                    confidence += workerDelta;
-                }
-                else if (workerArray[i] != Status.NONE)
-                {
-                    confidence -= workerDelta;
+                    break;
                 }
             }
         }
-        
-        entity.setConfidence(confidence);
-        entity.shuffleReports(gateStatus);
+
+        entity.shuffleReports(gateStatus, reportType);
 
         confidence = Math.max(0, confidence); // normalize confidence, between 0 and 100
         confidence = Math.min(100, confidence);
