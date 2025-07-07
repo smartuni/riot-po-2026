@@ -289,6 +289,7 @@ public class GateService {
             //     gate.setStatus(null);
             // } else {
         gate.setStatus(Status.fromCode(status));
+        changeConfidence(gate, status, 1);
         messagingTemplate.convertAndSend("/topic/gates/updates", gate);
             // }
         // }
