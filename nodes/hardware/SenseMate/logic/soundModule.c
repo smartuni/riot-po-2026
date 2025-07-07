@@ -28,9 +28,9 @@ void init_sound_module(void) {
 
 void downlink_reveived_sound(void) {
     // Play sound for downlink received
-    play_sound(988, 300); // h''
-    play_sound(880, 300);  // a''
-    play_sound(784, 300);  // g''
+    play_sound(988, 400); // h''
+    play_sound(880, 400);  // a''
+    play_sound(784, 500);  // g''
     gpio_clear(sound);
 }
 
@@ -45,14 +45,14 @@ void uplink_sent_sound(void) {
 void ble_reveived_sound(void) {
     // Play sound for BLE received
     play_sound(932, 300); // b'' 
-    play_sound(831, 300); // as''                           
+    play_sound(831, 400); // as''                           
     
     gpio_clear(sound);
 }
 
 void ble_sent_sound(void) {
     // Play sound for BLE sent
-    play_sound(831, 300); // as''
+    play_sound(831, 400); // as''
     play_sound(932, 300); // b'' 
     gpio_clear(sound);
 }

@@ -35,14 +35,12 @@ void init_display(void){
     u8g2_SetDrawColor(&u8g2, 1);
     u8g2_SetFont(&u8g2, u8g2_font_helvR10_tf);
     u8g2_FirstPage(&u8g2);
-    do {
-        u8g2_DrawStr(&u8g2, 2, 2*Y_OFFSET, "Display initialized.");
-    } while (u8g2_NextPage(&u8g2));
-    ztimer_sleep(ZTIMER_MSEC, 1000);
+    //ztimer_sleep(ZTIMER_MSEC, 1000);
 
     u8g2_SetFlipMode(&u8g2, 1); // flip mode
+    u8g2_NextPage(&u8g2);
     u8g2_ClearDisplay(&u8g2);
-    printf("Display initialized. --\n");
+    //printf("Display initialized. --\n");
 }
 
 void display_demo(void){
