@@ -60,7 +60,8 @@ public class MqttMessageHandler {
                             int confidence = existingGate.getConfidence();
                             // existingGate.setStatus(status);
 
-                            gateService.changeGateStatus(gateId, statusCode, 1);
+                            gateService.changeGateStatus(gateId, statusCode);
+                            gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "Gate has changed to status " + status.toString(), null));
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
                             //add new Gate
@@ -82,7 +83,6 @@ public class MqttMessageHandler {
                         int senseMateId = statusNode.get("senseMateId").asInt(); // SenseMateID
 
                         Status status = Status.fromCode(statusCode);
-                        gateService.changeGateStatus(gateId, statusCode, 2);
 
                         System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
                                 ", GateTime: " + gateTime +
