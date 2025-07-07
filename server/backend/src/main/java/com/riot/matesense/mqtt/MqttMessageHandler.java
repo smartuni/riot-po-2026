@@ -3,12 +3,14 @@ package com.riot.matesense.mqtt;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
 import com.riot.matesense.model.Gate;
+import com.riot.matesense.service.GateActivityService;
 import com.riot.matesense.service.GateService;
 
 import java.sql.Timestamp;
@@ -21,9 +23,11 @@ public class MqttMessageHandler {
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final GateService gateService;
+    GateActivityService gateActivityService;
 
-    public MqttMessageHandler(GateService gateService) {
+    public MqttMessageHandler(GateService gateService, GateActivityService gateActivityService) {
         this.gateService = gateService;
+        this.gateActivityService = gateActivityService;
     }
 
     public void msgHandlerUplinks(String decodedJson) {
@@ -60,7 +64,7 @@ public class MqttMessageHandler {
                             int confidence = existingGate.getConfidence();
                             // existingGate.setStatus(status);
 
-                            gateService.changeGateStatus(gateId, statusCode);
+                            gateService.changeGateStatus(gateId, confidence, 1);
                             gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "Gate has changed to status " + status.toString(), null));
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
@@ -83,6 +87,13 @@ public class MqttMessageHandler {
                         int senseMateId = statusNode.get("senseMateId").asInt(); // SenseMateID
 
                         Status status = Status.fromCode(statusCode);
+
+                        GateEntity existingGate = gateService.getGateEntityById(gateId);
+
+                        int confidence = existingGate.getConfidence();
+                        // existingGate.setStatus(status);
+
+                        gateService.changeGateStatus(gateId, confidence, 2);
 
                         System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
                                 ", GateTime: " + gateTime +
