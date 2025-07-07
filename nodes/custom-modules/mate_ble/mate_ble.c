@@ -64,8 +64,6 @@ static const uint8_t _custom_msd_marker_pattern[] = {
 #define MATE_BLE_MSD_PAYLOAD_OFFS (sizeof(_company_id_code) + \
                           sizeof(_custom_msd_marker_pattern))
 
-/* buffer to store the advertised data in */
-static uint8_t _payload_buf[MATE_BLE_ADV_PKT_BUFFER_SIZE];
 static uint8_t encode_outbuf[BLE_MAX_PAYLOAD_SIZE + 64];
 static uint8_t send_buffer[BLE_MAX_PAYLOAD_SIZE * 10];
 static uint8_t recv_buffer[BLE_MAX_PAYLOAD_SIZE * 10];
@@ -297,6 +295,7 @@ int ble_send(cbor_buffer* cbor_packet)
         ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
     }
 
+    int packet_offset = 0;
     for (int i = 0; i < cbor_packet->cbor_size; i++) {
         memcpy(_payload_buf, cbor_packet->buffer, cbor_packet->package_size[i]);
 
@@ -308,10 +307,12 @@ int ble_send(cbor_buffer* cbor_packet)
         
         start_adv(encoded_ptr, encoded_len);
 
-        /* Block here until the ADV_COMPLETE event posts the sem */
+        // Block here until the ADV_COMPLETE event posts the sem
         sem_wait(&adv_done_sem);
 
         ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
+
+        packet_offset += cbor_packet->package_size[i];
     }
 
     return BLE_SUCCESS;
@@ -341,16 +342,11 @@ void* ble_send_loop(void* arg)
         }
         
         count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
-        count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
         if (count > 0) {
             ble_send(&buffer);
         }
 
-        count = jobs_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
-        if (count > 0) {
-            ble_send(&buffer);
-        }
-        ztimer_sleep(ZTIMER_MSEC, 10000);
+        ztimer_sleep(ZTIMER_MSEC, BLE_SEND_INTERVAL);
     }
 }
 
