@@ -3,6 +3,7 @@
 #include <tables.h>
 #include <stdio.h>
 #include "displayDemo.h"
+#include "mate_lorawan.h"
 #define MAX_GATES MAX_GATE_COUNT
 #define MAX_SENSE_MATES 10
 #define MIN_SIGNAL_STRENGTH 85
@@ -1021,6 +1022,7 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                     set_job_done(upper_entry.current_gate->gate_id, true);
                     in_tables_set_gate_job_done(upper_entry.current_gate->gate_id, true);
                 }
+                event_post(&lorawan_queue, &send_is_state_table);
             } else if (lower_entry.selected && lower_entry.subentry == CONFIRM){
 
                 if(state == OPEN){
@@ -1035,6 +1037,7 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                     set_job_done(lower_entry.current_gate->gate_id, true);
                     in_tables_set_gate_job_done(lower_entry.current_gate->gate_id, true);
                 }
+                event_post(&lorawan_queue, &send_is_state_table);
             }
 
             if(menu == CONFIRMATION_GATE_OPEN || menu == CONFIRMATION_GATE_CLOSE){
