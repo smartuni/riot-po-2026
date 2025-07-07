@@ -355,15 +355,36 @@ void* ble_receive_loop(void* args)
         return NULL;
     }
     
+    uint8_t stack_package_size[10];
     cbor_buffer buffer;
     buffer.buffer = recv_buffer;
     buffer.capacity = BLE_MAX_PAYLOAD_SIZE * 10;
+    buffer.package_size = stack_package_size;
+    
     ble_metadata_t metadata;
     ble_received_thread_args_t* thr_args = (ble_received_thread_args_t *)args; 
     while (true) {
         if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
+            printf("BLE: receive failed\n");
             continue;
         }
+            printf("BLE: receive success\n"
+            "metadata\n"
+            "\t.type %d\n"
+            "\t.rssi %d\n"
+            "buffer\n"
+            "\t.buffer %d\n"
+            "\t.cbor_size %d\n"
+            "\t.buffer_size[0] %d\n"
+            "\t.capacity %d\n",
+            metadata.message_type,
+            metadata.rssi,
+            (int)buffer.buffer,
+            buffer.cbor_size,
+            buffer.package_size[0],
+            buffer.capacity
+            );
+
         int res = cbor_to_table_test(&buffer);
         if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
             continue;
