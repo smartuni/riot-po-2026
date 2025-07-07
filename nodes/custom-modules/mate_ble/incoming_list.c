@@ -12,14 +12,27 @@ typedef struct {
     cbor_buffer cbor_packet;
     ble_metadata_t metadata;
     uint8_t data[BLE_MAX_PAYLOAD_SIZE]; // Buffer to store the actual data
+    uint8_t package_size; // Buffer to store the actual data
     
 } incoming_message_t;
+
+#define _INIT_CBOR_BUFFER(msg) \
+{ \
+    (msg).cbor_packet.buffer = (msg).data; \
+    (msg).cbor_packet.package_size = (msg).package_size; \
+    (msg).cbor_packet.cbor_size = 1; \
+    (msg).cbor_packet.capacity = BLE_MAX_PAYLOAD_SIZE; \
+}
 
 static incoming_message_t incoming_messages[MATE_BLE_INCOMING_LIST_SIZE];
 static mutex_t list_mutex = MUTEX_INIT;
 
 int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata) 
 {
+    if (data_len > BLE_MAX_PAYLOAD_SIZE) {
+        return BLE_ERROR_INTERNAL_INVALID_DATA_LENGTH;
+    }
+
     CborParser cobr_parser;
     CborValue cbor_iter;
     cbor_parser_init(data, data_len, 0, &cobr_parser, &cbor_iter);
@@ -44,9 +57,7 @@ int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata)
     mutex_lock(&list_mutex);
     for (int i = 0; i < MATE_BLE_INCOMING_LIST_SIZE; i++) {
         if (incoming_messages[i].cbor_packet.buffer == NULL) {
-            incoming_messages[i].cbor_packet.buffer = incoming_messages[i].data;
-            incoming_messages[i].cbor_packet.cbor_size = data_len;
-            incoming_messages[i].cbor_packet.capacity = BLE_MAX_PAYLOAD_SIZE;
+            _INIT_CBOR_BUFFER(incoming_messages[i]);
             memcpy(incoming_messages[i].cbor_packet.buffer, data, data_len);
             incoming_messages[i].metadata = metadata;
             mutex_unlock(&list_mutex);
@@ -68,11 +79,12 @@ int remove_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, b
         if ((type_match || any_type) && 
             incoming_messages[i].cbor_packet.buffer != NULL) {
             cbor_packet->cbor_size = incoming_messages[i].cbor_packet.cbor_size;
+            cbor_packet->package_size[0] = incoming_messages[i].cbor_packet.package_size[0];
             if (cbor_packet->capacity < incoming_messages[i].cbor_packet.capacity) {
                 mutex_unlock(&list_mutex);
                 return BLE_ERROR_INTERNAL_INSUFFICIENT_CAPACITY;
             }
-            memcpy(cbor_packet->buffer, incoming_messages[i].cbor_packet.buffer, incoming_messages[i].cbor_packet.cbor_size);
+            memcpy(cbor_packet->buffer, incoming_messages[i].cbor_packet.buffer, incoming_messages[i].cbor_packet.capacity);
             *metadata = incoming_messages[i].metadata;
             memset(&incoming_messages[i], 0, sizeof(incoming_messages[i]));
             mutex_unlock(&list_mutex);
