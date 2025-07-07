@@ -98,15 +98,15 @@ int main(void){
        "bleSend"
     );
     
-    // thread_create(
-    //     ble_reicv_stack,
-    //     sizeof(ble_reicv_stack),
-    //     THREAD_PRIORITY_MAIN - 1,
-    //     THREAD_CREATE_STACKTEST,
-    //     ble_receive_loop,
-    //     NULL,
-    //    "bleRecv"
-    // );
+     thread_create(
+         ble_reicv_stack,
+         sizeof(ble_reicv_stack),
+         THREAD_PRIORITY_MAIN - 1,
+         THREAD_CREATE_STACKTEST,
+         ble_receive_loop,
+         NULL,
+        "bleRecv"
+     );
 
 
     puts("main loop");
