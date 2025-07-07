@@ -262,7 +262,7 @@ public class GateService {
         gateRepository.save(gate);
     }
 
-    public void changeGateStatus(Long gateId, int status) {
+    public void changeGateStatus(Long gateId, int status, int reportType) {
         GateEntity gate = gateRepository.getById(gateId);
         System.out.println("Current Status: " + gate.getStatus());
         // System.out.println("Requested Status: " + targetStatus);
@@ -290,7 +290,7 @@ public class GateService {
             //     gate.setStatus(null);
             // } else {
         gate.setStatus(Status.fromCode(status));
-        changeConfidence(gate, confidence, 1);
+        changeConfidence(gate, confidence, reportType);
         messagingTemplate.convertAndSend("/topic/gates/updates", gate);
             // }
         // }

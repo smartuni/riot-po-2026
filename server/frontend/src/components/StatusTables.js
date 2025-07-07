@@ -426,7 +426,22 @@ function StatusTables() {
                                 <th>Pending Jobs</th>
                                 <th>Priority</th>
                                 <th>Last Update</th>
-                                <th>Confidence</th>
+                                <th>
+                                    Confidence
+                                    <Tooltip
+                                        title="If it says a 100% we are a 100% sure that the current Status is correct">
+                                        <HelpOutlineIcon
+                                            fontSize="small"
+                                            className="help-icon"
+                                            style={{
+                                                marginLeft: 4,
+                                                cursor: "help",
+                                                verticalAlign: "middle",
+                                                color: "#888"
+                                            }}
+                                        />
+                                    </Tooltip>
+                                </th>
                                 <th>Actions</th>
                                 <th>Activities</th>
                                 <th>Delete</th>
@@ -482,21 +497,7 @@ function StatusTables() {
                                             <div className="date">{new Date(gate.lastTimeStamp).toLocaleString()}</div>
                                         </td>
                                         <td data-label="Confidence">
-                                            {gate.confidence}
-                                            <br />
-                                            <Tooltip
-                                                title="Confidence reflects agreement between sensor and worker. 100% means both match.">
-                                                <HelpOutlineIcon
-                                                    fontSize="small"
-                                                    className="help-icon"
-                                                    style={{
-                                                        marginLeft: 4,
-                                                        cursor: "help",
-                                                        verticalAlign: "middle",
-                                                        color: "#888"
-                                                    }}
-                                                />
-                                            </Tooltip>
+                                            {gate.confidence}%
                                         </td>
                                         <td data-label="Actions">
                                             <IconButton
