@@ -1,0 +1,11 @@
+USEMODULE_INCLUDES_key_distro := $(LAST_MAKEFILEDIR)/include
+USEMODULE_INCLUDES += $(USEMODULE_INCLUDES_key_distro)
+
+ifneq (,$(RIOT_CONFIG_USE_TEST_KEYS))
+  CFLAGS += -DTEST_KEYS
+  $(info test_Keys defined)
+else
+   ifneq (,$(RIOT_CONFIG_DEVICE_ID))
+       CFLAGS += -DDEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
+   endif
+endif

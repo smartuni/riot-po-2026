@@ -17,3 +17,5 @@ USEMODULE += posix_semaphore
 
 # Add the tinycbor package
 USEPKG += tinycbor
+
+USEMODULE += cose-service

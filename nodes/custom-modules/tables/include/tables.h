@@ -10,12 +10,17 @@
     #include <stdint.h>
 
     #define INVALID_GATE_ID (0xFF)
-    #define MAX_GATE_COUNT (0xFF)
+    #define MAX_GATE_COUNT (64)
+    #define MAX_SENSE_COUNT (64)
 
     #define TARGET_STATE_KEY 0x00
     #define IS_STATE_KEY 0x01
     #define SEEN_STATUS_KEY 0x02
     #define JOBS_KEY 0x03
+    #define TIMESTAMP_KEY 0x04
+
+    #define JOB_DONE 0x01
+    #define JOB_IN_PROGRESS 0x00
 
     #define TABLE_SUCCESS               0
     #define TABLE_UPDATED               1
@@ -25,10 +30,11 @@
     #define TABLE_ERROR_NOT_FOUND      -3
     
     #define BASE_CBOR_BYTE_SIZE 0x03
-    #define CBOR_TARGET_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
-    #define CBOR_IS_STATE_MAX_BYTE_SIZE (0x0A + 0x01)
-    #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x0C + 0x01)
-    #define CBOR_JOBS_MAX_BYTE_SIZE (0x05 + 0x01)
+    #define CBOR_TARGET_STATE_MAX_BYTE_SIZE (0x06)
+    #define CBOR_IS_STATE_MAX_BYTE_SIZE (0x06)
+    #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x07)
+    #define CBOR_JOBS_MAX_BYTE_SIZE (0x03)
+    #define CBOR_TIMESTAMP_MAX_BYTE_SIZE (0x06)
 
     typedef struct {
         uint8_t gateID;
@@ -52,12 +58,13 @@
     typedef struct {
         uint8_t gateID;
         int timestamp;
-        char rssi;
+        int8_t rssi;
     } timestamp_entry;
 
     typedef struct {
         uint8_t gateID;
         uint8_t done;
+        uint8_t priority;
     } jobs_entry;
 
     typedef struct {
@@ -76,6 +83,7 @@
     int is_state_table_to_cbor(cbor_buffer* buffer);
     int seen_status_table_to_cbor(cbor_buffer* buffer);
     int jobs_table_to_cbor(cbor_buffer* buffer);
+    int timestamp_table_to_cbor(cbor_buffer* buffer);
     /**
      * @param package_size maximum size of one cbor package
      * @param buffer cbor buffer to write the cbor package into
@@ -86,6 +94,7 @@
     int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer);
     int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer);
     int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+    int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer);
 
     /**
      * @param buffer cbor buffer
@@ -133,6 +142,14 @@ int merge_seen_status_entry_table(const seen_status_entry* other, uint8_t size);
 int merge_jobs_entry_table(const jobs_entry* other, uint8_t size);
 
 /**
+ * Merge seen timestamp entries from another table
+ * @param other Pointer to array of timestamp_entry
+ * @param size Number of timestamp in other array
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int merge_timestamp_entry_table(const timestamp_entry* other, uint8_t size);
+
+/**
  * Set/update a single target state entry
  * Updates only if new entry has newer timestamp
  * @param entry Pointer to target_state_entry to set
@@ -165,6 +182,13 @@ int set_seen_status_entry(const seen_status_entry* entry);
 int set_jobs_entry(const jobs_entry* entry);
 
 /**
+ * Set/update a single timestamp entry
+ * @param entry Pointer to timestamp_entry to set
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int set_timestamp_entry(const timestamp_entry* entry);
+
+/**
  * Force set a target state entry (ignore timestamp)
  * Always overwrites existing entry regardless of timestamp
  * @param entry Pointer to target_state_entry to set
@@ -195,7 +219,7 @@ int get_is_state_entry(uint8_t gate_id, is_state_entry* entry);
  * @param entry Pointer to seen_status_entry to store result
  * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
  */
-int get_seen_status_entry(uint8_t gate_id, seen_status_entry* entry);
+int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, seen_status_entry* entry);
 
 /**
  * Get a single jobs entry by gate ID
@@ -204,6 +228,14 @@ int get_seen_status_entry(uint8_t gate_id, seen_status_entry* entry);
  * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
  */
 int get_jobs_entry(uint8_t gate_id, jobs_entry* entry);
+
+/**
+ * Get a single timestamp entry by gate ID
+ * @param gate_id Gate ID to look up
+ * @param entry Pointer to timestamp_entry to store result
+ * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
+ */
+int get_timestamp_entry(uint8_t gate_id, timestamp_entry* entry);
 
 /**
  * Get direct pointer to target state table 
@@ -228,6 +260,12 @@ const seen_status_entry* get_seen_status_table(void);
  * @return Pointer to internal table array
  */
 const jobs_entry* get_jobs_table(void);
+
+/**
+ * Get direct pointer to jobs table 
+ * @return Pointer to internal table array
+ */
+const timestamp_entry* get_timestamp_table(void);
 
     /**
      * only for testing purposes
