@@ -92,7 +92,7 @@ public class GateService {
         gate.setWorkerStatusArray(gate.getWorkerStatusArray());
 
         changeConfidence(gate, gate.getConfidence(), reportType);
-        gate.setConfidence(gate.getConfidence());
+        //gate.setConfidence(gate.getConfidence());
         gateRepository.save(gate);
 
     }
