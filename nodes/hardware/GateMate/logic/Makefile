@@ -29,6 +29,7 @@ USEMODULE += mate_ble
 
 
 CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=2*1024
+CFLAGS += -DTHREAD_STACKSIZE_DEFAULT=2*4096
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
@@ -37,7 +38,9 @@ DEVELHELP ?= 1
 
 # Some workarounds are needed in order to get the tutorial running on
 # some computers.
-PREFLASH_DELAY=10
+PREFLASH_DELAY=4
+
+BUILD_IN_DOCKER ?= 1
 
 
 # Change this to 0 show compiler invocation lines by default:

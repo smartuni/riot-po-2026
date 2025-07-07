@@ -247,13 +247,12 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
             
             size_t verify_payload_len = 0;
             int verify_result = verify_decode(payload, pl,verify_outbuf, sizeof(verify_outbuf),&verify_payload_len);
-            printf("done with decoing");
             if(verify_result == 0) {
                 insert_message(verify_outbuf, verify_payload_len, metadata);
+                print_hex_arr(verify_outbuf,verify_payload_len);
             } else {
                 printf("Failed to verify: %.*s\n", pl, payload);
             }
-            
         }
     }
 }

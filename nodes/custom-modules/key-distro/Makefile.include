@@ -9,5 +9,3 @@ else
        CFLAGS += -DDEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
    endif
 endif
-
-$(info $(CFLAGS))
