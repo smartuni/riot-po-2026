@@ -19,7 +19,7 @@ typedef struct {
 #define _INIT_CBOR_BUFFER(msg) \
 { \
     (msg).cbor_packet.buffer = (msg).data; \
-    (msg).cbor_packet.package_size = (msg).package_size; \
+    (msg).cbor_packet.package_size = &(msg).package_size; \
     (msg).cbor_packet.cbor_size = 1; \
     (msg).cbor_packet.capacity = BLE_MAX_PAYLOAD_SIZE; \
 }

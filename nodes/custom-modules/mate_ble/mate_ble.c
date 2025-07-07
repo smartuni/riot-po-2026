@@ -297,12 +297,11 @@ int ble_send(cbor_buffer* cbor_packet)
 
     int packet_offset = 0;
     for (int i = 0; i < cbor_packet->cbor_size; i++) {
-        memcpy(_payload_buf, cbor_packet->buffer, cbor_packet->package_size[i]);
 
         // --- Encode code ---
         uint8_t *encoded_ptr = NULL;
         size_t encoded_len = 0;
-        sign_payload(_payload_buf, cbor_packet->package_size[i],encode_outbuf,&encoded_ptr, &encoded_len);
+        sign_payload(cbor_packet->buffer + packet_offset, cbor_packet->package_size[i],encode_outbuf,&encoded_ptr, &encoded_len);
         // update the payload with the given message
         
         start_adv(encoded_ptr, encoded_len);
@@ -369,9 +368,12 @@ void* ble_receive_loop(void* args)
         if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
             continue;
         }
-        if (thr_args->receive_queue != NULL && TABLE_UPDATED == res) {
-            event_post(thr_args->receive_queue, thr_args->receive_event);
+        if (thr_args != NULL) {
+            if (thr_args->receive_queue != NULL && TABLE_UPDATED == res) {
+                event_post(thr_args->receive_queue, thr_args->receive_event);
+            }
         }
+
     }
     return NULL;
 }
