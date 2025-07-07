@@ -41,6 +41,7 @@ USEMODULE += event_timeout
 USEMODULE += tables
 
 USEMODULE += mate_lorawan
+USEMODULE += mate_ble
 
 
 

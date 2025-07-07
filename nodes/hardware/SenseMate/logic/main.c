@@ -13,7 +13,12 @@
 #include "soundModule.h"
 #include "vibrationModule.h"
 
+#include "mate_ble.h"
+
 void fill_tables_test(void);
+
+char ble_send_stack[2*THREAD_STACKSIZE_DEFAULT];
+char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
 
 int main(void) {
@@ -47,6 +52,40 @@ int main(void) {
     // }
 
     start_lorawan();
+
+    puts("starting ble");
+    if (BLE_SUCCESS == ble_init()){
+        puts("Ble init complete");
+    } else {
+        puts("BLE not started");
+    }
+
+    thread_create(
+        ble_send_stack,
+        sizeof(ble_send_stack),
+        THREAD_PRIORITY_MAIN - 1,
+        THREAD_CREATE_STACKTEST,
+        ble_send_loop,
+        NULL,
+       "bleSend"
+    );
+
+    ble_received_thread_args_t args = {
+        .receive_queue = EVENT_PRIO_HIGHEST,
+        .receive_event = &eventNews,
+
+    };
+
+    thread_create(
+        ble_reicv_stack,
+        sizeof(ble_reicv_stack),
+        THREAD_PRIORITY_MAIN - 1,
+        THREAD_CREATE_STACKTEST,
+        ble_receive_loop,
+        &args,
+       "bleRecv"
+    );
+
 
     while (1)
     {
