@@ -21,13 +21,13 @@ public class Gate {
 	private Boolean sensorConfidence;
 	private String requestedStatus;
 	private String pendingJob;
-	private String confidence;
+	private int confidence;
 	private int priority;
 
 	public Gate(Long id , Long deviceId, Timestamp lastTimeStamp, Status status,
 				Double latitude, Double longitude,String location,
 				 Boolean workerConfidence, Boolean sensorConfidence,
-				String requestedStatus,  String confidence,
+				String requestedStatus,  int confidence,
 				String pendingJob, int priority) {
 		this.id = id;
 		this.location = location;

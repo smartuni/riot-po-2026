@@ -28,6 +28,12 @@ public class GateService {
     private SimpMessagingTemplate messagingTemplate;
     MsgType msgType;
 
+    
+    public GateService(GateRepository gateRepository, SimpMessagingTemplate messagingTemplate) {
+        this.gateRepository = gateRepository;
+        this.messagingTemplate = messagingTemplate;
+    }
+
     public List<Gate> getAllGates() {
         List<GateEntity> gates = gateRepository.findAll();
         List<Gate> customGates = new ArrayList<>();
@@ -50,7 +56,7 @@ public class GateService {
         gate.setPriority(3);
         gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
         //TODO: if confidence calc is done remove this
-        gate.setConfidence("100");
+        gate.setConfidence(100);
         gateRepository.save(gate);
         //TODO: IS THIS THE RIGHT WAY?
         messagingTemplate.convertAndSend("/topic/gates/add", gate);
@@ -121,6 +127,41 @@ public class GateService {
                 gate.setRequestedStatus(targetStatus);
             }
         }
+
+        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        gateRepository.save(gate);
+    }
+
+    public void changeGateStatus(Long gateId, int status) {
+        GateEntity gate = gateRepository.getById(gateId);
+        System.out.println("Current Status: " + gate.getStatus());
+        // System.out.println("Requested Status: " + targetStatus);
+        System.out.println("ID: " + gate.getId());
+
+        // Ziel-Status aus requestedStatus ableiten
+        // switch (targetStatus) {
+        //     case "REQUESTED_OPEN" -> tmp = "OPENED";
+        //     case "REQUESTED_CLOSE" -> tmp = "CLOSED";
+        //     case "REQUESTED_NONE" -> tmp = "NONE";
+        //     default -> tmp = targetStatus;
+        // }
+
+        // 1. Pending-Job **immer setzen**, basierend auf targetStatus
+        // switch (targetStatus) {
+        //     case "REQUESTED_OPEN" -> gate.setPendingJob("PENDING_OPEN");
+        //     case "REQUESTED_CLOSE" -> gate.setPendingJob("PENDING_CLOSE");
+        //     case "REQUESTED_NONE" -> gate.setPendingJob("PENDING_NONE");
+        // }
+
+        // 2. Nur wenn tatsächlicher Status ≠ Ziel, dann requestedStatus setzen
+        // if (!tmp.equalsIgnoreCase(gate.getStatus().toString().strip())) {
+            // if (targetStatus.equals("REQUESTED_NONE") || targetStatus.equals("NONE")) {
+            //     gate.setStatus(null);
+            // } else {
+        gate.setStatus(Status.fromCode(status));
+        messagingTemplate.convertAndSend("/topic/gates/updates", gate);
+            // }
+        // }
 
         gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
         gateRepository.save(gate);

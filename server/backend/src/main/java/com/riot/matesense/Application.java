@@ -68,14 +68,14 @@ class PopulateTestDataRunner implements CommandLineRunner {
 //		);
 
 		downlinkService.sendDownlinkToDevice(downPayload); // Test call
- 		GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.5408, 9.9654, "St.Pauli", false, true, "REQUESTED_NONE", "100%", "PENDING_NONE", 3);
- 		GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, 53.5409, 9.8674, "Landungsbrücken", false, true, "REQUESTED_NONE", "75%", "PENDING_NONE", 3);
- 		GateEntity gate2 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 3L, 53.5410, 9.8664, "Veddel", true, false, "REQUESTED_NONE",  "80%", "PENDING_NONE", 3);
- 		GateEntity gate3 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 4L, 53.5460, 9.8634, "Hafen", true, true, "REQUESTED_NONE", "60%", "PENDING_NONE", 3);
- 		gateService.addGate(gate);
- 		gateService.addGate(gate1);
- 		gateService.addGate(gate2);
- 		gateService.addGate(gate3);
+ 		// GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.5408, 9.9654, "St.Pauli", false, true, "REQUESTED_NONE", "100%", "PENDING_NONE", 3);
+ 		// GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, 53.5409, 9.8674, "Landungsbrücken", false, true, "REQUESTED_NONE", "75%", "PENDING_NONE", 3);
+ 		// GateEntity gate2 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 3L, 53.5410, 9.8664, "Veddel", true, false, "REQUESTED_NONE",  "80%", "PENDING_NONE", 3);
+ 		// GateEntity gate3 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 4L, 53.5460, 9.8634, "Hafen", true, true, "REQUESTED_NONE", "60%", "PENDING_NONE", 3);
+ 		// gateService.addGate(gate);
+ 		// gateService.addGate(gate1);
+ 		// gateService.addGate(gate2);
+ 		// gateService.addGate(gate3);
 
 
 /*
@@ -92,16 +92,16 @@ class PopulateTestDataRunner implements CommandLineRunner {
 		gateActivityService.addGateActivity(gateActivityEntity5);
 */
 
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Worker with ID: " + 1L + " shall close the Gate with ID: " + gate.getId(), false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Worker with ID: " + 1L + " shall open the Gate with ID: " + gate.getId(), false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 2L, "Worker with ID: " + 2L + " shall close the Gate with ID: " + gate.getId(), false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 2L, "Worker with ID: " + 2L + " shall close the Gate with ID: " + gate.getId(), false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 3L, "Worker with ID: " + 3L + " shall close the Gate with ID: " + gate.getId(), false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 3L, "Worker with ID: " + 3L + " shall close the Gate with ID: " + gate.getId(), false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 4L, "Worker with ID: " + 4L + " shall close the Gate with ID: " + gate.getId(), false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 4L, "Worker with ID: " + 4L + " shall close the Gate with ID: " + gate.getId(), false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 5L, "Worker with ID: " + 5L + " shall close the Gate with ID: " + gate.getId(), false));
-		notificationService.addNotification(new NotificationEntity(Status.OPENED, 5L, "Worker with ID: " + 5L + " shall close the Gate with ID: " + gate.getId(), false));
+		// notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Worker with ID: " + 1L + " shall close the Gate with ID: " + gate.getId(), false));
+		// notificationService.addNotification(new NotificationEntity(Status.OPENED, 1L, "Worker with ID: " + 1L + " shall open the Gate with ID: " + gate.getId(), false));
+		// notificationService.addNotification(new NotificationEntity(Status.OPENED, 2L, "Worker with ID: " + 2L + " shall close the Gate with ID: " + gate.getId(), false));
+		// notificationService.addNotification(new NotificationEntity(Status.OPENED, 2L, "Worker with ID: " + 2L + " shall close the Gate with ID: " + gate.getId(), false));
+		// notificationService.addNotification(new NotificationEntity(Status.OPENED, 3L, "Worker with ID: " + 3L + " shall close the Gate with ID: " + gate.getId(), false));
+		// notificationService.addNotification(new NotificationEntity(Status.OPENED, 3L, "Worker with ID: " + 3L + " shall close the Gate with ID: " + gate.getId(), false));
+		// notificationService.addNotification(new NotificationEntity(Status.OPENED, 4L, "Worker with ID: " + 4L + " shall close the Gate with ID: " + gate.getId(), false));
+		// notificationService.addNotification(new NotificationEntity(Status.OPENED, 4L, "Worker with ID: " + 4L + " shall close the Gate with ID: " + gate.getId(), false));
+		// notificationService.addNotification(new NotificationEntity(Status.OPENED, 5L, "Worker with ID: " + 5L + " shall close the Gate with ID: " + gate.getId(), false));
+		// notificationService.addNotification(new NotificationEntity(Status.OPENED, 5L, "Worker with ID: " + 5L + " shall close the Gate with ID: " + gate.getId(), false));
 
 		//test commit
 	}

@@ -9,6 +9,10 @@ import com.riot.matesense.enums.Status;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
 import com.riot.matesense.service.GateService;
+
+import java.sql.Timestamp;
+import java.sql.Time;
+
 import org.springframework.stereotype.Component;
 
 @Component
@@ -46,21 +50,23 @@ public class MqttMessageHandler {
                     for (JsonNode statusNode : root.get("statuses")) {
                         long gateId = statusNode.get("gateId").asLong();
                         int statusCode = statusNode.get("status").asInt();
+                        Timestamp timestamp = new Timestamp(statusNode.get("timestamp").asLong());    // GateTime
                         Status status = Status.fromCode(statusCode);
 
                         try {
                             //update Existing Gate
                             GateEntity existingGate = gateService.getGateEntityById(gateId);
-                            existingGate.setStatus(status);
+                            // existingGate.setStatus(status);
 
-                            gateService.updateGate(existingGate);
+                            gateService.changeGateStatus(gateId, statusCode);
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
                             //add new Gate
-                            GateEntity newGate = new GateEntity(); //Need to be changed
+                            // GateEntity newGate = new GateEntity(); //Need to be changed
+                            GateEntity newGate = new GateEntity(status, timestamp, 93.044, 51.222, "HAW", "none", 100, "none", 3  ); //Need to be changed
 
 
-                            gateService.addGate(newGate);
+                            gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
                         }
                     }

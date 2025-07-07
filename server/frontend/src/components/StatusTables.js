@@ -139,8 +139,8 @@ function StatusTables() {
             await api.delete(`/gates/${gateToDelete.id}`);
             setDeleteDialogOpen(false);
             setGateToDelete(null);
-            const updated = await fetchGates();
-            setGates(updated);
+            // const updated = await fetchGates();
+            // setGates(updated);
         } catch (error) {
             console.error("Fehler beim Löschen des Gates:", error);
             alert("Fehler beim Löschen des Gates.");
@@ -161,11 +161,11 @@ function StatusTables() {
             }
         };
         loadActivities();
-        const intervalId = setInterval(() => {
-            loadActivities();
-        }, 300);
+        // const intervalId = setInterval(() => {
+        //     loadActivities();
+        // }, 300);
 
-        return () => clearInterval(intervalId);
+        // return () => clearInterval(intervalId);
     }, []);
 
 
@@ -646,8 +646,8 @@ function StatusTables() {
                         onClick={async () => {
                             try {
                                 await api.post("/add-gate-ui", newGateData);
-                                const updated = await fetchGates();
-                                setGates(updated);
+                                // const updated = await fetchGates();
+                                // setGates(updated);
                                 setCreateDialogOpen(false);
                                 setNewGateData({ location: "", latitude: "", longitude: "", priority: 0 });
                             } catch (error) {

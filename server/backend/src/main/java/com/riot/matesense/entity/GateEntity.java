@@ -29,21 +29,20 @@ public class GateEntity {
 	@Column(name = "requested_status")
 	private String requestedStatus;
 	private String pendingJob;
-	private String confidence;
+	private int confidence;
 	private int priority = 0;
 
 
 	public GateEntity(Status status, Timestamp lastTimeStamp,
-					  Long deviceId, Double latitude, Double longitude,
-					  String location, Boolean workerConfidence,
-					  Boolean sensorConfidence, String requestedStatus,
-					  String confidence,  String pendingJob, int priority) {
+					Double latitude, Double longitude,
+					  String location, String requestedStatus,
+					  int confidence,  String pendingJob, int priority) {
 		this.status = status;
 		this.lastTimeStamp = lastTimeStamp;
-		this.deviceId = deviceId;
+		// this.deviceId = deviceId;
 		this.location = location;
-		this.workerConfidence = workerConfidence;
-		this.sensorConfidence = sensorConfidence;
+		// this.workerConfidence = workerConfidence;
+		// this.sensorConfidence = sensorConfidence;
 		this.requestedStatus = requestedStatus;
 		this.latitude = latitude;
 		this.longitude = longitude;
