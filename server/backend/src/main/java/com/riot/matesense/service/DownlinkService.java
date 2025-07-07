@@ -33,6 +33,7 @@ public class DownlinkService {
     }
 
     public void sendDownlinkToDevice(DownPayload payloadData) {
+        //sensegate-*
         try {
             System.out.println("Soll-Status Downlink: " + payloadData.getStatuses());
 
@@ -47,8 +48,10 @@ public class DownlinkService {
             List<Object> sollStatusPayload = Arrays.asList(
                     0,                          // Message Type für Soll-Status
                     payloadData.getTimestamp(), // Globaler Timestamp
+                    2,                          // ServerSide
+                    0,                          // devicesID
                     sollStatusList              // Soll-Status Einträge
-            );
+           );
 
             byte[] sollCbor = cborConverter.toCbor(sollStatusPayload);
             String sollBase64 = Base64.getEncoder().encodeToString(sollCbor);
@@ -65,6 +68,7 @@ public class DownlinkService {
       }
       """, sollBase64);
 
+            //sensemate-*
             System.out.println("Soll-Status Downlink: " + sollJson);
             mqttPublisher.publishDownlink(sollJson.getBytes(), mqttProperties.getPublishTopic());
             System.out.println("Soll-Status Downlink published And job Table is starting");

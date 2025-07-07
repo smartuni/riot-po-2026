@@ -49,7 +49,7 @@ public class MqttMessageHandler {
             }
 
             System.out.println("Verarbeiteter Nachrichtentyp: " + type + " mit Code: " + type.getCode());
-
+            //TODO RequestStatusChange if works is done
             switch (type) {
                 case IST_STATE -> {
                     for (JsonNode statusNode : root.get("statuses")) {
@@ -88,9 +88,6 @@ public class MqttMessageHandler {
 
                             // GateEntity newGate = new GateEntity(); //Need to be changed
                             GateEntity newGate = new GateEntity(gateId,status, timestamp, 93.044, 51.222, "HAW", "none", 100, "none", 3  ); //Need to be changed
-
-
-
                             gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
                         }
@@ -126,7 +123,6 @@ public class MqttMessageHandler {
                         // existingGate.setStatus(status);
 
                         gateService.changeGateStatus(gateId, status, 2);
-
                         System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
                                 ", GateTime: " + gateTime +
                                 ", Status: " + status +
