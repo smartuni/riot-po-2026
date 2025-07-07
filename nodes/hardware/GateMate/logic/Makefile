@@ -29,7 +29,6 @@ USEMODULE += mate_ble
 
 
 CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=2*1024
-CFLAGS += -DTHREAD_STACKSIZE_DEFAULT=2*4096
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
