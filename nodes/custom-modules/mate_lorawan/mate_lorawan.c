@@ -50,7 +50,7 @@
 #define SEND_BUFFER_SIZE 50
 #define MAX_RECEIVE_SIZE 222
 /* Duration to trigger send_event */
-#define TIMEOUT_DURATION 6000000
+#define TIMEOUT_DURATION 60000000
 /* Stack for reception thread */
 static char _rx_thread_stack[THREAD_STACKSIZE_DEFAULT];
 /* Message queue for reception thread] */
