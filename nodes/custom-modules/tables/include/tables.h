@@ -102,7 +102,7 @@
      * receives a cbor buffer and turns the sequence into table structs
      * consequently calls functions to merge received table with saved table
     */
-    int cbor_to_table_test(cbor_buffer* buffer);
+    int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi);
 
     // Initialization
 int init_tables(void);

@@ -37,8 +37,8 @@
  * MATE_BLE_SCAN_INTERVAL_MS = MATE_BLE_SCAN_WINDOW_MS results in continuous scanning.*/
 #define MATE_BLE_SCAN_INTERVAL_MS    30
 
-#define MATE_BLE_THRESHOLD_MAX  (-100)
-#define MATE_BLE_THRESHOLD_MIN  (0)
+#define MATE_BLE_THRESHOLD_MAX  (128)
+#define MATE_BLE_THRESHOLD_MIN  (-100)
 
 static uint8_t id_addr_type;
 static uint8_t init = 0;
@@ -355,19 +355,40 @@ void* ble_receive_loop(void* args)
         return NULL;
     }
     
+    uint8_t stack_package_size[10];
     cbor_buffer buffer;
     buffer.buffer = recv_buffer;
     buffer.capacity = BLE_MAX_PAYLOAD_SIZE * 10;
+    buffer.package_size = stack_package_size;
+    
     ble_metadata_t metadata;
     ble_received_thread_args_t* thr_args = (ble_received_thread_args_t *)args; 
     while (true) {
         if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
+            printf("BLE: receive failed\n");
             continue;
         }
-        int res = cbor_to_table_test(&buffer);
-        if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
-            continue;
-        }
+            printf("BLE: receive success\n"
+            "metadata\n"
+            "\t.type %d\n"
+            "\t.rssi %d\n"
+            "buffer\n"
+            "\t.buffer %d\n"
+            "\t.cbor_size %d\n"
+            "\t.buffer_size[0] %d\n"
+            "\t.capacity %d\n",
+            metadata.message_type,
+            metadata.rssi,
+            (int)buffer.buffer,
+            buffer.cbor_size,
+            buffer.package_size[0],
+            buffer.capacity
+            );
+
+        int res = cbor_to_table_test(&buffer, metadata.rssi);
+        //if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
+        //    continue;
+        //}
         if (thr_args != NULL) {
             if (thr_args->receive_queue != NULL && TABLE_UPDATED == res) {
                 event_post(thr_args->receive_queue, thr_args->receive_event);
