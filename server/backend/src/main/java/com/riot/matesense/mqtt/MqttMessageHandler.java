@@ -57,6 +57,7 @@ public class MqttMessageHandler {
                         try {
                             //update Existing Gate
                             GateEntity existingGate = gateService.getGateEntityById(gateId);
+                            int confidence = existingGate.getConfidence();
                             // existingGate.setStatus(status);
 
                             gateService.changeGateStatus(gateId, statusCode);

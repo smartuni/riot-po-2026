@@ -263,7 +263,7 @@ function StatusTables() {
             Math.floor(Date.now() / 1000), // Unix Timestamp
             filteredGates
                 .filter(g => g.requestedStatus in statusIntMap)
-                .map(g => [g.id, statusIntMap[g.requestedStatus]])
+                .map(g => [g.id, statusIntMap[g.requestedStatus], g.priority ?? 0])
         ];
 
         if (payload[2].length === 0) {

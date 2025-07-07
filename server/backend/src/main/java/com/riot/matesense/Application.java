@@ -53,7 +53,7 @@ class PopulateTestDataRunner implements CommandLineRunner {
 	}
 	@Override
 	public void run(String... args) throws Exception {
-		DownPayload downPayload =new DownPayload(1,247,Arrays.asList(Arrays.asList(1,0,1),Arrays.asList(2,1,0)));
+		//DownPayload downPayload =new DownPayload(1,247,Arrays.asList(Arrays.asList(1,0,1),Arrays.asList(2,1,0)));
 		//[1,247,[[187,0],[69,1]]]
 		// Beispiel für ein größeres DownPayload mit 6 Einträgen
 //		DownPayload downPayload = new DownPayload(
@@ -69,7 +69,7 @@ class PopulateTestDataRunner implements CommandLineRunner {
 //				)
 //		);
 
-		downlinkService.sendDownlinkToDevice(downPayload); // Test call
+		//downlinkService.sendDownlinkToDevice(downPayload); // Test call
  		// GateEntity gate = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 1L, 53.5408, 9.9654, "St.Pauli", false, true, "REQUESTED_NONE", "100%", "PENDING_NONE", 3);
  		// GateEntity gate1 = new GateEntity(Status.CLOSED, new Timestamp(System.currentTimeMillis()), 2L, 53.5409, 9.8674, "Landungsbrücken", false, true, "REQUESTED_NONE", "75%", "PENDING_NONE", 3);
  		// GateEntity gate2 = new GateEntity(Status.OPENED, new Timestamp(System.currentTimeMillis()), 3L, 53.5410, 9.8664, "Veddel", true, false, "REQUESTED_NONE",  "80%", "PENDING_NONE", 3);

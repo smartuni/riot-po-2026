@@ -3,6 +3,7 @@ package com.riot.matesense.service;
 import com.riot.matesense.config.DownPayload;
 import com.riot.matesense.config.MqttProperties;
 import com.riot.matesense.mqtt.TTNMqttPublisher;
+import com.riot.matesense.repository.GateRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -20,27 +21,31 @@ public class DownlinkService {
     private final TTNMqttPublisher mqttPublisher;
     private final CborConverter cborConverter;
     private final MqttProperties mqttProperties;
+    private final GateRepository gateRepository;
     // private final JobTableService jobTableService;
 
-    public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter, MqttProperties mqttProperties) {
+    public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter, MqttProperties mqttProperties, GateRepository gateRepository) {
         this.mqttPublisher = mqttPublisher;
         this.cborConverter = cborConverter;
         this.mqttProperties = mqttProperties;
         // this.jobTableService = jobTableService;
+        this.gateRepository = gateRepository;
     }
 
     public void sendDownlinkToDevice(DownPayload payloadData) {
         try {
+            System.out.println("Soll-Status Downlink: " + payloadData.getStatuses());
+
             // === 1. Soll-Status Payload vorbereiten ===
             List<List<Integer>> sollStatusList = payloadData.getStatuses().stream()
                     .map(statusEntry -> Arrays.asList(
                             statusEntry.get(0), // GateID
-                            statusEntry.get(1)  // Soll-Status
+                            statusEntry.get(1) // Soll-Status
                     ))
                     .toList();
 
             List<Object> sollStatusPayload = Arrays.asList(
-                    1,                          // Message Type für Soll-Status
+                    0,                          // Message Type für Soll-Status
                     payloadData.getTimestamp(), // Globaler Timestamp
                     sollStatusList              // Soll-Status Einträge
             );
@@ -62,19 +67,20 @@ public class DownlinkService {
 
             System.out.println("Soll-Status Downlink: " + sollJson);
             mqttPublisher.publishDownlink(sollJson.getBytes(), mqttProperties.getPublishTopic());
-
+            System.out.println("Soll-Status Downlink published And job Table is starting");
             // === 2. Jobtable Payload vorbereiten ===
             List<List<Integer>> jobTableList = payloadData.getStatuses().stream()
                     .map(statusEntry -> Arrays.asList(
                             statusEntry.get(0), // GateID
-                            statusEntry.get(2)  // Prio
+                            statusEntry.get(2)
                     ))
                     .toList();
 
             List<Object> jobTablePayload = Arrays.asList(
-                    2,              // Message Type für Jobtable
+                    3,              // Message Type für Jobtable
                     jobTableList    // Jobtable Einträge
             );
+            System.out.println("JobTable list Created");
 
             byte[] jobTableCbor = cborConverter.toCbor(jobTablePayload);
             String jobTableBase64 = Base64.getEncoder().encodeToString(jobTableCbor);

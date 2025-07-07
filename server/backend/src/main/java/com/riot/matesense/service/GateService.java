@@ -267,6 +267,7 @@ public class GateService {
         System.out.println("Current Status: " + gate.getStatus());
         // System.out.println("Requested Status: " + targetStatus);
         System.out.println("ID: " + gate.getId());
+        int confidence = gate.getConfidence();
 
         // Ziel-Status aus requestedStatus ableiten
         // switch (targetStatus) {
@@ -289,7 +290,7 @@ public class GateService {
             //     gate.setStatus(null);
             // } else {
         gate.setStatus(Status.fromCode(status));
-        changeConfidence(gate, status, 1);
+        changeConfidence(gate, confidence, 1);
         messagingTemplate.convertAndSend("/topic/gates/updates", gate);
             // }
         // }

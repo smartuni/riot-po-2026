@@ -71,7 +71,7 @@ public class JsonFormatter {
             }
             Message message = new Message(messageType, statusList);
             return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
-        } else if (messageType == 3) { // SEEN_TABLE_STATE
+        } else if (messageType == 2) { // SEEN_TABLE_STATE
             List<SeenTableEntry> seenTableList = new ArrayList<>();
             for (List<Integer> entry : entries) {
                 seenTableList.add(new SeenTableEntry(entry.get(0), entry.get(1), entry.get(2), entry.get(3)));
@@ -99,7 +99,7 @@ public class JsonFormatter {
                 int timestamp = statusNode.get("timestamp").asInt();
                 entries.add(Arrays.asList(gateId, status, timestamp));
             }
-        } else if (messageType == 3) { // SEEN_TABLE_STATE
+        } else if (messageType == 2) { // SEEN_TABLE_STATE
             for (JsonNode statusNode : root.get("statuses")) {
                 int gateId = statusNode.get("gateId").asInt();
                 int gateTime = statusNode.get("gateTime").asInt();
