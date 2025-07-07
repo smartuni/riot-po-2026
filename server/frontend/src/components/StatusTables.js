@@ -82,11 +82,6 @@ function StatusTables() {
             }
         };
         loadGates();
-        // const intervalId = setInterval(() => {
-        //     loadGates();
-        // }, 300);
-
-        // return () => clearInterval(intervalId);
     }, []);
 
     useEffect(() => {
@@ -111,6 +106,31 @@ function StatusTables() {
         }, []);
 
     /**
+     * Initialisiert die WebSocket-Verbindung und abonniert die relevanten Topics.
+     */
+    useEffect(() => {
+        const socket = new SockJS('http://localhost:8080/ws');
+        const stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, () => {
+
+            stompClient.subscribe('/topic/gates/add', (message) => {
+                const activity = JSON.parse(message.body);
+                setGates(prev => [...prev, activity]);
+            });
+
+            stompClient.subscribe('/topic/gates/delete', (message) => {
+                const id = parseInt(message.body);
+                setGates(prev => prev.filter(a => a.id !== id));
+            });
+        });
+
+        return () => {
+            stompClient.disconnect();
+        };
+    }, []);
+
+    /**
      * For deleting a gate.
      * @returns {Promise<void>}
      */
@@ -129,7 +149,7 @@ function StatusTables() {
 
 
     /**
-     * Lädt die Aktivitäten beim ersten Rendern der Komponente.
+     * Just for the Last Updatet Time of the Gates.
      */
     useEffect(() => {
         const loadActivities = async () => {
@@ -534,26 +554,7 @@ function StatusTables() {
                                             </div>
                                         </td>
                                     </tr>
-                                    {expandedGateId === gate.id && (
-                                        <tr className="expanded-row">
-                                            <td colSpan={8} style={{ backgroundColor: "#f9f9f9" }}>
-                                                <div>
-                                                    <strong>Activities</strong>
-                                                    {activities
-                                                        .filter(activity => activity.gateId === gate.id)
-                                                        .slice(-4) // Optional: nur die letzten 4 zeigen
-                                                        .map((activity, index) => (
-                                                            <p key={activity.id}>
-                                                                <strong>{activity.lastTimeStamp}:</strong> {activity.message}
-                                                            </p>
-                                                        ))}
-                                                    {activities.filter(a => a.gateId === gate.id).length === 0 && (
-                                                        <p>No activities available for this gate.</p>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )}
+                                )}
                                 </React.Fragment>
                             ))}
                         </tbody>

@@ -1,6 +1,7 @@
 package com.riot.matesense.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.Status;
@@ -10,6 +11,7 @@ import com.riot.matesense.model.Gate;
 import com.riot.matesense.model.GateForDownlink;
 import com.riot.matesense.repository.GateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.tools.Diagnostic;
@@ -23,6 +25,7 @@ public class GateService {
 
     @Autowired
     GateRepository gateRepository;
+    private SimpMessagingTemplate messagingTemplate;
     MsgType msgType;
 
     public List<Gate> getAllGates() {
@@ -39,6 +42,7 @@ public class GateService {
 
     public String addGate(GateEntity gate) throws GateAlreadyExistingException {
         gateRepository.save(gate);
+        messagingTemplate.convertAndSend("/topic/gate-activities/add", gate);
         return gate.toString();
     }
 
@@ -48,6 +52,9 @@ public class GateService {
         //TODO: if confidence calc is done remove this
         gate.setConfidence("100");
         gateRepository.save(gate);
+        //TODO: IS THIS THE RIGHT WAY?
+        messagingTemplate.convertAndSend("/topic/gates/add", gate);
+        // Notify all clients about the new gate
         return gate.toString();
     }
 
@@ -62,6 +69,7 @@ public class GateService {
             throw new GateNotFoundException(id);
         }
         gateRepository.delete(gate);
+        messagingTemplate.convertAndSend("/topic/gates/delete", id);
     }
 
     public void updateGate(GateEntity gate) {
