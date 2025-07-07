@@ -63,6 +63,9 @@ public class MqttMessageHandler {
                             GateEntity existingGate = gateService.getGateEntityById(gateId);
                             int confidence = existingGate.getConfidence();
                             // existingGate.setStatus(status);
+                            if(status == null) {
+                                status = Status.CLOSED;
+                            }
 
                             gateService.changeGateStatus(gateId, confidence, 1);
                             gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "Gate has changed to status " + status.toString(), null));
@@ -72,6 +75,9 @@ public class MqttMessageHandler {
                             // GateEntity newGate = new GateEntity(); //Need to be changed
                             GateEntity newGate = new GateEntity(status, timestamp, 93.044, 51.222, "HAW", "none", 100, "none", 3  ); //Need to be changed
 
+                            if(status == null) {
+                                status = Status.CLOSED;
+                            }
 
                             gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
