@@ -17,13 +17,11 @@ void fill_tables_test(void);
 
 
 int main(void) {
-    //ztimer_sleep(ZTIMER_MSEC, 3000);
+    ztimer_sleep(ZTIMER_MSEC, 3000);
     init_interrupt();
     init_sound_module();
     init_vibration_module();
-    start_vibration();
     startup_sound();
-    stop_vibration();
 
     //printf("Display demo started.\n");
     init_display();
