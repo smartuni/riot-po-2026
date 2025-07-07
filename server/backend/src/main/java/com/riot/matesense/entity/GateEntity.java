@@ -18,7 +18,7 @@ public class GateEntity {
 	@Getter
 	@Setter
     @Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	//@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private Status status;
 	private Timestamp lastTimeStamp;
@@ -40,10 +40,11 @@ public class GateEntity {
 	private int priority = 0;
 
 
-	public GateEntity(Status status, Timestamp lastTimeStamp,
+	public GateEntity(Long gateID,Status status, Timestamp lastTimeStamp,
 					Double latitude, Double longitude,
 					  String location, String requestedStatus,
 					  int confidence,  String pendingJob, int priority) {
+		this.id = gateID;
 		this.status = status;
 		this.lastTimeStamp = lastTimeStamp;
 		// this.deviceId = deviceId;

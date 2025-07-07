@@ -87,7 +87,7 @@ public class MqttMessageHandler {
                             //add new Gate
 
                             // GateEntity newGate = new GateEntity(); //Need to be changed
-                            GateEntity newGate = new GateEntity(status, timestamp, 93.044, 51.222, "HAW", "none", 100, "none", 3  ); //Need to be changed
+                            GateEntity newGate = new GateEntity(gateId,status, timestamp, 93.044, 51.222, "HAW", "none", 100, "none", 3  ); //Need to be changed
 
 
 

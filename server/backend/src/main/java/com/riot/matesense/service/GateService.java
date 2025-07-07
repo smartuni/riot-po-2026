@@ -334,6 +334,7 @@ public class GateService {
     }
 
     public String addGateFromGUI(GateEntity gate) throws GateAlreadyExistingException {
+
         gate.setPriority(3);
         gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
         //TODO: if confidence calc is done remove this
