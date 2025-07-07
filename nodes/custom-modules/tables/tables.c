@@ -1,4 +1,5 @@
 #include "include/tables.h"
+#include <stdatomic.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -9,6 +10,7 @@
 #include "fmt.h"
 #include "cbor.h"
 #include "container.h"
+#include "atomic_utils.h"
 
 // Return Codes
 #define TABLE_SUCCESS           0
@@ -34,6 +36,20 @@ static mutex_t is_state_mutex = MUTEX_INIT;
 static mutex_t seen_status_mutex = MUTEX_INIT;
 static mutex_t jobs_mutex = MUTEX_INIT;
 static mutex_t timestamp_mutex = MUTEX_INIT;
+
+static volatile uint32_t device_timestamp = 0;
+
+void increment_device_timestamp(void) {
+    atomic_fetch_add_u32(&device_timestamp, 1);
+}
+
+uint32_t increment_and_get_device_timestamp(void) {
+    return atomic_fetch_add_u32(&device_timestamp, 1);
+}
+
+uint32_t get_device_timestamp(void) {
+    return atomic_load_u32(&device_timestamp);
+}
 
 /**
  * Initialize all tables with default values
@@ -304,6 +320,7 @@ int timestamp_table_to_cbor(cbor_buffer* buffer) {
 
 
 int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
+    (void) rssi;
     
     CborParser parser;
     CborValue value;
