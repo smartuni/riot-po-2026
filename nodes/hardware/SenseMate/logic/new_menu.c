@@ -6,9 +6,9 @@
 #include "mate_lorawan.h"
 #define MAX_GATES MAX_GATE_COUNT
 #define MAX_SENSE_MATES 10
-#define MIN_SIGNAL_STRENGTH 85
+#define MIN_SIGNAL_STRENGTH -100
 #define MIN_JOB_PRIO 1
-#define SENSEMATE_ID 7
+#define SENSEMATE_ID 2
 
 /*sorted by gate_id*/
 gate_entry all_entries [MAX_GATES];
@@ -253,7 +253,7 @@ void init_new_menu(void){
 
 void reorder_close_by(void){
     int added_cnt = 0;
-    int curr_sig_strength = 0;
+    int curr_sig_strength = -120;
     int last_sig_strenght = INT32_MAX;
     while(added_cnt < current_num_gates && last_sig_strenght > MIN_SIGNAL_STRENGTH){
         //find sigstrenght to add
@@ -271,7 +271,7 @@ void reorder_close_by(void){
             }
         }
         last_sig_strenght = curr_sig_strength;
-        curr_sig_strength = 0;
+        curr_sig_strength = -120;
     }
     current_num_close_by = added_cnt;
 }
