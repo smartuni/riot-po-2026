@@ -291,7 +291,20 @@ int timestamp_table_to_cbor(cbor_buffer* buffer) {
     return 0;
 }
 
+ int print_target_table_test(void){
+    printf("\n--- TARGET STATE TABLE ---\n");
+    
+    for (int i = 0; i < MAX_GATE_COUNT; i++) {
+        if (target_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
+            printf("Gate: %d, State: %d, Time: %d\n", target_state_entry_table[i].gateID, target_state_entry_table[i].state, target_state_entry_table[i].timestamp);
+        }
+    }
+    return 1;
+}
+
+
 int cbor_to_table_test(cbor_buffer* buffer) {
+    
     CborParser parser;
     CborValue value;
     CborValue wrapperValue;
@@ -402,16 +415,16 @@ int cbor_to_table_test(cbor_buffer* buffer) {
     // Integrate local data into global table
     switch(tableType) {
             case TARGET_STATE_KEY:
-                merge_target_state_entry_table(returnTargetTable, (length-1));
+                merge_target_state_entry_table(returnTargetTable, (length));
                 break;
             case IS_STATE_KEY:
-                merge_is_state_entry_table(returnIsTable, (length-1));
+                merge_is_state_entry_table(returnIsTable, (length));
                 break;
             case SEEN_STATUS_KEY:
-                merge_seen_status_entry_table(returnSeenTable, (length-1));
+                merge_seen_status_entry_table(returnSeenTable, (length));
                 break;
             case JOBS_KEY:
-                merge_jobs_entry_table(returnJobsTable, (length-1));
+                merge_jobs_entry_table(returnJobsTable, (length));
                 break;
             default:
                 return -1;
@@ -419,8 +432,6 @@ int cbor_to_table_test(cbor_buffer* buffer) {
 
     return 0;
 }
-
-
 
 int set_target_state_entry(const target_state_entry* entry) {
     if (entry == NULL) {

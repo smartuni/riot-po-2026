@@ -272,5 +272,6 @@ const timestamp_entry* get_timestamp_table(void);
     */
     int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buffer);
     int target_state_table_to_cbor_many_test(target_state_entry table[], int package_size, cbor_buffer* buffer);
+    int print_target_table_test(void);
 
 #endif
