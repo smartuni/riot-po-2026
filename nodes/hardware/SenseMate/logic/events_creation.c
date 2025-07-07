@@ -6,6 +6,7 @@
 #include "event/timeout.h"
 #include "new_menu.h"
 #include "soundModule.h"
+#include "vibrationModule.h"
 
 
 
@@ -85,10 +86,12 @@ void event_handlerNews(event_t *event)
     (void) event;   /* Not used */
     if(event_accepted){
         puts("got news");
+        start_vibration();
         update_menu_from_tables();
         downlink_reveived_sound();
         //ble_reveived_sound();
         event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
+        stop_vibration();
     }else{
         puts("event news ignored");
     }
