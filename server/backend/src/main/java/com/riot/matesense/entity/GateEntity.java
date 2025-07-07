@@ -95,7 +95,14 @@ public class GateEntity {
 	public GateEntity(Status status, Timestamp lastTimeStamp,
 					  Long deviceId, Double latitude, Double longitude,
 					  String location, String requestedStatus){
-		
+
+		this.status = status;
+		this.lastTimeStamp = lastTimeStamp;
+		this.deviceId = deviceId;
+		this.latitude = latitude;
+		this.longitude = longitude;
+		this.location = location;
+		this.requestedStatus = requestedStatus;
 
 	}
 }
