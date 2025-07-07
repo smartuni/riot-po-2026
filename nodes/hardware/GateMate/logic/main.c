@@ -13,7 +13,6 @@
 #include "header/event_creation.h"
 
 
-char lorawan_stack[THREAD_STACKSIZE_DEFAULT];
 char ble_send_stack[2*THREAD_STACKSIZE_DEFAULT];
 char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
