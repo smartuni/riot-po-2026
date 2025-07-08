@@ -47,7 +47,7 @@ void event_handler_reactivate(event_t *event)
     // UPDATE TABLE
     table_entry.gateID = GATE_ID;
     table_entry.state = event_status;
-    table_entry.gateTime = timestamp++;
+    table_entry.gateTime = get_device_timestamp();
 
     puts("In event reactivate handler");
 
