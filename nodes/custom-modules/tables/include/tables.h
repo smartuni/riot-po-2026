@@ -75,6 +75,15 @@
     } cbor_buffer;
 
     /**
+     * Utility functions for device timestamp
+     * management
+     * Thread-safe
+     */
+    void increment_device_timestamp(void);
+    uint32_t increment_and_get_device_timestamp(void);
+    uint32_t get_device_timestamp(void);
+
+    /**
      * @param buffer cbor buffer to write the cbor package into
      * @return 0 if successful
      * converts the table to a cbor package
