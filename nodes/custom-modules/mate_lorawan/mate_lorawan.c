@@ -260,7 +260,7 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             received_buffer.cbor_size = pkt->size; 
             received_buffer.package_size[0] = pkt->size;
             print_hex_arr(received_buffer.buffer,received_buffer.package_size[0]);
-            if (cbor_to_table_test(&received_buffer) == 0) {
+            if (cbor_to_table_test(&received_buffer, 0) == 0) {
                 printf("[LoRaWAN]: Downlink received and table updated.\n");
             }else{
                 printf("[LoRaWAN]: Error updating table.\n");
