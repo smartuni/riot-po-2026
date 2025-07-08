@@ -333,14 +333,26 @@ public class GateService {
         gateRepository.save(gateEntity);
     }
 
-    public String addGateFromGUI(GateEntity gate) throws GateAlreadyExistingException {
+    public Long getIdForGate(){
+        List<GateEntity> gates = gateRepository.findAll();
+        if (gates.isEmpty()) {
+            return 1L; // Start with ID 1 if no gates exist
+        } else {
+            Long maxId = gates.stream()
+                    .map(GateEntity::getId)
+                    .max(Long::compareTo)
+                    .orElse(0L);
+            return maxId + 1;
+        }
+    }
 
+    public String addGateFromGUI(GateEntity gate) throws GateAlreadyExistingException {
+        if (gate.getId() == null){
+            gate.setId(getIdForGate());
+        }
         gate.setPriority(3);
         gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
-        //TODO: if confidence calc is done remove this
-        gate.setConfidence(100);
         gateRepository.save(gate);
-        //TODO: IS THIS THE RIGHT WAY?
         messagingTemplate.convertAndSend("/topic/gates/add", gate);
         // Notify all clients about the new gate
         return gate.toString();
