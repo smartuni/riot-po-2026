@@ -29,12 +29,16 @@
     #define TABLE_ERROR_INVALID_GATE_ID -2
     #define TABLE_ERROR_NOT_FOUND      -3
     
-    #define BASE_CBOR_BYTE_SIZE 0x03
+    #define BASE_CBOR_BYTE_SIZE 0x05
     #define CBOR_TARGET_STATE_MAX_BYTE_SIZE (0x06)
     #define CBOR_IS_STATE_MAX_BYTE_SIZE (0x06)
     #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x07)
     #define CBOR_JOBS_MAX_BYTE_SIZE (0x03)
     #define CBOR_TIMESTAMP_MAX_BYTE_SIZE (0x06)
+
+    #define GATE_NODE 0x00
+    #define SENSEMATE_NODE 0x01
+    #define SERVER_SENDER 0x02
 
     typedef struct {
         uint8_t gateID;
@@ -104,6 +108,9 @@
     int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer);
     int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer);
     int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+
+    int is_state_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer);
+    int seen_status_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer);
 
     /**
      * @param buffer cbor buffer

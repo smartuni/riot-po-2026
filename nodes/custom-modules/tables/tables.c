@@ -320,15 +320,13 @@ int timestamp_table_to_cbor(cbor_buffer* buffer) {
 
 
 int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
-    (void) rssi;
-    
     CborParser parser;
     CborValue value;
     CborValue wrapperValue;
     CborValue fieldsValue;
     CborValue entryValue;
 
-    int tableType, timeStamp;
+    int tableType, timeStamp, typeOfSender, deviceID;
     target_state_entry returnTargetTable[buffer->cbor_size];
     is_state_entry returnIsTable[buffer->cbor_size];
     seen_status_entry returnSeenTable[buffer->cbor_size];
@@ -344,12 +342,59 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
         return -1;
     }
      // get type of table
-    if(tableType == TARGET_STATE_KEY) {
+
+    // get header information depending on table type
+    switch (tableType)
+    {
+    case TARGET_STATE_KEY:
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
             return -1;
         } // get timestamp
+        cbor_value_advance(&wrapperValue);
+        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
+            return -1;
+        } // get whether Sensemate, gate or Server sent msg
+        cbor_value_advance(&wrapperValue);
+        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
+            return -1;
+        } // get deviceID
+        break;
+    case IS_STATE_KEY:
+        cbor_value_advance(&wrapperValue);
+        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
+            return -1;
+        } // get timestamp
+        cbor_value_advance(&wrapperValue);
+        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
+            return -1;
+        } // get whether Sensemate, gate or Server sent msg
+        cbor_value_advance(&wrapperValue);
+        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
+            return -1;
+        } // get deviceID
+        break;
+    case SEEN_STATUS_KEY:
+    cbor_value_advance(&wrapperValue);
+        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
+            return -1;
+        } // get timestamp
+        cbor_value_advance(&wrapperValue);
+        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
+            return -1;
+        } // get whether Sensemate, gate or Server sent msg
+        cbor_value_advance(&wrapperValue);
+        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
+            return -1;
+        } // get deviceID
+        break;
+    case JOBS_KEY:
+        // no further header information for JOBS table
+        break;
+    default:
+        break;
     }
+
     // [ enter second container
     cbor_value_advance(&wrapperValue);
     if(cbor_value_enter_container(&wrapperValue, &fieldsValue) != CborNoError) {
@@ -430,6 +475,10 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     cbor_value_leave_container(&value, &wrapperValue); // ]	
 
     // Integrate local data into global table
+    if(typeOfSender == GATE_NODE) {
+        timestamp_entry change_entry = {deviceID, timeStamp, rssi}; // TODO deviceID==gateID?
+        set_timestamp_entry(&change_entry);
+    }
     switch(tableType) {
             case TARGET_STATE_KEY:
                 merge_target_state_entry_table(returnTargetTable, (length));
@@ -834,9 +883,16 @@ int target_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
         uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
         cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
-        cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
+        cbor_encoder_create_array(&encoder, &arrayEncoder, 5); // [
         cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
-        cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, target_state_entry_count); // Entry 2
+        cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
+        if (true) {
+            cbor_encode_int(&arrayEncoder, SENSEMATE_NODE); // Entry 3 TODO
+        } else {
+            cbor_encode_int(&arrayEncoder, GATE_NODE);
+        }
+        cbor_encode_int(&arrayEncoder, 0); // Entry 4 TODO
+        cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, target_state_entry_count); // Entry 5
         while((size_of_current_cbor + CBOR_TARGET_STATE_MAX_BYTE_SIZE < package_size) && (table_index < MAX_GATE_COUNT)) {
             if (target_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
                 printf("Valid entry: %d\n", target_state_entry_table[table_index].gateID);
@@ -882,7 +938,67 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
             // Create new package if needed
             if(size_of_current_cbor == 0 ){
                 cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
-                cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
+                cbor_encoder_create_array(&encoder, &arrayEncoder, 5); // [
+                cbor_encode_int(&arrayEncoder, IS_STATE_KEY); //Entry 1
+                cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
+                if (true) {
+                    cbor_encode_int(&arrayEncoder, SENSEMATE_NODE); // Entry 3 TODO
+                } else {
+                    cbor_encode_int(&arrayEncoder, GATE_NODE);
+                }
+                cbor_encode_int(&arrayEncoder, 0); // Entry 4 TODO
+                if(is_state_entry_count - is_states_entry_processed < calculated_array_entries){
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);  
+                }else{
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries); 
+                }
+            } // Entry 1
+            if (is_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
+                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
+                cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].gateID);
+                cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].state);
+                cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].gateTime);
+                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
+                is_states_entry_processed++;
+                i++;
+            }
+            table_index++;
+            size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
+        }
+        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
+        cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
+        cbor_stream_index += size_of_current_cbor;
+        buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
+        no_cbor_packages++;
+        size_of_current_cbor = 0;
+    }
+    buffer->cbor_size = no_cbor_packages;
+    return no_cbor_packages;
+}
+
+int is_state_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer) {
+    // Assert: given package_size big enough
+    if(BASE_CBOR_BYTE_SIZE + CBOR_IS_STATE_MAX_BYTE_SIZE > package_size) {
+        printf("ASSERT failed. Size passed too small for cbor!\n");
+        return -1;
+    }
+
+    int no_cbor_packages = 0;
+    int cbor_stream_index = 0;
+    int size_of_current_cbor = 0;
+    int table_index = 0;
+    int is_states_entry_processed = 0;
+    int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_IS_STATE_MAX_BYTE_SIZE;
+
+    while((is_state_entry_count > 0) && (table_index < MAX_GATE_COUNT) && (is_state_entry_count - is_states_entry_processed) > 0) {
+        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
+        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
+        int i = 0;
+        while( (i < calculated_array_entries) && (table_index < MAX_GATE_COUNT) && (is_state_entry_count - is_states_entry_processed) > 0) {
+            // Create new package if needed
+            if(size_of_current_cbor == 0 ){
+                cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
+                cbor_encoder_create_array(&encoder, &arrayEncoder, 5); // [
                 cbor_encode_int(&arrayEncoder, IS_STATE_KEY);
                 if(is_state_entry_count - is_states_entry_processed < calculated_array_entries){
                     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);  
@@ -914,6 +1030,84 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
 }
 
 int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
+    /* Assert: given package_size big enough */
+    if(BASE_CBOR_BYTE_SIZE + CBOR_SEEN_STATUS_MAX_BYTE_SIZE > package_size) {
+        printf("ASSERT failed. Size passed too small for cbor!\n");
+        return -1;
+    }
+
+    int no_cbor_packages = 0;
+    int cbor_stream_index = 0;
+    int size_of_current_cbor = 0;
+    int table_index = 0; // GateMate index
+    int sense_index = 0; // SenseMate index
+    int seen_status_entry_processed = 0;
+    int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_SEEN_STATUS_MAX_BYTE_SIZE;
+
+    while((seen_status_entry_count > 0) && (table_index < MAX_GATE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
+        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
+        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
+        int entry_index = 0;
+        while((entry_index < calculated_array_entries) && (table_index < MAX_GATE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
+            // Create new package if needed
+            if(size_of_current_cbor == 0) {
+                cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
+                cbor_encoder_create_array(&encoder, &arrayEncoder, 5);        // [
+                cbor_encode_int(&arrayEncoder, SEEN_STATUS_KEY);              // Entry 1
+                cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
+                if (true) {
+                    cbor_encode_int(&arrayEncoder, SENSEMATE_NODE); // Entry 3 TODO
+                } else {
+                    cbor_encode_int(&arrayEncoder, GATE_NODE);
+                }
+                cbor_encode_int(&arrayEncoder, 0); // Entry 4 TODO
+                if(seen_status_entry_count - seen_status_entry_processed < calculated_array_entries) {
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, seen_status_entry_count - seen_status_entry_processed);
+                }else {
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
+                }
+            }
+            // Check all SenseMates of the current GateMate
+            while((entry_index < calculated_array_entries) && (sense_index < MAX_SENSE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
+                if(seen_status_entry_table[table_index][sense_index].gateID != MAX_GATE_COUNT) {
+                    cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 4); // []
+                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].gateID);
+                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].gateTime);
+                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].status);
+                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].senseMateID);
+                    cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder);   // ]
+                    seen_status_entry_processed++;
+                    entry_index++;
+                }
+                sense_index++;
+
+                // Get current size of CBOR package, if the package is full, break out of SenseMate loop
+                size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
+                if(size_of_current_cbor + CBOR_SEEN_STATUS_MAX_BYTE_SIZE >= package_size) {
+                    break; // Paket full, break out of SenseMate loop
+                }
+            } /* while sense_index */
+
+            if(sense_index == MAX_SENSE_COUNT) {
+                table_index++; // Next GateMate
+                sense_index = 0; // Reset SenseMate index
+            }
+        } /* while entry_index */
+
+        // Close CBOR containers, write size to buffer and prepare for next package
+        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
+        cbor_encoder_close_container(&encoder, &arrayEncoder);        // ]
+        cbor_stream_index += size_of_current_cbor;
+        buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
+        no_cbor_packages++;
+        size_of_current_cbor = 0;
+    } /* while table_index */
+
+    buffer->cbor_size = no_cbor_packages;
+    return no_cbor_packages;
+}
+
+int seen_status_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer) {
     /* Assert: given package_size big enough */
     if(BASE_CBOR_BYTE_SIZE + CBOR_SEEN_STATUS_MAX_BYTE_SIZE > package_size) {
         printf("ASSERT failed. Size passed too small for cbor!\n");
@@ -1009,6 +1203,13 @@ int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encoder_init(&encoder, space, package_size, 0);
                 cbor_encoder_create_array(&encoder, &arrayEncoder, 2);          // [
                 cbor_encode_int(&arrayEncoder, JOBS_KEY);                       // Entry 1
+                cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
+                if (true) {
+                    cbor_encode_int(&arrayEncoder, SENSEMATE_NODE); // Entry 3 TODO
+                } else {
+                    cbor_encode_int(&arrayEncoder, GATE_NODE);
+                }
+                cbor_encode_int(&arrayEncoder, 0); // Entry 4 TODO
                 if(jobs_entry_count - jobs_entry_processed < calculated_array_entries){
                     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, jobs_entry_count - jobs_entry_processed);  
                 }else{
@@ -1062,6 +1263,13 @@ int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encoder_init(&encoder, space, package_size, 0);
                 cbor_encoder_create_array(&encoder, &arrayEncoder, 2);           // [
                 cbor_encode_int(&arrayEncoder, TIMESTAMP_KEY);                  // Entry 1
+                cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
+                if (true) {
+                    cbor_encode_int(&arrayEncoder, SENSEMATE_NODE); // Entry 3 TODO
+                } else {
+                    cbor_encode_int(&arrayEncoder, GATE_NODE);
+                }
+                cbor_encode_int(&arrayEncoder, 0); // Entry 4 TODO
                 if(timestamp_entry_count - timestamp_entry_processed < calculated_array_entries){
                     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, timestamp_entry_count - timestamp_entry_processed);  
                 }else{
