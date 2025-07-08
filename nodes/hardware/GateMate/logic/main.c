@@ -36,8 +36,7 @@ int main(void){
     is_state_entry table_entry;
     table_entry.gateID = GATE_ID;
     table_entry.state = inital_door_state;
-    table_entry.gateTime = timestamp++;
-    setTimestamp(timestamp);
+    table_entry.gateTime = get_device_timestamp();
 
     // if (TABLE_SUCCESS == set_is_state_entry()){
      if (TABLE_UPDATED == set_is_state_entry(&table_entry)){
@@ -90,7 +89,7 @@ int main(void){
     thread_create(
         ble_send_stack,
         sizeof(ble_send_stack),
-        THREAD_PRIORITY_MAIN - 1,
+        THREAD_PRIORITY_MAIN - 2,
         THREAD_CREATE_STACKTEST,
         ble_send_loop,
         NULL,
@@ -100,7 +99,7 @@ int main(void){
      thread_create(
          ble_reicv_stack,
          sizeof(ble_reicv_stack),
-         THREAD_PRIORITY_MAIN - 1,
+         THREAD_PRIORITY_MAIN - 3,
          THREAD_CREATE_STACKTEST,
          ble_receive_loop,
          NULL,
@@ -113,6 +112,9 @@ int main(void){
         
         // TODO  error detection
         // err = check_door_status();
+
+        increment_device_timestamp();
+        ztimer_sleep(1000);
 
     }
     return 0;
