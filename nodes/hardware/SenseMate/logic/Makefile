@@ -1,6 +1,5 @@
 # name of your application
 APPLICATION = displayTest
-
 # If no BOARD is found in the environment, use this default:
 BOARD ?= adafruit-feather-nrf52840-sense
 
@@ -45,6 +44,8 @@ USEMODULE += mate_ble
 
 
 
+CFLAGS += -DDEVICE_ID=1 #Device ID- change when flashing
+CFLAGS += -DDEVICE_TYPE=1 #Device Type 
 CFLAGS += -DI2C_DEVICE_IDX=0
 CFLAGS += -DI2C_DISPLAY_ADDR=0x3c
 CFLAGS += -DU8G2_DISPLAY_INIT_FUNC=u8g2_Setup_ssd1306_i2c_128x64_noname_f

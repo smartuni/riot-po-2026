@@ -22,7 +22,7 @@ char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
 
 int main(void) {
-    //ztimer_sleep(ZTIMER_MSEC, 3000);
+    ztimer_sleep(ZTIMER_MSEC, 3000);
     init_interrupt();
     init_sound_module();
     init_vibration_module();
@@ -30,6 +30,7 @@ int main(void) {
 
     //printf("Display demo started.\n");
     init_display();
+    printf("Device Type: %d device id: %d\n",DEVICE_TYPE, DEVICE_ID);
     printf("Display initialized.\n");
     //display_demo();
     //init_menu();
