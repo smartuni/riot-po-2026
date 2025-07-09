@@ -340,8 +340,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
 
     if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &tableType) != CborNoError) {
         return -1;
-    }
-     // get type of table
+    } // get type of table
 
     // get header information depending on table type
     switch (tableType)
@@ -476,7 +475,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
 
     // Integrate local data into global table
     if(typeOfSender == GATE_NODE) {
-        timestamp_entry change_entry = {deviceID, timeStamp, rssi}; // TODO deviceID==gateID?
+        timestamp_entry change_entry = {deviceID, timeStamp, rssi};
         set_timestamp_entry(&change_entry);
     }
     switch(tableType) {
@@ -886,12 +885,8 @@ int target_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encoder_create_array(&encoder, &arrayEncoder, 5); // [
         cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
         cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
-        if (true) {
-            cbor_encode_int(&arrayEncoder, SENSEMATE_NODE); // Entry 3 TODO
-        } else {
-            cbor_encode_int(&arrayEncoder, GATE_NODE);
-        }
-        cbor_encode_int(&arrayEncoder, 0); // Entry 4 TODO
+        cbor_encode_int(&arrayEncoder, DEVICE_TYPE); // Entry 3
+        cbor_encode_int(&arrayEncoder, DEVICE_ID); // Entry 4
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, target_state_entry_count); // Entry 5
         while((size_of_current_cbor + CBOR_TARGET_STATE_MAX_BYTE_SIZE < package_size) && (table_index < MAX_GATE_COUNT)) {
             if (target_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
@@ -941,12 +936,8 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encoder_create_array(&encoder, &arrayEncoder, 5); // [
                 cbor_encode_int(&arrayEncoder, IS_STATE_KEY); //Entry 1
                 cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
-                if (true) {
-                    cbor_encode_int(&arrayEncoder, SENSEMATE_NODE); // Entry 3 TODO
-                } else {
-                    cbor_encode_int(&arrayEncoder, GATE_NODE);
-                }
-                cbor_encode_int(&arrayEncoder, 0); // Entry 4 TODO
+                cbor_encode_int(&arrayEncoder, DEVICE_TYPE); // Entry 3
+                cbor_encode_int(&arrayEncoder, DEVICE_ID); // Entry 4
                 if(is_state_entry_count - is_states_entry_processed < calculated_array_entries){
                     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);  
                 }else{
@@ -1055,12 +1046,8 @@ int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encoder_create_array(&encoder, &arrayEncoder, 5);        // [
                 cbor_encode_int(&arrayEncoder, SEEN_STATUS_KEY);              // Entry 1
                 cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
-                if (true) {
-                    cbor_encode_int(&arrayEncoder, SENSEMATE_NODE); // Entry 3 TODO
-                } else {
-                    cbor_encode_int(&arrayEncoder, GATE_NODE);
-                }
-                cbor_encode_int(&arrayEncoder, 0); // Entry 4 TODO
+                cbor_encode_int(&arrayEncoder, DEVICE_TYPE); // Entry 3
+                cbor_encode_int(&arrayEncoder, DEVICE_ID); // Entry 4
                 if(seen_status_entry_count - seen_status_entry_processed < calculated_array_entries) {
                     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, seen_status_entry_count - seen_status_entry_processed);
                 }else {
@@ -1204,12 +1191,8 @@ int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encoder_create_array(&encoder, &arrayEncoder, 2);          // [
                 cbor_encode_int(&arrayEncoder, JOBS_KEY);                       // Entry 1
                 cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
-                if (true) {
-                    cbor_encode_int(&arrayEncoder, SENSEMATE_NODE); // Entry 3 TODO
-                } else {
-                    cbor_encode_int(&arrayEncoder, GATE_NODE);
-                }
-                cbor_encode_int(&arrayEncoder, 0); // Entry 4 TODO
+                cbor_encode_int(&arrayEncoder, DEVICE_TYPE); // Entry 3
+                cbor_encode_int(&arrayEncoder, DEVICE_ID); // Entry 4
                 if(jobs_entry_count - jobs_entry_processed < calculated_array_entries){
                     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, jobs_entry_count - jobs_entry_processed);  
                 }else{
@@ -1264,12 +1247,8 @@ int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encoder_create_array(&encoder, &arrayEncoder, 2);           // [
                 cbor_encode_int(&arrayEncoder, TIMESTAMP_KEY);                  // Entry 1
                 cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
-                if (true) {
-                    cbor_encode_int(&arrayEncoder, SENSEMATE_NODE); // Entry 3 TODO
-                } else {
-                    cbor_encode_int(&arrayEncoder, GATE_NODE);
-                }
-                cbor_encode_int(&arrayEncoder, 0); // Entry 4 TODO
+                cbor_encode_int(&arrayEncoder, DEVICE_TYPE); // Entry 3
+                cbor_encode_int(&arrayEncoder, DEVICE_ID); // Entry 4
                 if(timestamp_entry_count - timestamp_entry_processed < calculated_array_entries){
                     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, timestamp_entry_count - timestamp_entry_processed);  
                 }else{

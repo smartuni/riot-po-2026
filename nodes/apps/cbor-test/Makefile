@@ -38,4 +38,7 @@ QUIET ?= 1
 
 CFLAGS += -DDEBUG_ASSERT_VERBOSE
 
+CFLAGS += -DDEVICE_ID=$(RIOT_CONFIG_DEVICE_ID) #Device ID- change when flashing
+CFLAGS += -DDEVICE_TYPE=3 #Device Type 
+
 include $(RIOTBASE)/Makefile.include
