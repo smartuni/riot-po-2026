@@ -32,7 +32,7 @@ import StatusChangedDialog from "../components/StatusChangedDialog";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import SockJS from 'sockjs-client';
 import {Stomp} from '@stomp/stompjs';
-import {Snackbar} from "@mui/material";
+
 
 function StatusTables() {
     const [gates, setGates] = useState([]);
@@ -50,7 +50,9 @@ function StatusTables() {
     const [selectedPriorities, setSelectedPriorities] = useState({});
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [downlinkCount, setDownlinkCount] = useState(0);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [resetDialogOpen, setResetDialogOpen] = useState(false);
+    const [resetPassword, setResetPassword] = useState("");
+    const [resetError, setResetError] = useState("");
     const [newGateData, setNewGateData] = useState({
         location: "",
         latitude: "",
@@ -169,6 +171,25 @@ function StatusTables() {
         }
     };
 
+    const ADMIN_PASSWORD = "secret123";
+    const handleResetCounter = async () => {
+        if (resetPassword !== ADMIN_PASSWORD) {
+            setResetError("Incorrect password");
+            return;
+        }
+
+        try {
+            await api.post("/downlinkcounter/reset");
+            alert("Counter reset successfully.");
+            setDownlinkCount(0);
+            setResetDialogOpen(false);
+            setResetPassword("");
+            setResetError("");
+        } catch (error) {
+            console.error("Failed to reset counter:", error);
+            alert("Reset failed.");
+        }
+    };
 
     /**
      * Just for the Last Updatet Time of the Gates.
@@ -288,12 +309,7 @@ function StatusTables() {
         }
 
         try {
-            const allowed = await tryIncrementDownlinkCounter();
-            if (!allowed) {
-                setSnackbarOpen(true);
-                return;
-            }
-
+            await tryIncrementDownlinkCounter();
             await api.post("api/downlink", JSON.stringify(payload));
             alert("Downlink sent.");
 
@@ -443,6 +459,13 @@ function StatusTables() {
                     </Button>
                     </span>
                         </Tooltip>
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={() => setResetDialogOpen(true)}
+                        >
+                            Reset Downlink Counter
+                        </Button>
                         <Button
                             variant="contained"
                             color="success"
@@ -700,12 +723,29 @@ function StatusTables() {
                     </Button>
                 </DialogActions>
             </Dialog>
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={6000}
-                message="Maximum 10 downlinks reached by all users."
-                onClose={()=>setSnackbarOpen(false)}
-            />
+            <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
+                <DialogTitle>Reset Downlink Counter</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        type="password"
+                        label="Admin Password"
+                        fullWidth
+                        value={resetPassword}
+                        onChange={(e) => {
+                            setResetPassword(e.target.value);
+                            setResetError("");
+                        }}
+                        error={!!resetError}
+                        helperText={resetError}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setResetDialogOpen(false)}>Cancel</Button>
+                    <Button color="error" onClick={handleResetCounter} variant="contained">
+                        Reset
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </div>
     );
 }
