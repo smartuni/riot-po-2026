@@ -34,6 +34,11 @@ public class MqttMessageHandler {
     }
 
     public void msgHandlerUplinks(String decodedJson,String deviceName) {
+        // Sicherheit: Nur sensegate-* oder sensemate-* zulassen
+        if (!deviceName.startsWith("sensegate-") && !deviceName.startsWith("sensemate-")) {
+            System.err.println(" Nicht erlaubtes Gerät sendet Uplink: " + deviceName);
+            return;
+        }
         deviceRegistry.registerDevice(deviceName);
         try {
             JsonNode root = mapper.readTree(decodedJson);
@@ -91,7 +96,6 @@ public class MqttMessageHandler {
                             gateService.changeGateStatus(gateId,status, 1);
                             gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "Gate has changed to status " + status.toString(), null));
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
-                            System.out.println("getlasttimestamp:" + existingGate.getLastTimeStamp().getTime());
                         } catch (GateNotFoundException e) {
                             //add new Gate
 
@@ -131,7 +135,6 @@ public class MqttMessageHandler {
                         GateEntity existingGate = gateService.getGateEntityById(gateId);
 
                         int confidence = existingGate.getConfidence();
-                        // existingGate.setStatus(status);
 
                         gateService.changeGateStatus(gateId, status, 2);
                         System.out.println("SeenTable-Eintrag -> GateID: " + gateId +

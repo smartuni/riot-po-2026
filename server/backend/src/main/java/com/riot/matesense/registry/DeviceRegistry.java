@@ -1,74 +1,69 @@
 package com.riot.matesense.registry;
+
+import com.riot.matesense.config.DeviceInfo;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Component
 public class DeviceRegistry {
 
-    private final Map<Integer, String> gateDevices = new ConcurrentHashMap<>();
-    private final Map<Integer, String> mateDevices = new ConcurrentHashMap<>();
+    private final Map<String, DeviceInfo> devices = new ConcurrentHashMap<>();
 
-    //register devices that was writte in the uplink
-    private void register(Map<Integer, String> deviceMap, String deviceName, String typeLabel) {
-        int id = parseId(deviceName);
-        if (id == -1) return;
-
-        if (!deviceMap.containsKey(id)) {
-            deviceMap.put(id, deviceName);
-            System.out.println("Neues " + typeLabel + "-Gerät registriert: " + deviceName);
-        }
-        System.out.println(typeLabel + "-Gerät registriert: " + deviceName);
-    }
-
-    //Find out which sense it is
     public void registerDevice(String deviceName) {
+        DeviceInfo.Type type;
+
         if (deviceName.startsWith("sensegate-")) {
-            register(gateDevices, deviceName, "Gate");
+            type = DeviceInfo.Type.GATE;
         } else if (deviceName.startsWith("sensemate-")) {
-            register(mateDevices, deviceName, "Mate");
+            type = DeviceInfo.Type.MATE;
         } else {
-            System.err.println("Ungültiger Gerätename: " + deviceName);
+            System.err.println(" Ungültiger Gerätename: " + deviceName);
+            return;
         }
+
+        devices.putIfAbsent(deviceName, new DeviceInfo(deviceName, type));
+        System.out.println("Gerät registriert: " + deviceName + " (" + type + ")");
     }
 
+    public boolean removeDevice(String deviceName) {
+        return devices.remove(deviceName) != null;
+    }
 
     public Set<String> getAllGateDevices() {
-        return new HashSet<>(gateDevices.values());
+        return devices.values().stream()
+                .filter(d -> d.getType() == DeviceInfo.Type.GATE)
+                .map(DeviceInfo::getName)
+                .collect(Collectors.toSet());
     }
 
     public Set<String> getAllMateDevices() {
-        return new HashSet<>(mateDevices.values());
+        return devices.values().stream()
+                .filter(d -> d.getType() == DeviceInfo.Type.MATE)
+                .map(DeviceInfo::getName)
+                .collect(Collectors.toSet());
     }
 
     public Set<String> getAllDevices() {
-        Set<String> all = new HashSet<>();
-        all.addAll(gateDevices.values());
-        all.addAll(mateDevices.values());
-        return all;
+        return devices.keySet();
     }
 
     public int getGateDeviceCount() {
-        return gateDevices.size();
+        return (int) devices.values().stream()
+                .filter(d -> d.getType() == DeviceInfo.Type.GATE)
+                .count();
     }
 
     public int getMateDeviceCount() {
-        return mateDevices.size();
+        return (int) devices.values().stream()
+                .filter(d -> d.getType() == DeviceInfo.Type.MATE)
+                .count();
     }
 
-
-    private int parseId(String deviceName) {
-        try {
-            String[] parts = deviceName.split("-");
-            if (parts.length != 2) throw new IllegalArgumentException("Ungültiges Format");
-            return Integer.parseInt(parts[1]);
-        } catch (Exception e) {
-            System.err.println("Fehler beim Parsen der ID aus '" + deviceName + "': " + e.getMessage());
-            return -1; // oder andere Fehlerbehandlung
-        }
+    public boolean isRegistered(String deviceName) {
+        return devices.containsKey(deviceName);
     }
-
 }

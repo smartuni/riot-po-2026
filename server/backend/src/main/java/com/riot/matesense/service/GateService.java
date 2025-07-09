@@ -69,6 +69,8 @@ public class GateService {
         messagingTemplate.convertAndSend("/topic/gates/delete", id);
     }
 
+
+    //DO we even use this?
     public void updateGate(GateEntity gate, int reportType) {
         //Hole das Gate
         //GateEntity existingGate = gateRepository.findById(Math.toIntExact(gate.getId())).orElse(null);
@@ -120,19 +122,19 @@ public class GateService {
 //                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality());
 //    }
 
+    //TODO need to be checked - here can be a bug - need to be tested to!!
     public void changeConfidence(GateEntity entity, int passedConfidence, int reportType)
     {
-        System.out.println("Passed confidence:" + passedConfidence);
+        System.out.println("Passed confidence: " + passedConfidence);
         int confidence;
         Status gateStatus = entity.getStatus();
-        //Safety for out of bounds case
+
         Status[] gateArray = entity.getGateStatusArray() != null ? entity.getGateStatusArray() : new Status[0];
         Status[] workerArray = entity.getWorkerStatusArray() != null ? entity.getWorkerStatusArray() : new Status[0];
 
-
-        if (gateStatus == Status.UNKNOWN || gateStatus == Status.NONE) //set confidence to max if status doesn't exist or is reported as unknown
-        {
-            confidence = 100; //(if we don't know, we're sure that we don't know)
+        if (gateStatus == Status.UNKNOWN || gateStatus == Status.NONE) {
+            confidence = 100;
+            System.out.println("Gate status is unknown/none. Setting confidence to max (100).");
         }
         else
         {
@@ -174,29 +176,49 @@ public class GateService {
 
         entity.shuffleReports(gateStatus, reportType);
 
-        confidence = Math.max(0, confidence); // normalize confidence, between 0 and 100
-        confidence = Math.min(100, confidence);
-
+        confidence = Math.max(0, Math.min(100, confidence));
         entity.setConfidence(confidence);
+        System.out.println("Final normalized confidence: " + confidence);
 
         if (confidence >= 90){
             entity.setQuality(ConfidenceQuality.HIGH);
         }
-        else if (confidence >= 80 && confidence < 90){
+        else if (confidence >= 80){
             entity.setQuality(ConfidenceQuality.MED_HIGH);
         }
-        else if (confidence >= 70 && confidence < 80){
+        else if (confidence >= 70){
             entity.setQuality(ConfidenceQuality.MED);
         }
-        else if (confidence >= 60 && confidence < 70){
+        else if (confidence >= 60){
             entity.setQuality(ConfidenceQuality.MED_LOW);
         }
         else {
             entity.setQuality(ConfidenceQuality.LOW);
         }
 
-        System.out.println("Calculated confidence:" + confidence + "\n");
+        System.out.println("Set quality: " + entity.getQuality());
+
+        // Pending Job Check - only if confidenc is 100% set Pending to none!
+        String pendingJob = entity.getPendingJob();
+        if (entity.getQuality() == ConfidenceQuality.HIGH) {
+            if (gateStatus == Status.OPENED && "PENDING_OPEN".equals(pendingJob)) {
+                System.out.println("High confidence and gate is OPENED with PENDING_OPEN. Clearing pending job.");
+                entity.setPendingJob("None");
+            } else if (gateStatus == Status.CLOSED && "PENDING_CLOSE".equals(pendingJob)) {
+                System.out.println("High confidence and gate is CLOSED with PENDING_CLOSE. Clearing pending job.");
+                entity.setPendingJob("None");
+            } else {
+                System.out.println("High confidence but no matching pending job state. PendingJob: " + pendingJob + ", GateStatus: " + gateStatus);
+            }
+        } else {
+            System.out.println("Confidence not high enough to modify pending job. Quality: " + entity.getQuality());
+        }
+
+        System.out.println("Final pending job state: " + entity.getPendingJob());
+        System.out.println("Calculated confidence: " + confidence + "\n");
     }
+
+
 
     /*@Scheduled(fixedRate = 10000)
     public void periodicSubtractConfidence()
@@ -264,8 +286,6 @@ public class GateService {
 
     public void changeGateStatus(Long gateId, Status status, int reportType) {
         GateEntity gate = gateRepository.getById(gateId);
-        // System.out.println("Requested Status: " + targetStatus);
-        System.out.println("ID: " + gate.getId());
         int confidence = gate.getConfidence();
 
         // Ziel-Status aus requestedStatus ableiten
@@ -288,21 +308,20 @@ public class GateService {
             // if (targetStatus.equals("REQUESTED_NONE") || targetStatus.equals("NONE")) {
             //     gate.setStatus(null);
             // } else {
-        System.out.println("status_name: " + status.name());
-        System.out.println("StatusCode: " + gate.getPendingJob());
 
-        if (status == Status.OPENED) {
-            if ("PENDING_OPEN".equals(gate.getPendingJob())) {
-                gate.setPendingJob("None");
-            }
-        } else if(status == Status.CLOSED){
-            if ("PENDING_CLOSE".equals(gate.getPendingJob())) {
-                gate.setPendingJob("None");
-            }
-        }
+//
+//        if (status == Status.OPENED) {
+//            if ("PENDING_OPEN".equals(gate.getPendingJob())) {
+//                gate.setPendingJob("None");
+//            }
+//        } else if(status == Status.CLOSED){
+//            if ("PENDING_CLOSE".equals(gate.getPendingJob())) {
+//                gate.setPendingJob("None");
+//            }
+//        }
 
-        System.out.println("Status: " + status);
         gate.setStatus(status);
+        //dont be surprised if pending job didn't change after the first status change! It need to be 100% confidence
         changeConfidence(gate, confidence, reportType);
         messagingTemplate.convertAndSend("/topic/gates/updates", gate);
             // }
