@@ -8,7 +8,7 @@
 #define MAX_SENSE_MATES 10
 #define MIN_SIGNAL_STRENGTH -100
 #define MIN_JOB_PRIO 1
-#define SENSEMATE_ID 2
+#define SENSEMATE_ID DEVICE_ID
 
 /*sorted by gate_id*/
 gate_entry all_entries [MAX_GATES];

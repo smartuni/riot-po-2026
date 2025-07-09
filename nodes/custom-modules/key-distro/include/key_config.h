@@ -11,7 +11,7 @@
 	#define FILE_PATH(dev) STR(secrets/dev##_private_key.h)
 	#define INCLUDE_FILE(dev) FILE_PATH(dev)
 
-	#include INCLUDE_FILE(DEVICE_ID)
+	#include INCLUDE_FILE(KEY_ID)
 	#include "secrets/public_keys.h"
 #endif
 
