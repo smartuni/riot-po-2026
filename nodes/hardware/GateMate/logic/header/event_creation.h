@@ -13,7 +13,7 @@
 #include "tables.h" 
 #include "mate_lorawan.h"
 
-#define GATE_ID 1
+#define GATE_ID DEVICE_ID
 #define DEBOUNCE_TIME 5000
 
 

@@ -9,6 +9,11 @@ RIOTBASE ?= $(CURDIR)/../../../RIOT
 PROJECT_BASE ?= $(CURDIR)/../../../
 EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
+
+RIOT_CONFIG_DEVICE_ID ?= 1
+$(info Using device ID: $(RIOT_CONFIG_DEVICE_ID))
+
+
 USEMODULE += periph_gpio
 USEMODULE += periph_gpio_irq
 
@@ -27,7 +32,8 @@ USEMODULE += tables
 USEMODULE += mate_lorawan
 USEMODULE += mate_ble
 
-
+CFLAGS += -DDEVICE_ID=$(RIOT_CONFIG_DEVICE_ID) #Device ID - when flashing for product change in make call RIOT_CONFIG_DEVICE_ID=X
+CFLAGS += -DDEVICE_TYPE=0 #Device Type 
 CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=2*1024
 
 # Comment this out to disable code in RIOT that does safety checking
