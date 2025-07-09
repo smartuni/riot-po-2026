@@ -379,6 +379,9 @@ public class GateService {
             gate.setId(getIdForGate());
         }
         gate.setPriority(3);
+        if (gate.getLastTimeStamp() == null) {
+            gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        }
         gate.setLastTimeStamp(gate.getLastTimeStamp());
 
         gateRepository.save(gate);

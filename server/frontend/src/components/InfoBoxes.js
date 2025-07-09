@@ -1,5 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {fetchGates} from "../services/api";
+import SockJS from "sockjs-client";
+import {Stomp} from "@stomp/stompjs";
 
 function totalGates(gates) {
     let total = 0;
@@ -67,6 +69,44 @@ function InfoBoxes() {
         };
 
         loadGates();
+    }, []);
+
+    /**
+     * Initialisiert die WebSocket-Verbindung und abonniert die relevanten Topics.
+     */
+    useEffect(() => {
+        const socket = new SockJS('http://localhost:8080/ws');
+        const stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, () => {
+
+            stompClient.subscribe('/topic/gates/add', (message) => {
+                const activity = JSON.parse(message.body);
+                setGates(prev => [...prev, activity]);
+            });
+
+            stompClient.subscribe('/topic/gates/delete', (message) => {
+                const id = parseInt(message.body);
+                setGates(prev => prev.filter(a => a.id !== id));
+            });
+
+            stompClient.subscribe('/topic/gates/updates', (message) => {
+                const updatedGate = JSON.parse(message.body);
+                setGates(prevGates => {
+                    const index = prevGates.findIndex(gate => gate.id === updatedGate.id);
+                    if (index !== -1) {
+                        // Gate exists: replace it
+                        const newGates = [...prevGates];
+                        newGates[index] = updatedGate;
+                        return newGates;
+                    }
+                });
+            });
+        });
+
+        return () => {
+            stompClient.disconnect();
+        };
     }, []);
 
     return (

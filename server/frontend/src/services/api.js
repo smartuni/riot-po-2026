@@ -119,6 +119,17 @@ export const updateGatePriority = async (gateId, newPriority) => {
     });
 };
 
+export const fetchDownlinkCounter = async () => {
+    const response = await api.get("/downlinkcounter/counter");
+    return response.data;
+};
+
+export const tryIncrementDownlinkCounter = async () => {
+    const response = await api.post("/downlinkcounter/try-increment");
+    console.log(response);
+    return response.data; // true oder false
+};
+
 
 
 

@@ -2,10 +2,12 @@ package com.riot.matesense;
 
 import com.riot.matesense.config.DownPayload;
 
+import com.riot.matesense.entity.DownlinkCounterEntity;
 import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.entity.NotificationEntity;
 import com.riot.matesense.enums.Status;
+import com.riot.matesense.repository.DownlinkCounterRepository;
 import com.riot.matesense.repository.GateRepository;
 import com.riot.matesense.service.DownlinkService;
 import com.riot.matesense.service.GateActivityService;
@@ -36,6 +38,7 @@ public class Application {
 @Component
 class PopulateTestDataRunner implements CommandLineRunner {
 
+	private final DownlinkCounterRepository downlinkCounterRepository;
 	DownlinkService downlinkService;
 	GateService gateService;
 	GateRepository gateRepository;
@@ -44,12 +47,13 @@ class PopulateTestDataRunner implements CommandLineRunner {
 
 	@Autowired
 	public PopulateTestDataRunner(GateActivityService gateActivityService, GateService gateService, GateRepository gateRepository,
-								  DownlinkService downlinkService, NotificationService notificationService) {
+								  DownlinkService downlinkService, NotificationService notificationService, DownlinkCounterRepository downlinkCounterRepository) {
 		this.gateService = gateService;
 		this.gateRepository = gateRepository;
 		this.downlinkService = downlinkService;
 		this.gateActivityService = gateActivityService;
 		this.notificationService = notificationService;
+		this.downlinkCounterRepository = downlinkCounterRepository;
 	}
 	@Override
 	public void run(String... args) throws Exception {
@@ -104,7 +108,8 @@ class PopulateTestDataRunner implements CommandLineRunner {
 		notificationService.addNotification(new NotificationEntity(Status.OPENED, 4L, "Worker with ID: " + 4L + " shall close the Gate with ID: " + 1, false));
 		notificationService.addNotification(new NotificationEntity(Status.OPENED, 5L, "Worker with ID: " + 5L + " shall close the Gate with ID: " + 1, false));
 		notificationService.addNotification(new NotificationEntity(Status.OPENED, 5L, "Worker with ID: " + 5L + " shall close the Gate with ID: " + 1, false));
-
+		DownlinkCounterEntity downlinkCounterEntity = new DownlinkCounterEntity();
+		downlinkCounterRepository.save(downlinkCounterEntity);
 		//test commit
 	}
 }
