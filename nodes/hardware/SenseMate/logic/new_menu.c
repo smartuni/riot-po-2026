@@ -5,7 +5,7 @@
 #include "displayDemo.h"
 #include "mate_lorawan.h"
 #define MAX_GATES MAX_GATE_COUNT
-#define MAX_SENSE_MATES 10
+#define MAX_SENSE_MATES MAX_SENSE_COUNT
 #define MIN_SIGNAL_STRENGTH -100
 #define MIN_JOB_PRIO 1
 #define SENSEMATE_ID DEVICE_ID
