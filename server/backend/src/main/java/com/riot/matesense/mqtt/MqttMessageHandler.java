@@ -10,6 +10,7 @@ import com.riot.matesense.enums.Status;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
 import com.riot.matesense.model.Gate;
+import com.riot.matesense.registry.DeviceRegistry;
 import com.riot.matesense.service.GateActivityService;
 import com.riot.matesense.service.GateService;
 
@@ -24,13 +25,16 @@ public class MqttMessageHandler {
     private final ObjectMapper mapper = new ObjectMapper();
     private final GateService gateService;
     GateActivityService gateActivityService;
+    private final DeviceRegistry deviceRegistry;
 
-    public MqttMessageHandler(GateService gateService, GateActivityService gateActivityService) {
+    public MqttMessageHandler(GateService gateService, GateActivityService gateActivityService, DeviceRegistry deviceRegistry) {
         this.gateService = gateService;
         this.gateActivityService = gateActivityService;
+        this.deviceRegistry = deviceRegistry;
     }
 
     public void msgHandlerUplinks(String decodedJson,String deviceName) {
+        deviceRegistry.registerDevice(deviceName);
         try {
             JsonNode root = mapper.readTree(decodedJson);
 

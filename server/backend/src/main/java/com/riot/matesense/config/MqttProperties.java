@@ -70,5 +70,9 @@ public class MqttProperties {
         this.applicationId = applicationId;
     }
 
+    public String buildDeviceDownlinkTopic(String deviceId) {
+        return String.format("v3/%s/devices/%s/down/push", this.getUsername(), deviceId);
+    }
+
 
 }

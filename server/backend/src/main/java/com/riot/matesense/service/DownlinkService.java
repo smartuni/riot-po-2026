@@ -3,6 +3,7 @@ package com.riot.matesense.service;
 import com.riot.matesense.config.DownPayload;
 import com.riot.matesense.config.MqttProperties;
 import com.riot.matesense.mqtt.TTNMqttPublisher;
+import com.riot.matesense.registry.DeviceRegistry;
 import com.riot.matesense.repository.GateRepository;
 import org.springframework.stereotype.Service;
 
@@ -21,90 +22,158 @@ public class DownlinkService {
     private final TTNMqttPublisher mqttPublisher;
     private final CborConverter cborConverter;
     private final MqttProperties mqttProperties;
-    private final GateRepository gateRepository;
 
-    public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter, MqttProperties mqttProperties, GateRepository gateRepository) {
+    private final DeviceRegistry deviceRegistry;
+    public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter, MqttProperties mqttProperties, DeviceRegistry deviceRegistry) {
         this.mqttPublisher = mqttPublisher;
         this.cborConverter = cborConverter;
         this.mqttProperties = mqttProperties;
-        this.gateRepository = gateRepository;
+        this.deviceRegistry = deviceRegistry;
     }
 
-    public void sendDownlinkToDevice(DownPayload payloadData) {
-        //sensegate-*
-        try {
-            System.out.println("Soll-Status Downlink: " + payloadData.getStatuses());
-            System.out.println("Get TimeStamp" + payloadData.getTimestamp());
+//    public void sendDownlinkToDevice(DownPayload payloadData) {
+//
+//        System.out.println("Registrierte Gate-Geräte: " + deviceRegistry.getAllGateDevices());
+//        System.out.println("Registrierte Mate-Geräte: " + deviceRegistry.getAllMateDevices());
+//        System.out.println("Anzahl Gate-Geräte: " + deviceRegistry.getGateDeviceCount());
+//        System.out.println("Anzahl Mate-Geräte: " + deviceRegistry.getMateDeviceCount());
+//
+//        //sensegate-*
+//        try {
+//            System.out.println("Soll-Status Downlink: " + payloadData.getStatuses());
+//            System.out.println("Get TimeStamp" + payloadData.getTimestamp());
+//
+//            // === 1. Soll-Status Payload vorbereiten ===
+//            List<List<Integer>> sollStatusList = payloadData.getStatuses().stream()
+//                    .map(statusEntry -> Arrays.asList(
+//                            statusEntry.get(0), // GateID
+//                            statusEntry.get(1) // Soll-Status
+//                    ))
+//                    .toList();
+//
+//            List<Object> sollStatusPayload = Arrays.asList(
+//                    0,                          // Message Type für Soll-Status
+//                    payloadData.getTimestamp(), // Globaler Timestamp
+//                    2,                          // ServerSide
+//                    0,                          // devicesID
+//                    sollStatusList              // Soll-Status Einträge
+//           );
+//
+//            byte[] sollCbor = cborConverter.toCbor(sollStatusPayload);
+//            String sollBase64 = Base64.getEncoder().encodeToString(sollCbor);
+//
+//            String sollJson = String.format("""
+//      {
+//        "downlinks": [
+//          {
+//            "f_port": 15,
+//            "frm_payload":"%s",
+//            "priority": "NORMAL"
+//          }
+//        ]
+//      }
+//      """, sollBase64);
+//
+//            //sensemate-*
+//            System.out.println("JobTable Downlink: " + sollJson);
+//            mqttPublisher.publishDownlink(sollJson.getBytes(),"v3/testing-area-1@ttn/devices/sensegate-1/down/push");
+//            System.out.println("JobTable Downlink published And job Table is starting");
+//            // === 2. Jobtable Payload vorbereiten ===
+//            List<List<Integer>> jobTableList = payloadData.getStatuses().stream()
+//                    .map(statusEntry -> Arrays.asList(
+//                            statusEntry.get(0), // GateID
+//                            statusEntry.get(2)
+//                    ))
+//                    .toList();
+//
+//            List<Object> jobTablePayload = Arrays.asList(
+//                    3,              // Message Type für Jobtable
+//                    jobTableList    // Jobtable Einträge
+//            );
+//            System.out.println("JobTable list Created");
+//
+//            byte[] jobTableCbor = cborConverter.toCbor(jobTablePayload);
+//            String jobTableBase64 = Base64.getEncoder().encodeToString(jobTableCbor);
+//
+//            String jobTableJson = String.format("""
+//      {
+//        "downlinks": [
+//          {
+//            "f_port": 15,
+//            "frm_payload":"%s",
+//            "priority": "NORMAL"
+//          }
+//        ]
+//      }
+//      """, jobTableBase64);
+//
+//            System.out.println("Jobtable Downlink: " + jobTableJson);
+//            mqttPublisher.publishDownlink(jobTableJson.getBytes(), "v3/testing-area-1@ttn/devices/sensemate-1/down/push");
+//
+//        } catch (Exception e) {
+//            System.err.println("Fehler beim Senden: " + e.getMessage());
+//        }
+//    }
 
-            // === 1. Soll-Status Payload vorbereiten ===
+    public void sendDownlinkToDevice(DownPayload payloadData) {
+        try {
+            System.out.println("Registrierte Gate-Geräte: " + deviceRegistry.getAllGateDevices());
+            System.out.println("Registrierte Mate-Geräte: " + deviceRegistry.getAllMateDevices());
+
+            // === Soll-Status vorbereiten ===
             List<List<Integer>> sollStatusList = payloadData.getStatuses().stream()
-                    .map(statusEntry -> Arrays.asList(
-                            statusEntry.get(0), // GateID
-                            statusEntry.get(1) // Soll-Status
-                    ))
+                    .map(statusEntry -> Arrays.asList(statusEntry.get(0), statusEntry.get(1)))
                     .toList();
 
             List<Object> sollStatusPayload = Arrays.asList(
-                    0,                          // Message Type für Soll-Status
-                    payloadData.getTimestamp(), // Globaler Timestamp
-                    2,                          // ServerSide
-                    0,                          // devicesID
-                    sollStatusList              // Soll-Status Einträge
-           );
+                    0, payloadData.getTimestamp(), 2, 0, sollStatusList
+            );
 
-            byte[] sollCbor = cborConverter.toCbor(sollStatusPayload);
-            String sollBase64 = Base64.getEncoder().encodeToString(sollCbor);
+            String sollJson = encodePayloadToBase64Json(sollStatusPayload);
+            System.out.println("Soll-Status JSON: " + sollJson);
 
-            String sollJson = String.format("""
-      {
-        "downlinks": [
-          {
-            "f_port": 15,
-            "frm_payload":"%s",
-            "priority": "NORMAL"
-          }
-        ]
-      }
-      """, sollBase64);
+            for (String gateDevice : deviceRegistry.getAllGateDevices()) {
+                String topic = mqttProperties.buildDeviceDownlinkTopic(gateDevice);
+                mqttPublisher.publishDownlink(sollJson.getBytes(), topic);
+                System.out.println("Soll-Status gesendet an: " + topic);
+            }
 
-            //sensemate-*
-            System.out.println("Soll-Status Downlink: " + sollJson);
-            mqttPublisher.publishDownlink(sollJson.getBytes(), mqttProperties.getPublishTopic());
-            System.out.println("Soll-Status Downlink published And job Table is starting");
-            // === 2. Jobtable Payload vorbereiten ===
+            // === Jobtable vorbereiten ===
             List<List<Integer>> jobTableList = payloadData.getStatuses().stream()
-                    .map(statusEntry -> Arrays.asList(
-                            statusEntry.get(0), // GateID
-                            statusEntry.get(2)
-                    ))
+                    .map(statusEntry -> Arrays.asList(statusEntry.get(0), statusEntry.get(2)))
                     .toList();
 
-            List<Object> jobTablePayload = Arrays.asList(
-                    3,              // Message Type für Jobtable
-                    jobTableList    // Jobtable Einträge
-            );
-            System.out.println("JobTable list Created");
+            List<Object> jobTablePayload = Arrays.asList(3, jobTableList);
+            String jobTableJson = encodePayloadToBase64Json(jobTablePayload);
+            System.out.println("Jobtable JSON: " + jobTableJson);
 
-            byte[] jobTableCbor = cborConverter.toCbor(jobTablePayload);
-            String jobTableBase64 = Base64.getEncoder().encodeToString(jobTableCbor);
-
-            String jobTableJson = String.format("""
-      {
-        "downlinks": [
-          {
-            "f_port": 15,
-            "frm_payload":"%s",
-            "priority": "NORMAL"
-          }
-        ]
-      }
-      """, jobTableBase64);
-
-            System.out.println("Jobtable Downlink: " + jobTableJson);
-            mqttPublisher.publishDownlink(jobTableJson.getBytes(), mqttProperties.getPublishTopic());
+            for (String mateDevice : deviceRegistry.getAllMateDevices()) {
+                String topic = mqttProperties.buildDeviceDownlinkTopic(mateDevice);
+                mqttPublisher.publishDownlink(jobTableJson.getBytes(), topic);
+                System.out.println("Jobtable gesendet an: " + topic);
+            }
 
         } catch (Exception e) {
-            System.err.println("Fehler beim Senden: " + e.getMessage());
+            System.err.println("Fehler beim Downlink-Senden: " + e.getMessage());
         }
     }
+
+    private String encodePayloadToBase64Json(List<Object> payload) throws Exception {
+    byte[] cbor = cborConverter.toCbor(payload);
+    String base64 = Base64.getEncoder().encodeToString(cbor);
+    return String.format("""
+    {
+      "downlinks": [
+        {
+          "f_port": 15,
+          "frm_payload":"%s",
+          "priority": "NORMAL"
+        }
+      ]
+    }
+    """, base64);
+}
+
+
+
 }

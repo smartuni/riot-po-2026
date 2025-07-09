@@ -33,5 +33,6 @@ public class GateActivityEntity {
 	public GateActivityEntity() {
 
 	}
+
 }
 
