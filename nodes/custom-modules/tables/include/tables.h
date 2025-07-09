@@ -10,8 +10,8 @@
     #include <stdint.h>
 
     #define INVALID_GATE_ID (0xFF)
-    #define MAX_GATE_COUNT (64)
-    #define MAX_SENSE_COUNT (64)
+    #define MAX_GATE_COUNT (128)
+    #define MAX_SENSE_COUNT (20)
 
     #define TARGET_STATE_KEY 0x00
     #define IS_STATE_KEY 0x01

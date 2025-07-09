@@ -253,8 +253,8 @@ void init_new_menu(void){
 
 void reorder_close_by(void){
     int added_cnt = 0;
-    int curr_sig_strength = -120;
-    int last_sig_strenght = INT32_MAX;
+    int8_t curr_sig_strength = -127;
+    int8_t last_sig_strenght = -127;
     while(added_cnt < current_num_gates && last_sig_strenght > MIN_SIGNAL_STRENGTH){
         //find sigstrenght to add
         for (int i=0; i<current_num_gates; i++){
@@ -271,7 +271,7 @@ void reorder_close_by(void){
             }
         }
         last_sig_strenght = curr_sig_strength;
-        curr_sig_strength = -120;
+        curr_sig_strength = -127;
     }
     current_num_close_by = added_cnt;
 }

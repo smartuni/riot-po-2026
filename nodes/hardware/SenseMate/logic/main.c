@@ -22,7 +22,7 @@ char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
 
 int main(void) {
-    ztimer_sleep(ZTIMER_MSEC, 3000);
+    //ztimer_sleep(ZTIMER_MSEC, 3000); if use term activate sleep to see all prints
     init_interrupt();
     init_sound_module();
     init_vibration_module();
@@ -90,8 +90,9 @@ int main(void) {
 
     while (1)
     {
-        ztimer_sleep(ZTIMER_MSEC, 200);
+        ztimer_sleep(ZTIMER_MSEC, 1000);
         //refresh_display();
+        increment_device_timestamp();
     }
     
     printf("Display demo finished.\n");
