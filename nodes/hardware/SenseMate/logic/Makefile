@@ -15,6 +15,8 @@ EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 # development process:
 DEVELHELP ?= 1
 VERBOSE_ASSERT ?= 1
+RIOT_CONFIG_DEVICE_ID ?= 1
+$(info Using device ID: $(RIOT_CONFIG_DEVICE_ID))
 # Some workarounds are needed in order to get the tutorial running on
 # some computers.
 -include ../../../lab_workarounds.mk
@@ -44,7 +46,7 @@ USEMODULE += mate_ble
 
 
 
-CFLAGS += -DDEVICE_ID=1 #Device ID- change when flashing
+CFLAGS += -DDEVICE_ID=$(RIOT_CONFIG_DEVICE_ID) #Device ID- change when flashing
 CFLAGS += -DDEVICE_TYPE=1 #Device Type 
 CFLAGS += -DI2C_DEVICE_IDX=0
 CFLAGS += -DI2C_DISPLAY_ADDR=0x3c
