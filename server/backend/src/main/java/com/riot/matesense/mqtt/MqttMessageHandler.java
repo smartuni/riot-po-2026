@@ -30,7 +30,7 @@ public class MqttMessageHandler {
         this.gateActivityService = gateActivityService;
     }
 
-    public void msgHandlerUplinks(String decodedJson) {
+    public void msgHandlerUplinks(String decodedJson,String deviceName) {
         try {
             JsonNode root = mapper.readTree(decodedJson);
 
@@ -49,14 +49,13 @@ public class MqttMessageHandler {
             }
 
             System.out.println("Verarbeiteter Nachrichtentyp: " + type + " mit Code: " + type.getCode());
-            //TODO RequestStatusChange if works is done
             switch (type) {
                 case IST_STATE -> {
                     for (JsonNode statusNode : root.get("statuses")) {
                         long gateId = statusNode.get("gateId").asLong();
                         int statusCode = statusNode.get("status").asInt();
                         Timestamp timestamp = new Timestamp(statusNode.get("timestamp").asLong());    // GateTime
-
+                        //can be better - maybe but this back in the enum Status
                         Status status;
                             switch (statusCode) {
                                 case 0:
@@ -76,13 +75,19 @@ public class MqttMessageHandler {
                         try {
                             //update Existing Gate
                             GateEntity existingGate = gateService.getGateEntityById(gateId);
-                            int confidence = existingGate.getConfidence();
+                            if(Math.abs(timestamp.getTime() - existingGate.getLastTimeStamp().getTime()) < 500){
+                                System.out.println("Timestamp are Equal");
+                                System.out.println("GateID:" + gateId + "Timestamp" + timestamp.getTime());
+                                continue;
+                            }
+//                            int confidence = existingGate.getConfidence();
                             // existingGate.setStatus(status);
 
 
                             gateService.changeGateStatus(gateId,status, 1);
                             gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "Gate has changed to status " + status.toString(), null));
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
+                            System.out.println("getlasttimestamp:" + existingGate.getLastTimeStamp().getTime());
                         } catch (GateNotFoundException e) {
                             //add new Gate
 
@@ -90,6 +95,8 @@ public class MqttMessageHandler {
                             GateEntity newGate = new GateEntity(gateId,status, timestamp, 93.044, 51.222, "HAW", "none", 100, "none", 3  ); //Need to be changed
                             gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
+                            System.out.println("GateID:" + gateId + "Timestamp" + timestamp.getTime());
+
                         }
                     }
                 }
@@ -97,8 +104,8 @@ public class MqttMessageHandler {
                 case SEEN_TABLE_STATE -> {
                     for (JsonNode statusNode : payload) {
                         long gateId = statusNode.get("gateId").asLong();        // GateID
-                        long gateTime = statusNode.get("gateTime").asLong();    // GateTime
                         int statusCode = statusNode.get("status").asInt();      // Status
+                        Timestamp gateTime = new Timestamp(statusNode.get("gateTime").asLong());    // GateTime
                         int senseMateId = statusNode.get("senseMateId").asInt(); // SenseMateID
 
                         Status status;
@@ -124,8 +131,8 @@ public class MqttMessageHandler {
 
                         gateService.changeGateStatus(gateId, status, 2);
                         System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
-                                ", GateTime: " + gateTime +
                                 ", Status: " + status +
+                                ", GateTime: " + gateTime +
                                 ", SenseMateID: " + senseMateId);
 
                     }

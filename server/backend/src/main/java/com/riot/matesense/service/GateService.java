@@ -288,8 +288,18 @@ public class GateService {
             // if (targetStatus.equals("REQUESTED_NONE") || targetStatus.equals("NONE")) {
             //     gate.setStatus(null);
             // } else {
-        System.out.println("StatusCode: " + status);
+        System.out.println("status_name: " + status.name());
+        System.out.println("StatusCode: " + gate.getPendingJob());
 
+        if (status == Status.OPENED) {
+            if ("PENDING_OPEN".equals(gate.getPendingJob())) {
+                gate.setPendingJob("None");
+            }
+        } else if(status == Status.CLOSED){
+            if ("PENDING_CLOSE".equals(gate.getPendingJob())) {
+                gate.setPendingJob("None");
+            }
+        }
 
         System.out.println("Status: " + status);
         gate.setStatus(status);
@@ -301,7 +311,6 @@ public class GateService {
         gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
         gateRepository.save(gate);
     }
-
 
     public List<GateForDownlink> getAllGatesForDownlink() {
         List<GateEntity> gates = gateRepository.findAll();
@@ -351,7 +360,8 @@ public class GateService {
             gate.setId(getIdForGate());
         }
         gate.setPriority(3);
-        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        gate.setLastTimeStamp(gate.getLastTimeStamp());
+
         gateRepository.save(gate);
         messagingTemplate.convertAndSend("/topic/gates/add", gate);
         // Notify all clients about the new gate

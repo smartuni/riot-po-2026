@@ -1,9 +1,8 @@
 mqtt:
   broker: ssl://eu1.cloud.thethings.network:8883
   clientId: mqtt-client-1234
-  username: riot-application-test-paul@ttn
-  applicationId: riot-application-test-paul
-  password: NNSXS.IRPLZAOEP3BLYGHVDBVW34MIUWBQFJIET4LT4TI.WHYR5BN2532MGXTPEKGVMSCHTFZO3TOYDHAFLTBZUC6OP6BID4QA
-  subscribeTopic: v3/riot-application-test-paul@ttn/devices/+/up
-  publishTopic: v3/riot-application-test-paul@ttn/devices/my-new-test-device-pl-2000/down/push
-
+  username: testing-area-1@ttn
+  applicationId: testing-area-1
+  password: NNSXS.VKMASX5X3WED37I7GU3DYXUVOMYZ64WI74PJRMI.LX7X2UY63XQNJUOKBTJ42A5VTDXRIGZ426PTI7CPYSVU2VMU2CZQ
+  subscribeTopic: v3/testing-area-1@ttn/devices/+/up
+  publishTopic: v3/testing-area-1@ttn/devices/test-mqtt-1/down/push

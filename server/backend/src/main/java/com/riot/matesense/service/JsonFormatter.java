@@ -105,7 +105,7 @@ public class JsonFormatter {
                 int gateTime = statusNode.get("gateTime").asInt();
                 int status = statusNode.get("status").asInt();
                 int senseMateId = statusNode.get("senseMateId").asInt();
-                entries.add(Arrays.asList(gateId, gateTime, status, senseMateId));
+                entries.add(Arrays.asList(gateId,status,gateTime, senseMateId));
             }
         } else {
             throw new IllegalArgumentException("Unbekannter MessageType: " + messageType);

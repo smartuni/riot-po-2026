@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-
+//TODO do timestamp for the targetTable
 //small example for some downlinks
 //TODO: need to connect downlinks with request from the frontend
 //TODO need to clean up a bit and connect with node team to
@@ -22,13 +22,11 @@ public class DownlinkService {
     private final CborConverter cborConverter;
     private final MqttProperties mqttProperties;
     private final GateRepository gateRepository;
-    // private final JobTableService jobTableService;
 
     public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter, MqttProperties mqttProperties, GateRepository gateRepository) {
         this.mqttPublisher = mqttPublisher;
         this.cborConverter = cborConverter;
         this.mqttProperties = mqttProperties;
-        // this.jobTableService = jobTableService;
         this.gateRepository = gateRepository;
     }
 
@@ -36,6 +34,7 @@ public class DownlinkService {
         //sensegate-*
         try {
             System.out.println("Soll-Status Downlink: " + payloadData.getStatuses());
+            System.out.println("Get TimeStamp" + payloadData.getTimestamp());
 
             // === 1. Soll-Status Payload vorbereiten ===
             List<List<Integer>> sollStatusList = payloadData.getStatuses().stream()

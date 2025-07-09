@@ -52,20 +52,27 @@ public class TTNMqttListener {
                     try {
                         String payloadStr = new String(message.getPayload());
                         JsonNode root = mapper.readTree(payloadStr);
+                        JsonNode devicePath = root.path("end_device_ids");
                         JsonNode uplink = root.path("uplink_message");
 
                         if (!uplink.isMissingNode()) {
                             JsonNode frmPayloadNode = uplink.path("frm_payload");
-                            if (!frmPayloadNode.isMissingNode()) {
-                                String frmPayloadBase64 = frmPayloadNode.asText();
-                                System.out.println("frm_payload erkannt: " + frmPayloadBase64);
+                            if (!devicePath.isMissingNode()) {
+                                JsonNode device_id = devicePath.path("device_id");
+                                String device_name = device_id.asText();
+                                System.out.println("Das ist mein device: " + device_id);
 
-                                List<Object> decodedList = converter.decodeBase64ToList(frmPayloadBase64);
-                                String formattedJson = jsonFormatter.toJsonFormat(decodedList);
+                                if (!frmPayloadNode.isMissingNode()) {
+                                    String frmPayloadBase64 = frmPayloadNode.asText();
+                                    System.out.println("frm_payload erkannt: " + frmPayloadBase64);
 
-                                System.out.println("Dekodiertes JSON: " + formattedJson);
+                                    List<Object> decodedList = converter.decodeBase64ToList(frmPayloadBase64);
+                                    String formattedJson = jsonFormatter.toJsonFormat(decodedList);
 
-                                mqttMessageHandler.msgHandlerUplinks(formattedJson);
+                                    System.out.println("Dekodiertes JSON: " + formattedJson);
+
+                                    mqttMessageHandler.msgHandlerUplinks(formattedJson, device_name);
+                                }
                             }
                         }
                     } catch (Exception e) {
