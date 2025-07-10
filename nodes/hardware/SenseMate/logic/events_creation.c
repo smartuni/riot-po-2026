@@ -89,8 +89,8 @@ void event_handlerNews(event_t *event)
         puts("got news");
         start_vibration();
         update_menu_from_tables();
-        downlink_reveived_sound();
-        //ble_reveived_sound();
+        event_post(&sound_queue, &downlink_sound_event);
+        //downlink_reveived_sound();
         event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
         stop_vibration();
     }else{
@@ -105,7 +105,8 @@ void event_handlerBleNews(event_t *event)
         puts("got ble news");
         start_vibration();
         update_menu_from_tables();
-        ble_reveived_sound();
+        event_post(&sound_queue, &ble_received_sound_event);
+        //ble_reveived_sound();
         event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
         stop_vibration();
     }else{

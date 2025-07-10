@@ -5,6 +5,8 @@
 #include "periph/gpio.h"
 #include "thread.h"
 #include "vibrationModule.h"
+#include "event/timeout.h"
+#include "event/thread.h"
 
 
 gpio_t sound = GPIO_PIN(0, 8);
@@ -15,8 +17,10 @@ bool ble_received_toplay = false;
 bool ble_send_toplay = false;
 bool uplink_sent_toplay = false;
 bool downlink_received_toplay = false;
+event_queue_t sound_queue;
 
 char thread_stack[THREAD_STACKSIZE_DEFAULT];
+
 
 void play_sound(int frequency, int duration_ms) {
     // Play sound at a specific frequency for a given duration
@@ -29,6 +33,7 @@ void play_sound(int frequency, int duration_ms) {
     }
     gpio_clear(sound); // Ensure sound is off after playing
 }
+
 
 void internal_startup(void){
     start_vibration();
@@ -78,10 +83,49 @@ void internal_ble_send(void) {
     gpio_clear(sound);
 }
 
+static void sound_handler(event_t *event){
+    puts("Sound handler called.");
+    if(event == &start_sound_event){
+        internal_startup();
+        puts("Playing startup sound.");
+    }
+    else if(event == &downlink_sound_event){
+        internal_downlink_reveived();
+        puts("Playing downlink sound.");
+    }
+    else if(event == &uplink_sound_event){
+        internal_uplink_send();
+    }
+    else if(event == &ble_received_sound_event){
+        internal_ble_received();
+    }
+    else if(event == &ble_sent_sound_event){
+        internal_ble_send();
+    }
+    else {
+        puts("Unknown sound event received.");
+    }
+}
+
+event_t start_sound_event = { .handler = sound_handler };
+event_t downlink_sound_event = { .handler = sound_handler };
+event_t uplink_sound_event = { .handler = sound_handler };
+event_t ble_received_sound_event = { .handler = sound_handler };
+event_t ble_sent_sound_event = { .handler = sound_handler };
+
+
+
+
 void* thread_sound_function(void *arg) {
     (void)arg; // Unused argument
+    
     while(1){
-        ztimer_sleep(ZTIMER_MSEC, 500); // Sleep for 1 second
+        puts("Sound thread running.");
+        event_loop(&sound_queue);
+        //event_t *ev = event_wait(&sound_queue);
+        //ev->handler(ev);
+        puts("Sound thread event loop finished.");
+        /*ztimer_sleep(ZTIMER_MSEC, 500); // Sleep for 1 second
         if(thread_job){
             thread_job = false;
             if(startup_toplay){
@@ -105,7 +149,7 @@ void* thread_sound_function(void *arg) {
                 downlink_received_toplay = false;
                 internal_downlink_reveived();
             }
-        }
+        }*/
     }
 }
 
@@ -115,15 +159,17 @@ void init_sound_module(void) {
     // Initialize the sound module
     gpio_init(sound, sound_mode);
     gpio_clear(sound);
-
+    event_queue_init(&sound_queue); // Initialize the sound event queue
     thread_create(thread_stack, sizeof(thread_stack), THREAD_PRIORITY_MAIN - 1,
                   THREAD_CREATE_STACKTEST, thread_sound_function, NULL, "sound_thread");
     printf("Sound module initialized.\n");
 }
 
 void downlink_reveived_sound(void) {
-    downlink_received_toplay = true;
-    thread_job = true;
+    event_post(&sound_queue, &downlink_sound_event);
+    puts("Downlink sound event posted.");
+    //downlink_received_toplay = true;
+    //thread_job = true;
 }
 
 void uplink_sent_sound(void) {
@@ -142,6 +188,8 @@ void ble_sent_sound(void) {
 }
 
 void startup_sound(void){
-    startup_toplay = true;
-    thread_job = true;
+    event_post(&sound_queue, &start_sound_event);
+    puts("Startup sound event posted.");
+    //startup_toplay = true;
+    //thread_job = true;
 }
