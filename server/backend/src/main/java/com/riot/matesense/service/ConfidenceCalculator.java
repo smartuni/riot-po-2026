@@ -1,142 +1,108 @@
 package com.riot.matesense.service;
 
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component; // ignore this file
-
+import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.enums.ConfidenceQuality;
-import lombok.Getter;
+import com.riot.matesense.enums.MsgType;
 
-@Component
-public class ConfidenceCalculator //retooled to work within existing framework
+public class ConfidenceCalculator
 {
-    @Getter
-    int confidence;
-    boolean ignoreGate;
-    boolean gateDetector;
-    Status[] gateStatusArray = new Status[5];
-    Status[] workerStatusArray = new Status[5];
-
-    public ConfidenceCalculator() //initialize an empty list of reports and set confidence to max
+    public ConfidenceCalculator()
     {
-        confidence = 100;
-        ignoreGate = false;
-        gateDetector = false;
-        for(int i = 0; i < 5; i++)
-        {
-            gateStatusArray[i] = Status.NONE;
-            workerStatusArray[i] = Status.NONE;
-        }
+
     }
 
-    public void shuffleConfidence(Status status) // will need to update once we know the origin of a report
+    public void changeConfidence(GateEntity entity, int passedConfidence, MsgType reportType) // redesigned: now uses a universal calculator, each gate stores its confidence
     {
-        for(int i = 1; i < 5; i++)
-        {
-            gateStatusArray[i] = gateStatusArray[i-1]; // push older reports to the back of the array
-            workerStatusArray[i] = workerStatusArray[i-1];
-        }
+        System.out.println("Passed confidence: " + passedConfidence);
+        int confidence;
+        Status gateStatus = entity.getStatus(); // retrieves status of the gate (already updated in MqttMessageHandler)
 
-        gateStatusArray[0] = status; // insert most recent report to the front of the array
-        workerStatusArray[0] = status;
-    }
+        Status[] gateArray = entity.getGateStatusArray() != null ? entity.getGateStatusArray() : new Status[0];
+        Status[] workerArray = entity.getWorkerStatusArray() != null ? entity.getWorkerStatusArray() : new Status[0];
 
-    public int updateConfidence(Status status)
-    {
-        if (status == Status.UNKNOWN || status == Status.NONE) //set confidence to max if status doesn't exist or is reported as unknown
-        {
-            confidence = 100; //(if we don't know, we're sure that we don't know)
+        if (gateStatus == Status.UNKNOWN || gateStatus == Status.NONE) { // if we don't know the status of the gate, we can be sure that we don't know, set confidence to 100
+            confidence = 100;
+            System.out.println("Gate status is unknown/none. Setting confidence to max (100).");
         }
         else
         {
-            for(int i = 0; i < 5; i++)
+            confidence = passedConfidence; // retrieve confidence from gate
+            int iterations = Math.min(5, Math.min(gateArray.length, workerArray.length));
+
+            for (int i = 0; i < iterations; i++) // iterate through reports
             {
-                int gateDelta = 10 - (2 * i); // if gate is flagged as faulty, ignore its reports
-                int workerDelta = 20 - (4 * i);
-
-                if (!ignoreGate) 
+                if(reportType == MsgType.IST_STATE) // if the report is from a gate sensor
                 {
-                    if (status == gateStatusArray[i] && gateStatusArray[i] != Status.NONE)
+                    int delta = 10 - (2 * i);
+                    if (gateStatus == gateArray[i] && gateArray[i] != Status.NONE)
                     {
-                        confidence += gateDelta; // if new a report matches an older report, increase confidence
+                        confidence += delta; // if new a report matches an older report, increase confidence
                     }
-                    else
+                    else if (gateArray[i] != Status.NONE)
                     {
-                        confidence -= gateDelta; // otherwise, decrease confidence
+                        confidence -= delta; // otherwise, decrease confidence
                     }
                 }
-
-                if (status == workerStatusArray[i] && workerStatusArray[i] != Status.NONE)
+                else if(reportType == MsgType.SEEN_TABLE_STATE) // if the report is from a worker
                 {
-                    confidence += workerDelta;
+                    int delta = 20 - (4 * i);
+                    if (gateStatus == workerArray[i] && workerArray[i] != Status.NONE)
+                    {
+                        confidence += delta;
+                    }
+                    else if (workerArray[i] != Status.NONE)
+                    {
+                        confidence -= delta;
+                    }
                 }
-                else
+                else // update not originating from a gate or worker
                 {
-                    confidence -= workerDelta;
+                    break;
                 }
             }
         }
 
-        shuffleConfidence(status);
+        entity.shuffleReports(gateStatus, reportType); // give older reports less sway for future calculations
 
-        confidence = Math.max(0, confidence); // normalize confidence, between 0 and 100
-        confidence = Math.min(100, confidence);
+        confidence = Math.max(0, Math.min(100, confidence)); // normalize confidence (keep within 0-100)
+        entity.setConfidence(confidence);
+        System.out.println("Final normalized confidence: " + confidence);
 
-        return confidence;
-    }
-
-    @Scheduled(fixedRate = 21600000) // six hours in milliseconds
-    public void subtractConfidence()
-    {
-        confidence -= 5; //subtract five percent every six hours
-    }
-
-    public ConfidenceQuality determineQuality() { // given a confidence number, report a keyword for the confidence (Qualitative, not just a number)
-        
-        if (confidence >= 90){
-            return ConfidenceQuality.HIGH;
+        if (confidence >= 90){ // set a keyword depending on confidence level
+            entity.setQuality(ConfidenceQuality.HIGH);
         }
-
-        else if (confidence >= 80 && confidence < 90){
-            return ConfidenceQuality.MED_HIGH;
+        else if (confidence >= 80){
+            entity.setQuality(ConfidenceQuality.MED_HIGH);
         }
-
-        else if (confidence >= 70 && confidence < 80){
-            return ConfidenceQuality.MED;
+        else if (confidence >= 70){
+            entity.setQuality(ConfidenceQuality.MED);
         }
-
-        else if (confidence >= 60 && confidence < 70){
-            return ConfidenceQuality.MED_LOW;
+        else if (confidence >= 60){
+            entity.setQuality(ConfidenceQuality.MED_LOW);
         }
-
         else {
-            return ConfidenceQuality.LOW;
+            entity.setQuality(ConfidenceQuality.LOW);
         }
 
-    }
+        System.out.println("Set quality: " + entity.getQuality());
 
-    public boolean isGateFaulty () 
-    {
-        if (gateStatusArray[0] == workerStatusArray [0] && gateStatusArray [1] == workerStatusArray [0])
-        {
-            gateDetector = false;
+        // Pending Job Check - only if confidenc is 100% set Pending to none!
+        String pendingJob = entity.getPendingJob();
+        if (entity.getQuality() == ConfidenceQuality.HIGH) {
+            if (gateStatus == Status.OPENED && "PENDING_OPEN".equals(pendingJob)) {
+                System.out.println("High confidence and gate is OPENED with PENDING_OPEN. Clearing pending job.");
+                entity.setPendingJob("None");
+            } else if (gateStatus == Status.CLOSED && "PENDING_CLOSE".equals(pendingJob)) {
+                System.out.println("High confidence and gate is CLOSED with PENDING_CLOSE. Clearing pending job.");
+                entity.setPendingJob("None");
+            } else {
+                System.out.println("High confidence but no matching pending job state. PendingJob: " + pendingJob + ", GateStatus: " + gateStatus);
+            }
+        } else {
+            System.out.println("Confidence not high enough to modify pending job. Quality: " + entity.getQuality());
         }
 
-        else 
-        {
-             gateDetector = true;
-        }
-        return gateDetector;
-
+        System.out.println("Final pending job state: " + entity.getPendingJob());
     }
-
-    public void receiveReports (boolean command) 
-    {
-        ignoreGate = command;
-    }
-
 }
-
-
-
-

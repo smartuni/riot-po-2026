@@ -64,36 +64,18 @@ public class MqttMessageHandler {
                         long gateId = statusNode.get("gateId").asLong();
                         int statusCode = statusNode.get("status").asInt();
                         Timestamp timestamp = new Timestamp(statusNode.get("timestamp").asLong());    // GateTime
-                        //can be better - maybe but this back in the enum Status
-                        Status status;
-                            switch (statusCode) {
-                                case 0:
-                                    status = Status.CLOSED;
-                                break;
-                                case 1:
-                                    status = Status.OPENED;
-                                break;
-                                case 2:
-                                    status = Status.UNKNOWN;
-                                break;
-                                default:
-                                    status = Status.NONE;
-                                break;
-                            }
+                        Status status = Status.fromCode(statusCode);
 
                         try {
                             //update Existing Gate
                             GateEntity existingGate = gateService.getGateEntityById(gateId);
-                            if(Math.abs(timestamp.getTime() - existingGate.getLastTimeStamp().getTime()) < 500){
+                            if(Math.abs(timestamp.getTime() - existingGate.getLastTimeStamp().getTime()) < 10){
                                 System.out.println("Timestamp are Equal");
                                 System.out.println("GateID:" + gateId + "Timestamp" + timestamp.getTime());
                                 continue;
                             }
-//                            int confidence = existingGate.getConfidence();
-                            // existingGate.setStatus(status);
 
-
-                            gateService.changeGateStatus(gateId,status, 1);
+                            gateService.changeGateStatus(gateId, status, MsgType.IST_STATE);
                             gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "Gate has changed to status " + status.toString(), null));
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
@@ -132,11 +114,7 @@ public class MqttMessageHandler {
                                 break;
                         }
 
-                        GateEntity existingGate = gateService.getGateEntityById(gateId);
-
-                        int confidence = existingGate.getConfidence();
-
-                        gateService.changeGateStatus(gateId, status, 2);
+                        gateService.changeGateStatus(gateId, status, MsgType.SEEN_TABLE_STATE);
                         System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
                                 ", Status: " + status +
                                 ", GateTime: " + gateTime +
