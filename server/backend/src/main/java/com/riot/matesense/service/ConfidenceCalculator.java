@@ -34,7 +34,7 @@ public class ConfidenceCalculator
             {
                 if(reportType == MsgType.IST_STATE) // if the report is from a gate sensor
                 {
-                    int delta = 10 - (5 * i);
+                    int delta = 10 - (5 * i); // calculates how much consideration a report gets, newer reports get more sway
                     if (gateStatus == gateArray[i] && gateArray[i] != Status.NONE)
                     {
                         confidence += delta; // if new a report matches an older report, increase confidence
