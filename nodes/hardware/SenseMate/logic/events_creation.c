@@ -7,13 +7,20 @@
 #include "new_menu.h"
 #include "soundModule.h"
 #include "vibrationModule.h"
-
+#include "tables.h"
+#define MIN_SIGNAL_STRENGTH -100 // Minimum signal strength for events
+#define DECREMENT_RSSI 10 // decrement rssi by 10
+#define RSSI_DECREMENT_TIMEOUT 5000 // in milliseconds
 
 
 bool event_accepted = true;
 event_timeout_t reactivate;
+event_timeout_t decrement_rssi_timeout;
 event_queue_t events_creation_queue;
 static char thread_stack[THREAD_STACKSIZE_DEFAULT];
+static timestamp_entry timestamp_tbl_entry_buf;
+void event_handler_decrement_rssi_timeout(event_t *event);
+event_t event_rssi_timeout = { .handler = event_handler_decrement_rssi_timeout };
 
 void* thread_events_function(void *arg) {
     (void)arg; // Unused argument
@@ -28,9 +35,12 @@ void* thread_events_function(void *arg) {
 
 void init_event(void){
     event_timeout_ztimer_init(&reactivate, ZTIMER_MSEC, &events_creation_queue, &event_reactivate);
-
+    
+    event_timeout_ztimer_init(&decrement_rssi_timeout, ZTIMER_MSEC, &events_creation_queue, &event_rssi_timeout);
     thread_create(thread_stack, sizeof(thread_stack), THREAD_PRIORITY_MAIN - 1,
                   THREAD_CREATE_STACKTEST, thread_events_function, NULL, "events_creation_thread");
+    
+    event_timeout_set(&decrement_rssi_timeout, RSSI_DECREMENT_TIMEOUT); // Set a timeout for the next decrement
 }
 
 
@@ -39,6 +49,25 @@ void event_callback (void *arg)
     (void) arg; /* the argument is not used */
     ztimer_sleep(ZTIMER_MSEC, 500); // Wait for 0.1 second before accepting the next event
     event_accepted = true; // Allow the event handler to be called again
+}
+
+void event_handler_decrement_rssi_timeout(event_t *event)
+{
+    (void) event;   /* Not used */
+    event_accepted = true; // Allow the event handler to be called again
+    for(int i = 0; i< MAX_GATE_COUNT; i++){
+        if(get_timestamp_entry(i, &timestamp_tbl_entry_buf)!=TABLE_ERROR_NOT_FOUND){
+            if(timestamp_tbl_entry_buf.rssi > MIN_SIGNAL_STRENGTH){
+                timestamp_tbl_entry_buf.rssi -= DECREMENT_RSSI; //decrement rssi by 10
+            }
+            set_timestamp_entry(&(timestamp_entry){
+                .gateID = timestamp_tbl_entry_buf.gateID,
+                .timestamp = timestamp_tbl_entry_buf.timestamp,
+                .rssi = timestamp_tbl_entry_buf.rssi
+            });
+        };
+    }
+    event_timeout_set(&decrement_rssi_timeout, RSSI_DECREMENT_TIMEOUT); // Set a timeout for the next decrement
 }
 
 void event_handler_reactivate(event_t *event)

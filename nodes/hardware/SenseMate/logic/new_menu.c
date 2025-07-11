@@ -1147,7 +1147,7 @@ void display_header(display_entry *entry){
             display_menu_header("SenseMate ID ", SENSEMATE_ID, true);
             break;
         case GATE_OVERVIEW:
-            display_menu_header("all Gates: ", current_num_gates, true);
+            display_menu_header("All Gates: ", current_num_gates, true);
             break;
         case JOB_PRIOS:
             display_menu_header("Jobs: ", current_num_jobs, true);
@@ -1184,7 +1184,7 @@ void display_main(display_entry *entry, bool upper){
     bool use_num = true;
     switch (entry->subentry){
         case GATES:
-            text = "all Gates: ";
+            text = "All Gates: ";
             displayed_num = current_num_gates;
             more_content = !upper;
             break;
