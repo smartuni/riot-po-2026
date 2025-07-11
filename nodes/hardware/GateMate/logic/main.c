@@ -22,7 +22,6 @@ int main(void){
     init__door_interrupt();
     puts("init tables");
     init_tables();
-    setTimestamp(0);
     
     puts("reading initial door state");
     uint8_t inital_door_state = initial_door_state();
