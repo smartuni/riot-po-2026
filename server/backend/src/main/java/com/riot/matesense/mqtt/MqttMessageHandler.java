@@ -64,25 +64,7 @@ public class MqttMessageHandler {
                         long gateId = statusNode.get("gateId").asLong();
                         int statusCode = statusNode.get("status").asInt();
                         Timestamp timestamp = new Timestamp(statusNode.get("timestamp").asLong());    // GateTime
-                        //can be better - maybe but this back in the enum Status
                         Status status = Status.fromCode(statusCode);
-
-                        /*
-                        switch (statusCode) {
-                            case 0:
-                                status = Status.CLOSED;
-                            break;
-                            case 1:
-                                status = Status.OPENED;
-                            break;
-                            case 2:
-                                status = Status.UNKNOWN;
-                            break;
-                            default:
-                                status = Status.NONE;
-                            break;
-                        }
-                        */
 
                         try {
                             //update Existing Gate
