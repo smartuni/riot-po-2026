@@ -24,24 +24,25 @@
 
 #define MATE_BLE_TX_POWER_UNDEF (127)
 
-#define MATE_BLE_GAP_NAME_BUF_SIZE (300)
-#define MATE_BLE_ADV_PKT_BUFFER_SIZE BLE_MAX_PAYLOAD_SIZE
 #define MATE_BLE_NIMBLE_INSTANCE (0)
 
 /* The scan window defines how long to listen on the currently
  * configured advertisement channel. */
-#define MATE_BLE_SCAN_WINDOW_MS    30
+#define MATE_BLE_SCAN_WINDOW_MS 30
 
 /* The scan interval defines how long to wait before starting the next
  * scan window an the next advertisement channel. Setting the
  * MATE_BLE_SCAN_INTERVAL_MS = MATE_BLE_SCAN_WINDOW_MS results in continuous scanning.*/
-#define MATE_BLE_SCAN_INTERVAL_MS    30
+#define MATE_BLE_SCAN_INTERVAL_MS 30
+#define MATE_BLE_ADV_START_MS 20
+#define MATE_BLE_ADV_STOP_MS 2000
 
-#define MATE_BLE_THRESHOLD_MAX  (128)
-#define MATE_BLE_THRESHOLD_MIN  (-100)
+#define MATE_BLE_THRESHOLD_MAX  (127)
+#define MATE_BLE_THRESHOLD_MIN  (-128)
+
 
 static uint8_t id_addr_type;
-static uint8_t init = 0;
+static uint8_t ble_initialized = 0;
 
 static const char adv_name[] = BLE_ADVERTISE_NAME;
 
@@ -64,9 +65,11 @@ static const uint8_t _custom_msd_marker_pattern[] = {
 #define MATE_BLE_MSD_PAYLOAD_OFFS (sizeof(_company_id_code) + \
                           sizeof(_custom_msd_marker_pattern))
 
-static uint8_t encode_outbuf[BLE_MAX_PAYLOAD_SIZE + 64];
-static uint8_t send_buffer[BLE_MAX_PAYLOAD_SIZE * 10];
-static uint8_t recv_buffer[BLE_MAX_PAYLOAD_SIZE * 10];
+static uint8_t encode_outbuf[MATE_BLE_MAX_PAYLOAD_SIZE];
+static uint8_t send_buffer[MATE_BLE_MAX_CBOR_PACKAGE_SIZE * MATE_BLE_MAX_CBOR_PACKAGE_COUNT];
+static uint8_t send_package_size_buffer[MATE_BLE_MAX_CBOR_PACKAGE_COUNT];
+static uint8_t recv_buffer[MATE_BLE_MAX_CBOR_PACKAGE_SIZE * MATE_BLE_MAX_CBOR_PACKAGE_COUNT];
+static uint8_t recv_package_size_buffer[MATE_BLE_MAX_CBOR_PACKAGE_COUNT];
 uint8_t verify_outbuf[1024];  // ausreichend groß dimensionieren //TODO
 
 static sem_t adv_done_sem;
@@ -109,12 +112,12 @@ static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payloa
 static int ble_gap_event_cb(struct ble_gap_event *event, void *arg) 
 {
     (void)arg;
-switch (event->type) {
-    case BLE_GAP_EVENT_ADV_COMPLETE:
-        sem_post(&adv_done_sem);
-        break;
-    default:
-        break;
+    switch (event->type) {
+        case BLE_GAP_EVENT_ADV_COMPLETE:
+            sem_post(&adv_done_sem);
+            break;
+        default:
+            break;
     }
     return 0;
 }
@@ -145,8 +148,8 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     params.tx_power = MATE_BLE_TX_POWER_UNDEF;
     params.sid = 0;
     // min/max advertising interval converted from ms to 0.625ms units
-    params.itvl_min = BLE_GAP_ADV_ITVL_MS(20);
-    params.itvl_max = BLE_GAP_ADV_ITVL_MS(20);
+    params.itvl_min = BLE_GAP_ADV_ITVL_MS(MATE_BLE_ADV_START_MS);
+    params.itvl_max = BLE_GAP_ADV_ITVL_MS(MATE_BLE_ADV_STOP_MS);
 
     // configure the nimble instance
     rc = ble_gap_ext_adv_configure(MATE_BLE_NIMBLE_INSTANCE, &params, NULL, ble_gap_event_cb, NULL);
@@ -216,10 +219,10 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
     bluetil_ad_init(&rec_ad, ad_ro, len, len);
 
     char name[BLE_ADV_PDU_LEN + 1] = {0};
-    int res = bluetil_ad_find_str(&rec_ad, BLE_GAP_AD_NAME,
+    int table_result = bluetil_ad_find_str(&rec_ad, BLE_GAP_AD_NAME,
                                 name, sizeof(name));
     // Output name, address, and data of the advertisement
-    if (res == BLUETIL_AD_OK) {
+    if (table_result == BLUETIL_AD_OK) {
         printf("\n\"%s\" @", name);
     }
     nimble_addr_print(addr);
@@ -228,8 +231,8 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
 
     // output our payload marke# BUILD_IN_DOCKER ?= 1d by our custom byte pattern
     bluetil_ad_data_t msd;
-    res = bluetil_ad_find(&rec_ad, BLE_GAP_AD_VENDOR, &msd);
-    if (res == BLUETIL_AD_OK) {
+    table_result = bluetil_ad_find(&rec_ad, BLE_GAP_AD_VENDOR, &msd);
+    if (table_result == BLUETIL_AD_OK) {
         uint8_t *marker = &msd.data[sizeof(_company_id_code)];
         if (memcmp(marker, _custom_msd_marker_pattern,
                 sizeof(_custom_msd_marker_pattern)) == 0) {
@@ -239,10 +242,8 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
             printf("Received: %.*s\n", pl, payload);
 
             ble_metadata_t metadata = {};
-            metadata.message_type = 187;
             metadata.rssi = info->rssi;
 
-            
             size_t verify_payload_len = 0;
             int verify_result = verify_decode(payload, pl,verify_outbuf, sizeof(verify_outbuf),&verify_payload_len);
             if(verify_result == 0) {
@@ -278,7 +279,7 @@ int ble_init(void)
     nimble_scanner_init(&params, nimble_scan_evt_cb);
     // start the scanner
     nimble_scanner_start();
-    init = 1;
+    ble_initialized = 1;
     return BLE_SUCCESS;
 }
 
@@ -297,13 +298,18 @@ int ble_send(cbor_buffer* cbor_packet)
 
     int packet_offset = 0;
     for (int i = 0; i < cbor_packet->cbor_size; i++) {
-
         // --- Encode code ---
         uint8_t *encoded_ptr = NULL;
         size_t encoded_len = 0;
-        sign_payload(cbor_packet->buffer + packet_offset, cbor_packet->package_size[i],encode_outbuf,&encoded_ptr, &encoded_len);
+        sign_payload(
+            cbor_packet->buffer + packet_offset, 
+            cbor_packet->package_size[i], 
+            encode_outbuf, 
+            &encoded_ptr, 
+            &encoded_len
+        );
+
         // update the payload with the given message
-        
         start_adv(encoded_ptr, encoded_len);
 
         // Block here until the ADV_COMPLETE event posts the sem
@@ -317,84 +323,93 @@ int ble_send(cbor_buffer* cbor_packet)
     return BLE_SUCCESS;
 }
 
+static void wait_for_ble_init(void)
+{
+    if (!ble_initialized) {
+        printf("ble_send_loop: BLE not initialized\n");
+        while (!ble_initialized) {
+            ztimer_sleep(ZTIMER_MSEC, 100);
+        }
+    }
+}
+
 void* ble_send_loop(void* arg)
 {
-    (void) arg;
-    if (init == 0) {
-        return NULL;
-    }
-    uint8_t stack_package_size[10];
+    (void)arg;
+
+    wait_for_ble_init();
+
     cbor_buffer buffer;
     buffer.buffer = send_buffer;
-    buffer.capacity = BLE_MAX_PAYLOAD_SIZE * 10;
-    buffer.package_size = stack_package_size;
+    buffer.capacity = MATE_BLE_MAX_CBOR_PACKAGE_SIZE * MATE_BLE_MAX_CBOR_PACKAGE_COUNT;
+    buffer.package_size = send_package_size_buffer;
 
-    while (true) {
-        int count = target_state_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
-        if (count > 0) {
-            ble_send(&buffer);
-        }
+    typedef int (*cbor_fn_t)(int, cbor_buffer *);
+    static const cbor_fn_t cbor_fns[] = {
+        target_state_table_to_cbor_many,
+        is_state_table_to_cbor_many,
+        seen_status_table_to_cbor_many
+    };
 
-        count = is_state_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
-        if (count > 0) {
-            ble_send(&buffer);
+    for (;;) {
+        for (size_t i = 0; i < sizeof(cbor_fns) / sizeof(*cbor_fns); ++i) {
+            int count = cbor_fns[i](MATE_BLE_MAX_CBOR_PACKAGE_SIZE, &buffer);
+            if (count > 0) {
+                ble_send(&buffer);
+            }
         }
-        
-        count = seen_status_table_to_cbor_many(BLE_MAX_PAYLOAD_SIZE, &buffer);
-        if (count > 0) {
-            ble_send(&buffer);
-        }
-
         ztimer_sleep(ZTIMER_MSEC, BLE_SEND_INTERVAL);
     }
 }
 
 void* ble_receive_loop(void* args)
 {
-    if (init == 0) {
-        return NULL;
-    }
+    ble_received_thread_args_t *thr_args = (ble_received_thread_args_t *)args;
+
+    wait_for_ble_init();
     
-    uint8_t stack_package_size[10];
     cbor_buffer buffer;
     buffer.buffer = recv_buffer;
-    buffer.capacity = BLE_MAX_PAYLOAD_SIZE * 10;
-    buffer.package_size = stack_package_size;
+    buffer.capacity = MATE_BLE_MAX_CBOR_PACKAGE_SIZE * MATE_BLE_MAX_CBOR_PACKAGE_COUNT;
+    buffer.package_size = recv_package_size_buffer;
     
     ble_metadata_t metadata;
-    ble_received_thread_args_t* thr_args = (ble_received_thread_args_t *)args; 
+
     while (true) {
         if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
-            printf("BLE: receive failed\n");
+            continue;
+        }
+
+        int table_result = cbor_to_table_test(&buffer, metadata.rssi);
+        if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
+            continue;
+        }
+
+        if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
             continue;
         }
             printf("BLE: receive success\n"
-            "metadata\n"
-            "\t.type %d\n"
-            "\t.rssi %d\n"
-            "buffer\n"
-            "\t.buffer %d\n"
-            "\t.cbor_size %d\n"
-            "\t.buffer_size[0] %d\n"
-            "\t.capacity %d\n",
-            metadata.message_type,
-            metadata.rssi,
-            (int)buffer.buffer,
-            buffer.cbor_size,
-            buffer.package_size[0],
-            buffer.capacity
+                "metadata\n"
+                "\t.type %d\n"
+                "\t.rssi %d\n"
+                "buffer\n"
+                "\t.buffer %d\n"
+                "\t.cbor_size %d\n"
+                "\t.buffer_size[0] %d\n"
+                "\t.capacity %d\n",
+                metadata.message_type,
+                metadata.rssi,
+                (int)buffer.buffer,
+                buffer.cbor_size,
+                buffer.package_size[0],
+                buffer.capacity
             );
 
-        int res = cbor_to_table_test(&buffer, metadata.rssi);
-        //if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
-        //    continue;
-        //}
         if (thr_args != NULL) {
-            if (thr_args->receive_queue != NULL && TABLE_UPDATED == res) {
+            if (thr_args->receive_queue != NULL && TABLE_UPDATED == table_result) {
                 event_post(thr_args->receive_queue, thr_args->receive_event);
             }
         }
-
     }
     return NULL;
 }
