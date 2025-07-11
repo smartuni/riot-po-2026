@@ -83,6 +83,25 @@ void internal_ble_send(void) {
     gpio_clear(sound);
 }
 
+void internal_tables_news(void) {
+    //Play sound for tables news
+    play_sound(784, 300);  // g''
+    play_sound(932, 300); // b'' 
+    play_sound(587, 300); // d''
+}
+
+void internal_close_by_todo(void) {
+    // Play sound for close by todo
+    start_vibration();
+    play_sound(698, 300);  // f''
+    play_sound(880, 300);  // a''
+    ztimer_sleep(ZTIMER_MSEC, 500); // Half period for toggle
+    play_sound(698, 300);  // f''
+    play_sound(880, 300);  // a''
+    gpio_clear(sound);
+    stop_vibration();
+}
+
 static void sound_handler(event_t *event){
     puts("Sound handler called.");
     if(event == &start_sound_event){
@@ -102,6 +121,12 @@ static void sound_handler(event_t *event){
     else if(event == &ble_sent_sound_event){
         internal_ble_send();
     }
+    else if(event == &tables_news_sound_event){
+        internal_tables_news();
+    }else if(event == &close_by_todo_sound_event){
+        internal_close_by_todo();
+    }
+
     else {
         puts("Unknown sound event received.");
     }
@@ -112,7 +137,8 @@ event_t downlink_sound_event = { .handler = sound_handler };
 event_t uplink_sound_event = { .handler = sound_handler };
 event_t ble_received_sound_event = { .handler = sound_handler };
 event_t ble_sent_sound_event = { .handler = sound_handler };
-
+event_t tables_news_sound_event = { .handler = sound_handler };
+event_t close_by_todo_sound_event = { .handler = sound_handler };
 
 
 

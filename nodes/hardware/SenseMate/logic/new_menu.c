@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "displayDemo.h"
 #include "mate_lorawan.h"
+#include "soundModule.h"
 #define MAX_GATES MAX_GATE_COUNT
 #define MAX_SENSE_MATES MAX_SENSE_COUNT
 #define MIN_SIGNAL_STRENGTH -100
@@ -255,6 +256,7 @@ void reorder_close_by(void){
     int added_cnt = 0;
     int8_t curr_sig_strength = -127;
     int8_t last_sig_strenght = -127;
+    bool todo_closeby = false;
     while(added_cnt < current_num_gates && last_sig_strenght > MIN_SIGNAL_STRENGTH){
         //find sigstrenght to add
         for (int i=0; i<current_num_gates; i++){
@@ -266,6 +268,9 @@ void reorder_close_by(void){
         //add gates with sigstrengt
         for(int i=0; i<current_num_gates; i++){
             if(all_entries[i].sig_strength == curr_sig_strength){
+                if(all_entries[i].job_is_todo){
+                    todo_closeby = true;
+                }
                 close_by_order[added_cnt] = &all_entries[i];
                 added_cnt += 1;
             }
@@ -274,6 +279,9 @@ void reorder_close_by(void){
         curr_sig_strength = -127;
     }
     current_num_close_by = added_cnt;
+    if(todo_closeby){
+        event_post(&sound_queue, &close_by_todo_sound_event);
+    }
 }
 
 
@@ -1022,7 +1030,8 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                     set_job_done(upper_entry.current_gate->gate_id, true);
                     in_tables_set_gate_job_done(upper_entry.current_gate->gate_id, true);
                 }
-                event_post(&lorawan_queue, &send_is_state_table);
+                event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
+                event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
             } else if (lower_entry.selected && lower_entry.subentry == CONFIRM){
 
                 if(state == OPEN){
@@ -1038,6 +1047,7 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                     in_tables_set_gate_job_done(lower_entry.current_gate->gate_id, true);
                 }
                 event_post(&lorawan_queue, &send_is_state_table);
+                event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
             }
 
             if(menu == CONFIRMATION_GATE_OPEN || menu == CONFIRMATION_GATE_CLOSE){
