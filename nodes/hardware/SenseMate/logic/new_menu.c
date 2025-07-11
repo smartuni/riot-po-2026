@@ -255,7 +255,7 @@ void init_new_menu(void){
 void reorder_close_by(void){
     int added_cnt = 0;
     int8_t curr_sig_strength = -127;
-    int8_t last_sig_strenght = -127;
+    int8_t last_sig_strenght = 0;
     bool todo_closeby = false;
     while(added_cnt < current_num_gates && last_sig_strenght > MIN_SIGNAL_STRENGTH){
         //find sigstrenght to add
