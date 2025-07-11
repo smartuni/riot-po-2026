@@ -16,21 +16,25 @@
 #define GATE_ID DEVICE_ID
 #define DEBOUNCE_TIME 5000
 
-
-
-// #include "mate_lorawan.h"
-
-void event_handlerA0(event_t *event);
-
-
-
 extern event_t eventA0;
 extern event_t event_reactivate;
 
+/**
+* function that handles incoming events, that are send when an interrupt occurs. 
+* Futher events will be ignored while a timed runoff.
+*/
+void event_handlerA0(event_t *event);
+
+/**
+* enables the event
+*/
 extern void init_event(void);
+
+/**
+* sets current status of sensor. needed to set internal table after change
+*/
 void update_status(uint8_t newStatus);
 
-void setTimestamp(int newTimestamp);
-int getTimestamp(void);
+
 
 #endif
