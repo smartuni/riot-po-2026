@@ -48,13 +48,11 @@ void event_handler_reactivate(event_t *event)
     table_entry.gateID = GATE_ID;
     table_entry.state = event_status;
     table_entry.gateTime = get_device_timestamp();
-
-
-    if( TABLE_UPDATED == set_is_state_entry(&table_entry)){
-
+    
+    int tableUpdate = set_is_state_entry(&table_entry);
+    if( TABLE_UPDATED == tableUpdate){
         // TELL LORAWAN
-        event_post(&lorawan_queue, &send_is_state_table);
-
+        event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
     } else {
         puts("writing to table failed!");
     } 

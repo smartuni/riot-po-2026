@@ -39,6 +39,11 @@
 #include "event/timeout.h"
 #include "cbor.h"
 #include "tables.h"
+#include "event.h"
+#include "event/thread.h"
+#if DEVICE_TYPE == 1
+#include "events_creation.h"
+#endif
 
 /* Interval between data transmissions, in seconds */
 #define SEND_INTERVAL_SEC 1
@@ -63,7 +68,7 @@ uint8_t msg_sizes[MAX_GATE_COUNT];
 
 cbor_buffer cbor_receive_buffer;
 
-event_queue_t lorawan_queue;
+//event_queue_t lorawan_queue;
 event_timeout_t event_timeout;
 netif_t *netif = NULL;
 
@@ -77,10 +82,13 @@ static netif_t *_find_lorawan_network_interface(void);
  * @brief   Join the LoRaWAN network using OTAA.
  * @param   netif  Pointer to the LoRaWAN network interface.
  *
+ * @retval   0 on success
+ * @retval  -1 on failure
+ *
  * This function will attempt to join the LoRaWAN network using Over-The-Air
  * Activation (OTAA). It will keep retrying until a successful join is achieved.
  */
-static void _join_lorawan_network(const netif_t *netif);
+static int _join_lorawan_network(const netif_t *netif);
 
 /**
  * @brief   Send a LoRaWAN packet with temperature data.
@@ -135,13 +143,14 @@ static netif_t *_find_lorawan_network_interface(void)
     return netif;
 }
 
-static void _join_lorawan_network(const netif_t *netif)
+static int _join_lorawan_network(const netif_t *netif)
 {
     assert(netif != NULL);
     netopt_enable_t status;
     uint8_t data_rate = 5;
+    int joinAttempts = 0;
 
-    while (1) {
+    while (joinAttempts < 5) {
         status = NETOPT_ENABLE;
         printf("[LoRaWAN]: Joining LoRaWAN network...\n");
         ztimer_now_t timeout = ztimer_now(ZTIMER_SEC);
@@ -160,10 +169,13 @@ static void _join_lorawan_network(const netif_t *netif)
                 status = NETOPT_DISABLE;
                 netif_set_opt(netif, NETOPT_ACK_REQ, 0, &status, sizeof(status));
                 printf("[LoRaWAN]: Uplink confirmation requests disabled\n");
-                return;
+                return 0;
             }
         }
+        joinAttempts++;
     }
+    
+    return -1;
 }
 
 static int _send_lorawan_packet(const netif_t *netif, int msg_no, int read)
@@ -261,6 +273,10 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             received_buffer.package_size[0] = pkt->size;
             print_hex_arr(received_buffer.buffer,received_buffer.package_size[0]);
             if (cbor_to_table_test(&received_buffer, 0) == 0) {
+#if DEVICE_TYPE == 1
+                    
+                        event_post(EVENT_PRIO_HIGHEST, &eventNews);
+#endif
                 printf("[LoRaWAN]: Downlink received and table updated.\n");
             }else{
                 printf("[LoRaWAN]: Error updating table.\n");
@@ -275,8 +291,8 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
 static void send_handler_timeout(event_t *event){
     (void) event;
     event_timeout_set(&event_timeout, TIMEOUT_DURATION); // reset timer
-    event_post(&lorawan_queue, &send_is_state_table);
-    event_post(&lorawan_queue, &send_seen_status_table);
+    event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
+    event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
 }
 
 static void send_handler(event_t *event){
@@ -284,13 +300,13 @@ static void send_handler(event_t *event){
     int pkg_count = 0;
     if (event == &send_is_state_table) {
         printf("[LoRaWAN]: Sending is_state_table\n");
-        pkg_count = is_state_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
+        pkg_count = is_state_table_to_cbor_many_to_server(SEND_BUFFER_SIZE, &cbor_send_buffer);
     } else if (event == &send_target_state_table) {
         printf("[LoRaWAN]: Sending target_state_table\n");
         pkg_count = target_state_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
     } else if (event == &send_seen_status_table) {
         printf("[LoRaWAN]: Sending seen_status_table\n");
-        pkg_count = seen_status_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
+        pkg_count = seen_status_table_to_cbor_many_to_server(SEND_BUFFER_SIZE, &cbor_send_buffer);
     } else if (event == &send_jobs_table) {
         printf("[LoRaWAN]: Sending jobs_table\n");
         pkg_count = jobs_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
@@ -327,14 +343,14 @@ int start_lorawan(void)
     /* Sleep so that we do not miss this message while connecting */
     ztimer_sleep(ZTIMER_SEC, 3);
     printf("[LoRaWAN]: Starting module.\n");
-    event_queue_init(&lorawan_queue);
+    //event_queue_init(&lorawan_queue);
     
     cbor_send_buffer.buffer = send_buffer;
     cbor_send_buffer.package_size = msg_sizes;
 
     void event_timeout_init(event_timeout_t *event_timeout, event_queue_t *queue, event_t *event);
     /* Init timeout event */
-    event_timeout_init(&event_timeout, &lorawan_queue, (event_t*)&send_event_timeout);
+    event_timeout_init(&event_timeout, EVENT_PRIO_HIGHEST, (event_t*)&send_event_timeout);
     event_timeout_set(&event_timeout, TIMEOUT_DURATION);
     
     /* Sleep so that we do not miss this message while connecting */
@@ -346,7 +362,10 @@ int start_lorawan(void)
         puts("[LoRaWAN]: No network interface found");
         return -1;
     }
-    _join_lorawan_network(netif);
+    if(_join_lorawan_network(netif) == -1){
+        printf("[LoRaWAN]: Joining LoRaWAN failed");
+        return -1;
+    }
 
     printf("[LoRaWAN]: Starting receive thread\n");
     /* create the reception thread] */
@@ -366,7 +385,8 @@ int start_lorawan(void)
     gnrc_netreg_register(GNRC_NETTYPE_UNDEF, &entry);
 
     printf("[LoRaWAN]: Starting event queue\n");
-    event_loop(&lorawan_queue);
+
+    //event_loop(&lorawan_queue);
     return 0;
 }
 
