@@ -22,13 +22,52 @@
     #define JOB_DONE 0x01
     #define JOB_IN_PROGRESS 0x00
 
-    #define TABLE_SUCCESS               0
-    #define TABLE_UPDATED               1
-    #define TABLE_NO_UPDATES            2
-    #define TABLE_ERROR_SIZE_TOO_BIG   -1
-    #define TABLE_ERROR_INVALID_GATE_ID -2
-    #define TABLE_ERROR_NOT_FOUND      -3
+    //General table defines
+    #define TABLE_SUCCESS                               0x00
+    #define TABLE_NO_UPDATES                            0x00
+    #define TABLE_UPDATED                               0x01
+    #define TABLE_NEW_RECORD                            0x02
+    #define TABLE_NEW_RECORD_AND_UPDATE                 TABLE_UPDATED | TABLE_NEW_RECORD
+    #define TABLE_ERROR_SIZE_TOO_BIG                    -1
+    #define TABLE_ERROR_INVALID_GATE_ID                 -2
+    #define TABLE_ERROR_NOT_FOUND                       -3
     
+
+    //target state table defines
+    #define TARGET_STATE_TABLE_BASE                     0x10
+    #define TARGET_STATE_TABLE_NO_UPDATES               TARGET_STATE_TABLE_BASE | TABLE_NO_UPDATES
+    #define TARGET_STATE_TABLE_UPDATED                  TARGET_STATE_TABLE_BASE | TABLE_UPDATED
+    #define TARGET_STATE_TABLE_NEW_RECORD               TARGET_STATE_TABLE_BASE | TABLE_NEW_RECORD
+    #define TARGET_STATE_TABLE_NEW_RECORD_AND_UPDATE    TARGET_STATE_TABLE_BASE | TABLE_NEW_RECORD_AND_UPDATE
+
+    //is state table defines
+    #define IS_STATE_TABLE_BASE                         0x20
+    #define IS_STATE_TABLE_NO_UPDATES                   IS_STATE_TABLE_BASE     | TABLE_NO_UPDATES
+    #define IS_STATE_TABLE_UPDATED                      IS_STATE_TABLE_BASE     | TABLE_UPDATED
+    #define IS_STATE_TABLE_NEW_RECORD                   IS_STATE_TABLE_BASE     | TABLE_NEW_RECORD
+    #define IS_STATE_TABLE_NEW_RECORD_AND_UPDATE        IS_STATE_TABLE_BASE     | TABLE_NEW_RECORD_AND_UPDATE
+
+    //seen status table defines
+    #define SEEN_STATUS_TABLE_BASE                      0x30
+    #define SEEN_STATUS_TABLE_NO_UPDATES                SEEN_STATUS_TABLE_BASE  | TABLE_NO_UPDATES
+    #define SEEN_STATUS_TABLE_UPDATED                   SEEN_STATUS_TABLE_BASE  | TABLE_UPDATED
+    #define SEEN_STATUS_TABLE_NEW_RECORD                SEEN_STATUS_TABLE_BASE  | TABLE_NEW_RECORD
+    #define SEEN_STATUS_TABLE_NEW_RECORD_AND_UPDATE     SEEN_STATUS_TABLE_BASE  | TABLE_NEW_RECORD_AND_UPDATE
+
+    //timestamp table defines
+    #define TIMESTAMP_TABLE_BASE                        0x40
+    #define TIMESTAMP_TABLE_NO_UPDATES                  TIMESTAMP_TABLE_BASE    | TABLE_NO_UPDATES
+    #define TIMESTAMP_TABLE_UPDATED                     TIMESTAMP_TABLE_BASE    | TABLE_UPDATED
+    #define TIMESTAMP_TABLE_NEW_RECORD                  TIMESTAMP_TABLE_BASE    | TABLE_NEW_RECORD
+    #define TIMESTAMP_TABLE_NEW_RECORD_AND_UPDATE       TIMESTAMP_TABLE_BASE    | TABLE_NEW_RECORD_AND_UPDATE
+
+    //jobs table defines
+    #define JOBS_TABLE_BASE                             0x50
+    #define JOBS_STATE_TABLE_NO_UPDATES                 JOBS_TABLE_BASE         | TABLE_NO_UPDATES
+    #define JOBS_TABLE_UPDATED                          JOBS_TABLE_BASE         | TABLE_UPDATED
+    #define JOBS_TABLE_NEW_RECORD                       JOBS_TABLE_BASE         | TABLE_NEW_RECORD
+    #define JOBS_TABLE_NEW_RECORD_AND_UPDATE            JOBS_TABLE_BASE         | TABLE_NEW_RECORD_AND_UPDATE
+
     #define BASE_CBOR_BYTE_SIZE 0x05
     #define CBOR_TARGET_STATE_MAX_BYTE_SIZE (0x06)
     #define CBOR_IS_STATE_MAX_BYTE_SIZE (0x06)
