@@ -276,7 +276,7 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             if (cbor_to_table_test(&received_buffer, 0) == 0) {
 #if DEVICE_TYPE == 1
                     
-                        event_post(EVENT_PRIO_HIGHEST, &eventNews);
+                        event_post(EVENT_PRIO_MEDIUM, &eventNews);
 #endif
                 printf("[LoRaWAN]: Downlink received and table updated.\n");
             }else{
@@ -292,13 +292,16 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
 static void send_handler_timeout(event_t *event){
     (void) event;
     event_timeout_set(&event_timeout, TIMEOUT_DURATION); // reset timer
-    event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
-    event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
+    event_post(EVENT_PRIO_MEDIUM, &send_is_state_table);
+    event_post(EVENT_PRIO_MEDIUM, &send_seen_status_table);
 }
 
 static void send_handler_is_state_table(event_t *event){
+    printf("Handler called\n");
     (void) event;
     int pkg_count = is_state_table_to_cbor_many_to_server(SEND_BUFFER_SIZE, &cbor_send_buffer);
+    printf("Table to cbor successful\n");
+    
     if (pkg_count == 0){
         printf("[LoRaWAN]: Nothing to send.\n");
         return;
