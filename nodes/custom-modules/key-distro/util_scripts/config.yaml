@@ -1,0 +1,10 @@
+tti_instance: "eu1.cloud.thethings.network"
+application_id: "haw-riot-rescuemate"
+
+sensemates:
+  count: 3
+  id_prefix: "sensemate"
+
+sensegates:
+  count: 2
+  id_prefix: "sensegate"
