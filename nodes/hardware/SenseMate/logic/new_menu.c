@@ -5,6 +5,7 @@
 #include "displayDemo.h"
 #include "mate_lorawan.h"
 #include "soundModule.h"
+#include "event.h"
 #define MAX_GATES MAX_GATE_COUNT
 #define MAX_SENSE_MATES MAX_SENSE_COUNT
 #define MIN_SIGNAL_STRENGTH -100
@@ -134,13 +135,13 @@ void update_with_seen_status(int potential_id){
 }
 
 void update_with_latest_status(int potential_id){
-    int timestamp = 0; 
+    uint32_t timestamp = 0; 
     uint8_t state = 0;
     bool success = false;
     //get the latest seen status entry
     for (int i = 0; i < MAX_SENSE_MATES; i++){
         if(get_seen_status_entry(potential_id, i, &seen_status_tbl_entry_buf) == TABLE_SUCCESS){
-            if(timestamp < seen_status_tbl_entry_buf.gateTime){
+            if(timestamp < (uint32_t)seen_status_tbl_entry_buf.gateTime){
                 timestamp = seen_status_tbl_entry_buf.gateTime;
                 state = seen_status_tbl_entry_buf.status;
                 success = true;
@@ -1030,8 +1031,8 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                     set_job_done(upper_entry.current_gate->gate_id, true);
                     in_tables_set_gate_job_done(upper_entry.current_gate->gate_id, true);
                 }
-                event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
-                event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
+                //event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
+                //event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
             } else if (lower_entry.selected && lower_entry.subentry == CONFIRM){
 
                 if(state == OPEN){
@@ -1046,8 +1047,8 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                     set_job_done(lower_entry.current_gate->gate_id, true);
                     in_tables_set_gate_job_done(lower_entry.current_gate->gate_id, true);
                 }
-                event_post(&lorawan_queue, &send_is_state_table);
-                event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
+                //event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
+                //event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
             }
 
             if(menu == CONFIRMATION_GATE_OPEN || menu == CONFIRMATION_GATE_CLOSE){
