@@ -6,6 +6,8 @@
 #include "mate_lorawan.h"
 #include "soundModule.h"
 #include "event.h"
+//#include "event/timeout.h"
+#include "event/thread.h"
 #define MAX_GATES MAX_GATE_COUNT
 #define MAX_SENSE_MATES MAX_SENSE_COUNT
 #define MIN_SIGNAL_STRENGTH -100
@@ -1031,8 +1033,8 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                     set_job_done(upper_entry.current_gate->gate_id, true);
                     in_tables_set_gate_job_done(upper_entry.current_gate->gate_id, true);
                 }
-                //event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
-                //event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
+                event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
+                event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
             } else if (lower_entry.selected && lower_entry.subentry == CONFIRM){
 
                 if(state == OPEN){
@@ -1047,8 +1049,8 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                     set_job_done(lower_entry.current_gate->gate_id, true);
                     in_tables_set_gate_job_done(lower_entry.current_gate->gate_id, true);
                 }
-                //event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
-                //event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
+                event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
+                event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
             }
 
             if(menu == CONFIRMATION_GATE_OPEN || menu == CONFIRMATION_GATE_CLOSE){
