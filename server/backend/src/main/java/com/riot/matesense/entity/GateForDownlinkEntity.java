@@ -8,7 +8,9 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 
-//Das Node team shcickt sowas hier: [//    2, # 2 is an example value for the message type//    [  # The list with the "Ist Status" entries//        [ # This is a "Ist Status" entry//            187, # GateID//            0,   # Ist Status//            247  # Timestamp//        ],//        [ # 2nd "Ist Status" entry//            69,  # GateID//            1,   # Ist Status//            333  # Timestamp//        ]//        # ... More entries//    ]//]
+/**
+ * A helper Entity for storing only the necessary values for the MQTT-Stuff
+ */
 @Getter
 @Setter
 @Table(name = "gates_for_downlink")

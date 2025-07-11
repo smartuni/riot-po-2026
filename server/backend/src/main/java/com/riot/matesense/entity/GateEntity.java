@@ -9,7 +9,9 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 
-
+/**
+ * An Entity for storing the Gates
+ */
 @Getter
 @Setter
 @Table(name = "gates")
@@ -67,6 +69,11 @@ public class GateEntity {
 
 	}
 
+	/**
+	 * TODO://@Simon Korondi
+	 * @param gateStatus
+	 * @param reportType
+	 */
 
 	public void shuffleReports(Status gateStatus, MsgType reportType) // orders reports based on how recent they were
 	{

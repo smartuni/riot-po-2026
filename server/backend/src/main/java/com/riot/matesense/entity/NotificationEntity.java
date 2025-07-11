@@ -7,7 +7,9 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 
-
+/**
+ * An Entity for storing Notifications that are created when stuff happens to the Gates
+ */
 @Getter
 @Setter
 @Table(name = "notifications")

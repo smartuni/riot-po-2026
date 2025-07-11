@@ -74,6 +74,8 @@ public class MqttMessageHandler {
                                 System.out.println("GateID:" + gateId + "Timestamp" + timestamp.getTime());
                                 continue;
                             }
+//                            int confidence = existingGate.getConfidence();
+                            // existingGate.setStatus(status);
 
                             gateService.changeGateStatus(gateId, status, MsgType.IST_STATE);
                             gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "Gate has changed to status " + status.toString(), null));

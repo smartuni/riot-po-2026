@@ -3,6 +3,7 @@ package com.riot.matesense.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+//TODO: @Lyam Lynch comment please
 
 @Setter
 @Getter

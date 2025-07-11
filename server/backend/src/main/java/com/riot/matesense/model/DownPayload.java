@@ -3,6 +3,7 @@ package com.riot.matesense.model;
 import lombok.Getter;
 import lombok.Setter;
 
+//TODO: @David Dao do we need that?
 import java.sql.Timestamp;
 import java.util.List;
 @Getter
