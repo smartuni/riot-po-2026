@@ -2,13 +2,6 @@ import * as React from 'react';
 import {Dialog, DialogTitle, DialogActions, DialogContent, DialogContentText, Button } from "@mui/material";
 
 export const AlertDialog = ({open, onClose}) => {
-    // const [isOpen, setOpen] = React.useState(open);
-
-    // const handleClose = () => {
-    //     // setOpen(false);
-    //     onClose()
-    // };
-
     return (
       <Dialog
         open={open}

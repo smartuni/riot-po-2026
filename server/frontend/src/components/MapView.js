@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polygon } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../styles/MapView.css";
-import FloodGatePopup from "./FloodGatePopup";
+// import FloodGatePopup from "./FloodGatePopup";
 import {fetchGates} from "../services/api";
 
 const getArrowIcon = (status) => {

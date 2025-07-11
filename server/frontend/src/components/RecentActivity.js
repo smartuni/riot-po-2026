@@ -18,12 +18,6 @@ function RecentActivity() {
             }
         };
         loadActivities();
-
-        // const intervalId = setInterval(() => {
-        //     loadActivities();
-        // }, 300);
-
-        // return () => clearInterval(intervalId);
     }, []);
 
     useEffect(() => {
