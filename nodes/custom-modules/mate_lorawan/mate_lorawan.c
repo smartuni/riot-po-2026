@@ -106,16 +106,17 @@ static int _send_lorawan_packet(const netif_t *netif, int msg_no, int read);
  */
 static void _handle_received_packet(gnrc_pktsnip_t *pkt);
 
-static void send_handler(event_t *event);
+static void send_handler_is_state_table(event_t *event);
+static void send_handler_seen_status_table(event_t *event);
 static void send_handler_timeout(event_t *event);
 
 event_t send_event = { .handler = send_handler };
-event_t send_is_state_table = { .handler = send_handler};
-event_t send_target_state_table = { .handler = send_handler};
-event_t send_seen_status_table = { .handler = send_handler};
-event_t send_jobs_table = { .handler = send_handler};
-event_t send_timestamp_table = { .handler = send_handler};
-event_t send_event_timeout = { .handler = send_handler_timeout };
+event_t send_seen_status_table = { .handler = send_handler_seen_status_table};
+event_t send_is_state_table = { .handler = send_handler_is_state_table};
+// event_t send_target_state_table = { .handler = send_handler};
+// event_t send_jobs_table = { .handler = send_handler};
+// event_t send_timestamp_table = { .handler = send_handler};
+// event_t send_event_timeout = { .handler = send_handler_timeout };
 
 static void print_hex_arr(const uint8_t *data, unsigned len)
 {
@@ -295,40 +296,35 @@ static void send_handler_timeout(event_t *event){
     event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
 }
 
-static void send_handler(event_t *event){
-    printf("[LoRaWAN]: send_handler started.\n");
-
-    int pkg_count = 0;
-    pkg_count = is_state_table_to_cbor_many_to_server(SEND_BUFFER_SIZE, &cbor_send_buffer);
-    puts("Table call worked");
-    // TODO: REMOVE
-    return;
-
-    if (event == &send_is_state_table) {
-        printf("[LoRaWAN]: Sending is_state_table.\n");
-        pkg_count = is_state_table_to_cbor_many_to_server(SEND_BUFFER_SIZE, &cbor_send_buffer);
-    } else if (event == &send_target_state_table) {
-        printf("[LoRaWAN]: Sending target_state_table.\n");
-        pkg_count = target_state_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
-    } else if (event == &send_seen_status_table) {
-        printf("[LoRaWAN]: Sending seen_status_table.\n");
-        pkg_count = seen_status_table_to_cbor_many_to_server(SEND_BUFFER_SIZE, &cbor_send_buffer);
-    } else if (event == &send_jobs_table) {
-        printf("[LoRaWAN]: Sending jobs_table.\n");
-        pkg_count = jobs_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
-    } else if (event == &send_timestamp_table) {
-        printf("[LoRaWAN]: Sending timestamp_table.\n");
-        pkg_count = timestamp_table_to_cbor_many(SEND_BUFFER_SIZE, &cbor_send_buffer);
-    } else {
-        puts("[LoRaWAN]: Unknown event type in send_handler.");
-        return;
-    }
-
+static void send_handler_is_state_table(event_t *event){
+    (void) event;
+    int pkg_count = is_state_table_to_cbor_many_to_server(SEND_BUFFER_SIZE, &cbor_send_buffer);
     if (pkg_count == 0){
         printf("[LoRaWAN]: Nothing to send.\n");
         return;
     }
+    int read = 0;
+    printf("[LoRaWAN]: Sending %d packages ...\n", pkg_count);
+    puts("");
+    int result = 0;
+    for (int msg_no = 0; msg_no < pkg_count; msg_no++){
+        result = _send_lorawan_packet(netif, msg_no, read);
+        if (result != 0) {
+            puts("[LoRaWAN]: Failed to send packet.");
+        } else {
+            printf("[LoRaWAN]: Sent packet successfully.\n");
+        }
+        read += cbor_send_buffer.package_size[msg_no];
+    }
+}
 
+static void send_handler_seen_status_table(event_t *event){
+    (void) event;
+    int pkg_count = seen_status_table_to_cbor_many_to_server(SEND_BUFFER_SIZE, &cbor_send_buffer);
+    if (pkg_count == 0){
+        printf("[LoRaWAN]: Nothing to send.\n");
+        return;
+    }
     int read = 0;
     printf("[LoRaWAN]: Sending %d packages ...\n", pkg_count);
     puts("");
@@ -392,4 +388,5 @@ int start_lorawan(void)
     printf("[LoRaWAN]: Start up succesful.\n");
     return 0;
 }
+
 
