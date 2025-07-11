@@ -1,5 +1,5 @@
 tti_instance: "eu1.cloud.thethings.network"
-application_id: "haw-riot-rescuemate"
+application_id: "riot-application-test-paul"
 
 sensemates:
   count: 3
