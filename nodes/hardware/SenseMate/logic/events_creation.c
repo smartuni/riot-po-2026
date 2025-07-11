@@ -67,6 +67,8 @@ void event_handler_decrement_rssi_timeout(event_t *event)
             });
         };
     }
+    update_menu_from_tables();
+    update_menu_display();
     event_timeout_set(&decrement_rssi_timeout, RSSI_DECREMENT_TIMEOUT); // Set a timeout for the next decrement
 }
 
