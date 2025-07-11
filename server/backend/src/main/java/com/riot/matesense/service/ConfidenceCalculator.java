@@ -28,13 +28,13 @@ public class ConfidenceCalculator
         else
         {
             confidence = passedConfidence; // retrieve confidence from gate
-            int iterations = Math.min(5, Math.min(gateArray.length, workerArray.length));
+            int iterations = Math.min(2, Math.min(gateArray.length, workerArray.length));
 
             for (int i = 0; i < iterations; i++) // iterate through reports
             {
                 if(reportType == MsgType.IST_STATE) // if the report is from a gate sensor
                 {
-                    int delta = 10 - (2 * i);
+                    int delta = 10 - (5 * i);
                     if (gateStatus == gateArray[i] && gateArray[i] != Status.NONE)
                     {
                         confidence += delta; // if new a report matches an older report, increase confidence
@@ -46,7 +46,7 @@ public class ConfidenceCalculator
                 }
                 else if(reportType == MsgType.SEEN_TABLE_STATE) // if the report is from a worker
                 {
-                    int delta = 20 - (4 * i);
+                    int delta = 20 - (10 * i);
                     if (gateStatus == workerArray[i] && workerArray[i] != Status.NONE)
                     {
                         confidence += delta;
