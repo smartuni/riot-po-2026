@@ -63,13 +63,13 @@ public class ConfidenceCalculator
             }
         }
 
-        entity.shuffleReports(gateStatus, reportType);
+        entity.shuffleReports(gateStatus, reportType); // give older reports less sway for future calculations
 
-        confidence = Math.max(0, Math.min(100, confidence));
+        confidence = Math.max(0, Math.min(100, confidence)); // normalize confidence (keep within 0-100)
         entity.setConfidence(confidence);
         System.out.println("Final normalized confidence: " + confidence);
 
-        if (confidence >= 90){
+        if (confidence >= 90){ // set a keyword depending on confidence level
             entity.setQuality(ConfidenceQuality.HIGH);
         }
         else if (confidence >= 80){
@@ -104,6 +104,5 @@ public class ConfidenceCalculator
         }
 
         System.out.println("Final pending job state: " + entity.getPendingJob());
-        System.out.println("Calculated confidence: " + confidence + "\n");
     }
 }
