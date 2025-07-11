@@ -2,7 +2,6 @@ package com.riot.matesense.entity;
 
 import com.riot.matesense.enums.ConfidenceQuality;
 import com.riot.matesense.enums.Status;
-import com.riot.matesense.service.ConfidenceCalculator;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
