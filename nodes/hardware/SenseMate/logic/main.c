@@ -75,7 +75,7 @@ int main(void) {
 
     ble_received_thread_args_t args = {
         .receive_queue = EVENT_PRIO_HIGHEST,
-        .receive_event = &eventNews,
+        .receive_event = &eventBleNews,
 
     };
 

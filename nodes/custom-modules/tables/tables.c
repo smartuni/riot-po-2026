@@ -332,14 +332,18 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     seen_status_entry returnSeenTable[buffer->cbor_size];
     jobs_entry returnJobsTable[buffer->cbor_size];
 
-    cbor_parser_init(buffer->buffer, buffer->cbor_size, 0, &parser, &value);
-    
-    if(cbor_value_enter_container(&value, &wrapperValue) != CborNoError) {
+    if (buffer->cbor_size != 1) {
         return -1;
     }
 
+    cbor_parser_init(buffer->buffer, buffer->package_size[0], 0, &parser, &value);
+
+    if(cbor_value_enter_container(&value, &wrapperValue) != CborNoError) {
+        return -30;
+    }
+
     if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &tableType) != CborNoError) {
-        return -1;
+        return -2;
     } // get type of table
 
     // get header information depending on table type
@@ -348,43 +352,43 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     case TARGET_STATE_KEY:
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
-            return -1;
+            return -3;
         } // get timestamp
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
-            return -1;
+            return -4;
         } // get whether Sensemate, gate or Server sent msg
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
-            return -1;
+            return -5;
         } // get deviceID
         break;
     case IS_STATE_KEY:
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
-            return -1;
+            return -6;
         } // get timestamp
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
-            return -1;
+            return -7;
         } // get whether Sensemate, gate or Server sent msg
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
-            return -1;
+            return -8;
         } // get deviceID
         break;
     case SEEN_STATUS_KEY:
     cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
-            return -1;
+            return -9;
         } // get timestamp
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
-            return -1;
+            return -10;
         } // get whether Sensemate, gate or Server sent msg
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
-            return -1;
+            return -11;
         } // get deviceID
         break;
     case JOBS_KEY:
@@ -397,7 +401,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     // [ enter second container
     cbor_value_advance(&wrapperValue);
     if(cbor_value_enter_container(&wrapperValue, &fieldsValue) != CborNoError) {
-        return -1;
+        return -12;
     }
     
     int id, s, sID, p, gt;
@@ -408,11 +412,11 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
         switch(tableType) {
             case TARGET_STATE_KEY:
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
-                    return -1;
+                    return -13;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
-                    return -1;
+                    return -14;
                 }
                 cbor_value_advance(&entryValue);
                 target_state_entry newTargetEntry = {id, s, timeStamp};
@@ -420,15 +424,15 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                 break;
             case IS_STATE_KEY:
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
-                    return -1;
+                    return -15;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
-                    return -1;
+                    return -16;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
-                    return -1;
+                    return -17;
                 }
                 cbor_value_advance(&entryValue);
                 is_state_entry newIsEntry = {id, s, gt};
@@ -436,19 +440,19 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                 break;
             case SEEN_STATUS_KEY:
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
-                    return -1;
+                    return -18;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
-                    return -1;
+                    return -19;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
-                    return -1;
+                    return -20;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &sID) != CborNoError) {
-                    return -1;
+                    return -21;
                 }
                 cbor_value_advance(&entryValue);
                 seen_status_entry newSeenEntry = {id, gt, s, sID};
@@ -456,11 +460,11 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                 break;
             case JOBS_KEY:
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
-                    return -1;
+                    return -22;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &p) != CborNoError) {
-                    return -1;
+                    return -23;
                 }
                 cbor_value_advance(&entryValue);
                 jobs_entry newJobsEntry = {id, JOB_IN_PROGRESS, p};
@@ -478,24 +482,26 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
         timestamp_entry change_entry = {deviceID, timeStamp, rssi};
         set_timestamp_entry(&change_entry);
     }
+
+    int res = 0;
     switch(tableType) {
             case TARGET_STATE_KEY:
-                merge_target_state_entry_table(returnTargetTable, (length));
+                res |= merge_target_state_entry_table(returnTargetTable, (length));
                 break;
             case IS_STATE_KEY:
-                merge_is_state_entry_table(returnIsTable, (length));
+                res |= merge_is_state_entry_table(returnIsTable, (length));
                 break;
             case SEEN_STATUS_KEY:
-                merge_seen_status_entry_table(returnSeenTable, (length));
+                res |= merge_seen_status_entry_table(returnSeenTable, (length));
                 break;
             case JOBS_KEY:
-                merge_jobs_entry_table(returnJobsTable, (length));
+                res |= merge_jobs_entry_table(returnJobsTable, (length));
                 break;
             default:
-                return -1;
+                return -24;
     }
 
-    return 0;
+    return res;
 }
 
 int set_target_state_entry(const target_state_entry* entry) {

@@ -58,6 +58,7 @@ int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata)
     for (int i = 0; i < MATE_BLE_INCOMING_LIST_SIZE; i++) {
         if (incoming_messages[i].cbor_packet.buffer == NULL) {
             _INIT_CBOR_BUFFER(incoming_messages[i]);
+            incoming_messages[i].cbor_packet.package_size[0] = data_len;
             memcpy(incoming_messages[i].cbor_packet.buffer, data, data_len);
             incoming_messages[i].metadata = metadata;
             mutex_unlock(&list_mutex);

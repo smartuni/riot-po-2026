@@ -27,7 +27,7 @@
     #define TABLE_NO_UPDATES                            0x00
     #define TABLE_UPDATED                               0x01
     #define TABLE_NEW_RECORD                            0x02
-    #define TABLE_NEW_RECORD_AND_UPDATE                 TABLE_UPDATED | TABLE_NEW_RECORD
+    #define TABLE_NEW_RECORD_AND_UPDATE                 (TABLE_UPDATED | TABLE_NEW_RECORD)
     #define TABLE_ERROR_SIZE_TOO_BIG                    -1
     #define TABLE_ERROR_INVALID_GATE_ID                 -2
     #define TABLE_ERROR_NOT_FOUND                       -3

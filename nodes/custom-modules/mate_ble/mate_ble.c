@@ -390,6 +390,7 @@ void* ble_receive_loop(void* args)
         }
 
         int table_result = cbor_to_table_test(&buffer, metadata.rssi);
+        printf("cbor_to_table_test result: %d\n", table_result);
         if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
             continue;
         }
@@ -415,8 +416,9 @@ void* ble_receive_loop(void* args)
             );
 
         if (thr_args != NULL) {
-            if (thr_args->receive_queue != NULL && TABLE_UPDATED == table_result) {
+            if ((thr_args->receive_queue != NULL) && (table_result & TABLE_NEW_RECORD_AND_UPDATE)) {
                 event_post(thr_args->receive_queue, thr_args->receive_event);
+                printf("Event posted that table was updated\n");
             }
         }
     }
