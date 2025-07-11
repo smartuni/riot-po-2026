@@ -119,6 +119,8 @@ event_t ble_sent_sound_event = { .handler = sound_handler };
 void* thread_sound_function(void *arg) {
     (void)arg; // Unused argument
     
+    event_queue_init(&sound_queue); // Initialize the sound event queue
+
     while(1){
         puts("Sound thread running.");
         event_loop(&sound_queue);
@@ -159,7 +161,6 @@ void init_sound_module(void) {
     // Initialize the sound module
     gpio_init(sound, sound_mode);
     gpio_clear(sound);
-    event_queue_init(&sound_queue); // Initialize the sound event queue
     thread_create(thread_stack, sizeof(thread_stack), THREAD_PRIORITY_MAIN - 1,
                   THREAD_CREATE_STACKTEST, thread_sound_function, NULL, "sound_thread");
     printf("Sound module initialized.\n");
