@@ -52,7 +52,9 @@ void event_handler_reactivate(event_t *event)
     int tableUpdate = set_is_state_entry(&table_entry);
     if( TABLE_UPDATED == tableUpdate){
         // TELL LORAWAN
+        puts("Gatemate: Posted Event into EVENT_PRIO_HIGH");
         event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
+       
     } else {
         puts("writing to table failed!");
     } 

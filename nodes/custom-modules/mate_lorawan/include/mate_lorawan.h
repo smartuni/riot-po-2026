@@ -13,7 +13,7 @@
  * @brief       Lorawan interface for SenseMate / GateMate
  *
  * @author      Paul Lange <paul.lange2@haw-hamburg.de>
- * @author      Jannik Schön
+ * @author      Jannik Schön <jannik.schoen@haw-hamburg.de>
  * @}
  */
 
@@ -29,7 +29,6 @@
  */
 int start_lorawan(void);
 
-extern event_queue_t lorawan_queue; // Event queue for LoRaWAN events
 extern event_t send_event; // Generic event for sending data
 extern event_t send_is_state_table; // Event for sending is state table
 extern event_t send_target_state_table; // Event for sending target state table
