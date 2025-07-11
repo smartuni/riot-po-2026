@@ -380,7 +380,7 @@ void* ble_receive_loop(void* args)
             continue;
         }
 
-        int table_result = cbor_to_table_test(&buffer);
+        int table_result = cbor_to_table_test(&buffer, metadata.rssi);
         if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
             continue;
         }
