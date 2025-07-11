@@ -110,7 +110,7 @@ static void send_handler_is_state_table(event_t *event);
 static void send_handler_seen_status_table(event_t *event);
 static void send_handler_timeout(event_t *event);
 
-event_t send_event = { .handler = send_handler };
+event_t send_event_timeout = { .handler = send_handler_timeout };
 event_t send_seen_status_table = { .handler = send_handler_seen_status_table};
 event_t send_is_state_table = { .handler = send_handler_is_state_table};
 // event_t send_target_state_table = { .handler = send_handler};
