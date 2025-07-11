@@ -100,21 +100,7 @@ public class MqttMessageHandler {
                         Timestamp gateTime = new Timestamp(statusNode.get("gateTime").asLong());    // GateTime
                         int senseMateId = statusNode.get("senseMateId").asInt(); // SenseMateID
 
-                        Status status;
-                        switch (statusCode) {
-                            case 0:
-                                status = Status.CLOSED;
-                                break;
-                            case 1:
-                                status = Status.OPENED;
-                                break;
-                            case 2:
-                                status = Status.UNKNOWN;
-                                break;
-                            default:
-                                status = Status.NONE;
-                                break;
-                        }
+                        Status status = Status.fromCode(statusCode);
 
                         gateService.changeGateStatus(gateId, status, MsgType.SEEN_TABLE_STATE);
                         System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
