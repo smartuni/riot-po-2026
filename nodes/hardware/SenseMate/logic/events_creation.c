@@ -103,12 +103,10 @@ void event_handlerBleNews(event_t *event)
     (void) event;   /* Not used */
     if(event_accepted){
         puts("got ble news");
-        start_vibration();
         update_menu_from_tables();
         event_post(&sound_queue, &ble_received_sound_event);
         //ble_reveived_sound();
         event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-        stop_vibration();
     }else{
         puts("XXXX event ble news ignored");
     }

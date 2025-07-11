@@ -20,14 +20,15 @@ void fill_tables_test(void);
 char ble_send_stack[2*THREAD_STACKSIZE_DEFAULT];
 char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
+int lorawan_started = -1;
 
 int main(void) {
-    ztimer_sleep(ZTIMER_MSEC, 3000); //if use term activate sleep to see all prints
+    //ztimer_sleep(ZTIMER_MSEC, 3000); //if use term activate sleep to see all prints
     init_interrupt();
     init_sound_module();
     init_vibration_module();
     event_post(&sound_queue, &start_sound_event);
-    startup_sound();
+    //startup_sound();
 
     //printf("Display demo started.\n");
     init_display();
@@ -53,7 +54,7 @@ int main(void) {
     //     printf("ID: %d, State: %d, Time: %d\n", table[i].gateID, table[i].state, table[i].gateTime);
     // }
 
-    start_lorawan();
+    lorawan_started = start_lorawan();
 
     puts("starting ble");
     if (BLE_SUCCESS == ble_init()){
@@ -91,6 +92,9 @@ int main(void) {
     puts("entering main loop");
     while (1)
     {
+        if(lorawan_started == -1){
+            lorawan_started = start_lorawan();
+        }
         ztimer_sleep(ZTIMER_MSEC, 1000);
         //refresh_display();
         increment_device_timestamp();

@@ -10,6 +10,8 @@ extern event_t downlink_sound_event;
 extern event_t uplink_sound_event;
 extern event_t ble_received_sound_event;
 extern event_t ble_sent_sound_event;
+extern event_t tables_news_sound_event;
+extern event_t close_by_todo_sound_event;
 
 
 void init_sound_module(void);
