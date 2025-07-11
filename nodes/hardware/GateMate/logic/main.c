@@ -53,7 +53,7 @@ int main(void){
     // start lorawan
     puts("starting lorawan");
     int lorawanstarted = start_lorawan();
-    if (!lorawanstarted){
+    if (-1 == lorawanstarted){
         printf("starting lorawan failed");
     }
 
@@ -88,7 +88,7 @@ int main(void){
      );
 
     while(1){
-        if (!lorawanstarted){
+        if (-1 == lorawanstarted){
             lorawanstarted = start_lorawan();
         }
         
