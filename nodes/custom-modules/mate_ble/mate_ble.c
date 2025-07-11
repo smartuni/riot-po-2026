@@ -114,7 +114,7 @@ static int ble_gap_event_cb(struct ble_gap_event *event, void *arg)
     (void)arg;
     switch (event->type) {
         case BLE_GAP_EVENT_ADV_COMPLETE:
-            sem_post(&adv_done_sem);
+            //sem_post(&adv_done_sem);
             break;
         default:
             break;
@@ -237,6 +237,7 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
         if (memcmp(marker, _custom_msd_marker_pattern,
                 sizeof(_custom_msd_marker_pattern)) == 0) {
             uint8_t *payload = &msd.data[MATE_BLE_MSD_PAYLOAD_OFFS];
+
             // length of the payload without the marker
             int pl = msd.len - MATE_BLE_MSD_PAYLOAD_OFFS;
             printf("Received: %.*s\n", pl, payload);
@@ -245,7 +246,14 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
             metadata.rssi = info->rssi;
 
             size_t verify_payload_len = 0;
-            int verify_result = verify_decode(payload, pl,verify_outbuf, sizeof(verify_outbuf),&verify_payload_len);
+            int verify_result = verify_decode(
+                payload, 
+                pl,
+                verify_outbuf, 
+                sizeof(verify_outbuf),
+                &verify_payload_len
+            );
+
             if(verify_result == 0) {
                 insert_message(verify_outbuf, verify_payload_len, metadata);
                 print_hex_arr(verify_outbuf,verify_payload_len);
@@ -313,7 +321,8 @@ int ble_send(cbor_buffer* cbor_packet)
         start_adv(encoded_ptr, encoded_len);
 
         // Block here until the ADV_COMPLETE event posts the sem
-        sem_wait(&adv_done_sem);
+        //sem_wait(&adv_done_sem);
+        ztimer_sleep(ZTIMER_MSEC, MATE_BLE_ADV_STOP_MS);
 
         ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
 
