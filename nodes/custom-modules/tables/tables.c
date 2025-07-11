@@ -12,6 +12,7 @@
 #include "container.h"
 #include "atomic_utils.h"
 
+
 // Return Codes
 #define TABLE_ERROR_SIZE_TOO_BIG -1
 #define TABLE_ERROR_INVALID_GATE_ID -2

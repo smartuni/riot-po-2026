@@ -88,7 +88,7 @@
     typedef struct {
         uint8_t gateID;
         uint8_t state;
-        int gateTime;
+        uint32_t gateTime;
     } is_state_entry;
 
     typedef struct {
@@ -100,7 +100,7 @@
 
     typedef struct {
         uint8_t gateID;
-        int timestamp;
+        uint32_t timestamp;
         int8_t rssi;
     } timestamp_entry;
 

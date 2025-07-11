@@ -29,4 +29,7 @@ CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 
+CFLAGS += -DDEVICE_ID=$(RIOT_CONFIG_DEVICE_ID) #Device ID- change when flashing
+CFLAGS += -DDEVICE_TYPE=3 #Device Type
+
 include $(RIOTBASE)/Makefile.include

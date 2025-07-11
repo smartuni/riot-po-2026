@@ -22,7 +22,6 @@ int main(void){
     init__door_interrupt();
     puts("init tables");
     init_tables();
-    setTimestamp(0);
     
     puts("reading initial door state");
     uint8_t inital_door_state = initial_door_state();
@@ -31,8 +30,6 @@ int main(void){
 
     // write to table
     puts("write to table");
-    int timestamp = getTimestamp();
-
     is_state_entry table_entry;
     table_entry.gateID = GATE_ID;
     table_entry.state = inital_door_state;
@@ -41,9 +38,6 @@ int main(void){
     // if (TABLE_SUCCESS == set_is_state_entry()){
      if (TABLE_UPDATED == set_is_state_entry(&table_entry)){
         
-
-        // TODO REMOVE LATER #1
-        // ---------------------------------------------
         if (!inital_door_state) {
             
             puts("door closed initially");
@@ -52,28 +46,15 @@ int main(void){
             
             puts("door opened initially");
         }
-    // ----------------------------------------------
     } else {
         puts("could not write to table");
-       
-        //err = -1;
-    }
-
-
-    // TEST TABLE IS WRITTEN
-    is_state_entry test_table_entry;
-    if (!get_is_state_entry(GATE_ID, &test_table_entry)) {
-        printf("TEST ENTRY Time %d\n", test_table_entry.gateTime);
-        printf("TEST ENTRY State %d\n", test_table_entry.state);
-    } else {
-        printf("test failed");
     }
 
     // start lorawan
     puts("starting lorawan");
-    if (!start_lorawan()){
+    int lorawanstarted = start_lorawan();
+    if (-1 == lorawanstarted){
         printf("starting lorawan failed");
-        return -1;
     }
 
 
@@ -106,15 +87,13 @@ int main(void){
         "bleRecv"
      );
 
-
-    puts("main loop");
     while(1){
+        if (-1 == lorawanstarted){
+            lorawanstarted = start_lorawan();
+        }
         
-        // TODO  error detection
-        // err = check_door_status();
-
         increment_device_timestamp();
-        ztimer_sleep(1000);
+        ztimer_sleep(ZTIMER_MSEC,1000);
 
     }
     return 0;
