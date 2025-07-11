@@ -3,6 +3,7 @@ package com.riot.matesense.service;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.enums.ConfidenceQuality;
+import com.riot.matesense.enums.MsgType;
 
 public class ConfidenceCalculator
 {
@@ -11,27 +12,27 @@ public class ConfidenceCalculator
 
     }
 
-    public void changeConfidence(GateEntity entity, int passedConfidence, int reportType) // redesigned: now uses a universal calculator, each gate stores its confidence
+    public void changeConfidence(GateEntity entity, int passedConfidence, MsgType reportType) // redesigned: now uses a universal calculator, each gate stores its confidence
     {
         System.out.println("Passed confidence: " + passedConfidence);
         int confidence;
-        Status gateStatus = entity.getStatus(); // retrieves status of the gate 
+        Status gateStatus = entity.getStatus(); // retrieves status of the gate (already updated in MqttMessageHandler)
 
         Status[] gateArray = entity.getGateStatusArray() != null ? entity.getGateStatusArray() : new Status[0];
         Status[] workerArray = entity.getWorkerStatusArray() != null ? entity.getWorkerStatusArray() : new Status[0];
 
-        if (gateStatus == Status.UNKNOWN || gateStatus == Status.NONE) {
+        if (gateStatus == Status.UNKNOWN || gateStatus == Status.NONE) { // if we don't know the status of the gate, we can be sure that we don't know, set confidence to 100
             confidence = 100;
             System.out.println("Gate status is unknown/none. Setting confidence to max (100).");
         }
         else
         {
-            confidence = passedConfidence;
+            confidence = passedConfidence; // retrieve confidence from gate
             int iterations = Math.min(5, Math.min(gateArray.length, workerArray.length));
 
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < iterations; i++) // iterate through reports
             {
-                if(reportType == 1) // IST STATE
+                if(reportType == MsgType.IST_STATE) // if the report is from a gate sensor
                 {
                     int delta = 10 - (2 * i);
                     if (gateStatus == gateArray[i] && gateArray[i] != Status.NONE)
@@ -43,7 +44,7 @@ public class ConfidenceCalculator
                         confidence -= delta; // otherwise, decrease confidence
                     }
                 }
-                else if(reportType == 2) // SEEN STATE
+                else if(reportType == MsgType.SEEN_TABLE_STATE) // if the report is from a worker
                 {
                     int delta = 20 - (4 * i);
                     if (gateStatus == workerArray[i] && workerArray[i] != Status.NONE)

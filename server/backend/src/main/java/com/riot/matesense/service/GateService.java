@@ -75,7 +75,7 @@ public class GateService {
 
 
     //DO we even use this?
-    public void updateGate(GateEntity gate, int reportType) {
+    public void updateGate(GateEntity gate, MsgType reportType) {
         //Hole das Gate
         //GateEntity existingGate = gateRepository.findById(Math.toIntExact(gate.getId())).orElse(null);
        //Existiert das Gate schon
@@ -170,7 +170,7 @@ public class GateService {
         gateRepository.save(gate);
     }
 
-    public void changeGateStatus(Long gateId, Status status, int reportType) {
+    public void changeGateStatus(Long gateId, Status status, MsgType reportType) {
         GateEntity gate = gateRepository.getById(gateId);
         int confidence = gate.getConfidence();
 

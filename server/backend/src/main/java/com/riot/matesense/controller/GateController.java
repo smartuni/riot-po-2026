@@ -2,6 +2,7 @@ package com.riot.matesense.controller;
 
 import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
+import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
 import com.riot.matesense.model.Gate;
@@ -43,7 +44,7 @@ public class GateController {
 
     @RequestMapping(value = "update-gate", method = RequestMethod.PUT)
     public void updateGate(@RequestBody GateEntity gate) throws GateNotFoundException {
-        gateService.updateGate(gate, 3);
+        gateService.updateGate(gate, MsgType.DUMMY_STATE);
     }
 
     @DeleteMapping("/gates/{id}")

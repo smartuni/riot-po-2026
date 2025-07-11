@@ -2,6 +2,7 @@ package com.riot.matesense.entity;
 
 import com.riot.matesense.enums.ConfidenceQuality;
 import com.riot.matesense.enums.Status;
+import com.riot.matesense.enums.MsgType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -67,9 +68,9 @@ public class GateEntity {
 	}
 
 
-	public void shuffleReports(Status gateStatus, int reportType)
+	public void shuffleReports(Status gateStatus, MsgType reportType) // orders reports based on how recent they were
 	{
-		if(reportType == 1) // IST STATE (report from gates)
+		if(reportType == MsgType.IST_STATE) // if the report is from the gate's sensor
 		{
 			for(int i = 1; i < 5; i++)
 			{
@@ -77,7 +78,7 @@ public class GateEntity {
 			}
 			gateStatusArray[0] = gateStatus; // insert most recent report to the front of the array
 		}
-		else if(reportType == 2) // SEEN STATE (report from workers)
+		else if(reportType == MsgType.SEEN_TABLE_STATE) // if the report is from a worker
 		{
 			for(int i = 1; i < 5; i++)
 			{
