@@ -1,0 +1,39 @@
+.header-bar{
+    background-color: #156082;
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo-title h1{
+    margin-bottom: 0;
+}
+.logo-title p{
+    color: #dddddd;
+    margin-top: 0;
+}
+.profil-notifications-container{
+    width: 15%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.header-title{
+    width: 30%;
+    font-size: 36px;
+    color: #47D45A;
+}
+
+.profile-notify-icons{
+    color: white;
+    display: flex;
+    flex-direction: row;
+    font-size: 24px;
+}
+
+.profile-notify-icon{
+    padding: 10px;
+}
