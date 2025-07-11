@@ -101,5 +101,6 @@ coverage/
 
 nodes/lab_workarounds.mk
 nodes/custom-modules/key-distro/include/secrets
+nodes/custom-modules/key-distro/util_scripts/secrets.yaml
 
 *.d
