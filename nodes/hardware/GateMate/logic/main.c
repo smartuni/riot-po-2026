@@ -53,9 +53,9 @@ int main(void){
 
     // start lorawan
     puts("starting lorawan");
-    if (!start_lorawan()){
+    int lorawanstarted = start_lorawan();
+    if (!lorawanstarted){
         printf("starting lorawan failed");
-        return -1;
     }
 
 
@@ -89,6 +89,9 @@ int main(void){
      );
 
     while(1){
+        if (!lorawanstarted){
+            lorawanstarted = start_lorawan();
+        }
         
         increment_device_timestamp();
         ztimer_sleep(ZTIMER_MSEC,1000);
