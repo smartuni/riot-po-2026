@@ -14,7 +14,6 @@
 
 
 // Return Codes
-#define TABLE_SUCCESS           0
 #define TABLE_ERROR_SIZE_TOO_BIG -1
 #define TABLE_ERROR_INVALID_GATE_ID -2
 #define TABLE_ERROR_NOT_FOUND   -3
@@ -515,12 +514,12 @@ int set_target_state_entry(const target_state_entry* entry) {
         // Entry doesn't exist yet, add it
         target_state_entry_count++;
         target_state_entry_table[gate_id] = *entry;
-        res = TABLE_UPDATED;
+        res |= TABLE_NEW_RECORD;
     }
     else if (target_state_entry_table[gate_id].timestamp < entry->timestamp) {
         // New entry is newer, update ours
         target_state_entry_table[gate_id] = *entry;
-        res = TABLE_UPDATED;
+        res |= TABLE_UPDATED;
     }
     
     mutex_unlock(&target_state_mutex);
@@ -544,12 +543,12 @@ int set_is_state_entry(const is_state_entry* entry) {
         // Entry doesn't exist yet, add it
         is_state_entry_count++;
         is_state_entry_table[gate_id] = *entry;
-        res = TABLE_UPDATED;
+        res |= TABLE_NEW_RECORD;
     }
     else if (is_state_entry_table[gate_id].gateTime < entry->gateTime) {
         // New entry is newer, update ours
         is_state_entry_table[gate_id] = *entry;
-        res = TABLE_UPDATED;
+        res |= TABLE_UPDATED;
     }
     
     mutex_unlock(&is_state_mutex);
@@ -573,12 +572,12 @@ int set_seen_status_entry(const seen_status_entry* entry) {
         // Entry doesn't exist yet, add it
         seen_status_entry_count++;
         seen_status_entry_table[gate_id][sense_id] = *entry;
-        res = TABLE_UPDATED;
+        res |= TABLE_NEW_RECORD;
     }
     else if (seen_status_entry_table[gate_id][sense_id].gateTime < entry->gateTime) {
         // New entry is newer, update ours
         seen_status_entry_table[gate_id][sense_id] = *entry;
-        res = TABLE_UPDATED;
+        res |= TABLE_UPDATED;
     }
     
     mutex_unlock(&seen_status_mutex);
@@ -596,13 +595,15 @@ int set_jobs_entry(const jobs_entry* entry) {
     }
     
     mutex_lock(&jobs_mutex);
-    if (jobs_entry_table[gate_id].gateID != MAX_GATE_COUNT) {
+    int res = TABLE_UPDATED;
+    if (!is_jobs_entry_present_internal(gate_id)) {
         jobs_entry_count++;
+        res |= TABLE_NEW_RECORD;
     }
     jobs_entry_table[gate_id] = *entry;
     mutex_unlock(&jobs_mutex);
     
-    return TABLE_UPDATED;
+    return res;
 }
 
 int set_timestamp_entry(const timestamp_entry* entry) {
@@ -616,10 +617,18 @@ int set_timestamp_entry(const timestamp_entry* entry) {
     }
     
     mutex_lock(&timestamp_mutex);
+    int res = TABLE_NO_UPDATES;
+    if (!is_timestamp_entry_present_internal(gate_id)) {
+        timestamp_entry_count++;
+        res |= TABLE_NEW_RECORD;
+    }
+    else {
+        res |= TABLE_UPDATED;
+    }
     timestamp_table[gate_id] = *entry;
     mutex_unlock(&timestamp_mutex);
     
-    return TABLE_UPDATED;
+    return res;
 }
 
 int force_set_target_state_entry(const target_state_entry* entry) {
@@ -636,18 +645,18 @@ int force_set_target_state_entry(const target_state_entry* entry) {
     target_state_entry_table[gate_id] = *entry;
     mutex_unlock(&target_state_mutex);
     
-    return TABLE_UPDATED;;
+    return TABLE_UPDATED;
 }
 
 int merge_target_state_entry_table(const target_state_entry* other, uint8_t size) {
     if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
-    int merge_result = TABLE_NO_UPDATES;
+    int merge_result = TARGET_STATE_TABLE_NO_UPDATES;
     for (int i = 0; i < size; i++) {
         int result = set_target_state_entry(&other[i]);
-        if (TABLE_UPDATED == result) {
-            merge_result = result; // Propagate unexpected errors
+        if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
+            merge_result |= result; 
         }
     }
     return merge_result;
@@ -657,11 +666,11 @@ int merge_is_state_entry_table(const is_state_entry* other, uint8_t size) {
     if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
-    int merge_result = TABLE_NO_UPDATES;
+    int merge_result = IS_STATE_TABLE_NO_UPDATES;
     for (int i = 0; i < size; i++) {
         int result = set_is_state_entry(&other[i]);
-        if (TABLE_UPDATED == result) {
-            merge_result = result; // Propagate unexpected errors
+        if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
+            merge_result |= result; 
         }
     }
     return merge_result;
@@ -671,11 +680,11 @@ int merge_seen_status_entry_table(const seen_status_entry* other, uint8_t size) 
     if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
-    int merge_result = TABLE_NO_UPDATES;
+    int merge_result = SEEN_STATUS_TABLE_NO_UPDATES;
     for (int i = 0; i < size; i++) {
         int result = set_seen_status_entry(&other[i]);
-        if (TABLE_UPDATED == result) {
-            merge_result = result; // Propagate unexpected errors
+        if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
+            merge_result |= result; 
         }
     }
     return merge_result;
@@ -685,11 +694,11 @@ int merge_timestamp_entry_table(const timestamp_entry* other, uint8_t size) {
     if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
-    int merge_result = TABLE_NO_UPDATES;
+    int merge_result = TIMESTAMP_TABLE_NO_UPDATES;
     for (int i = 0; i < size; i++) {
         int result = set_timestamp_entry(&other[i]);
-        if (TABLE_UPDATED == result) {
-            merge_result = result; // Propagate unexpected errors
+        if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
+            merge_result |= result; 
         }
     }
     return merge_result;
@@ -699,11 +708,11 @@ int merge_jobs_entry_table(const jobs_entry* other, uint8_t size) {
     if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
-    int merge_result = TABLE_NO_UPDATES;
+    int merge_result = JOBS_STATE_TABLE_NO_UPDATES;
     for (int i = 0; i < size; i++) {
         int result = set_jobs_entry(&other[i]);
-        if (TABLE_UPDATED == result) {
-            merge_result = result; // Propagate unexpected errors
+        if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
+            merge_result |= result; 
         }
     }
     return merge_result;
