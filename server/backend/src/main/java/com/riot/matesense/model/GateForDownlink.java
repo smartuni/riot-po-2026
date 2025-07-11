@@ -6,6 +6,9 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 
+/**
+ * A DTO for the GateForDownlink Entity
+ */
 @Setter
 @Getter
 public class GateForDownlink {

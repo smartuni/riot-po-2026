@@ -23,6 +23,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+/**
+ * A Fassade-Service class for the DownlinkCounterEntity
+ */
 @Service
 public class DownlinkCounterService {
 
@@ -33,6 +36,10 @@ public class DownlinkCounterService {
         this.repository = repository;
     }
 
+    /**
+     * a method to get counter
+     * @return
+     */
     public int getCounter() {
         DownlinkCounterEntity counterOpt = repository.getById(1L);
         return counterOpt.getCounter();
@@ -42,6 +49,10 @@ public class DownlinkCounterService {
         return repository.getById(1L);
     }
 
+    /**
+     * a method to increase the counter by 1
+     * @return if the increment was successfully
+     */
     public boolean incrementCounterIfBelowLimit() {
         DownlinkCounterEntity counter = repository.getById(1L);
 
@@ -54,7 +65,9 @@ public class DownlinkCounterService {
         return true;
     }
 
-    // Optional: Zurücksetzen (z. B. einmal pro Tag durch Admin oder Cron)
+    /**
+     * a method to reset the counter
+     */
     public void resetCounter() {
         DownlinkCounterEntity counter = repository.getById(1L);
         if (counter != null) {
@@ -63,7 +76,10 @@ public class DownlinkCounterService {
         }
     }
 
-    @Scheduled(cron = "0 0 0 * * *") // jeden Tag um 00:00 Uhr
+    /**
+     * a method to reset the counter every at 12pm
+     */
+    @Scheduled(cron = "0 0 0 * * *")
     public void scheduledReset() {
         resetCounter();
         System.out.println("Downlink counter wurde um Mitternacht zurückgesetzt.");

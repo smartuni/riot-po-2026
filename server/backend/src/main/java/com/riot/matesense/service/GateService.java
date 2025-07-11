@@ -39,6 +39,10 @@ public class GateService {
         this.calculator = new ConfidenceCalculator();
     }
 
+    /**
+     * a Method to get all GateEntities from the DB
+     * @return a list with all the gates
+     */
     public List<Gate> getAllGates() {
         List<GateEntity> gates = gateRepository.findAll();
         List<Gate> customGates = new ArrayList<>();
@@ -53,6 +57,12 @@ public class GateService {
         return customGates;
     }
 
+    /**
+     * a Method to add a Gate to be DB
+     * @param gate to be added
+     * @return the gate as a String
+     * @throws GateAlreadyExistingException
+     */
     public String addGate(GateEntity gate) throws GateAlreadyExistingException {
         gateRepository.save(gate);
         messagingTemplate.convertAndSend("/topic/gate-activities/add", gate);
@@ -60,21 +70,30 @@ public class GateService {
     }
 
 
-    public void removeGate(GateEntity gate){
+    /*public void removeGate(GateEntity gate){
         gateRepository.delete(gate);
-    }
+    }*/
 
-    public void removeGateById(Long id) throws GateNotFoundException {
-        GateEntity gate = gateRepository.getById(id);
+    /**
+     * a method to remove a gate by the given gateID
+     * @param gateId of the gate that should be removed
+     * @throws GateNotFoundException
+     */
+    public void removeGateById(Long gateId) throws GateNotFoundException {
+        GateEntity gate = gateRepository.getById(gateId);
         if (gate == null) {
-            throw new GateNotFoundException(id);
+            throw new GateNotFoundException(gateId);
         }
         gateRepository.delete(gate);
-        messagingTemplate.convertAndSend("/topic/gates/delete", id);
+        messagingTemplate.convertAndSend("/topic/gates/delete", gateId);
     }
 
 
-    //DO we even use this?
+    /**
+     * a method to update the gate
+     * @param gate that should be updated
+     * @param reportType of the msg
+     */
     public void updateGate(GateEntity gate, MsgType reportType) {
         //Hole das Gate
         //GateEntity existingGate = gateRepository.findById(Math.toIntExact(gate.getId())).orElse(null);
@@ -103,28 +122,37 @@ public class GateService {
 
     }
 
+    /**
+     * a method to check if a gate exists by its id
+     * @param id of the gate
+     * @return true if it exists
+     */
     public boolean existsGateById(Long id) {
         return gateRepository.existsById(Math.toIntExact(id));
     }
 
+    /**
+     * return a gate by its id
+     * @param id of the gate
+     * @return the gate if it exists
+     * @throws GateNotFoundException
+     */
     public GateEntity getGateEntityById(Long id) throws GateNotFoundException {
         return gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
     }
 
+    /**
+     * a method to get a gate by its id
+     * @param id of the gate
+     * @return the gate
+     * @throws GateNotFoundException
+     */
     public Gate getGateById(Long id) throws GateNotFoundException {
         GateEntity gate = gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
         return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
                 gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality(), gate.getPendingJob(), gate.getPriority());
     }
-
-
-//    public Gate getGateById(Long id) {
-//        GateEntity gate = gateRepository.getById(id);
-//        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
-//                gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
-//                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality());
-//    }
 
     //TODO need to be checked - here can be a bug - need to be tested to!!
 
@@ -135,6 +163,11 @@ public class GateService {
 //                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality());
 //    }
 
+    /**
+     * a method to change the requested status of a gate
+     * @param gateId of the gate
+     * @param targetStatus for the gate
+     */
     public void requestGateStatusChange(Long gateId, String targetStatus) {
         GateEntity gate = gateRepository.getById(gateId);
         System.out.println("Current Status: " + gate.getStatus());
@@ -217,6 +250,10 @@ public class GateService {
         gateRepository.save(gate);
     }
 
+    /**
+     * a method to all the gates and format them into gatesForDownLink Entities
+     * @return a List with the formatted gates
+     */
     public List<GateForDownlink> getAllGatesForDownlink() {
         List<GateEntity> gates = gateRepository.findAll();
         List<GateForDownlink> customGates = new ArrayList<>();
@@ -241,12 +278,21 @@ public class GateService {
         return customGates;
     }
 
+    /**
+     * a method to update the priority of the gate
+     * @param gateId of the gate that should be changed
+     * @param newPriority for the gate
+     */
     public void updatePriority(Long gateId, int newPriority) {
         GateEntity gateEntity = gateRepository.getById(gateId);
         gateEntity.setPriority(newPriority);
         gateRepository.save(gateEntity);
     }
 
+    /**
+     * a method to get the next highest ID for the gates so there wont be collisions
+     * @return the next free id
+     */
     public Long getIdForGate(){
         List<GateEntity> gates = gateRepository.findAll();
         if (gates.isEmpty()) {
@@ -260,6 +306,12 @@ public class GateService {
         }
     }
 
+    /**
+     * a method to add a basic Gate to the DB
+     * @param gate that should be added to the DB
+     * @return the gate as a String
+     * @throws GateAlreadyExistingException
+     */
     public String addGateFromGUI(GateEntity gate) throws GateAlreadyExistingException {
         if (gate.getId() == null){
             gate.setId(getIdForGate());

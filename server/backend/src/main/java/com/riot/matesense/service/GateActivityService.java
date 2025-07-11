@@ -33,6 +33,10 @@ public class GateActivityService {
         this.messagingTemplate = messagingTemplate;
     }
 
+    /**
+     * a method to get all the gateActivityEntities
+     * @return a list with all the gateActivities
+     */
     public List<GateActivity> getAllGateActivities() {
         List<GateActivityEntity> gates = gateActivityRepository.findAll();
         List<GateActivity> customGateActivities = new ArrayList<>();
@@ -43,25 +47,41 @@ public class GateActivityService {
         return customGateActivities;
     }
 
+    /**
+     * a method to add a gateActivity to the repository(database)
+     * @param gateActivity the activity that needs to be added
+     * @return the gate as a String
+     */
     public String addGateActivity(GateActivityEntity gateActivity) {
         GateActivityEntity saved = gateActivityRepository.save(gateActivity);
         messagingTemplate.convertAndSend("/topic/gate-activities", saved);
         return gateActivity.toString();
     }
 
+    /**
+     * a method to add a List of gateActivities
+     * @param gates to be added
+     */
     public void addGateActivities(List<GateActivityEntity> gates) {
         for (GateActivityEntity gate : gates) {
             addGateActivity(gate);
         }
     }
 
-
+    /**
+     * a method to remove a gateActivity from the database
+     * @param gateActivityEntity to remove from the database
+     */
     public void removeGateActivity(GateActivityEntity gateActivityEntity) {
         gateActivityRepository.delete(gateActivityEntity);
         messagingTemplate.convertAndSend("/topic/gate-activities/delete", gateActivityEntity.getId());
     }
 
-
+    /**
+     * a method to get a gateActivity by the GateID
+     * @param gateId from the gate
+     * @return the activity
+     */
     public List<GateActivity> getGateActivitiesByGateId(Long gateId) {
         List<GateActivityEntity> gateActivities = gateActivityRepository.findAll().stream().filter(e -> e.getGateId().equals(gateId)).collect(Collectors.toList());
         List<GateActivity> customGateActivities = new ArrayList<>();
@@ -72,6 +92,11 @@ public class GateActivityService {
         return customGateActivities;
     }
 
+    /**
+     * A method to build a specific message for the gateActivity
+     * @param gateActivity
+     * @return a messageString
+     */
     public String buildStatusMessage(GateActivity gateActivity) {
         return String.format("Gate ID: %d, Last Timestamp: %s, Requested Status: %s",
                 gateActivity.getGateId(),
