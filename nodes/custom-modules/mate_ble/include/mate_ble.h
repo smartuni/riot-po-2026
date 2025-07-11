@@ -32,8 +32,6 @@
 #define BLE_ERROR_INTERNAL_INSUFFICIENT_CAPACITY (-5)
 #define BLE_ERROR_INTERNAL_INVALID_DATA_LENGTH (-6)
 
-#define BLE_MAX_PAYLOAD_SIZE (300 - 86)
-
 typedef uint8_t cbor_message_type_t;
 
 #define CBOR_MESSAGE_TYPE_UNKNOWN ((uint8_t)-1)
