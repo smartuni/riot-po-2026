@@ -11,7 +11,7 @@
 typedef struct {
     cbor_buffer cbor_packet;
     ble_metadata_t metadata;
-    uint8_t data[BLE_MAX_PAYLOAD_SIZE]; // Buffer to store the actual data
+    uint8_t data[MATE_BLE_MAX_CBOR_PACKAGE_SIZE]; // Buffer to store the actual data
     uint8_t package_size; // Buffer to store the actual data
     
 } incoming_message_t;
@@ -21,7 +21,7 @@ typedef struct {
     (msg).cbor_packet.buffer = (msg).data; \
     (msg).cbor_packet.package_size = &(msg).package_size; \
     (msg).cbor_packet.cbor_size = 1; \
-    (msg).cbor_packet.capacity = BLE_MAX_PAYLOAD_SIZE; \
+    (msg).cbor_packet.capacity = MATE_BLE_MAX_CBOR_PACKAGE_SIZE; \
 }
 
 static incoming_message_t incoming_messages[MATE_BLE_INCOMING_LIST_SIZE];
@@ -29,7 +29,7 @@ static mutex_t list_mutex = MUTEX_INIT;
 
 int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata) 
 {
-    if (data_len > BLE_MAX_PAYLOAD_SIZE) {
+    if (data_len > MATE_BLE_MAX_CBOR_PACKAGE_SIZE) {
         return BLE_ERROR_INTERNAL_INVALID_DATA_LENGTH;
     }
 
@@ -59,8 +59,6 @@ int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata)
         if (incoming_messages[i].cbor_packet.buffer == NULL) {
             _INIT_CBOR_BUFFER(incoming_messages[i]);
             memcpy(incoming_messages[i].cbor_packet.buffer, data, data_len);
-            incoming_messages[i].cbor_packet.cbor_size = data_len;
-            incoming_messages[i].cbor_packet.package_size[0] = data_len;
             incoming_messages[i].metadata = metadata;
             mutex_unlock(&list_mutex);
             return BLE_SUCCESS;

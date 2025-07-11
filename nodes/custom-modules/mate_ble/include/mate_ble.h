@@ -32,10 +32,17 @@
 #define BLE_ERROR_INTERNAL_INSUFFICIENT_CAPACITY (-5)
 #define BLE_ERROR_INTERNAL_INVALID_DATA_LENGTH (-6)
 
-typedef uint8_t cbor_message_type_t;
-
 #define CBOR_MESSAGE_TYPE_UNKNOWN ((uint8_t)-1)
 #define CBOR_MESSAGE_TYPE_WILDCARD ((uint8_t)-2)
+
+#define MATE_BLE_GAP_NAME_BUF_SIZE (300)
+#define MATE_BLE_ADV_PKT_BUFFER_SIZE (300)
+#define MATE_BLE_SIGNING_DATA_SIZE      (86)
+#define MATE_BLE_MAX_PAYLOAD_SIZE       (300)
+#define MATE_BLE_MAX_CBOR_PACKAGE_COUNT (10)
+#define MATE_BLE_MAX_CBOR_PACKAGE_SIZE  (MATE_BLE_MAX_PAYLOAD_SIZE - MATE_BLE_SIGNING_DATA_SIZE)
+
+typedef uint8_t cbor_message_type_t;
 
 typedef struct {
    cbor_message_type_t message_type;

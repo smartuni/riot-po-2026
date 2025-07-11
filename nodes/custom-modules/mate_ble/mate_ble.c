@@ -24,8 +24,6 @@
 
 #define MATE_BLE_TX_POWER_UNDEF (127)
 
-#define MATE_BLE_GAP_NAME_BUF_SIZE (300)
-#define MATE_BLE_ADV_PKT_BUFFER_SIZE BLE_MAX_PAYLOAD_SIZE
 #define MATE_BLE_NIMBLE_INSTANCE (0)
 
 /* The scan window defines how long to listen on the currently
@@ -42,10 +40,6 @@
 #define MATE_BLE_THRESHOLD_MAX  (127)
 #define MATE_BLE_THRESHOLD_MIN  (-128)
 
-#define MATE_BLE_SIGNING_DATA_SIZE      (86)
-#define MATE_BLE_MAX_PAYLOAD_SIZE       (300)
-#define MATE_BLE_MAX_CBOR_PACKAGE_COUNT (10)
-#define MATE_BLE_MAX_CBOR_PACKAGE_SIZE  (MATE_BLE_MAX_PAYLOAD_SIZE - MATE_BLE_SIGNING_DATA_SIZE)
 
 static uint8_t id_addr_type;
 static uint8_t ble_initialized = 0;
@@ -225,10 +219,10 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
     bluetil_ad_init(&rec_ad, ad_ro, len, len);
 
     char name[BLE_ADV_PDU_LEN + 1] = {0};
-    int res = bluetil_ad_find_str(&rec_ad, BLE_GAP_AD_NAME,
+    int table_result = bluetil_ad_find_str(&rec_ad, BLE_GAP_AD_NAME,
                                 name, sizeof(name));
     // Output name, address, and data of the advertisement
-    if (res == BLUETIL_AD_OK) {
+    if (table_result == BLUETIL_AD_OK) {
         printf("\n\"%s\" @", name);
     }
     nimble_addr_print(addr);
@@ -237,8 +231,8 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
 
     // output our payload marke# BUILD_IN_DOCKER ?= 1d by our custom byte pattern
     bluetil_ad_data_t msd;
-    res = bluetil_ad_find(&rec_ad, BLE_GAP_AD_VENDOR, &msd);
-    if (res == BLUETIL_AD_OK) {
+    table_result = bluetil_ad_find(&rec_ad, BLE_GAP_AD_VENDOR, &msd);
+    if (table_result == BLUETIL_AD_OK) {
         uint8_t *marker = &msd.data[sizeof(_company_id_code)];
         if (memcmp(marker, _custom_msd_marker_pattern,
                 sizeof(_custom_msd_marker_pattern)) == 0) {
@@ -304,7 +298,6 @@ int ble_send(cbor_buffer* cbor_packet)
 
     int packet_offset = 0;
     for (int i = 0; i < cbor_packet->cbor_size; i++) {
-
         // --- Encode code ---
         uint8_t *encoded_ptr = NULL;
         size_t encoded_len = 0;
@@ -342,6 +335,8 @@ static void wait_for_ble_init(void)
 
 void* ble_send_loop(void* arg)
 {
+    (void)arg;
+
     wait_for_ble_init();
 
     cbor_buffer buffer;
@@ -349,7 +344,7 @@ void* ble_send_loop(void* arg)
     buffer.capacity = MATE_BLE_MAX_CBOR_PACKAGE_SIZE * MATE_BLE_MAX_CBOR_PACKAGE_COUNT;
     buffer.package_size = send_package_size_buffer;
 
-    typedef int (*cbor_fn_t)(size_t, cbor_buffer *);
+    typedef int (*cbor_fn_t)(int, cbor_buffer *);
     static const cbor_fn_t cbor_fns[] = {
         target_state_table_to_cbor_many,
         is_state_table_to_cbor_many,
@@ -376,16 +371,20 @@ void* ble_receive_loop(void* args)
     cbor_buffer buffer;
     buffer.buffer = recv_buffer;
     buffer.capacity = MATE_BLE_MAX_CBOR_PACKAGE_SIZE * MATE_BLE_MAX_CBOR_PACKAGE_COUNT;
-    buffer.package_size = receive_package_size_buffer;
+    buffer.package_size = recv_package_size_buffer;
     
     ble_metadata_t metadata;
 
     while (true) {
         if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
-            printf("BLE: receive failed\n");
             continue;
         }
-        int res = cbor_to_table_test(&buffer);
+
+        int table_result = cbor_to_table_test(&buffer);
+        if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
+            continue;
+        }
+
         if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
             continue;
         }
@@ -406,13 +405,8 @@ void* ble_receive_loop(void* args)
                 buffer.capacity
             );
 
-        int res = cbor_to_table_test(&buffer, metadata.rssi);
-        if (MATE_BLE_THRESHOLD_MIN >= metadata.rssi && MATE_BLE_THRESHOLD_MAX <= metadata.rssi) {
-            continue;
-        }
-
         if (thr_args != NULL) {
-            if (thr_args->receive_queue != NULL && TABLE_UPDATED == res) {
+            if (thr_args->receive_queue != NULL && TABLE_UPDATED == table_result) {
                 event_post(thr_args->receive_queue, thr_args->receive_event);
             }
         }
