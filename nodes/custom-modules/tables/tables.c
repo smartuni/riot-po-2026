@@ -1005,7 +1005,7 @@ int is_state_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer)
             // Create new package if needed
             if(size_of_current_cbor == 0 ){
                 cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
-                cbor_encoder_create_array(&encoder, &arrayEncoder, 5); // [
+                cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
                 cbor_encode_int(&arrayEncoder, IS_STATE_KEY);
                 if(is_state_entry_count - is_states_entry_processed < calculated_array_entries){
                     cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);  
