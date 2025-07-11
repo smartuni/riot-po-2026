@@ -40,7 +40,7 @@
 #define MATE_BLE_ADV_START_MS 20
 #define MATE_BLE_ADV_STOP_MS 200
 
-#define MATE_BLE_THRESHOLD  (-60)
+#define MATE_BLE_THRESHOLD  (-70)
 
 
 static uint8_t id_addr_type;
@@ -390,6 +390,23 @@ void* ble_receive_loop(void* args)
         if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
             continue;
         }
+
+        printf("BLE: receive\n"
+            "metadata\n"
+            "\t.type %d\n"
+            "\t.rssi %d\n"
+            "buffer\n"
+            "\t.buffer %d\n"
+            "\t.cbor_size %d\n"
+            "\t.buffer_size[0] %d\n"
+            "\t.capacity %d\n",
+            metadata.message_type,
+            metadata.rssi,
+            (int)buffer.buffer,
+            buffer.cbor_size,
+            buffer.package_size[0],
+            buffer.capacity
+        );
 
         int table_result = cbor_to_table_test(&buffer, metadata.rssi);
         printf("cbor_to_table_test result: %d\n", table_result);
