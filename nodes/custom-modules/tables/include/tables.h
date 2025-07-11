@@ -10,8 +10,8 @@
     #include <stdint.h>
 
     #define INVALID_GATE_ID (0xFF)
-    #define MAX_GATE_COUNT (64)
-    #define MAX_SENSE_COUNT (64)
+    #define MAX_GATE_COUNT (128)
+    #define MAX_SENSE_COUNT (20)
 
     #define TARGET_STATE_KEY 0x00
     #define IS_STATE_KEY 0x01
@@ -29,12 +29,16 @@
     #define TABLE_ERROR_INVALID_GATE_ID -2
     #define TABLE_ERROR_NOT_FOUND      -3
     
-    #define BASE_CBOR_BYTE_SIZE 0x03
+    #define BASE_CBOR_BYTE_SIZE 0x05
     #define CBOR_TARGET_STATE_MAX_BYTE_SIZE (0x06)
     #define CBOR_IS_STATE_MAX_BYTE_SIZE (0x06)
     #define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x07)
     #define CBOR_JOBS_MAX_BYTE_SIZE (0x03)
     #define CBOR_TIMESTAMP_MAX_BYTE_SIZE (0x06)
+
+    #define GATE_NODE 0x00
+    #define SENSEMATE_NODE 0x01
+    #define SERVER_SENDER 0x02
 
     typedef struct {
         uint8_t gateID;
@@ -45,7 +49,7 @@
     typedef struct {
         uint8_t gateID;
         uint8_t state;
-        int gateTime;
+        uint32_t gateTime;
     } is_state_entry;
 
     typedef struct {
@@ -57,7 +61,7 @@
 
     typedef struct {
         uint8_t gateID;
-        int timestamp;
+        uint32_t timestamp;
         int8_t rssi;
     } timestamp_entry;
 
@@ -73,6 +77,15 @@
         uint8_t* package_size;
         int capacity;
     } cbor_buffer;
+
+    /**
+     * Utility functions for device timestamp
+     * management
+     * Thread-safe
+     */
+    void increment_device_timestamp(void);
+    uint32_t increment_and_get_device_timestamp(void);
+    uint32_t get_device_timestamp(void);
 
     /**
      * @param buffer cbor buffer to write the cbor package into
@@ -96,13 +109,16 @@
     int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer);
     int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer);
 
+    int is_state_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer);
+    int seen_status_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer);
+
     /**
      * @param buffer cbor buffer
      * @return 0 if successful, -1 otherwise
      * receives a cbor buffer and turns the sequence into table structs
      * consequently calls functions to merge received table with saved table
     */
-    int cbor_to_table_test(cbor_buffer* buffer);
+    int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi);
 
     // Initialization
 int init_tables(void);
@@ -272,5 +288,6 @@ const timestamp_entry* get_timestamp_table(void);
     */
     int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buffer);
     int target_state_table_to_cbor_many_test(target_state_entry table[], int package_size, cbor_buffer* buffer);
+    int print_target_table_test(void);
 
 #endif

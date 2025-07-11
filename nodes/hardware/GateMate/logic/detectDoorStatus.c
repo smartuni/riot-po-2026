@@ -10,16 +10,15 @@ gpio_t doorSensor = TRIGGER;
 
 uint8_t status = 0;
 
-//uint32_t last_interrupt_time = 0;  // Time last interrupt occurs
-//int door_state = -1;  // -1: invalid, init with invalid value TODO for error checking
-//volatile bool busy = false;
 
+/**
+* callback function that triggers an event on interrupt
+*/
 void trigger_door_callback(void *arg) {
     
     (void) arg; /* the argument is not used */
 
     if (!gpio_read(doorSensor)) {
-        // TO SMTH
         status = 0;
         update_status(status);
         event_post(EVENT_PRIO_HIGHEST, &eventA0);
@@ -27,7 +26,6 @@ void trigger_door_callback(void *arg) {
         
     }
     else {
-        // TO SMTH
         status = 1;
         update_status(status);
         event_post(EVENT_PRIO_HIGHEST, &eventA0);
@@ -43,6 +41,7 @@ uint8_t initial_door_state(void) {
     if (!status) gpio_set(led1);
     return status;
 }
+
 
 void init__door_interrupt(void) {
     init_event();

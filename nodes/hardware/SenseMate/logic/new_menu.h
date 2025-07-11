@@ -54,7 +54,7 @@ typedef struct {
     uint8_t gate_requested_state;
     bool job_is_todo;
     uint8_t job_prio;
-    uint8_t sig_strength;
+    int8_t sig_strength;
 } gate_entry;
 
 typedef struct {

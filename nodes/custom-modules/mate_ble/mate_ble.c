@@ -304,7 +304,6 @@ int ble_send(cbor_buffer* cbor_packet)
 
     int packet_offset = 0;
     for (int i = 0; i < cbor_packet->cbor_size; i++) {
-        memcpy(_payload_buf, cbor_packet->buffer, cbor_packet->package_size[i]);
 
         // --- Encode code ---
         uint8_t *encoded_ptr = NULL;
@@ -383,6 +382,7 @@ void* ble_receive_loop(void* args)
 
     while (true) {
         if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
+            printf("BLE: receive failed\n");
             continue;
         }
         int res = cbor_to_table_test(&buffer);

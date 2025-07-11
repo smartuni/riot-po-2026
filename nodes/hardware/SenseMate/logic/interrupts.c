@@ -7,6 +7,7 @@
 #include "displayDemo.h"
 #include "menu.h"
 #include "events_creation.h"
+#include "soundModule.h"
 
 #define TRIGGER0 GPIO_PIN(0, 4);
 #define TRIGGER1 GPIO_PIN(0, 5);
@@ -75,6 +76,7 @@ void trigger4_callback (void *arg)
         // TO SMTH
         printf("Trigger 4 activated\n");
         event_post(EVENT_PRIO_HIGHEST, &eventNews);
+        event_post(&sound_queue, &ble_received_sound_event);
     }
     else {
         // TO SMTH

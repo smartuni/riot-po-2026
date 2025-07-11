@@ -19,7 +19,7 @@ typedef struct {
 #define _INIT_CBOR_BUFFER(msg) \
 { \
     (msg).cbor_packet.buffer = (msg).data; \
-    (msg).cbor_packet.package_size = (msg).package_size; \
+    (msg).cbor_packet.package_size = &(msg).package_size; \
     (msg).cbor_packet.cbor_size = 1; \
     (msg).cbor_packet.capacity = BLE_MAX_PAYLOAD_SIZE; \
 }
@@ -59,6 +59,8 @@ int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata)
         if (incoming_messages[i].cbor_packet.buffer == NULL) {
             _INIT_CBOR_BUFFER(incoming_messages[i]);
             memcpy(incoming_messages[i].cbor_packet.buffer, data, data_len);
+            incoming_messages[i].cbor_packet.cbor_size = data_len;
+            incoming_messages[i].cbor_packet.package_size[0] = data_len;
             incoming_messages[i].metadata = metadata;
             mutex_unlock(&list_mutex);
             return BLE_SUCCESS;

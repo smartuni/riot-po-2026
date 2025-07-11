@@ -1,6 +1,22 @@
 from nacl.signing import SigningKey
 from pathlib import Path
 import json
+import yaml
+
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
+tti_instance = config["tti_instance"]
+
+sensemate_count = config["sensemates"]["count"]
+sensemate_prefix = config["sensemates"]["id_prefix"]
+
+sensegate_count = config["sensegates"]["count"]
+sensegate_prefix = config["sensegates"]["id_prefix"]
+
+# Beispiel Device-IDs erstellen
+sensemate_ids = [f"{sensemate_prefix}-{i+1}" for i in range(sensemate_count)]
+sensegate_ids = [f"{sensegate_prefix}-{i+1}" for i in range(sensegate_count)]
 
 NUM_DEVICES = 3
 
@@ -11,10 +27,11 @@ def main():
 
     secrets_dir.mkdir(parents=True, exist_ok=True)
 
-    key_list = []
+    deviceIds = sensemate_ids + sensegate_ids
+    key_list=[]
 
-    for i in range(NUM_DEVICES):
-        kid = f"device_{i+1:02d}"
+    for devId in deviceIds:
+        kid = devId
         sk = SigningKey.generate()
         pk = sk.verify_key
 

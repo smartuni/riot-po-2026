@@ -1,11 +1,22 @@
 USEMODULE_INCLUDES_key_distro := $(LAST_MAKEFILEDIR)/include
 USEMODULE_INCLUDES += $(USEMODULE_INCLUDES_key_distro)
 
-ifneq (,$(RIOT_CONFIG_USE_TEST_KEYS))
-  CFLAGS += -DTEST_KEYS
-  $(info test_Keys defined)
+ifeq ($(DEVICE_TYPE),1)
+    DEVICE_PREFIX := sensemate
 else
-   ifneq (,$(RIOT_CONFIG_DEVICE_ID))
-       CFLAGS += -DDEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
-   endif
+    DEVICE_PREFIX := sensegate
+endif
+
+ifneq (,$(RIOT_CONFIG_USE_TEST_KEYS))
+    CFLAGS += -DTEST_KEYS
+else
+    CFLAGS += -DKEY_ID=$(DEVICE_PREFIX)-$(RIOT_CONFIG_DEVICE_ID)
+endif
+
+# Dynamisch die passende Konfigurationsdatei aus ttn_configs einbinden
+CONFIG_FILE := $(LAST_MAKEFILEDIR)/ttn_configs/$(DEVICE_PREFIX)-$(RIOT_CONFIG_DEVICE_ID)_config.mk
+ifneq ("$(wildcard $(CONFIG_FILE))","")
+    include $(CONFIG_FILE)
+else
+    $(error Config file $(CONFIG_FILE) not found!)
 endif

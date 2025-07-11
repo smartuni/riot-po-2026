@@ -1,8 +1,5 @@
 #include "header/event_creation.h"
 
-// ID of Gatemate
-int id = GATE_ID;
-
 gpio_t led0 = GPIO_PIN(1, 10); // TODO REMOVE LATER #1
 gpio_mode_t led0_mode = GPIO_OUT; // TODO REMOVE LATER #1
 
@@ -11,7 +8,6 @@ gpio_mode_t led0_mode = GPIO_OUT; // TODO REMOVE LATER #1
 is_state_entry table_entry;
 
 uint8_t event_status = 0;
-uint32_t timestamp = 0;
 
 // Debounce
 bool event_accepted = true;
@@ -38,6 +34,10 @@ void event_callback (void *arg)
     event_accepted = true; // Allow the event handler to be called again  
 }
 
+
+/**
+* Function 
+*/
 void event_handler_reactivate(event_t *event) 
 {
     gpio_set(led0);
@@ -47,33 +47,15 @@ void event_handler_reactivate(event_t *event)
     // UPDATE TABLE
     table_entry.gateID = GATE_ID;
     table_entry.state = event_status;
-    table_entry.gateTime = timestamp++;
-
-    puts("In event reactivate handler");
-
-    if( TABLE_UPDATED == set_is_state_entry(&table_entry)){
-        puts("In event reactivate handler IF");
-        // // TEST
-        is_state_entry test_table_entry;
-        if (!get_is_state_entry(GATE_ID, &test_table_entry)) {
-            puts("In event reactivate handler GET");
-            // printf("TEST ENTRY Time %d\n", test_table_entry.gateTime);
-            // printf("TEST ENTRY State %d\n", test_table_entry.state);
-
-
-        } else {
-            puts("test failed");
-        } 
-
+    table_entry.gateTime = get_device_timestamp();
+    
+    int tableUpdate = set_is_state_entry(&table_entry);
+    if( TABLE_UPDATED == tableUpdate){
         // TELL LORAWAN
-        event_post(&lorawan_queue, &send_is_state_table);
-
+        event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
     } else {
         puts("writing to table failed!");
-    }
-
-
-    
+    } 
     
 }
 
@@ -93,12 +75,4 @@ void event_handlerA0(event_t *event)
 
 void update_status(uint8_t newStatus){
     event_status = newStatus;
-}
-
-void setTimestamp(int newTimestamp) {
-    timestamp = newTimestamp;
-}
-
-int getTimestamp(void) {
-    return timestamp;
 }

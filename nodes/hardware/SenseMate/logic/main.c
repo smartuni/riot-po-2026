@@ -13,18 +13,25 @@
 #include "soundModule.h"
 #include "vibrationModule.h"
 
+#include "mate_ble.h"
+
 void fill_tables_test(void);
+
+char ble_send_stack[2*THREAD_STACKSIZE_DEFAULT];
+char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
 
 int main(void) {
-    ztimer_sleep(ZTIMER_MSEC, 3000);
+    ztimer_sleep(ZTIMER_MSEC, 3000); //if use term activate sleep to see all prints
     init_interrupt();
     init_sound_module();
     init_vibration_module();
+    event_post(&sound_queue, &start_sound_event);
     startup_sound();
 
     //printf("Display demo started.\n");
     init_display();
+    printf("Device Type: %d device id: %d\n",DEVICE_TYPE, DEVICE_ID);
     printf("Display initialized.\n");
     //display_demo();
     //init_menu();
@@ -36,7 +43,7 @@ int main(void) {
     //is_state_entry receiveide_is_state;
     //int hallo = get_is_state_entry(1, &receiveide_is_state);
     //printf("Gate Id %d\n", receiveide_is_state.gateID);
-    fill_tables_test();
+    //fill_tables_test();
     
     update_menu_from_tables();
     //(void) test_merge;
@@ -48,10 +55,45 @@ int main(void) {
 
     start_lorawan();
 
+    puts("starting ble");
+    if (BLE_SUCCESS == ble_init()){
+        puts("Ble init complete");
+    } else {
+        puts("BLE not started");
+    }
+
+    thread_create(
+        ble_send_stack,
+        sizeof(ble_send_stack),
+        THREAD_PRIORITY_MAIN - 1,
+        THREAD_CREATE_STACKTEST,
+        ble_send_loop,
+        NULL,
+       "bleSend"
+    );
+
+    ble_received_thread_args_t args = {
+        .receive_queue = EVENT_PRIO_HIGHEST,
+        .receive_event = &eventNews,
+
+    };
+
+    thread_create(
+        ble_reicv_stack,
+        sizeof(ble_reicv_stack),
+        THREAD_PRIORITY_MAIN - 1,
+        THREAD_CREATE_STACKTEST,
+        ble_receive_loop,
+        &args,
+       "bleRecv"
+    );
+
+    puts("entering main loop");
     while (1)
     {
-        ztimer_sleep(ZTIMER_MSEC, 200);
+        ztimer_sleep(ZTIMER_MSEC, 1000);
         //refresh_display();
+        increment_device_timestamp();
     }
     
     printf("Display demo finished.\n");
