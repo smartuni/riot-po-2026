@@ -29,12 +29,6 @@
 | Vibration Motor    | GPIO (via NPN)    | D3             |
 | Battery Voltage    | Analog Input      | A6             |
 
-## Programming
-
-- Firmware is based on **RIOT OS**
-- Flash via USB using the built-in **UF2 bootloader**
-- Enter bootloader mode: **double-tap RESET**
-- Flash with RIOT: `make BOARD=adafruit-feather-nrf52840-sense flash`
 
 ---
 
