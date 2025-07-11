@@ -92,6 +92,7 @@ void event_handlerNews(event_t *event)
         event_post(&sound_queue, &downlink_sound_event);
         //downlink_reveived_sound();
         event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
+        update_menu_display();
         stop_vibration();
     }else{
         puts("XXXX event news ignored");
@@ -107,6 +108,7 @@ void event_handlerBleNews(event_t *event)
         event_post(&sound_queue, &ble_received_sound_event);
         //ble_reveived_sound();
         event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
+        update_menu_display();
     }else{
         puts("XXXX event ble news ignored");
     }
