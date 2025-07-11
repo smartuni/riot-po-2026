@@ -199,6 +199,7 @@ void update_with_jobs(int potential_id){
 }
 
 void update_with_timestamp(int potential_id){
+    printf("Updating with timestamp for gate %d\n", potential_id);
     if(get_timestamp_entry(potential_id, &timestamp_tbl_entry_buf) == TABLE_SUCCESS){
         //check if gate already there
         if(!gate_listed(timestamp_tbl_entry_buf.gateID)){
@@ -218,6 +219,7 @@ void update_with_timestamp(int potential_id){
 }
 
 void update_menu_from_tables(void){
+    printf("Updating menu from tables\n");
     for(int i = 0; i< MAX_GATES; i++){
         update_with_target(i);
         //update_with_is_state(i); //alternative
@@ -265,6 +267,7 @@ void reorder_close_by(void){
         for (int i=0; i<current_num_gates; i++){
             if(all_entries[i].sig_strength < last_sig_strenght && all_entries[i].sig_strength > curr_sig_strength){
                 curr_sig_strength = all_entries[i].sig_strength;
+                printf("New sig strength: %d\n", curr_sig_strength);
             }
         }
 
@@ -282,6 +285,7 @@ void reorder_close_by(void){
         curr_sig_strength = -127;
     }
     current_num_close_by = added_cnt;
+    printf("Close by gates: %d\n", current_num_close_by);
     if(todo_closeby){
         event_post(&sound_queue, &close_by_todo_sound_event);
     }
@@ -1033,8 +1037,8 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                     set_job_done(upper_entry.current_gate->gate_id, true);
                     in_tables_set_gate_job_done(upper_entry.current_gate->gate_id, true);
                 }
-                event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
-                event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
+                event_post(EVENT_PRIO_MEDIUM, &send_is_state_table);
+                event_post(EVENT_PRIO_MEDIUM, &send_seen_status_table);
             } else if (lower_entry.selected && lower_entry.subentry == CONFIRM){
 
                 if(state == OPEN){
@@ -1049,8 +1053,8 @@ void confirmation_open_closed(input input, menu_type menu, gate_state state){
                     set_job_done(lower_entry.current_gate->gate_id, true);
                     in_tables_set_gate_job_done(lower_entry.current_gate->gate_id, true);
                 }
-                event_post(EVENT_PRIO_HIGHEST, &send_is_state_table);
-                event_post(EVENT_PRIO_HIGHEST, &send_seen_status_table);
+                event_post(EVENT_PRIO_MEDIUM, &send_is_state_table);
+                event_post(EVENT_PRIO_MEDIUM, &send_seen_status_table);
             }
 
             if(menu == CONFIRMATION_GATE_OPEN || menu == CONFIRMATION_GATE_CLOSE){

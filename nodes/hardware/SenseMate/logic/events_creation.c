@@ -12,9 +12,25 @@
 
 bool event_accepted = true;
 event_timeout_t reactivate;
+event_queue_t events_creation_queue;
+static char thread_stack[THREAD_STACKSIZE_DEFAULT];
+
+void* thread_events_function(void *arg) {
+    (void)arg; // Unused argument
+    
+    event_queue_init(&events_creation_queue); // Initialize the sound event queue
+
+    while(1){
+        puts("events creation thread running.");
+        event_loop(&events_creation_queue);
+    }
+}
 
 void init_event(void){
-    event_timeout_ztimer_init(&reactivate, ZTIMER_MSEC, EVENT_PRIO_HIGHEST, &event_reactivate);
+    event_timeout_ztimer_init(&reactivate, ZTIMER_MSEC, &events_creation_queue, &event_reactivate);
+
+    thread_create(thread_stack, sizeof(thread_stack), THREAD_PRIORITY_MAIN - 1,
+                  THREAD_CREATE_STACKTEST, thread_events_function, NULL, "events_creation_thread");
 }
 
 
@@ -85,33 +101,30 @@ void event_handlerA3(event_t *event)
 void event_handlerNews(event_t *event)
 {
     (void) event;   /* Not used */
-    if(event_accepted){
-        puts("got news");
-        start_vibration();
-        update_menu_from_tables();
-        event_post(&sound_queue, &downlink_sound_event);
-        //downlink_reveived_sound();
-        event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-        update_menu_display();
-        stop_vibration();
-    }else{
-        puts("XXXX event news ignored");
-    }
+    
+    puts("got news");
+    start_vibration();
+    update_menu_from_tables();
+    event_post(&sound_queue, &downlink_sound_event);
+    //downlink_reveived_sound();
+    event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
+    update_menu_display();
+    stop_vibration();
 }
 
 void event_handlerBleNews(event_t *event)
 {
     (void) event;   /* Not used */
-    if(event_accepted){
-        puts("got ble news");
-        update_menu_from_tables();
-        event_post(&sound_queue, &ble_received_sound_event);
-        //ble_reveived_sound();
-        event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-        update_menu_display();
-    }else{
-        puts("XXXX event ble news ignored");
-    }
+    
+    puts("got ble news");
+    start_vibration();
+    update_menu_from_tables();
+    event_post(&sound_queue, &tables_news_sound_event);
+    //ble_reveived_sound();
+    event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
+    update_menu_display();
+    stop_vibration();
+    
 }
 
 event_t eventA0 = { .handler = event_handlerA0 };

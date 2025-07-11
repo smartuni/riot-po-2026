@@ -54,7 +54,7 @@ int main(void) {
     //     printf("ID: %d, State: %d, Time: %d\n", table[i].gateID, table[i].state, table[i].gateTime);
     // }
 
-    lorawan_started = start_lorawan();
+    
 
     puts("starting ble");
     if (BLE_SUCCESS == ble_init()){
@@ -74,7 +74,7 @@ int main(void) {
     );
 
     ble_received_thread_args_t args = {
-        .receive_queue = EVENT_PRIO_HIGHEST,
+        .receive_queue = &events_creation_queue,
         .receive_event = &eventBleNews,
 
     };
@@ -88,6 +88,8 @@ int main(void) {
         &args,
        "bleRecv"
     );
+
+    lorawan_started = start_lorawan();
 
     puts("entering main loop");
     while (1)

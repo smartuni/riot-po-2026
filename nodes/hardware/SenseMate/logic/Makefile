@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = displayTest
+APPLICATION = SenseMate
 # If no BOARD is found in the environment, use this default:
 BOARD ?= adafruit-feather-nrf52840-sense
 
@@ -52,7 +52,8 @@ CFLAGS += -DDEVICE_TYPE=$(DEVICE_TYPE) #Device Type
 CFLAGS += -DI2C_DEVICE_IDX=0
 CFLAGS += -DI2C_DISPLAY_ADDR=0x3c
 CFLAGS += -DU8G2_DISPLAY_INIT_FUNC=u8g2_Setup_ssd1306_i2c_128x64_noname_f
-CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=1024
+CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=1024*3
+CFLAGS += -DEVENT_THREAD_MEDIUM_STACKSIZE=1024*3
 
 
 # Change this to 0 show compiler invocation lines by default:

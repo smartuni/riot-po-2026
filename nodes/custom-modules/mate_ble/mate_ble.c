@@ -19,6 +19,9 @@
 #include "cbor.h"
 #include "semaphore.h"
 #include "cose-service.h"
+#if DEVICE_TYPE == 1 // SenseMate
+#include "soundModule.h"
+#endif
 
 #include "incoming_list.h"
 
@@ -185,7 +188,7 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     assert (rc == 0);
 
     printf("Now advertising\n");
-    print_hex_arr(payload, payload_len);
+    //print_hex_arr(payload, payload_len);
 }
 
 static void print_hex_arr(const uint8_t *data, unsigned len)
@@ -227,7 +230,7 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
     }
     nimble_addr_print(addr);
     printf("sent %d bytes:\n", len);
-    print_hex_arr(ad, len);
+    //print_hex_arr(ad, len);
 
     // output our payload marke# BUILD_IN_DOCKER ?= 1d by our custom byte pattern
     bluetil_ad_data_t msd;
@@ -417,9 +420,15 @@ void* ble_receive_loop(void* args)
 
         if (thr_args != NULL) {
             if ((thr_args->receive_queue != NULL) && (table_result & TABLE_NEW_RECORD_AND_UPDATE)) {
+                printf("Posting event to receive queue\n");
                 event_post(thr_args->receive_queue, thr_args->receive_event);
                 printf("Event posted that table was updated\n");
             }
+#if DEVICE_TYPE == 1 // only for SenseMate            
+            else{
+                event_post(&sound_queue, &ble_received_sound_event);
+            }
+#endif            
         }
     }
     return NULL;

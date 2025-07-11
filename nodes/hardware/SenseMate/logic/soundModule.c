@@ -68,12 +68,10 @@ void internal_uplink_send(void) {
 
 void internal_ble_received(void) {
     // Play sound for BLE received
-    start_vibration();
-    play_sound(932, 300); // b'' 
-    play_sound(831, 400); // as''                           
+    play_sound(932, 50); // b'' 
+    play_sound(831, 50); // as''                           
     
     gpio_clear(sound);
-    stop_vibration();
 }
 
 void internal_ble_send(void) {

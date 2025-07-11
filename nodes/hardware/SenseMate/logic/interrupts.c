@@ -31,7 +31,7 @@ void trigger0_callback (void *arg)
         // TO SMTH
         //gpio_set(led0);
         printf("Trigger 0 activated\n");
-        event_post(EVENT_PRIO_HIGHEST, &eventA0);
+        event_post(&events_creation_queue, &eventA0);
     }
     else {
         // TO SMTH
@@ -46,7 +46,7 @@ void trigger1_callback (void *arg)
         // TO SMTH
         //gpio_set(led0);
         printf("Trigger 1 activated\n");
-        event_post(EVENT_PRIO_HIGHEST, &eventA1);
+        event_post(&events_creation_queue, &eventA1);
     }
     else {
         // TO SMTH
@@ -61,7 +61,7 @@ void trigger3_callback (void *arg)
         // TO SMTH
         //gpio_set(led0);
         printf("Trigger 3 activated\n");
-        event_post(EVENT_PRIO_HIGHEST, &eventA3);
+        event_post(&events_creation_queue, &eventA3);
     }
     else {
         // TO SMTH
@@ -75,7 +75,7 @@ void trigger4_callback (void *arg)
     if (!gpio_read(trigger4)) {
         // TO SMTH
         printf("Trigger 4 activated\n");
-        event_post(EVENT_PRIO_HIGHEST, &eventNews);
+        event_post(&events_creation_queue, &eventNews);
         event_post(&sound_queue, &ble_received_sound_event);
     }
     else {

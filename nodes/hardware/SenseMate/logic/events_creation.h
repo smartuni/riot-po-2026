@@ -18,6 +18,7 @@ extern event_t eventA3;
 extern event_t eventNews;
 extern event_t eventBleNews;
 extern event_t event_reactivate;
+extern event_queue_t events_creation_queue;
 
 extern void init_event(void);
 
