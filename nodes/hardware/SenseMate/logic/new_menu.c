@@ -199,7 +199,7 @@ void update_with_jobs(int potential_id){
 }
 
 void update_with_timestamp(int potential_id){
-    printf("Updating with timestamp for gate %d\n", potential_id);
+    //printf("Updating with timestamp for gate %d\n", potential_id);
     if(get_timestamp_entry(potential_id, &timestamp_tbl_entry_buf) == TABLE_SUCCESS){
         //check if gate already there
         if(!gate_listed(timestamp_tbl_entry_buf.gateID)){
@@ -270,7 +270,9 @@ void reorder_close_by(void){
                 printf("New sig strength: %d\n", curr_sig_strength);
             }
         }
-
+        if(curr_sig_strength < MIN_SIGNAL_STRENGTH){
+            break; //no more gates to add
+        }
         //add gates with sigstrengt
         for(int i=0; i<current_num_gates; i++){
             if(all_entries[i].sig_strength == curr_sig_strength){

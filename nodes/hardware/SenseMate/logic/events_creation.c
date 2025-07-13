@@ -59,6 +59,7 @@ void event_handler_decrement_rssi_timeout(event_t *event)
         if(get_timestamp_entry(i, &timestamp_tbl_entry_buf)!=TABLE_ERROR_NOT_FOUND){
             if(timestamp_tbl_entry_buf.rssi > MIN_SIGNAL_STRENGTH){
                 timestamp_tbl_entry_buf.rssi -= DECREMENT_RSSI; //decrement rssi by 10
+                printf("Decremented rssi for gate %d to %d\n", timestamp_tbl_entry_buf.gateID, timestamp_tbl_entry_buf.rssi);
             }
             set_timestamp_entry(&(timestamp_entry){
                 .gateID = timestamp_tbl_entry_buf.gateID,
