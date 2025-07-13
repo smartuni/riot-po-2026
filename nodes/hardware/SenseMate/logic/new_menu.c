@@ -44,6 +44,13 @@ void in_tables_set_gate_open_closed(int gate_id, gate_state state){
     if(get_timestamp_entry(gate_id, &timestamp_tbl_entry_buf) != TABLE_SUCCESS){
         return; //no timestamp entry found
     }
+    timestamp_tbl_entry_buf.timestamp++;
+
+    set_timestamp_entry(&(timestamp_entry){
+        .gateID = gate_id,
+        .timestamp = timestamp_tbl_entry_buf.timestamp,
+        .rssi = timestamp_tbl_entry_buf.rssi
+    });
 
     set_seen_status_entry(&(seen_status_entry){
         .gateID = gate_id,
@@ -487,6 +494,24 @@ void main_to_job_prios(void){
     lower_entry.selected = true;
 }
 
+//get to close by menu to header
+void main_to_close_by(void){
+    upper_entry.menu = CLOSE_BY_MENU;
+    upper_entry.subentry = HEADER;
+    upper_entry.current_gate = NULL;
+    upper_entry.selected = false;
+
+    lower_entry.menu = CLOSE_BY_MENU;
+    if(current_num_close_by > 0){
+        lower_entry.subentry = OTHER;
+        lower_entry.current_gate = close_by_order[0];
+    }else{
+        lower_entry.subentry = CANCEL;
+        lower_entry.current_gate = NULL;
+    }
+    lower_entry.selected = true;
+}
+
 //get back to job prios menu to the before selected gate
 void cancel_to_job_prios(void){
     upper_entry.menu = JOB_PRIOS;
@@ -514,24 +539,6 @@ void cancel_to_job_prios(void){
         }
     }
     lower_entry.selected = false;
-}
-
-//get to close by menu to header
-void main_to_close_by(void){
-    upper_entry.menu = CLOSE_BY_MENU;
-    upper_entry.subentry = HEADER;
-    upper_entry.current_gate = NULL;
-    upper_entry.selected = false;
-
-    lower_entry.menu = CLOSE_BY_MENU;
-    if(current_num_close_by > 0){
-        lower_entry.subentry = OTHER;
-        lower_entry.current_gate = close_by_order[0];
-    }else{
-        lower_entry.subentry = CANCEL;
-        lower_entry.current_gate = NULL;
-    }
-    lower_entry.selected = true;
 }
 
 //get back to close by menu to the before selected gate
