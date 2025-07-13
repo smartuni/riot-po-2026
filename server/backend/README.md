@@ -190,4 +190,4 @@ Registry subdirectory tracks gatemates and sensemates on the network.
 
 Repository subdirectory initializes repositories which store information used when the application is running.
 
-README completed by Cosmin Musteata and Simon Korondi.
+Server Team Back-End completed by Cosmin Musteata and Simon Korondi.
