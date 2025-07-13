@@ -34,10 +34,10 @@ To connect Rescue‑Mate to TTN, you first need to access the **TTN Console**, w
 Continue with the following steps:
 
 2. **Create an Application**
-- On the left sidebar, select **“Applications”**
-- On the top right, click **“+ Add application”**
-- Give your application a unique ID, e.g. `rescue-mate-app`
-- Click **“Create application”**
+    - On the left sidebar, select **“Applications”**        
+    - On the top right, click **“+ Add application”**
+    - Give your application a unique ID, e.g. `rescue-mate-app`
+    - Click **“Create application”**
 
 
 3. **Register Your Device**

@@ -69,11 +69,12 @@ public class MqttMessageHandler {
                         try {
                             //update Existing Gate
                             GateEntity existingGate = gateService.getGateEntityById(gateId);
-                            if(Math.abs(timestamp.getTime() - existingGate.getLastTimeStamp().getTime()) < 10){
-                                System.out.println("Timestamp are Equal");
-                                System.out.println("GateID:" + gateId + "Timestamp" + timestamp.getTime());
-                                continue;
-                            }
+                            //if(Math.abs(timestamp.getTime() - existingGate.getLastTimeStamp().getTime()) < 10){
+                                //System.out.println("Timestamp are Equal");
+                                //System.out.println("GateID:" + gateId + "Timestamp" + timestamp.getTime());
+                                //continue;
+                            //}
+                        
 //                            int confidence = existingGate.getConfidence();
                             // existingGate.setStatus(status);
 
