@@ -56,7 +56,7 @@ void event_handler_decrement_rssi_timeout(event_t *event)
     (void) event;   /* Not used */
     event_accepted = true; // Allow the event handler to be called again
     for(int i = 0; i< MAX_GATE_COUNT; i++){
-        if(get_timestamp_entry(i, &timestamp_tbl_entry_buf)!=TABLE_ERROR_NOT_FOUND){
+        if(get_timestamp_entry(i, &timestamp_tbl_entry_buf)==TABLE_SUCCESS){
             if(timestamp_tbl_entry_buf.rssi > MIN_SIGNAL_STRENGTH){
                 timestamp_tbl_entry_buf.rssi -= DECREMENT_RSSI; //decrement rssi by 10
                 printf("Decremented rssi for gate %d to %d\n", timestamp_tbl_entry_buf.gateID, timestamp_tbl_entry_buf.rssi);
