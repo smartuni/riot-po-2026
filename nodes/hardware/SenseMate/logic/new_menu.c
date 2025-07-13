@@ -495,6 +495,11 @@ void cancel_to_job_prios(void){
 
     lower_entry.menu = JOB_PRIOS;
 
+    if(current_num_jobs == 0 || upper_entry.current_gate->job_prio < MIN_JOB_PRIO){
+        main_to_close_by();
+        return; //no close by gates, so no lower entry
+    }
+
     if(jobs_order[current_num_jobs -1] == upper_entry.current_gate){
         lower_entry.subentry = CANCEL;
         lower_entry.current_gate = NULL;
@@ -534,9 +539,13 @@ void cancel_to_close_by(void){
     upper_entry.menu = CLOSE_BY_MENU;
     upper_entry.subentry = OTHER;
     upper_entry.selected = true;
-
     lower_entry.menu = CLOSE_BY_MENU;
 
+    if(current_num_close_by == 0 || upper_entry.current_gate->sig_strength < MIN_SIGNAL_STRENGTH){
+        main_to_close_by();
+        return; //no close by gates, so no lower entry
+    }
+    
     if(close_by_order[current_num_close_by-1] == upper_entry.current_gate){
         lower_entry.subentry = CANCEL;
         lower_entry.current_gate = NULL;
