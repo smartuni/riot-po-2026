@@ -242,15 +242,15 @@ void fill_tables_test(void){
     timestamp_entry test_timestamp;
     test_timestamp.gateID = 1;
     test_timestamp.timestamp = 55000;
-    test_timestamp.rssi = 50;
+    test_timestamp.rssi = -50;
     int test_timestamp_merge = set_timestamp_entry(&test_timestamp);
     test_timestamp.gateID = 2;
     test_timestamp.timestamp = 60000;
-    test_timestamp.rssi = 60;
+    test_timestamp.rssi = -100;
     test_timestamp_merge = set_timestamp_entry(&test_timestamp);
     test_timestamp.gateID = 3;
     test_timestamp.timestamp = 66000;
-    test_timestamp.rssi = 60;
+    test_timestamp.rssi = 0;
     test_timestamp_merge = set_timestamp_entry(&test_timestamp);
     test_timestamp.gateID = 4;
     test_timestamp.timestamp = 70000;
@@ -258,15 +258,15 @@ void fill_tables_test(void){
     test_timestamp_merge = set_timestamp_entry(&test_timestamp);
     test_timestamp.gateID = 5;
     test_timestamp.timestamp = 8000;
-    test_timestamp.rssi = 80;
+    test_timestamp.rssi = -20;
     test_timestamp_merge = set_timestamp_entry(&test_timestamp);
     test_timestamp.gateID = 6;
     test_timestamp.timestamp = 9000;
-    test_timestamp.rssi = 70;
+    test_timestamp.rssi = -30;
     test_timestamp_merge = set_timestamp_entry(&test_timestamp);
     test_timestamp.gateID = 7;
     test_timestamp.timestamp = 10000;
-    test_timestamp.rssi = 90;
+    test_timestamp.rssi = 0;
     test_timestamp_merge = set_timestamp_entry(&test_timestamp);
     printf("Test merge: %d\n", test_timestamp_merge);
 }
