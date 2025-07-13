@@ -488,7 +488,7 @@ function StatusTables() {
                             <th>
                                 Confidence
                                 <Tooltip
-                                    title="If it says a 100% we are a 100% sure that the current Status is correct">
+                                    title="If it says a 100% we are a 100% sure that the current Status is correct. Also the confidence will add up for every uplink with the current status we get.">
                                     <HelpOutlineIcon
                                         fontSize="small"
                                         className="help-icon"
