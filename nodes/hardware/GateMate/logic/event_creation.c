@@ -1,5 +1,6 @@
 #include "header/event_creation.h"
 
+
 gpio_t led0 = GPIO_PIN(1, 10); // TODO REMOVE LATER #1
 gpio_mode_t led0_mode = GPIO_OUT; // TODO REMOVE LATER #1
 
@@ -76,4 +77,8 @@ void event_handlerA0(event_t *event)
 
 void update_status(uint8_t newStatus){
     event_status = newStatus;
+}
+
+uint8_t get_status(void){
+    return event_status;
 }
