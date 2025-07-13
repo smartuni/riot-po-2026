@@ -5,6 +5,7 @@
 #include "thread.h"
 #include "event.h"
 #include "event/thread.h"
+#include <cstdint>
 
 #include <stdio.h>
 #include "ztimer.h"
@@ -34,6 +35,11 @@ extern void init_event(void);
 * sets current status of sensor. needed to set internal table after change
 */
 void update_status(uint8_t newStatus);
+
+/**
+* return current status
+*/
+uint8_t get_status(void);
 
 
 

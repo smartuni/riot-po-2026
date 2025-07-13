@@ -12,6 +12,8 @@
 #include "header/detectDoorStatus.h"
 #include "header/event_creation.h"
 
+#define TIME_PERIOD_TABLE_UPDATE 30 // const defines time to update table periodically
+
 
 char ble_send_stack[2*THREAD_STACKSIZE_DEFAULT];
 char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
@@ -87,13 +89,33 @@ int main(void){
         "bleRecv"
      );
 
+    int timeToUpdateTable = 0; // var to update table periodically
+    
     while(1){
+
+        
         if (-1 == lorawanstarted){
             lorawanstarted = start_lorawan();
         }
         
         increment_device_timestamp();
         ztimer_sleep(ZTIMER_MSEC,1000);
+    
+        if (timeToUpdateTable == TIME_PERIOD_TABLE_UPDATE) {
+            is_state_entry table_update_entry;
+            table_update_entry.gateID = GATE_ID;
+            table_update_entry.state = get_status();
+            table_update_entry.gateTime = get_device_timestamp();
+
+            if (TABLE_UPDATED == set_is_state_entry(&table_entry)){
+                puts("Table updated with newest timestamp");
+            }
+            timeToUpdateTable = 0;
+        } else {
+            timeToUpdateTable++
+        }
+
+        
 
     }
     return 0;
