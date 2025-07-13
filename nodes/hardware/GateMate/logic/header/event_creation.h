@@ -5,7 +5,7 @@
 #include "thread.h"
 #include "event.h"
 #include "event/thread.h"
-#include <cstdint>
+#include <stdint.h>
 
 #include <stdio.h>
 #include "ztimer.h"
