@@ -44,7 +44,7 @@ int main(void) {
     //is_state_entry receiveide_is_state;
     //int hallo = get_is_state_entry(1, &receiveide_is_state);
     //printf("Gate Id %d\n", receiveide_is_state.gateID);
-    fill_tables_test();
+    //fill_tables_test();
     
     update_menu_from_tables();
     //(void) test_merge;
