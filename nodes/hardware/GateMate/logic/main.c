@@ -107,12 +107,12 @@ int main(void){
             table_update_entry.state = get_status();
             table_update_entry.gateTime = get_device_timestamp();
 
-            if (TABLE_UPDATED == set_is_state_entry(&table_entry)){
+            if (TABLE_UPDATED == set_is_state_entry(&table_update_entry)){
                 puts("Table updated with newest timestamp");
             }
             timeToUpdateTable = 0;
         } else {
-            timeToUpdateTable++
+            timeToUpdateTable++;
         }
 
         
