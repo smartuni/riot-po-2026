@@ -8,10 +8,7 @@ import com.riot.matesense.repository.GateRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class DownlinkService {
@@ -30,6 +27,9 @@ public class DownlinkService {
 
     public void sendDownlinkToDevice(DownPayload payloadData) {
         try {
+            List<String> allDevices = new ArrayList<>();
+            allDevices.addAll(deviceRegistry.getAllGateDevices());
+            allDevices.addAll(deviceRegistry.getAllMateDevices());
 
             // === Soll-Status vorbereiten ===
             List<List<Integer>> sollStatusList = payloadData.getStatuses().stream()
@@ -43,26 +43,36 @@ public class DownlinkService {
             String sollJson = encodePayloadToBase64Json(sollStatusPayload);
             System.out.println("Soll-Status JSON: " + sollJson);
 
+//            for (String device : allDevices) {
+//                String topic = mqttProperties.buildDeviceDownlinkTopic(device);
+//                mqttPublisher.publishDownlink(sollJson.getBytes(), topic);
+//                System.out.println("Soll-Status gesendet an: " + topic);
+//            }
             for (String gateDevice : deviceRegistry.getAllGateDevices()) {
                 String topic = mqttProperties.buildDeviceDownlinkTopic(gateDevice);
                 mqttPublisher.publishDownlink(sollJson.getBytes(), topic);
                 System.out.println("Soll-Status gesendet an: " + topic);
             }
+//            for (String mateDevice_1 : deviceRegistry.getAllMateDevices()) {
+//                String topic = mqttProperties.buildDeviceDownlinkTopic(mateDevice_1);
+//                mqttPublisher.publishDownlink(sollJson.getBytes(), topic);
+//                System.out.println("Soll-Status gesendet an Sensemate: " + topic);
+//            }
 
             // === Jobtable vorbereiten ===
-            List<List<Integer>> jobTableList = payloadData.getStatuses().stream()
-                    .map(statusEntry -> Arrays.asList(statusEntry.get(0), statusEntry.get(2)))
-                    .toList();
-
-            List<Object> jobTablePayload = Arrays.asList(3, jobTableList);
-            String jobTableJson = encodePayloadToBase64Json(jobTablePayload);
-            System.out.println("Jobtable JSON: " + jobTableJson);
-
-            for (String mateDevice : deviceRegistry.getAllMateDevices()) {
-                String topic = mqttProperties.buildDeviceDownlinkTopic(mateDevice);
-                mqttPublisher.publishDownlink(jobTableJson.getBytes(), topic);
-                System.out.println("Jobtable gesendet an: " + topic);
-            }
+//            List<List<Integer>> jobTableList = payloadData.getStatuses().stream()
+//                    .map(statusEntry -> Arrays.asList(statusEntry.get(0), statusEntry.get(2)))
+//                    .toList();
+//
+//            List<Object> jobTablePayload = Arrays.asList(3, jobTableList);
+//            String jobTableJson = encodePayloadToBase64Json(jobTablePayload);
+//            System.out.println("Jobtable JSON: " + jobTableJson);
+//
+//            for (String mateDevice : deviceRegistry.getAllMateDevices()) {
+//                String topic = mqttProperties.buildDeviceDownlinkTopic(mateDevice);
+//                mqttPublisher.publishDownlink(jobTableJson.getBytes(), topic);
+//                System.out.println("Jobtable gesendet an: " + topic);
+//            }
 
         } catch (Exception e) {
             System.err.println("Fehler beim Downlink-Senden: " + e.getMessage());
