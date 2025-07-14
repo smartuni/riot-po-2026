@@ -15,6 +15,7 @@ import com.riot.matesense.service.GateActivityService;
 import com.riot.matesense.service.GateService;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.sql.Time;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -68,7 +69,8 @@ public class MqttMessageHandler {
                     for (JsonNode statusNode : root.get("statuses")) {
                         long gateId = statusNode.get("gateId").asLong();
                         int statusCode = statusNode.get("status").asInt();
-                        Timestamp timestamp = new Timestamp(statusNode.get("timestamp").asLong());    // GateTime
+                        // Timestamp timestamp = new Timestamp(statusNode.get("timestamp").asLong());    // GateTime
+                        Timestamp timestamp = new Timestamp(System.currentTimeMillis());    // GateTime
                         Status status = Status.fromCode(statusCode);
 
                         try {
@@ -84,7 +86,7 @@ public class MqttMessageHandler {
                             // existingGate.setStatus(status);
 
                             gateService.changeGateStatus(gateId, status, MsgType.IST_STATE);
-                            gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "Gate has changed to status " + status.toString(), null));
+                            gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "Gate " + gateId + " has changed to status " + status.toString(), null));
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
                             //add new Gate
@@ -103,12 +105,14 @@ public class MqttMessageHandler {
                     for (JsonNode statusNode : payload) {
                         long gateId = statusNode.get("gateId").asLong();        // GateID
                         int statusCode = statusNode.get("status").asInt();      // Status
-                        Timestamp gateTime = new Timestamp(statusNode.get("gateTime").asLong());    // GateTime
-                        int senseMateId = statusNode.get("senseMateId").asInt(); // SenseMateID
+                        // Timestamp gateTime = new Timestamp(statusNode.get("gateTime").asLong());    // GateTime
+                        Timestamp gateTime = new Timestamp(System.currentTimeMillis());    // GateTime
+                        Long senseMateId = statusNode.get("senseMateId").asLong(); // SenseMateID
 
                         Status status = Status.fromCode(statusCode);
 
                         gateService.changeGateStatus(gateId, status, MsgType.SEEN_TABLE_STATE);
+                        gateActivityService.addGateActivity(new GateActivityEntity(gateTime, gateId, status.toString(), "Gate "+ gateId +" has changed to status " + status.toString() + "by sensemate " + senseMateId, senseMateId));
                         System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
                                 ", Status: " + status +
                                 ", GateTime: " + gateTime +
