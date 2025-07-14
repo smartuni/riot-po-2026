@@ -1,11 +1,26 @@
-Notizen 02.06.2025:
-- Base64 -> Hex -> Cbor
-- No payload formatter
-- 1) cbor_encoder_init - probably only once at start, creates basic structure (not visible) 2) cbor_encoder_create_array - creates array 3) cbor_encoder_create_array - reference to previous encoder, puts array in array
-- Basic example message: 
+# Description
+
+This module uses the RIOT LoRaWan module and adapts it to fit the requirements of the nodes of the SenseMate project.
+
+The module is used to send messages to the server using an uplink.
+
+# Data structure
+
+CBOR Example
+```
 [
-[1, 0, 4567], 
-[1, 1, 3456],
-[1, 1, 2345],
-[1, 0, 1234],
+    1,    # 1 is an example value for the message type
+    [     # The list with the "Soll Status" entries
+        [ # This is a "Soll Status" entry
+            187, # GateID
+            0,   # Soll Status
+        ],
+        [ # 2nd "Soll Status" entry
+            69,  # GateID
+            1,   # Soll Status
+        ]
+        # ... More entries
+    ]
 ]
+```
+
