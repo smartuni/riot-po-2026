@@ -2691,6 +2691,10 @@
 		(uuid "fca3c25b-c63a-4ae8-9ffb-e98a0e4096d0")
 	)
 	(no_connect
+		(at 245.11 116.84)
+		(uuid "03f15a43-09c9-4848-962b-8a25d6f15e31")
+	)
+	(no_connect
 		(at 214.63 106.68)
 		(uuid "2d203764-2e4e-4e72-b9b7-afe934a4f37a")
 	)
@@ -3606,7 +3610,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
 			(at 86.36 149.225 0)
 			(effects
 				(font
@@ -3649,72 +3653,6 @@
 			(project ""
 				(path "/70e40189-008f-4f72-8f4c-fe289f3548a4"
 					(reference "Q1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 245.11 116.84 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "2bf2d898-a3ad-46af-ac3a-a7759a8ac3e7")
-		(property "Reference" "#PWR07"
-			(at 245.11 123.19 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 245.11 121.92 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 245.11 116.84 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 245.11 116.84 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 245.11 116.84 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "0529c120-9a7b-4b8a-9b4b-10b4e066dd9a")
-		)
-		(instances
-			(project ""
-				(path "/70e40189-008f-4f72-8f4c-fe289f3548a4"
-					(reference "#PWR07")
 					(unit 1)
 				)
 			)
@@ -4911,7 +4849,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
 			(at 127 139.065 0)
 			(effects
 				(font
@@ -5195,7 +5133,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Diode_SMD:D_SOD-323"
+		(property "Footprint" "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal"
 			(at 129.54 156.21 0)
 			(effects
 				(font
@@ -5351,7 +5289,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
+		(property "Footprint" "Connector_JST:JST_PH_S2B-PH-K_1x02_P2.00mm_Horizontal"
 			(at 147.32 155.194 0)
 			(effects
 				(font
