@@ -3,7 +3,7 @@
 The tables module includes several functions to work with the tables below. 
 
 Additionally, there are several functions to encode these tables to CBOR as well as a function to decode CBOR back to this table format.
-
+Consider to use normal set, get and merge functions because these functions are thread-safe instead of getting direct pointer to the tables.
 # Tables
 
 ## Target state table (Server-to-Node, Node-to-Node)
