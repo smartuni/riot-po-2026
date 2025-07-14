@@ -332,10 +332,10 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     CborValue entryValue;
 
     int tableType, timeStamp, typeOfSender, deviceID;
-    memset(returnTargetTable, 0, sizeof(returnTargetTable));
-    memset(returnIsTable, 0, sizeof(returnIsTable));
-    memset(returnSeenTable, 0, sizeof(returnSeenTable));
-    memset(returnJobsTable, 0, sizeof(returnJobsTable));
+    memset(returnTargetTable, MAX_GATE_COUNT, sizeof(returnTargetTable));
+    memset(returnIsTable, MAX_GATE_COUNT, sizeof(returnIsTable));
+    memset(returnSeenTable, MAX_GATE_COUNT, sizeof(returnSeenTable));
+    memset(returnJobsTable, MAX_GATE_COUNT, sizeof(returnJobsTable));
 
     if (buffer->cbor_size != 1) {
         return -1;
