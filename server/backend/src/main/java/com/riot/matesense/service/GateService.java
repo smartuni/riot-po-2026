@@ -154,8 +154,6 @@ public class GateService {
                 gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality(), gate.getPendingJob(), gate.getPriority());
     }
 
-    //TODO need to be checked - here can be a bug - need to be tested to!!
-
 //    public Gate getGateById(Long id) {
 //        GateEntity gate = gateRepository.getById(id);
 //        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
@@ -321,7 +319,6 @@ public class GateService {
             gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
         }
         gate.setLastTimeStamp(gate.getLastTimeStamp());
-        //TODO: löschen falls problematisch mit den gates von den Nodes
         gate.setRequestedStatus("REQUESTED_NONE");
         gate.setPendingJob("PENDING_NONE");
         gateRepository.save(gate);

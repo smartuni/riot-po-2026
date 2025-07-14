@@ -70,7 +70,6 @@ public class GateEntity {
 	}
 
 	/**
-	 * TODO://@Simon Korondi
 	 * @param gateStatus
 	 * @param reportType
 	 */
