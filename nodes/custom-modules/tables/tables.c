@@ -30,6 +30,11 @@ static int jobs_entry_count = 0;
 static timestamp_entry timestamp_table[MAX_GATE_COUNT];
 static int timestamp_entry_count = 0;
 
+static target_state_entry returnTargetTable[MAX_GATE_COUNT];
+static is_state_entry returnIsTable[MAX_GATE_COUNT];
+static seen_status_entry returnSeenTable[MAX_GATE_COUNT];
+static jobs_entry returnJobsTable[MAX_GATE_COUNT];
+
 // Mutexes for thread safety
 static mutex_t target_state_mutex = MUTEX_INIT;
 static mutex_t is_state_mutex = MUTEX_INIT;
@@ -327,10 +332,10 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     CborValue entryValue;
 
     int tableType, timeStamp, typeOfSender, deviceID;
-    target_state_entry returnTargetTable[buffer->cbor_size];
-    is_state_entry returnIsTable[buffer->cbor_size];
-    seen_status_entry returnSeenTable[buffer->cbor_size];
-    jobs_entry returnJobsTable[buffer->cbor_size];
+    memset(returnTargetTable, 0, sizeof(returnTargetTable));
+    memset(returnIsTable, 0, sizeof(returnIsTable));
+    memset(returnSeenTable, 0, sizeof(returnSeenTable));
+    memset(returnJobsTable, 0, sizeof(returnJobsTable));
 
     if (buffer->cbor_size != 1) {
         return -1;
