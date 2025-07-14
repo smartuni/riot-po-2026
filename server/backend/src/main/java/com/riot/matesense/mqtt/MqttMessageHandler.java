@@ -17,6 +17,7 @@ import com.riot.matesense.service.GateService;
 import java.sql.Timestamp;
 import java.sql.Time;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -26,11 +27,13 @@ public class MqttMessageHandler {
     private final GateService gateService;
     GateActivityService gateActivityService;
     private final DeviceRegistry deviceRegistry;
+    private SimpMessagingTemplate messagingTemplate;
 
-    public MqttMessageHandler(GateService gateService, GateActivityService gateActivityService, DeviceRegistry deviceRegistry) {
+    public MqttMessageHandler(GateService gateService, GateActivityService gateActivityService, DeviceRegistry deviceRegistry, SimpMessagingTemplate messagingTemplate) {
         this.gateService = gateService;
         this.gateActivityService = gateActivityService;
         this.deviceRegistry = deviceRegistry;
+        this.messagingTemplate = messagingTemplate;
     }
 
     public void msgHandlerUplinks(String decodedJson,String deviceName) {
@@ -57,7 +60,9 @@ public class MqttMessageHandler {
                 return;
             }
 
+            String messagestring = "Verarbeiteter Nachrichtentyp: " + type + " mit Code: " + type.getCode();
             System.out.println("Verarbeiteter Nachrichtentyp: " + type + " mit Code: " + type.getCode());
+            messagingTemplate.convertAndSend("/topic/uplinks", messagestring);
             switch (type) {
                 case IST_STATE -> {
                     for (JsonNode statusNode : root.get("statuses")) {

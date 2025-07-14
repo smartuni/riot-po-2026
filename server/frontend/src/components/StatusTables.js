@@ -30,6 +30,7 @@ import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 import MapView from "../components/MapView";
 import StatusChangedDialog from "../components/StatusChangedDialog";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import { AlertDialogUplink } from "./AlertDialogUplink";
 import SockJS from 'sockjs-client';
 import {Stomp} from '@stomp/stompjs';
 
@@ -53,6 +54,8 @@ function StatusTables() {
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
     const [resetPassword, setResetPassword] = useState("");
     const [resetError, setResetError] = useState("");
+    const [uplinkString, setUplinkString] = useState("");
+    const [uplinkDialog, setUplinkDialog] = useState(false);
     const [newGateData, setNewGateData] = useState({
         location: "",
         latitude: "",
@@ -146,6 +149,12 @@ function StatusTables() {
             stompClient.subscribe('/topic/gate-activities/delete', (message) => {
                 const id = parseInt(message.body);
                 setActivities(prev => prev.filter(a => a.id !== id));
+            });
+
+            stompClient.subscribe('/topic/uplinks', (message) => {
+                const messageString = message.body;
+                setUplinkString(messageString);
+                setUplinkDialog(true);
             });
         });
 
@@ -374,6 +383,10 @@ function StatusTables() {
         if (days === 1) return "yesterday";
         if (days < 7) return `${days} days ago`;
         return date.toLocaleDateString(); // fallback to a readable date
+    }
+
+    const closeUplinkDialog = () => {
+        setUplinkDialog(false)
     }
 
     return (
@@ -748,6 +761,8 @@ function StatusTables() {
                     </Button>
                 </DialogActions>
             </Dialog>
+            <AlertDialogUplink open={uplinkDialog} onClose={closeUplinkDialog} messageString={uplinkString}></AlertDialogUplink>
+            
         </div>
     );
 }
