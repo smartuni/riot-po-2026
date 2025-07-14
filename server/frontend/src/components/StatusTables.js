@@ -2,7 +2,6 @@ import React, {useEffect, useState} from "react";
 import {
     fetchActivities, fetchDownlinkCounter,
     fetchGates,
-    loadWorkerId,
     requestGateStatusChange,
     tryIncrementDownlinkCounter,
     updateGatePriority
@@ -27,6 +26,7 @@ import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
 import CircleIcon from '@mui/icons-material/Circle';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
+import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 import MapView from "../components/MapView";
 import StatusChangedDialog from "../components/StatusChangedDialog";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -488,7 +488,7 @@ function StatusTables() {
                             <th>
                                 Confidence
                                 <Tooltip
-                                    title="If it says a 100% we are a 100% sure that the current Status is correct">
+                                    title="If it says a 100% we are a 100% sure that the current Status is correct. Also the confidence will add up for every uplink with the current status we get.">
                                     <HelpOutlineIcon
                                         fontSize="small"
                                         className="help-icon"
@@ -517,9 +517,11 @@ function StatusTables() {
                                     </td>
                                     <td data-label="Status">
                                             <span className={`badge ${gate.status.toLowerCase()}`}>
-                                                {gate.status === "OPENED"
-                                                    ? <LockOpenIcon fontSize="small"/>
-                                                    : <LockIcon fontSize="small"/>
+                                                {
+                                                    gate.status === "OPENED"
+                                                    ? <LockOpenIcon fontSize="small"/> :
+                                                    gate.status === "CLOSED" ? <LockIcon fontSize="small"/> :
+                                                    <QuestionMarkIcon fontSize="small"/>
                                                 } {gate.status}
                                             </span>
                                     </td>

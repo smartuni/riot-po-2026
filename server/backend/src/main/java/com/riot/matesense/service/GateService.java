@@ -321,7 +321,9 @@ public class GateService {
             gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
         }
         gate.setLastTimeStamp(gate.getLastTimeStamp());
-
+        //TODO: löschen falls problematisch mit den gates von den Nodes
+        gate.setRequestedStatus("REQUESTED_NONE");
+        gate.setPendingJob("PENDING_NONE");
         gateRepository.save(gate);
         messagingTemplate.convertAndSend("/topic/gates/add", gate);
         // Notify all clients about the new gate
