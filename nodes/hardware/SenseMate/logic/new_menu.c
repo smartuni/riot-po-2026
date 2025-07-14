@@ -98,7 +98,7 @@ void update_with_is_state(int potential_id){
             add_gate(&(gate_entry){
                 .gate_id = is_state_tbl_entry_buf.gateID,
                 .gate_is_state = is_state_tbl_entry_buf.state,
-                .gate_requested_state = is_state_tbl_entry_buf.state,
+                .gate_requested_state = UNKNOWN,
                 .job_is_todo = false,
                 .job_prio = 0,
                 .sig_strength = 0
@@ -132,7 +132,7 @@ void update_with_seen_status(int potential_id){
         add_gate(&(gate_entry){
             .gate_id = seen_status_tbl_entry_buf.gateID,
             .gate_is_state = state,
-            .gate_requested_state = seen_status_tbl_entry_buf.status,
+            .gate_requested_state = UNKNOWN,
             .job_is_todo = false,
             .job_prio = 0,
             .sig_strength = 0
@@ -357,7 +357,7 @@ void add_gate(gate_entry *new_entry){
             all_entries[i] = all_entries[i-1];
             inbetween = true;
         } else{
-            new_idx = inbetween ? i: i-1;
+            new_idx = inbetween ? i-1: i;
             break;
         }
     }
