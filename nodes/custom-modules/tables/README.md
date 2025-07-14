@@ -35,13 +35,13 @@ CBOR Example
 ]
 ```
 
-## Ist Status Tabelle (Node-to-Node, Node-to-Server)
+## Is state table (Node-to-Node, Node-to-Server)
 
 | Name | Data Type | Description |
 | ----------- | ----------- | ----------- |
 | GateID | BYTE | - |
-| Status | BYTE | Information whether a gate is closed or opened |
-| Gate Time | Int | Time when the status was updated |
+| State | BYTE | Current state of a gate: closed or opened |
+| Gate Time | Int | Last update timestamp |
 
 CBOR Example
 ```
@@ -50,15 +50,15 @@ CBOR Example
     247,  # Timestamp
     1,    # 1 is an example for which type of device sent the message
     5,    # 5 is an example for a deviceID
-    [  # The list with the "Ist Status" entries
-        [ # This is a "Ist Status" entry
+    [  # The list with the "is state" entries
+        [ # This is a "is state" entry
             187, # GateID
-            0,   # Ist Status
+            0,   # Is state
             247  # Timestamp
         ],
-        [ # 2nd "Ist Status" entry
+        [ # 2nd "is state" entry
             69,  # GateID
-            1,   # Ist Status
+            1,   # Is state
             333  # Timestamp
         ]
         # ... More entries
@@ -66,39 +66,16 @@ CBOR Example
 ]
 ```
 
-## Gesehener Status / Mitarbeiter Input (Node-to-Node, Node-to-Server)
+## Seen State / Worker Input (Node-to-Node, Node-to-Server)
 
 | Name | Data Type | Description |
 | ----------- | ----------- | ----------- |
 | GateID | BYTE | - |
-| Gate Time | Int | Time when the information was confirmed |
-| Status | BYTE | Information whether a gate is closed or opened |
-| SenseMate ID | Int | ID of SenseMate of the worker who confirmed the status |
+| Gate Time | Int | timestamp from a gate |
+| Status | BYTE | State of the gate: closed or opened |
+| SenseMate ID | Int | ID of SenseMate of the worker who confirmed the state |
 
-CBOR Example
-```
-[
-    2, # 2 is an example value for the message type
-    247,  # Timestamp
-    1,    # 1 is an example for which type of device sent the message
-    5,    # 5 is an example for a deviceID
-    [  # The list with the "Ist Status" entries
-        [ # This is a "Ist Status" entry
-            187, # GateID
-            0,   # Ist Status
-            247  # Timestamp
-        ],
-        [ # 2nd "Ist Status" entry
-            69,  # GateID
-            1,   # Ist Status
-            333  # Timestamp
-        ]
-        # ... More entries
-    ]
-]
-```
-
-## Aufgaben für Mitarbeiter (Server-to-Node)
+## Jobs Table (Server-to-Node(SenseMate))
 
 | Name | Data Type | Description |
 | ----------- | ----------- | ----------- |
@@ -106,10 +83,10 @@ CBOR Example
 | Progress | BYTE | Progress of task, either done or in progress |
 | Priority | BYTE | - |
 
-## Zeitstempel
+## Timestamp table
 
 | Name | Data Type | Description |
 | ----------- | ----------- | ----------- |
 | GateID | BYTE | - |
-| Timestamp | uint32 | Time when a gate last updated its data |
+| Timestamp | uint32 | last timestamp receiving from a cbor packet of a gate |
 | Distance / Signal strength | Int | signal strength of SenseMate that was near the gate |
