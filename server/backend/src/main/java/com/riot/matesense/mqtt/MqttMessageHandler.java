@@ -92,7 +92,7 @@ public class MqttMessageHandler {
                             //add new Gate
 
                             // GateEntity newGate = new GateEntity(); //Need to be changed
-                            GateEntity newGate = new GateEntity(gateId,status, timestamp, 93.044, 51.222, "HAW", "none", 100, "none", 3  ); //Need to be changed
+                            GateEntity newGate = new GateEntity(gateId,status, timestamp, 53.557120, 10.022826, "HAW", "REQUESTED_NONE", 0, "PENDING_NONE", 3  ); //Need to be changed
                             gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
                             System.out.println("GateID:" + gateId + "Timestamp" + timestamp.getTime());
