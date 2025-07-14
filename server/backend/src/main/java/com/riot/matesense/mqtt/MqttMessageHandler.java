@@ -96,6 +96,7 @@ public class MqttMessageHandler {
                             gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
                             System.out.println("GateID:" + gateId + "Timestamp" + timestamp.getTime());
+                            gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "New Gate " + gateId + " has been added with status " + status.toString(), null));
 
                         }
                     }
