@@ -1,35 +1,20 @@
-# Bluetooth Module
+# Description
 
-| Funktionsname | Parameters | Description |
-| ----------- | ----------- | ----------- |
-| send      | Message       | sends message as a beacon |
-| receive   | Package Type | receive a pointer to a struct as well as meta data of the sender |
-| init   | none        | initializes Bluetooth Module |
+This module uses the RIOT BLE module and adapts it to fit the requirements of the nodes of the SenseMate project.
 
-# LoRaWAN Module
+Instead of sending messages to one specific device, the BLE module enables the node to act as a beacon to transmit its information to all nodes within a certain radius.
 
-| Funktionsname | Parameters | Description |
-| ----------- | ----------- | ----------- |
-| send | Message | sends message to server |
-| receive | none | Text |
-| init | none | initalizes LoRaWAN module |
+# Data structure
 
-# Datenstrukturen
-
-## Soll Status Tabelle (BLE)
-
-Timestamp is part of the package but not part of list
-
-| Name | Data Type | Description |
-| ----------- | ----------- | ----------- |
-| GateID | BYTE | - |
-| Soll Status | BYTE | Information whether a gate should be closed or opened |
+The BLE module requires CBOR to encode the table type that is being transmitted, the timestamp, the type of device that is sending a message (either 0 for SenseGate or 1 for SenseMate) and the deviceID in order to process the received information.
 
 CBOR Example
 ```
 [
     1,    # 1 is an example value for the message type
     247,  # Timestamp
+    1,    # 1 is an example of a type of device
+    5,    # 5 is an example deviceID
     [     # The list with the "Soll Status" entries
         [ # This is a "Soll Status" entry
             187, # GateID
@@ -44,60 +29,3 @@ CBOR Example
 ]
 ```
 
-## Ist Status Tabelle (BLE)
-
-| Name | Data Type | Description |
-| ----------- | ----------- | ----------- |
-| GateID | BYTE | - |
-| Status | BYTE | Information whether a gate is closed or opened |
-| Gate Time | Int | Time when the status was updated |
-
-CBOR Example
-```
-[
-    2, # 2 is an example value for the message type
-    [  # The list with the "Ist Status" entries
-        [ # This is a "Ist Status" entry
-            187, # GateID
-            0,   # Ist Status
-            247  # Timestamp
-        ],
-        [ # 2nd "Ist Status" entry
-            69,  # GateID
-            1,   # Ist Status
-            333  # Timestamp
-        ]
-        # ... More entries
-    ]
-]
-```
-
-## Gesehener Status / Mitarbeiter Input (BLE)
-
-| Name | Data Type | Description |
-| ----------- | ----------- | ----------- |
-| GateID | BYTE | - |
-| Gate Time | Int | Time when the information was confirmed |
-| Status | BYTE | Information whether a gate is closed or opened |
-| SenseMate ID | Int | ID of SenseMate of the worker who confirmed the status |
-
-## Aufgaben für Mitarbeiter (DL, Server to one SenseMate)
-
-| Name | Data Type | Description |
-| ----------- | ----------- | ----------- |
-| GateID | BYTE | - |
-
-## Location Tracking (UL)
-
-On SenseMate device
-
-| Name | Data Type | Description |
-| ----------- | ----------- | ----------- |
-| GateID | BYTE | - |
-| Gate Time | Int | Time when the SenseMate was near the gate |
-| Distance / Signal strength | Int | signal strength of SenseMate that was near the gate |
-
-# Offene Fragen
-- Frequenz beachten, wie oft Nachrichten geschickt werden
-- State Tables verwalten
-- Fertige CBOR Nachricht wird weitergegeben, sodass signierte Cozy Nachricht daraus entsteht
