@@ -1,31 +1,46 @@
-# Description
+# BLE Module
 
-This module uses the RIOT BLE module and adapts it to fit the requirements of the nodes of the SenseMate project.
+## Overview
 
-Instead of sending messages to one specific device, the BLE module enables the node to act as a beacon to transmit its information to all nodes within a certain radius.
+The BLE module builds on RIOT’s NimBLE stack to provide beacon‐style, peer‐to‐peer exchange of state tables between SenseMate and GateMate nodes. Instead of point‐to‐point messaging, each node broadcasts its current state and listens for updates from its neighbors.
 
-# Data structure
+## Key Features
 
-The BLE module requires CBOR to encode the table type that is being transmitted, the timestamp, the type of device that is sending a message (either 0 for SenseGate or 1 for SenseMate) and the deviceID in order to process the received information.
+- **Beacon Broadcasting**  
+  Periodically advertises state tables to all nearby nodes.
 
-CBOR Example
-```
+- **Concurrent TX/RX**  
+  Runs two dedicated threads:
+  1. **Transmitter** – encodes and broadcasts your node’s state tables.  
+  2. **Receiver** – listens for incoming tables, verifies, and forwards them to the `tables` module.
+
+- **Expected Payloads**  
+  - **CBOR** for compact, architecture independent encoding 
+  - **COSE** signatures (via `cose-service`) to guarantee authenticity & integrity
+
+## Dependencies
+
+- **RIOT OS** (NimBLE and other RIOT features)  
+- **cose-service** (for COSE signing and verification)  
+- **table-module** (to prepare outgoing and process incoming packets)
+
+## Paket layout
+
+The BLE module requires CBOR to encode the table type, the timestamp and the transmitters device type and device-id in order to process the received information.
+
+The packets need to be signed using the "cose-service" module.
+
+Example of a CBOR packet
+```json
 [
-    1,    # 1 is an example value for the message type
-    247,  # Timestamp
-    1,    # 1 is an example of a type of device
-    5,    # 5 is an example deviceID
-    [     # The list with the "Soll Status" entries
-        [ # This is a "Soll Status" entry
-            187, # GateID
-            0,   # Soll Status
-        ],
-        [ # 2nd "Soll Status" entry
-            69,  # GateID
-            1,   # Soll Status
-        ]
-        # ... More entries
-    ]
+  1,              // Message type
+  247,            // Timestamp
+  1,              // Device type
+  5,              // Device ID
+  [               // State entries array
+    [187, 0],     // GateID=187, Status=0
+    [1337, 1]     // GateID=1337, Status=1
+    // … more entries
+  ]
 ]
 ```
-
