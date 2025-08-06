@@ -7,9 +7,20 @@ The SenseMate project is an IoT solution to monitoring flood gates in the Hambur
 
 It consists of physical devices / nodes (coined SenseMate and SenseGate respectively) and web frontend.
 
-## Overview
+## Table of Contents
+1. [Overview](#overview)  
+    1. [SenseMate](#overview-sensemate)
+    2. [SenseGate](#overview-sensegate)
+    3. [Server](#server)
+2. [Used Hardware](#used-hardware)  
+3. [GitFlow](#gitflow)  
+4. [Key Features](#key-features)  
+5. [Pinout Summary](#pinout-summary)  
 
-SenseMate
+
+## Overview <div id='overview'/>
+
+SenseMate <div id='overview-sensemate'/>
 
 - receive from and propagate data to other nodes via BLE-module
 - receive from and send data to server via LoRa-module
@@ -20,7 +31,7 @@ SenseMate
 $ make all flash term
 ```
 
-SenseGate
+SenseGate <div id='overview-sensegate'/>
 
 - receive from and propagate data to other nodes via BLE-module
 - receive from and send data to server via LoRa-module
@@ -31,12 +42,12 @@ SenseGate
 $ make all flash term
 ```
 
-Server
+Server <div id='overview-server'/>
 
 - receive from and send data to nodes via LoRa-Module
 - display real-time accumulated data
 
-## Used Hardware
+## Used Hardware <div id='used-hardware'/>
 
 - Board: Nordic nRF52840
 - Power Switch​
@@ -47,12 +58,12 @@ Server
 - Soundbuzzer​
 - Vibrationmotor​
 
-## GitFlow
+## GitFlow <div id='gitflow'/>
 
 
 **SenseMate** is a battery-powered IoT device for monitoring and controlling floodgates. It communicates over BLE and LoRaWAN and provides tactile, visual, and acoustic feedback.
 
-## Key Features
+## Key Features <div id='key-features'/>
 
 - **MCU**: [Adafruit Feather nRF52840 Sense](https://www.digikey.de/de/products/detail/adafruit-industries-llc/4516/11684829) (nRF52840 with BLE)
 - **LoRa Module**: [Adafruit RFM95W](https://www.digikey.de/de/products/detail/adafruit-industries-llc/3231/6193593)
@@ -64,7 +75,7 @@ Server
 - **Power Switch**: [C&K OS102011MA1QN1](https://www.digikey.de/de/products/detail/c-k/OS102011MA1QN1/1981430)
 - **Battery**: [Amazon LiPo 1S 450mAh](https://www.amazon.de/dp/B0C5LD55HN) 
 
-## Pinout Summary
+## Pinout Summary <div id='pin-summary'/>
 
 | Peripheral         | Connection Type   | MCU Pin       |
 |--------------------|-------------------|----------------|
