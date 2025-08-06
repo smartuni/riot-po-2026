@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polygon } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../styles/MapView.css";
-import FloodGatePopup from "./FloodGatePopup";
+// import FloodGatePopup from "./FloodGatePopup";
 import {fetchGates} from "../services/api";
 
 const getArrowIcon = (status) => {
@@ -43,7 +43,7 @@ function MapView({ search, statusFilter }) {
         (gate) =>
             (gate.id.toString().toLowerCase().includes(search.toLowerCase()) ||
                 gate.location.toLowerCase().includes(search.toLowerCase())) &&
-            (statusFilter === "" || gate.status === statusFilter)
+            (statusFilter === "" || gate.requestedStatus === statusFilter || gate.status === statusFilter)
     );
 
     return (
@@ -70,7 +70,6 @@ function MapView({ search, statusFilter }) {
                             Status: {gate.status}<br />
                             Gate-ID: {gate.id}<br />
                             Last Update: {new Date(gate.lastTimeStamp).toLocaleString()}<br />
-                            {/*Confidence: 👤 {gate.workerConfidence ? "Yes" : "No"} / 📡 {gate.sensorConfidence ? "Yes" : "No"}*/}
                             Confidence: {gate.confidence}
                         </Popup>
                     </Marker>

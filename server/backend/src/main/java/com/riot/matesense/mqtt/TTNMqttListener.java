@@ -7,7 +7,6 @@ import com.riot.matesense.service.Base64ToList;
 import com.riot.matesense.service.JsonFormatter;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,7 +20,6 @@ public class TTNMqttListener {
     private final JsonFormatter jsonFormatter;
     private final MqttMessageHandler mqttMessageHandler;
 
-    @Autowired
     public TTNMqttListener(
             MqttProperties mqttProperties,
             Base64ToList converter,

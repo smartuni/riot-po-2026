@@ -6,6 +6,9 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 
+/**
+ * A DTO for the NotificationEntity
+ */
 @Setter
 @Getter
 public class Notification {

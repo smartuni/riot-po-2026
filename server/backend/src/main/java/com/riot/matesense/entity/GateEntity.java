@@ -9,7 +9,9 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 
-
+/**
+ * An Entity for storing the Gates
+ */
 @Getter
 @Setter
 @Table(name = "gates")
@@ -31,8 +33,8 @@ public class GateEntity {
 	private ConfidenceQuality quality;
     private boolean ignoreGate;
     private boolean gateDetector;
-    private Status[] gateStatusArray = new Status[5];
-    private Status[] workerStatusArray = new Status[5];
+    private Status[] gateStatusArray = new Status[3];
+    private Status[] workerStatusArray = new Status[3];
 	@Column(name = "requested_status")
 	private String requestedStatus;
 	private String pendingJob;
@@ -54,7 +56,7 @@ public class GateEntity {
 		this.requestedStatus = requestedStatus;
 		this.latitude = latitude;
 		this.longitude = longitude;
-		for(int i = 0; i < 5; i++)
+		for(int i = 0; i < 3; i++)
 		{
 			this.gateStatusArray[i] = Status.NONE;
 			this.workerStatusArray[i] = Status.NONE;
@@ -67,24 +69,24 @@ public class GateEntity {
 
 	}
 
+	/**
+	 * @param gateStatus
+	 * @param reportType
+	 */
 
 	public void shuffleReports(Status gateStatus, MsgType reportType) // orders reports based on how recent they were
 	{
 		if(reportType == MsgType.IST_STATE) // if the report is from the gate's sensor
 		{
-			for(int i = 1; i < 5; i++)
-			{
-				this.gateStatusArray[i] = this.gateStatusArray[i-1]; // push older reports to the back of the array
-			}
-			gateStatusArray[0] = gateStatus; // insert most recent report to the front of the array
+			this.gateStatusArray[2] = this.gateStatusArray[1];
+			this.gateStatusArray[1] = this.gateStatusArray[0]; // push older reports to the back of the array
+			this.gateStatusArray[0] = gateStatus; // insert most recent report to the front of the array
 		}
 		else if(reportType == MsgType.SEEN_TABLE_STATE) // if the report is from a worker
 		{
-			for(int i = 1; i < 5; i++)
-			{
-				this.workerStatusArray[i] = this.workerStatusArray[i-1];
-			}
-			workerStatusArray[0] = gateStatus;
+			this.workerStatusArray[2] = this.workerStatusArray[1];
+			this.workerStatusArray[1] = this.workerStatusArray[0];
+			this.workerStatusArray[0] = gateStatus;
 		}
 		else // update not originating from a gate or worker
 		{
