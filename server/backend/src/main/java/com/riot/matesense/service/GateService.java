@@ -1,12 +1,8 @@
 package com.riot.matesense.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.Status;
-import com.riot.matesense.service.ConfidenceCalculator;
-import com.riot.matesense.enums.ConfidenceQuality;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
 import com.riot.matesense.model.Gate;
@@ -17,11 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.tools.Diagnostic;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class GateService {
@@ -39,12 +33,14 @@ public class GateService {
         this.calculator = new ConfidenceCalculator();
     }
 
+    /**
+     * a Method to get all GateEntities from the DB
+     * @return a list with all the gates
+     */
     public List<Gate> getAllGates() {
         List<GateEntity> gates = gateRepository.findAll();
         List<Gate> customGates = new ArrayList<>();
         gates.forEach(e -> {
-            System.out.println("getAll");
-            // changeConfidence(e, (int)(Math.random() * 100));
             Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), 
                     e.getWorkerConfidence(), e.getSensorConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getQuality(), e.getPendingJob(), e.getPriority());
@@ -53,6 +49,12 @@ public class GateService {
         return customGates;
     }
 
+    /**
+     * a Method to add a Gate to be DB
+     * @param gate to be added
+     * @return the gate as a String
+     * @throws GateAlreadyExistingException
+     */
     public String addGate(GateEntity gate) throws GateAlreadyExistingException {
         gateRepository.save(gate);
         messagingTemplate.convertAndSend("/topic/gate-activities/add", gate);
@@ -60,30 +62,31 @@ public class GateService {
     }
 
 
-    public void removeGate(GateEntity gate){
+    /*public void removeGate(GateEntity gate){
         gateRepository.delete(gate);
-    }
+    }*/
 
-    public void removeGateById(Long id) throws GateNotFoundException {
-        GateEntity gate = gateRepository.getById(id);
+    /**
+     * a method to remove a gate by the given gateID
+     * @param gateId of the gate that should be removed
+     * @throws GateNotFoundException
+     */
+    public void removeGateById(Long gateId) throws GateNotFoundException {
+        GateEntity gate = gateRepository.getById(gateId);
         if (gate == null) {
-            throw new GateNotFoundException(id);
+            throw new GateNotFoundException(gateId);
         }
         gateRepository.delete(gate);
-        messagingTemplate.convertAndSend("/topic/gates/delete", id);
+        messagingTemplate.convertAndSend("/topic/gates/delete", gateId);
     }
 
 
-    //DO we even use this?
+    /**
+     * a method to update the gate
+     * @param gate that should be updated
+     * @param reportType of the msg
+     */
     public void updateGate(GateEntity gate, MsgType reportType) {
-        //Hole das Gate
-        //GateEntity existingGate = gateRepository.findById(Math.toIntExact(gate.getId())).orElse(null);
-       //Existiert das Gate schon
-//        if (existingGate == null) {
-//            System.out.println("Gate nicht gefunden. Füge neues Gate hinzu.");
-//            gateRepository.save(gate);
-//            return;
-//        }
         gate.setRequestedStatus(gate.getRequestedStatus());
         gate.setLastTimeStamp(gate.getLastTimeStamp());
         gate.setDeviceId(gate.getDeviceId());
@@ -103,14 +106,31 @@ public class GateService {
 
     }
 
+    /**
+     * a method to check if a gate exists by its id
+     * @param id of the gate
+     * @return true if it exists
+     */
     public boolean existsGateById(Long id) {
         return gateRepository.existsById(Math.toIntExact(id));
     }
 
+    /**
+     * return a gate by its id
+     * @param id of the gate
+     * @return the gate if it exists
+     * @throws GateNotFoundException
+     */
     public GateEntity getGateEntityById(Long id) throws GateNotFoundException {
         return gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
     }
 
+    /**
+     * a method to get a gate by its id
+     * @param id of the gate
+     * @return the gate
+     * @throws GateNotFoundException
+     */
     public Gate getGateById(Long id) throws GateNotFoundException {
         GateEntity gate = gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
         return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
@@ -118,23 +138,11 @@ public class GateService {
                 gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality(), gate.getPendingJob(), gate.getPriority());
     }
 
-
-//    public Gate getGateById(Long id) {
-//        GateEntity gate = gateRepository.getById(id);
-//        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
-//                gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
-//                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality());
-//    }
-
-    //TODO need to be checked - here can be a bug - need to be tested to!!
-
-//    public Gate getGateById(Long id) {
-//        GateEntity gate = gateRepository.getById(id);
-//        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
-//                gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
-//                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality());
-//    }
-
+    /**
+     * a method to change the requested status of a gate
+     * @param gateId of the gate
+     * @param targetStatus for the gate
+     */
     public void requestGateStatusChange(Long gateId, String targetStatus) {
         GateEntity gate = gateRepository.getById(gateId);
         System.out.println("Current Status: " + gate.getStatus());
@@ -174,38 +182,6 @@ public class GateService {
         GateEntity gate = gateRepository.getById(gateId);
         int confidence = gate.getConfidence();
 
-        // Ziel-Status aus requestedStatus ableiten
-        // switch (targetStatus) {
-        //     case "REQUESTED_OPEN" -> tmp = "OPENED";
-        //     case "REQUESTED_CLOSE" -> tmp = "CLOSED";
-        //     case "REQUESTED_NONE" -> tmp = "NONE";
-        //     default -> tmp = targetStatus;
-        // }
-
-        // 1. Pending-Job **immer setzen**, basierend auf targetStatus
-        // switch (targetStatus) {
-        //     case "REQUESTED_OPEN" -> gate.setPendingJob("PENDING_OPEN");
-        //     case "REQUESTED_CLOSE" -> gate.setPendingJob("PENDING_CLOSE");
-        //     case "REQUESTED_NONE" -> gate.setPendingJob("PENDING_NONE");
-        // }
-
-        // 2. Nur wenn tatsächlicher Status ≠ Ziel, dann requestedStatus setzen
-        // if (!tmp.equalsIgnoreCase(gate.getStatus().toString().strip())) {
-            // if (targetStatus.equals("REQUESTED_NONE") || targetStatus.equals("NONE")) {
-            //     gate.setStatus(null);
-            // } else {
-
-//
-//        if (status == Status.OPENED) {
-//            if ("PENDING_OPEN".equals(gate.getPendingJob())) {
-//                gate.setPendingJob("None");
-//            }
-//        } else if(status == Status.CLOSED){
-//            if ("PENDING_CLOSE".equals(gate.getPendingJob())) {
-//                gate.setPendingJob("None");
-//            }
-//        }
-
         gate.setStatus(status);
         //dont be surprised if pending job didn't change after the first status change! It need to be 100% confidence
         calculator.changeConfidence(gate, confidence, reportType);
@@ -217,6 +193,10 @@ public class GateService {
         gateRepository.save(gate);
     }
 
+    /**
+     * a method to all the gates and format them into gatesForDownLink Entities
+     * @return a List with the formatted gates
+     */
     public List<GateForDownlink> getAllGatesForDownlink() {
         List<GateEntity> gates = gateRepository.findAll();
         List<GateForDownlink> customGates = new ArrayList<>();
@@ -241,12 +221,21 @@ public class GateService {
         return customGates;
     }
 
+    /**
+     * a method to update the priority of the gate
+     * @param gateId of the gate that should be changed
+     * @param newPriority for the gate
+     */
     public void updatePriority(Long gateId, int newPriority) {
         GateEntity gateEntity = gateRepository.getById(gateId);
         gateEntity.setPriority(newPriority);
         gateRepository.save(gateEntity);
     }
 
+    /**
+     * a method to get the next highest ID for the gates so there wont be collisions
+     * @return the next free id
+     */
     public Long getIdForGate(){
         List<GateEntity> gates = gateRepository.findAll();
         if (gates.isEmpty()) {
@@ -260,6 +249,12 @@ public class GateService {
         }
     }
 
+    /**
+     * a method to add a basic Gate to the DB
+     * @param gate that should be added to the DB
+     * @return the gate as a String
+     * @throws GateAlreadyExistingException
+     */
     public String addGateFromGUI(GateEntity gate) throws GateAlreadyExistingException {
         if (gate.getId() == null){
             gate.setId(getIdForGate());
@@ -269,7 +264,8 @@ public class GateService {
             gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
         }
         gate.setLastTimeStamp(gate.getLastTimeStamp());
-
+        gate.setRequestedStatus("REQUESTED_NONE");
+        gate.setPendingJob("PENDING_NONE");
         gateRepository.save(gate);
         messagingTemplate.convertAndSend("/topic/gates/add", gate);
         // Notify all clients about the new gate

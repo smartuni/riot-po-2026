@@ -1,4 +1,5 @@
 package com.riot.matesense.enums;
+
 public enum MsgType {
     SET_STATE(0),   // target Status Table (BLE) for them
     IST_STATE(1),   // Is Status Table (BLE) for us

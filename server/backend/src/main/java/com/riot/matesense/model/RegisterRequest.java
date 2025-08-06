@@ -1,5 +1,8 @@
 package com.riot.matesense.model;
 
+/**
+ * A DTO for the RegisterRequest
+ */
 public class RegisterRequest {
     private String email;
     private String password;

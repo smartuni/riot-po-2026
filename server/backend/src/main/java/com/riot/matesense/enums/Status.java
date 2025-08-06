@@ -1,5 +1,8 @@
 package com.riot.matesense.enums;
 
+/**
+ * A Status for the Gate
+ */
 public enum Status {
     CLOSED, OPENED, UNKNOWN, NONE;
 

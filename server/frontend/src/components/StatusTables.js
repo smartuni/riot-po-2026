@@ -2,7 +2,6 @@ import React, {useEffect, useState} from "react";
 import {
     fetchActivities, fetchDownlinkCounter,
     fetchGates,
-    loadWorkerId,
     requestGateStatusChange,
     tryIncrementDownlinkCounter,
     updateGatePriority
@@ -27,9 +26,11 @@ import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
 import CircleIcon from '@mui/icons-material/Circle';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
+import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 import MapView from "../components/MapView";
 import StatusChangedDialog from "../components/StatusChangedDialog";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import { AlertDialogUplink } from "./AlertDialogUplink";
 import SockJS from 'sockjs-client';
 import {Stomp} from '@stomp/stompjs';
 
@@ -53,6 +54,8 @@ function StatusTables() {
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
     const [resetPassword, setResetPassword] = useState("");
     const [resetError, setResetError] = useState("");
+    const [uplinkString, setUplinkString] = useState("");
+    const [uplinkDialog, setUplinkDialog] = useState(false);
     const [newGateData, setNewGateData] = useState({
         location: "",
         latitude: "",
@@ -146,6 +149,12 @@ function StatusTables() {
             stompClient.subscribe('/topic/gate-activities/delete', (message) => {
                 const id = parseInt(message.body);
                 setActivities(prev => prev.filter(a => a.id !== id));
+            });
+
+            stompClient.subscribe('/topic/uplinks', (message) => {
+                const messageString = message.body;
+                setUplinkString(messageString);
+                setUplinkDialog(true);
             });
         });
 
@@ -376,6 +385,10 @@ function StatusTables() {
         return date.toLocaleDateString(); // fallback to a readable date
     }
 
+    const closeUplinkDialog = () => {
+        setUplinkDialog(false)
+    }
+
     return (
         <div className="gate-status-container">
             <div className="gate-status-header">
@@ -488,7 +501,7 @@ function StatusTables() {
                             <th>
                                 Confidence
                                 <Tooltip
-                                    title="If it says a 100% we are a 100% sure that the current Status is correct">
+                                    title="If it says a 100% we are a 100% sure that the current Status is correct. Also the confidence will add up for every uplink with the current status we get.">
                                     <HelpOutlineIcon
                                         fontSize="small"
                                         className="help-icon"
@@ -517,9 +530,11 @@ function StatusTables() {
                                     </td>
                                     <td data-label="Status">
                                             <span className={`badge ${gate.status.toLowerCase()}`}>
-                                                {gate.status === "OPENED"
-                                                    ? <LockOpenIcon fontSize="small"/>
-                                                    : <LockIcon fontSize="small"/>
+                                                {
+                                                    gate.status === "OPENED"
+                                                    ? <LockOpenIcon fontSize="small"/> :
+                                                    gate.status === "CLOSED" ? <LockIcon fontSize="small"/> :
+                                                    <QuestionMarkIcon fontSize="small"/>
                                                 } {gate.status}
                                             </span>
                                     </td>
@@ -746,6 +761,8 @@ function StatusTables() {
                     </Button>
                 </DialogActions>
             </Dialog>
+            <AlertDialogUplink open={uplinkDialog} onClose={closeUplinkDialog} messageString={uplinkString}></AlertDialogUplink>
+            
         </div>
     );
 }

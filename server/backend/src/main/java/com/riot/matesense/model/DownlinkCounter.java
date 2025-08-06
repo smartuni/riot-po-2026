@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * A DTO for the DownLinkCounterEntity
+ */
 @Setter
 @Getter
 public class DownlinkCounter {

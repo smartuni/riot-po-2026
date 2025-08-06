@@ -1,5 +1,7 @@
 package com.riot.matesense.model;
 
+
+
 public class NotificationReadRequest {
     private boolean read;
 

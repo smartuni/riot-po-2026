@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {Dialog, DialogTitle, DialogActions, DialogContent, DialogContentText, Button } from "@mui/material";
 
-export const AlertDialog = ({open, onClose}) => {
+export const AlertDialogUplink = ({open, onClose, messageString}) => {
     return (
       <Dialog
         open={open}
@@ -10,11 +10,11 @@ export const AlertDialog = ({open, onClose}) => {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          {"User Details changed"}
+          {"Uplink Received"}
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Your user details have been successfully modified.
+            Uplink has been received from end-nodes. {messageString}
           </DialogContentText>
         </DialogContent>
         <DialogActions>

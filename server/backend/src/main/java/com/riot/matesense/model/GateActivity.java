@@ -5,6 +5,9 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 
+/**
+ * A DTO for the GateActivityEntity
+ */
 @Setter
 @Getter
 public class GateActivity {
