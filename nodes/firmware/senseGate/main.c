@@ -9,8 +9,8 @@
 
 #include <stdio.h>
 
-#include "detectDoorStatus.h"
-#include "event_creation.h"
+#include "include/detectDoorStatus.h"
+#include "include/event_creation.h"
 
 #define TIME_PERIOD_TABLE_UPDATE 30 // const defines time to update table periodically
 
