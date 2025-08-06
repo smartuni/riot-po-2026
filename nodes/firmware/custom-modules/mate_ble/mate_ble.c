@@ -293,7 +293,7 @@ int ble_init(void)
     return BLE_SUCCESS;
 }
 
-int ble_receive(cbor_message_type_t type, cbor_buffer* cbor_packet, ble_metadata_t* metadata)
+int ble_receive(cbor_message_type_t type, cbor_buffer* cbor_packet, ble_metadata_ptr_t metadata)
 {
     return wait_for_message(type, cbor_packet, metadata);
 }
@@ -375,7 +375,7 @@ void* ble_send_loop(void* arg)
 
 void* ble_receive_loop(void* args)
 {
-    ble_received_thread_args_t *thr_args = (ble_received_thread_args_t *)args;
+    ble_receive_thread_args_ptr_t thr_args = (ble_receive_thread_args_ptr_t)args;
 
     wait_for_ble_init();
     

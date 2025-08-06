@@ -35,24 +35,25 @@
 #define CBOR_MESSAGE_TYPE_UNKNOWN ((uint8_t)-1)
 #define CBOR_MESSAGE_TYPE_WILDCARD ((uint8_t)-2)
 
-#define MATE_BLE_GAP_NAME_BUF_SIZE      (300)
 #define MATE_BLE_ADV_PKT_BUFFER_SIZE    (300)
 #define MATE_BLE_SIGNING_DATA_SIZE      (88)
-#define MATE_BLE_MAX_PAYLOAD_SIZE       (300)
+#define MATE_BLE_MAX_PAYLOAD_SIZE       (MATE_BLE_ADV_PKT_BUFFER_SIZE)
 #define MATE_BLE_MAX_CBOR_PACKAGE_COUNT (10)
 #define MATE_BLE_MAX_CBOR_PACKAGE_SIZE  (MATE_BLE_MAX_PAYLOAD_SIZE - MATE_BLE_SIGNING_DATA_SIZE)
 
 typedef uint8_t cbor_message_type_t;
 
-typedef struct {
+typedef struct ble_metadata {
    cbor_message_type_t message_type;
    int8_t rssi;
-} ble_metadata_t;
 
-typedef struct {
+} ble_metadata_t, *ble_metadata_ptr_t;
+
+typedef struct ble_receive_thread_args {
    event_queue_t* receive_queue;
    event_t* receive_event;
-} ble_received_thread_args_t;
+
+} ble_receive_thread_args_t, *ble_receive_thread_args_ptr_t;
 
 
 /**
@@ -67,7 +68,7 @@ void ble_run_propagation(void);
  * @param[inout]    metadata  Pointer to output metadata
  * @return          0 on success, negative error code on failure
  */
-int ble_receive(cbor_message_type_t type, cbor_buffer* cbor_packet, ble_metadata_t* metadata);
+int ble_receive(cbor_message_type_t type, cbor_buffer* cbor_packet, ble_metadata_ptr_t metadata);
 
 /**
  * @brief           Function to send data over BLE
@@ -90,6 +91,7 @@ void* ble_send_loop(void*);
 
 /**
  * @brief           Receiver loop of the BLE module. Receives the propagated state tables
+ * @param[in]       args    Pointer to ble_receive_thread_args_t structure containing the event queue and event
  */
 void* ble_receive_loop(void* args);
 

@@ -1,20 +1,19 @@
-#include "incoming_list.h"
-#include <string.h>
-#include <mutex.h>
-#include <stdio.h>
-
+#include "incoming_list.h" 
 #include "ztimer.h"
 #include "cbor.h"
+#include <string.h>
+#include <mutex.h>
 
 #define MATE_BLE_INCOMING_LIST_SIZE (4)
 
-typedef struct {
+typedef struct incoming_message
+{
     cbor_buffer cbor_packet;
     ble_metadata_t metadata;
     uint8_t data[MATE_BLE_MAX_CBOR_PACKAGE_SIZE]; // Buffer to store the actual data
     uint8_t package_size; // Buffer to store the actual data
     
-} incoming_message_t;
+} incoming_message_t, *incoming_message_ptr_t;
 
 #define _INIT_CBOR_BUFFER(msg) \
 { \
@@ -27,7 +26,7 @@ typedef struct {
 static incoming_message_t incoming_messages[MATE_BLE_INCOMING_LIST_SIZE];
 static mutex_t list_mutex = MUTEX_INIT;
 
-int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata) 
+int insert_message(const uint8_t* data, size_t data_len, ble_metadata_t metadata) 
 {
     if (data_len > MATE_BLE_MAX_CBOR_PACKAGE_SIZE) {
         return BLE_ERROR_INTERNAL_INVALID_DATA_LENGTH;
@@ -69,7 +68,7 @@ int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata)
     return BLE_ERROR_INTERNAL_MESSAGE_BUFFER_FULL;
 }
 
-int remove_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, ble_metadata_t* metadata) 
+int remove_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, ble_metadata_ptr_t metadata) 
 {
     bool any_type = message_type == CBOR_MESSAGE_TYPE_WILDCARD;
 
@@ -96,7 +95,7 @@ int remove_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, b
     return BLE_ERROR_INTERNAL_NO_MESSAGE_FOUND;
 }
 
-int wait_for_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, ble_metadata_t* metadata)
+int wait_for_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, ble_metadata_ptr_t metadata)
 {
     int result;
     while ((result = remove_message(message_type, cbor_packet, metadata)) == BLE_ERROR_INTERNAL_NO_MESSAGE_FOUND) {
