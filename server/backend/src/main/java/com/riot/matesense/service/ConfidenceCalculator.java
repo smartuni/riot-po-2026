@@ -106,3 +106,15 @@ public class ConfidenceCalculator
         System.out.println("Final pending job state: " + entity.getPendingJob());
     }
 }
+
+/*
+ * During the presentation, an error came up where the confidence continued to go up despite receiving conflicting reports.
+ * This occurred as the GateMate and SenseMate repeatedly reported conflicting states (Gate kept saying it was closed, Sense kept saying it was open).
+ * Why this was happening is beyond my understanding, but it revealed a flaw in my confidence calculator:
+ * When it receives a gate report, it only compares it to other gate reports instead of both gate and sensor reports, and vice versa.
+ * This means that the confidence will always go up in situations like that: because both types of reports only talk to themselves, they'll only see identical reports.
+ * Thus, the confidence will always increase.
+ * 
+ * I won't change the code we presented, but if we had more time, I would change it so it compares reports to all previous reports, not just
+ * previous reports of the same type.
+ */

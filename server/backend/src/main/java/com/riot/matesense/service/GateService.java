@@ -41,8 +41,6 @@ public class GateService {
         List<GateEntity> gates = gateRepository.findAll();
         List<Gate> customGates = new ArrayList<>();
         gates.forEach(e -> {
-            System.out.println("getAll");
-            // changeConfidence(e, (int)(Math.random() * 100));
             Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), 
                     e.getWorkerConfidence(), e.getSensorConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getQuality(), e.getPendingJob(), e.getPriority());
