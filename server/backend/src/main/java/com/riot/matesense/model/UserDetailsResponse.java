@@ -3,6 +3,9 @@ package com.riot.matesense.model;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * A DTO for the UserDetailResponse
+ */
 @Getter
 @Setter
 public class UserDetailsResponse {

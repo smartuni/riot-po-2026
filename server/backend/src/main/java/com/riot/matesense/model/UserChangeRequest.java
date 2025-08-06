@@ -1,5 +1,8 @@
 package com.riot.matesense.model;
 
+/**
+ * A DTO for the UserChangeRequest
+ */
 public class UserChangeRequest {
     private String name;
     private String password;

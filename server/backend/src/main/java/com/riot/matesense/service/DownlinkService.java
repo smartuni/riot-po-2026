@@ -4,18 +4,10 @@ import com.riot.matesense.config.DownPayload;
 import com.riot.matesense.config.MqttProperties;
 import com.riot.matesense.mqtt.TTNMqttPublisher;
 import com.riot.matesense.registry.DeviceRegistry;
-import com.riot.matesense.repository.GateRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-//TODO do timestamp for the targetTable
-//small example for some downlinks
-//TODO: need to connect downlinks with request from the frontend
-//TODO need to clean up a bit and connect with node team to
+import java.util.*;
+
 @Service
 public class DownlinkService {
 
@@ -33,6 +25,9 @@ public class DownlinkService {
 
     public void sendDownlinkToDevice(DownPayload payloadData) {
         try {
+            List<String> allDevices = new ArrayList<>();
+            allDevices.addAll(deviceRegistry.getAllGateDevices());
+            allDevices.addAll(deviceRegistry.getAllMateDevices());
 
             // === Soll-Status vorbereiten ===
             List<List<Integer>> sollStatusList = payloadData.getStatuses().stream()
@@ -51,22 +46,6 @@ public class DownlinkService {
                 mqttPublisher.publishDownlink(sollJson.getBytes(), topic);
                 System.out.println("Soll-Status gesendet an: " + topic);
             }
-
-            // === Jobtable vorbereiten ===
-            List<List<Integer>> jobTableList = payloadData.getStatuses().stream()
-                    .map(statusEntry -> Arrays.asList(statusEntry.get(0), statusEntry.get(2)))
-                    .toList();
-
-            List<Object> jobTablePayload = Arrays.asList(3, jobTableList);
-            String jobTableJson = encodePayloadToBase64Json(jobTablePayload);
-            System.out.println("Jobtable JSON: " + jobTableJson);
-
-            for (String mateDevice : deviceRegistry.getAllMateDevices()) {
-                String topic = mqttProperties.buildDeviceDownlinkTopic(mateDevice);
-                mqttPublisher.publishDownlink(jobTableJson.getBytes(), topic);
-                System.out.println("Jobtable gesendet an: " + topic);
-            }
-
         } catch (Exception e) {
             System.err.println("Fehler beim Downlink-Senden: " + e.getMessage());
         }
