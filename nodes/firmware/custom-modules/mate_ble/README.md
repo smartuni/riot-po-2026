@@ -32,7 +32,7 @@ The packets need to be signed using the "cose-service" module.
 
 Example of a CBOR packet
 ```json
-[
+[                 // The Packet is encoded as an array
   1,              // Message type
   247,            // Timestamp
   1,              // Device type

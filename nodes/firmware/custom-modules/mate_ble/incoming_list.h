@@ -11,8 +11,6 @@
  * @ingroup     
  * @brief       The incoming_list module stores incoming BLE messages. These messages are consumed by ble_receive()
  *
- * @{
- *
  * @file        incoming_list.h
  *
  * @author      Nico
