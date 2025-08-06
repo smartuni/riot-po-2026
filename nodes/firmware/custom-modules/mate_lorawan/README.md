@@ -22,12 +22,14 @@ This module provides a LoRaWAN communication interface for **SenseMate** and **G
 mate_lorawan.c        # Main implementation
 mate_lorawan.h        # Header declarations (not shown here)
 include/              # Additional headers (e.g., event creation)
-
---
+```
+---
 
 ## Known Errors
 
 - Issue while receiving downlinks SenseMate and GateMate are crashing, presumably due to priority management of used threads.
+
+---
 
 ## User Guide
 
