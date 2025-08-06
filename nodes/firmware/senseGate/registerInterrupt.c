@@ -1,4 +1,4 @@
-#include "header/registerInterrupt.h"
+#include "include/registerInterrupt.h"
 
 #define TRIGGER GPIO_PIN(1, 2);
 

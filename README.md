@@ -1,46 +1,94 @@
+# RIOT im Internet of Things, Sommersemester 2025
 
-# SenseMate Hardware Overview
+Welcome to the primary repository of the RIOT im Internet of Things project for the Summer 2025 semester at HAW Hamburg. The project was concerned with designing, implementing and presenting technologies to improve the city of Hamburg's methods of managing its harbor's floodgates.
 
-# Description
+## The Current Situation
 
-The SenseMate project is an IoT solution to monitoring flood gates in the Hamburg harbour area, planned and implemented by the HAW RIOT project team 2025.
+Currently, the methods for ensuring floodgates are closed in the event of a flood are inefficient. Field workers receive orders, send updates and otherwise communicate with the central office via walkie-talkies. The central office relies on pen-and-paper record-keeping to log events, such as gates being opened or closed.
 
-It consists of physical devices / nodes (coined SenseMate and SenseGate respectively) and web frontend.
+## Our Proposed Solution
 
-## Table of Contents
-1. [Overview](#overview)  
-    1. [SenseMate](#overview-sensemate)
-    2. [SenseGate](#overview-sensegate)
-    3. [Server](#server)
-2. [Used Hardware](#used-hardware)  
-3. [GitFlow](#gitflow)  
-4. [Key Features](#key-features)  
-5. [Pinout Summary](#pinout-summary)  
+The solution proposed and developed by our team is as follows: 
+<ul>
+  <li>Floodgates will be fitted with sensors, called "GateMates," which autonomously report the state of the gate (open or closed) to a server located in the central office.</li>
+  <li>Field workers will be issued devices, called "SenseMates," which receive orders from the central office. SenseMates will also record the state of nearby gates by communicating with the GateMates, enabling workers to confirm or refute the state reported by the GateMate.</li>
+  <li>The workers at the office will be given a web app with a user interface, allowing them to track the status of gates in real time, as well as providing a digital record of the status of gates and allowing them to issue orders without the need for walkie-talkie communication.</li>
+</ul>
+
+Our proposed solution replaces the inefficient methods currently used by the city of Hamburg with fast and reliable digital methods, saving crucial time in the event of a flood.
 
 
-## Overview <div id='overview'/>
+## How to start the project
+
+### SenseGate
+
+- Connect to Power
+- Wait until blue LED is on
+- Red LED indicates if door is open (LED off) or closed (LED on)
+- Blue LED indicates, if a state update is in progress (LED off). 
+- There is a time runoff, which is triggered/restarted on any sensor input. When blue LED is on, the update is processed and sent via LoraWAN.    
+
+#### Deployment
+
+Before flashing make sure [signature keys](nodes/firmware/custom-modules/key-distro/README.md) are generated! 
+
+#### Testing 
+
+```make all flash RIOT_CONFIG_USE_TEST=1```
+
+#### Production
+
+```make all flash RIOT_CONFIG_DEVICE_ID=<GATE_ID>```
+
+### SenseMate
+
+#### Startup
+- Use power switch
+- Wait until screen is ready
+
+#### Deployment
+
+Before flashing make sure [signature keys](nodes/firmware/custom-modules/key-distro/README.md) are generated! 
+
+#### Testing 
+
+```make all flash RIOT_CONFIG_USE_TEST=1```
+
+#### Production
+
+```make all flash RIOT_CONFIG_DEVICE_ID=<GATE_ID>```
+
+### How to start frontend and backend
+
+
+#### Requirements to Start the Frontend
+- nodejs installed
+- npm installed
+
+
+#### Frontend StartUp
+[frontend StartUp](server/frontend/README.md)
+
+#### Backend StartUp
+[backend StartUp](server/backend/README.md)
+
+## Nodes
+
+### Overview <div id='overview'/>
 
 SenseMate <div id='overview-sensemate'/>
 
+- node carried around by workers
 - receive from and propagate data to other nodes via BLE-module
 - receive from and send data to server via LoRa-module
-- node carried around by workers
-- To flash enter nodes/hardware/SenseMate/logic
 
-```sh
-$ make all flash term
-```
 
 SenseGate <div id='overview-sensegate'/>
 
+- node attached to flood gates
 - receive from and propagate data to other nodes via BLE-module
 - receive from and send data to server via LoRa-module
-- node attached to flood gates
-- To flash enter nodes/hardware/GateMate/logic
 
-```sh
-$ make all flash term
-```
 
 Server <div id='overview-server'/>
 
@@ -57,9 +105,6 @@ Server <div id='overview-server'/>
 - Display​
 - Soundbuzzer​
 - Vibrationmotor​
-
-## GitFlow <div id='gitflow'/>
-
 
 **SenseMate** is a battery-powered IoT device for monitoring and controlling floodgates. It communicates over BLE and LoRaWAN and provides tactile, visual, and acoustic feedback.
 
