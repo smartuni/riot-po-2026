@@ -1,6 +1,7 @@
 # SenseMate
 
 ### Description
+This module provides the Application for the SenseMate Device.
 SenseMate is a handheld device that:
 
 - receives from and propagate data to other nodes via BLE-module
