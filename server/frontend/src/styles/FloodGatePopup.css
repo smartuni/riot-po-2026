@@ -1,0 +1,58 @@
+.popup-card {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    background-color: #075985;
+    color: white;
+    padding: 16px;
+    border-radius: 10px;
+    font-family: sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    width: 300px;
+    z-index: 1000;
+}
+
+.popup-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.popup-header,
+.popup-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    text-align: center;
+    font-size: 14px;
+}
+
+.popup-header {
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+}
+
+.status-open {
+    background-color: #28a745;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.status-closed {
+    background-color: #6c757d;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.close-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
