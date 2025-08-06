@@ -41,6 +41,7 @@ static mutex_t is_state_mutex = MUTEX_INIT;
 static mutex_t seen_status_mutex = MUTEX_INIT;
 static mutex_t jobs_mutex = MUTEX_INIT;
 static mutex_t timestamp_mutex = MUTEX_INIT;
+static mutex_t decode_mutex = MUTEX_INIT;
 
 static volatile uint32_t device_timestamp = 0;
 
@@ -330,7 +331,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     CborValue wrapperValue;
     CborValue fieldsValue;
     CborValue entryValue;
-
+    mutex_lock(&decode_mutex);
     int tableType, timeStamp, typeOfSender, deviceID;
     memset(returnTargetTable, MAX_GATE_COUNT, sizeof(returnTargetTable));
     memset(returnIsTable, MAX_GATE_COUNT, sizeof(returnIsTable));
@@ -338,16 +339,19 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     memset(returnJobsTable, MAX_GATE_COUNT, sizeof(returnJobsTable));
 
     if (buffer->cbor_size != 1) {
+        mutex_unlock(&decode_mutex);
         return -1;
     }
 
     cbor_parser_init(buffer->buffer, buffer->package_size[0], 0, &parser, &value);
 
     if(cbor_value_enter_container(&value, &wrapperValue) != CborNoError) {
+        mutex_unlock(&decode_mutex);
         return -30;
     }
 
     if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &tableType) != CborNoError) {
+        mutex_unlock(&decode_mutex);
         return -2;
     } // get type of table
 
@@ -357,42 +361,51 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     case TARGET_STATE_KEY:
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
+            mutex_unlock(&decode_mutex);
             return -3;
         } // get timestamp
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
+            mutex_unlock(&decode_mutex);
             return -4;
         } // get whether Sensemate, gate or Server sent msg
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
+            mutex_unlock(&decode_mutex);
             return -5;
         } // get deviceID
         break;
     case IS_STATE_KEY:
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
+            mutex_unlock(&decode_mutex);
             return -6;
         } // get timestamp
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
+            mutex_unlock(&decode_mutex);
             return -7;
         } // get whether Sensemate, gate or Server sent msg
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
+            mutex_unlock(&decode_mutex);
             return -8;
         } // get deviceID
         break;
     case SEEN_STATUS_KEY:
     cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
+            mutex_unlock(&decode_mutex);
             return -9;
         } // get timestamp
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
+            mutex_unlock(&decode_mutex);
             return -10;
         } // get whether Sensemate, gate or Server sent msg
         cbor_value_advance(&wrapperValue);
         if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
+            mutex_unlock(&decode_mutex);
             return -11;
         } // get deviceID
         break;
@@ -406,6 +419,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     // [ enter second container
     cbor_value_advance(&wrapperValue);
     if(cbor_value_enter_container(&wrapperValue, &fieldsValue) != CborNoError) {
+        mutex_unlock(&decode_mutex);
         return -12;
     }
     
@@ -417,10 +431,12 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
         switch(tableType) {
             case TARGET_STATE_KEY:
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    mutex_unlock(&decode_mutex);
                     return -13;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    mutex_unlock(&decode_mutex);
                     return -14;
                 }
                 cbor_value_advance(&entryValue);
@@ -429,14 +445,17 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                 break;
             case IS_STATE_KEY:
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    mutex_unlock(&decode_mutex);
                     return -15;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    mutex_unlock(&decode_mutex);
                     return -16;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
+                    mutex_unlock(&decode_mutex);
                     return -17;
                 }
                 cbor_value_advance(&entryValue);
@@ -445,18 +464,22 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                 break;
             case SEEN_STATUS_KEY:
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    mutex_unlock(&decode_mutex);
                     return -18;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
+                    mutex_unlock(&decode_mutex);
                     return -19;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
+                    mutex_unlock(&decode_mutex);
                     return -20;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &sID) != CborNoError) {
+                    mutex_unlock(&decode_mutex);
                     return -21;
                 }
                 cbor_value_advance(&entryValue);
@@ -465,10 +488,12 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                 break;
             case JOBS_KEY:
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
+                    mutex_unlock(&decode_mutex);
                     return -22;
                 }
                 cbor_value_advance(&entryValue);
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &p) != CborNoError) {
+                    mutex_unlock(&decode_mutex);
                     return -23;
                 }
                 cbor_value_advance(&entryValue);
@@ -503,9 +528,11 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                 res |= merge_jobs_entry_table(returnJobsTable, (length));
                 break;
             default:
+                mutex_unlock(&decode_mutex);
                 return -24;
     }
-
+    
+    mutex_unlock(&decode_mutex);
     return res;
 }
 
