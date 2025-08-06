@@ -17,4 +17,12 @@ These include:
 
 ## Hardware
 
+SenseMate hardware components and drawings 
+
+## Firmware
+
 SenseMate and SenseGate source code
+
+### Deployment
+
+`make all flash` or with terminal output `make all flash term` TODO
