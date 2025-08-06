@@ -14,6 +14,14 @@ Sensor needs to be connected to: Grnd / A5
 - Blue LED indicates, if a state update is in progress (LED off). 
 - There is a time runoff, which is triggered/restarted on any sensor input. When blue LED is on, the update is processed and sent via LoraWAN.    
 
-### Change Debounce Time
-- The device ID can be changed in the Makefile
-- Constants/ Macros can be found in folder `include/event_creation.h`
+### Deployment
+
+Before flashing make sure [signature keys](../custom-modules/key-distro/README.md) are generated! 
+
+#### Testing 
+
+```make all flash RIOT_CONFIG_USE_TEST=1```
+
+#### Production
+
+```make all flash RIOT_CONFIG_DEVICE_ID=<GATE_ID>```
