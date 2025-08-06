@@ -2,19 +2,12 @@
 package com.riot.matesense.controller;
 
 import com.riot.matesense.entity.GateActivityEntity;
-import com.riot.matesense.entity.GateEntity;
-import com.riot.matesense.exceptions.GateAlreadyExistingException;
-import com.riot.matesense.exceptions.GateNotFoundException;
-import com.riot.matesense.model.Gate;
 import com.riot.matesense.model.GateActivity;
-import com.riot.matesense.model.GateForDownlink;
 import com.riot.matesense.service.GateActivityService;
-import com.riot.matesense.service.GateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 // @CrossOrigin(origins = "*")

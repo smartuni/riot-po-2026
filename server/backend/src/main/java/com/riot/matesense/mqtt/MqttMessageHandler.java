@@ -7,16 +7,12 @@ import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.Status;
-import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
-import com.riot.matesense.model.Gate;
 import com.riot.matesense.registry.DeviceRegistry;
 import com.riot.matesense.service.GateActivityService;
 import com.riot.matesense.service.GateService;
 
 import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.sql.Time;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;

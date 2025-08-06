@@ -1,10 +1,6 @@
 package com.riot.matesense;
 
-import com.riot.matesense.config.DownPayload;
-
 import com.riot.matesense.entity.DownlinkCounterEntity;
-import com.riot.matesense.entity.GateActivityEntity;
-import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.entity.NotificationEntity;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.repository.DownlinkCounterRepository;
@@ -13,16 +9,12 @@ import com.riot.matesense.service.DownlinkService;
 import com.riot.matesense.service.GateActivityService;
 import com.riot.matesense.service.GateService;
 import com.riot.matesense.service.NotificationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
-
-import java.sql.Timestamp;
-import java.util.Arrays;
 
 @SpringBootApplication
 @EnableScheduling
@@ -44,8 +36,7 @@ class PopulateTestDataRunner implements CommandLineRunner {
 	GateRepository gateRepository;
 	GateActivityService gateActivityService;
 	NotificationService notificationService;
-
-	@Autowired
+	
 	public PopulateTestDataRunner(GateActivityService gateActivityService, GateService gateService, GateRepository gateRepository,
 								  DownlinkService downlinkService, NotificationService notificationService, DownlinkCounterRepository downlinkCounterRepository) {
 		this.gateService = gateService;

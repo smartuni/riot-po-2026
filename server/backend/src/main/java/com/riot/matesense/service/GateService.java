@@ -1,12 +1,8 @@
 package com.riot.matesense.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.Status;
-import com.riot.matesense.service.ConfidenceCalculator;
-import com.riot.matesense.enums.ConfidenceQuality;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
 import com.riot.matesense.model.Gate;
@@ -17,11 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.tools.Diagnostic;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class GateService {
@@ -95,14 +89,6 @@ public class GateService {
      * @param reportType of the msg
      */
     public void updateGate(GateEntity gate, MsgType reportType) {
-        //Hole das Gate
-        //GateEntity existingGate = gateRepository.findById(Math.toIntExact(gate.getId())).orElse(null);
-       //Existiert das Gate schon
-//        if (existingGate == null) {
-//            System.out.println("Gate nicht gefunden. Füge neues Gate hinzu.");
-//            gateRepository.save(gate);
-//            return;
-//        }
         gate.setRequestedStatus(gate.getRequestedStatus());
         gate.setLastTimeStamp(gate.getLastTimeStamp());
         gate.setDeviceId(gate.getDeviceId());
@@ -154,13 +140,6 @@ public class GateService {
                 gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality(), gate.getPendingJob(), gate.getPriority());
     }
 
-//    public Gate getGateById(Long id) {
-//        GateEntity gate = gateRepository.getById(id);
-//        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
-//                gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
-//                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality());
-//    }
-
     /**
      * a method to change the requested status of a gate
      * @param gateId of the gate
@@ -204,38 +183,6 @@ public class GateService {
     public void changeGateStatus(Long gateId, Status status, MsgType reportType) {
         GateEntity gate = gateRepository.getById(gateId);
         int confidence = gate.getConfidence();
-
-        // Ziel-Status aus requestedStatus ableiten
-        // switch (targetStatus) {
-        //     case "REQUESTED_OPEN" -> tmp = "OPENED";
-        //     case "REQUESTED_CLOSE" -> tmp = "CLOSED";
-        //     case "REQUESTED_NONE" -> tmp = "NONE";
-        //     default -> tmp = targetStatus;
-        // }
-
-        // 1. Pending-Job **immer setzen**, basierend auf targetStatus
-        // switch (targetStatus) {
-        //     case "REQUESTED_OPEN" -> gate.setPendingJob("PENDING_OPEN");
-        //     case "REQUESTED_CLOSE" -> gate.setPendingJob("PENDING_CLOSE");
-        //     case "REQUESTED_NONE" -> gate.setPendingJob("PENDING_NONE");
-        // }
-
-        // 2. Nur wenn tatsächlicher Status ≠ Ziel, dann requestedStatus setzen
-        // if (!tmp.equalsIgnoreCase(gate.getStatus().toString().strip())) {
-            // if (targetStatus.equals("REQUESTED_NONE") || targetStatus.equals("NONE")) {
-            //     gate.setStatus(null);
-            // } else {
-
-//
-//        if (status == Status.OPENED) {
-//            if ("PENDING_OPEN".equals(gate.getPendingJob())) {
-//                gate.setPendingJob("None");
-//            }
-//        } else if(status == Status.CLOSED){
-//            if ("PENDING_CLOSE".equals(gate.getPendingJob())) {
-//                gate.setPendingJob("None");
-//            }
-//        }
 
         gate.setStatus(status);
         //dont be surprised if pending job didn't change after the first status change! It need to be 100% confidence

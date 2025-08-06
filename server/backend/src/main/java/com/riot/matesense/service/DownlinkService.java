@@ -4,10 +4,8 @@ import com.riot.matesense.config.DownPayload;
 import com.riot.matesense.config.MqttProperties;
 import com.riot.matesense.mqtt.TTNMqttPublisher;
 import com.riot.matesense.registry.DeviceRegistry;
-import com.riot.matesense.repository.GateRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.*;
 
 @Service

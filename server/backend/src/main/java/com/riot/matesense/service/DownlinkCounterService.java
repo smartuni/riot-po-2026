@@ -1,27 +1,9 @@
 package com.riot.matesense.service;
 
 import com.riot.matesense.entity.DownlinkCounterEntity;
-import com.riot.matesense.entity.NotificationEntity;
-import com.riot.matesense.enums.MsgType;
-import com.riot.matesense.exceptions.GateAlreadyExistingException;
-import com.riot.matesense.exceptions.GateNotFoundException;
-import com.riot.matesense.model.DownlinkCounter;
-import com.riot.matesense.model.Notification;
 import com.riot.matesense.repository.DownlinkCounterRepository;
-import com.riot.matesense.repository.NotificationRepository;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 /**
  * A Fassade-Service class for the DownlinkCounterEntity
@@ -31,7 +13,6 @@ public class DownlinkCounterService {
 
     private final DownlinkCounterRepository repository;
 
-    @Autowired
     public DownlinkCounterService(DownlinkCounterRepository repository) {
         this.repository = repository;
     }

@@ -1,17 +1,12 @@
 package com.riot.matesense.service;
 
-import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.entity.NotificationEntity;
 import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
-import com.riot.matesense.model.Gate;
-import com.riot.matesense.model.GateForDownlink;
 import com.riot.matesense.model.Notification;
-import com.riot.matesense.repository.GateRepository;
 import com.riot.matesense.repository.NotificationRepository;
 import jakarta.transaction.Transactional;
-import org.aspectj.weaver.ast.Not;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;

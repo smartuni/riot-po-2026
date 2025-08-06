@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.sql.Timestamp;
-
 /**
  * A DTO for the GateForDownlink Entity
  */

@@ -22,7 +22,7 @@ public class NotificationEntity {
 	private Timestamp lastTimeStamp;
 	private Long workerId;
 	private String message;
-	@Getter
+	// @Getter
 	private boolean read;
 
 
