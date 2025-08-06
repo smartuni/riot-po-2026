@@ -34,8 +34,19 @@ extern void display_gate_menu_box(char* text, int num_after_text, bool upper, bo
  */
 extern void display_ordinary_menu(char *text, int num_after_text, bool use_num, bool upper, bool selected, bool more_content);
 
+/*
+* displays the a header for the menu
+* header is always displayed in the upper half of the screen
+*
+* @param text The text to display
+* @param num_after_text The number to display after the text
+* @param use_num If true, the number is displayed behind the text
+*/
 extern void display_menu_header(char *text, int num_after_text, bool use_num);
 
+/* 
+ * creates a new page to draw elements on the display
+*/
 extern void new_page(void);
 
 #endif

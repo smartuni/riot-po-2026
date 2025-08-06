@@ -28,13 +28,13 @@ public class ConfidenceCalculator
         else
         {
             confidence = passedConfidence; // retrieve confidence from gate
-            int iterations = Math.min(5, Math.min(gateArray.length, workerArray.length));
-
+            int iterations = Math.min(3, Math.min(gateArray.length, workerArray.length));
+  
             for (int i = 0; i < iterations; i++) // iterate through reports
             {
                 if(reportType == MsgType.IST_STATE) // if the report is from a gate sensor
                 {
-                    int delta = 10 - (2 * i);
+                    int delta = (int)Math.floor(10 / (i + 1)); // calculates how much consideration a report gets, newer reports get more sway
                     if (gateStatus == gateArray[i] && gateArray[i] != Status.NONE)
                     {
                         confidence += delta; // if new a report matches an older report, increase confidence
@@ -46,7 +46,7 @@ public class ConfidenceCalculator
                 }
                 else if(reportType == MsgType.SEEN_TABLE_STATE) // if the report is from a worker
                 {
-                    int delta = 20 - (4 * i);
+                    int delta = (int)Math.floor(20 / (i + 1));
                     if (gateStatus == workerArray[i] && workerArray[i] != Status.NONE)
                     {
                         confidence += delta;
@@ -106,3 +106,15 @@ public class ConfidenceCalculator
         System.out.println("Final pending job state: " + entity.getPendingJob());
     }
 }
+
+/*
+ * During the presentation, an error came up where the confidence continued to go up despite receiving conflicting reports.
+ * This occurred as the GateMate and SenseMate repeatedly reported conflicting states (Gate kept saying it was closed, Sense kept saying it was open).
+ * Why this was happening is beyond my understanding, but it revealed a flaw in my confidence calculator:
+ * When it receives a gate report, it only compares it to other gate reports instead of both gate and sensor reports, and vice versa.
+ * This means that the confidence will always go up in situations like that: because both types of reports only talk to themselves, they'll only see identical reports.
+ * Thus, the confidence will always increase.
+ * 
+ * I won't change the code we presented, but if we had more time, I would change it so it compares reports to all previous reports, not just
+ * previous reports of the same type.
+ */

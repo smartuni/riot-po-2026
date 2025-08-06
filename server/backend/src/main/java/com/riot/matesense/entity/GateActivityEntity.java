@@ -6,7 +6,11 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 
-
+/**
+ * An Entity for the Gate-Activities
+ * Everything that is done with a Gate for example: the gate has gotten closed should create a Gate-Activity
+ * Another Example: The requested Status of the Gate with ID: 1 has changed to "REQUESTED-OPEN"
+ */
 @Getter
 @Setter
 @Table(name = "gate_activities")

@@ -31,7 +31,7 @@
  * @param[in]   metadata    Metadata associated with the message
  * @return      0 on success, negative error code on failure
  */
-int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata);
+int insert_message(const uint8_t* data, size_t data_len, ble_metadata_t metadata);
 
 /**
  * @brief       Remove a message from the incoming message list
@@ -40,7 +40,7 @@ int insert_message(uint8_t* data, int data_len, ble_metadata_t metadata);
  * @param[out]  metadata    Pointer to the output metadata
  * @return      0 on success, negative error code on failure
  */
-int remove_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, ble_metadata_t* metadata);
+int remove_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, ble_metadata_ptr_t metadata);
 
 /**
  * @brief       Wait for a message of a specific type in the incoming message list and remove it
@@ -49,6 +49,6 @@ int remove_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, b
  * @param[out]  metadata    Pointer to the output metadata
  * @return      0 on success, negative error code on failure
  */
-int wait_for_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, ble_metadata_t* metadata);
+int wait_for_message(cbor_message_type_t message_type, cbor_buffer* cbor_packet, ble_metadata_ptr_t metadata);
 
 #endif /* MATE_BLE_INCOMING_LIST_H */
