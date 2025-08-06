@@ -1,10 +1,10 @@
-#include "soundModule.h"
+#include "include/soundModule.h"
 #include <stdio.h>
 #include "board.h"
 #include "ztimer.h"
 #include "periph/gpio.h"
 #include "thread.h"
-#include "vibrationModule.h"
+#include "include/vibrationModule.h"
 #include "event/timeout.h"
 #include "event/thread.h"
 

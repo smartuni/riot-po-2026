@@ -42,7 +42,7 @@
 #include "event.h"
 #include "event/thread.h"
 #if DEVICE_TYPE == 1
-#include "events_creation.h"
+#include "include/events_creation.h"
 #endif
 
 /* Interval between data transmissions, in seconds */

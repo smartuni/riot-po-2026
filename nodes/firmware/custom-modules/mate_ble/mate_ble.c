@@ -20,7 +20,7 @@
 #include "semaphore.h"
 #include "cose-service.h"
 #if DEVICE_TYPE == 1 // SenseMate
-#include "soundModule.h"
+#include "include/soundModule.h"
 #endif
 
 #include "incoming_list.h"

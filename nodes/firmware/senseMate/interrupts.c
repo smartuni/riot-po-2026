@@ -1,13 +1,13 @@
-#include "interrupts.h"
+#include "include/interrupts.h"
 #include <stdio.h>
 
 #include "board.h"
 #include "ztimer.h"
 #include "periph/gpio.h"
-#include "displayDemo.h"
-#include "menu.h"
-#include "events_creation.h"
-#include "soundModule.h"
+#include "include/displayDemo.h"
+//#include "menu.h"
+#include "include/events_creation.h"
+#include "include/soundModule.h"
 
 #define TRIGGER0 GPIO_PIN(0, 4);
 #define TRIGGER1 GPIO_PIN(0, 5);
