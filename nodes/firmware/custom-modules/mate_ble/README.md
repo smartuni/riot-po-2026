@@ -24,7 +24,7 @@ The BLE module builds on RIOT’s NimBLE stack to provide beacon‐style, peer�
 - **cose-service** (for COSE signing and verification)  
 - **table-module** (to prepare outgoing and process incoming packets)
 
-## Paket layout
+## Paket Layout
 
 The BLE module requires CBOR to encode the table type, the timestamp and the transmitters device type and device-id in order to process the received information.
 
