@@ -1,4 +1,4 @@
-#include "displayDemo.h"
+#include "include/displayDemo.h"
 #include "u8g2.h"
 #include "u8x8_riotos.h"
 #include "ztimer.h"
@@ -25,7 +25,7 @@ u8x8_riotos_t user_data =
 
 void init_display(void){
 
-    puts("Initializing display.");
+    //puts("Initializing display.");
     U8G2_DISPLAY_INIT_FUNC(&u8g2, U8G2_R0, u8x8_byte_hw_i2c_riotos, u8x8_gpio_and_delay_riotos);
 
     u8g2_SetUserPtr(&u8g2, &user_data);
@@ -35,7 +35,6 @@ void init_display(void){
     u8g2_SetDrawColor(&u8g2, 1);
     u8g2_SetFont(&u8g2, u8g2_font_helvR10_tf);
     u8g2_FirstPage(&u8g2);
-    //ztimer_sleep(ZTIMER_MSEC, 1000);
 
     u8g2_SetFlipMode(&u8g2, 1); // flip mode
     u8g2_NextPage(&u8g2);
@@ -43,171 +42,6 @@ void init_display(void){
     //printf("Display initialized. --\n");
 }
 
-void display_demo(void){
-    printf("Display demo started. --\n");
-    
-    u8g2_FirstPage(&u8g2);
-    do {
-        u8g2_DrawStr(&u8g2, 2, 2*Y_OFFSET, "start Display Demo.");
-    } while (u8g2_NextPage(&u8g2));
-
-
-    while (true)
-    {
-        ztimer_sleep(ZTIMER_MSEC, 2000);
-        printf("Display demo loop after sleep. --\n");
-        u8g2_FirstPage(&u8g2);
-        /*do {
-            printf("Display demo loop in do1. --\n");
-            u8g2_uint_t width = u8g2_GetStrWidth(&u8g2, "Helloo");
-            unsigned xpad = DISPLAY_WIDTH - width;
-            u8g2_DrawStr(&u8g2, xpad / 2, Y_OFFSET, "Helloo");
-            u8g2_DrawStr(&u8g2, xpad / 2, Y_OFFSET + 24, "World");
-            u8g2_DrawStr(&u8g2, 0 / 2, Y_OFFSET + 48, "RIOT-OS and some more");
-            u8g2_DrawTriangle(&u8g2, 1, 1, 1, 12, 12, 6);
-            u8g2_DrawFrame(&u8g2, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT/3);
-            u8g2_DrawFrame(&u8g2, 0, DISPLAY_HEIGHT/3, DISPLAY_WIDTH, DISPLAY_HEIGHT/3);
-            u8g2_DrawFrame(&u8g2, 0, ((DISPLAY_HEIGHT/3)*2), DISPLAY_WIDTH, DISPLAY_HEIGHT/3);
-            printf("Display demo loop end do1. --\n");
-        } while (u8g2_NextPage(&u8g2));
-        
-        printf("Display demo loop after 1. --\n");
-        ztimer_sleep(ZTIMER_MSEC, 1000);
-        
-        u8g2_FirstPage(&u8g2);
-        do {
-            u8g2_DrawCircle(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_ALL);
-        }while (u8g2_NextPage(&u8g2));
-
-        ztimer_sleep(ZTIMER_MSEC, 1000);
-
-        u8g2_FirstPage(&u8g2);
-        do {
-            u8g2_DrawCircle(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_ALL);
-            u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_UPPER_RIGHT);
-        }while (u8g2_NextPage(&u8g2));
-        
-        ztimer_sleep(ZTIMER_MSEC, 1000);
-
-        u8g2_FirstPage(&u8g2);
-        do {
-            u8g2_DrawCircle(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_ALL);
-            u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_UPPER_RIGHT);
-            u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_LOWER_RIGHT);
-        }while (u8g2_NextPage(&u8g2));
-
-        ztimer_sleep(ZTIMER_MSEC, 1000);
-
-        u8g2_FirstPage(&u8g2);
-        do {
-            u8g2_DrawCircle(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_ALL);
-            u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_UPPER_RIGHT);
-            u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_LOWER_RIGHT);
-            u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_LOWER_LEFT);
-        }while (u8g2_NextPage(&u8g2));
-
-        ztimer_sleep(ZTIMER_MSEC, 1000);
-
-        u8g2_FirstPage(&u8g2);
-        do {
-            u8g2_DrawCircle(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_ALL);
-            u8g2_DrawDisc(&u8g2, DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2, DISPLAY_HEIGHT/3, U8G2_DRAW_ALL);
-        }while (u8g2_NextPage(&u8g2));
-
-        ztimer_sleep(ZTIMER_MSEC, 1000);
-
-
-        for (int i = 0; i < 100; i++){
-            ztimer_sleep(ZTIMER_MSEC, 1000);
-            display_menu("Gate 01", "Gate 59", true, true, 0);
-            ztimer_sleep(ZTIMER_MSEC, 1000);
-            display_menu("Gate 01", "Gate 59", true, true, 1);
-        }
-        //display_menu("Entry 1", 7, "Entry 2", 7, true, true, 0);
-
-        ztimer_sleep(ZTIMER_MSEC, 20000);
-        */
-
-
-        //display demo but not working, needs to be adapted to updated display function
-        /*
-
-        u8g2_FirstPage(&u8g2);
-        do {
-            display_menu_header("Gate Menu");
-            display_gate_menu_box("Gate 01", false, true, true, true);
-        }while (u8g2_NextPage(&u8g2));
-
-        ztimer_sleep(ZTIMER_MSEC, 5000);
-
-        u8g2_FirstPage(&u8g2);
-        do{
-            display_menu_header("Gate 01 state:");
-            display_ordinary_menu("closed", false, true, true);
-        }while (u8g2_NextPage(&u8g2));
-        
-        ztimer_sleep(ZTIMER_MSEC, 2000);
-
-        
-        u8g2_FirstPage(&u8g2);
-        do{
-            display_ordinary_menu("closed", true, false, false);
-            display_ordinary_menu("open", false, true, true);
-        }while (u8g2_NextPage(&u8g2));
-        
-        ztimer_sleep(ZTIMER_MSEC, 2000);
-
-        
-        u8g2_FirstPage(&u8g2);
-        do {
-            display_ordinary_menu("open", true, false, true);
-            display_ordinary_menu("cancel", false, true, false);
-        }while (u8g2_NextPage(&u8g2));
-        
-        ztimer_sleep(ZTIMER_MSEC, 2000);
-
-        u8g2_FirstPage(&u8g2);
-        do {
-            display_ordinary_menu("open", true, true, true);
-            display_ordinary_menu("cancel", false, false, false);
-        }while (u8g2_NextPage(&u8g2));
-        
-        ztimer_sleep(ZTIMER_MSEC, 2000);
-        
-        u8g2_FirstPage(&u8g2);
-        do {
-            display_ordinary_menu("closed", true, true, false);
-            display_ordinary_menu("open", false, false, true);
-        }while (u8g2_NextPage(&u8g2));
-        
-        ztimer_sleep(ZTIMER_MSEC, 2000);
-
-       u8g2_FirstPage(&u8g2);
-        do {
-            display_gate_menu_box("Gate 01", true, true, false, true);
-            display_gate_menu_box("Gate 59", false, false, true, true);
-        }while (u8g2_NextPage(&u8g2));
-
-        ztimer_sleep(ZTIMER_MSEC, 2000);
-
-        u8g2_FirstPage(&u8g2);
-        do {
-            display_gate_menu_box("Gate 01", true, false, false, true);
-            display_gate_menu_box("Gate 59", false, true, true, true);
-        }while (u8g2_NextPage(&u8g2));
-
-        ztimer_sleep(ZTIMER_MSEC, 2000);
-
-        u8g2_FirstPage(&u8g2);
-        do {
-            display_gate_menu_box("Gate 01", true, true, false, true);
-            display_gate_menu_box("Gate 59", false, false, true, true);
-        }while (u8g2_NextPage(&u8g2));
-
-        ztimer_sleep(ZTIMER_MSEC, 2000);
-    */
-    }
-}
 
 void display_menu_box(char *text, int num_after_text, bool use_num, int pos_x, int pos_y, int width, int height, bool selected){
     int relative_x = width/32; //expected 128/32 = 4

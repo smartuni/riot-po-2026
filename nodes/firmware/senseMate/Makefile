@@ -4,9 +4,9 @@ APPLICATION = SenseMate
 BOARD ?= adafruit-feather-nrf52840-sense
 
 # This has to be the absolute path to the RIOT base directory:
-RIOTBASE ?= $(CURDIR)/../../../RIOT
+RIOTBASE ?= $(CURDIR)/../RIOT
 
-PROJECT_BASE ?= $(CURDIR)/../../../
+PROJECT_BASE ?= $(CURDIR)/../
 EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
 
@@ -20,7 +20,7 @@ DEVICE_TYPE := 1
 $(info Using device ID: $(RIOT_CONFIG_DEVICE_ID))
 # Some workarounds are needed in order to get the tutorial running on
 # some computers.
--include ../../../lab_workarounds.mk
+-include ../../lab_workarounds.mk
 
 # This board requires a start sleep to actually catch the printed output
 USEMODULE += ztimer_sec

@@ -1,10 +1,10 @@
-#include "new_menu.h"
+#include "include/new_menu.h"
 #include <string.h>
 #include <tables.h>
 #include <stdio.h>
-#include "displayDemo.h"
+#include "include/displayDemo.h"
 #include "mate_lorawan.h"
-#include "soundModule.h"
+#include "include/soundModule.h"
 #include "event.h"
 //#include "event/timeout.h"
 #include "event/thread.h"

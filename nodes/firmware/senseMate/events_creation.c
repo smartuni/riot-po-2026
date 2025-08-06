@@ -1,12 +1,11 @@
-#include "events_creation.h"
+#include "include/events_creation.h"
 #include <stdio.h>
-//#include "menu.h"
 #include "ztimer.h"
 #include "board.h"
 #include "event/timeout.h"
-#include "new_menu.h"
-#include "soundModule.h"
-#include "vibrationModule.h"
+#include "include/new_menu.h"
+#include "include/soundModule.h"
+#include "include/vibrationModule.h"
 #include "tables.h"
 #define MIN_SIGNAL_STRENGTH -100 // Minimum signal strength for events
 #define DECREMENT_RSSI 10 // decrement rssi by 10

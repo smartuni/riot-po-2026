@@ -1,4 +1,4 @@
-#include "vibrationModule.h"
+#include "include/vibrationModule.h"
 #include <stdio.h>
 #include "board.h"
 #include "ztimer.h"

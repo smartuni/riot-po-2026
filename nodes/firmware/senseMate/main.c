@@ -1,17 +1,17 @@
-#include "displayDemo.h"
+#include "include/displayDemo.h"
 #include "ztimer.h"
 #include <stdio.h>
 #include <list.h>
 #include "board.h"
 #include "periph/gpio.h"
 #include "ztimer.h"
-#include "interrupts.h"
-#include "events_creation.h"
+#include "include/interrupts.h"
+#include "include/events_creation.h"
 #include "tables.h"
 #include "mate_lorawan.h"
-#include "new_menu.h"
-#include "soundModule.h"
-#include "vibrationModule.h"
+#include "include/new_menu.h"
+#include "include/soundModule.h"
+#include "include/vibrationModule.h"
 
 #include "mate_ble.h"
 
@@ -34,7 +34,6 @@ int main(void) {
     init_display();
     printf("Device Type: %d device id: %d\n",DEVICE_TYPE, DEVICE_ID);
     printf("Display initialized.\n");
-    //display_demo();
     //init_menu();
     init_new_menu();
     //set_current_meustate(INIT);
