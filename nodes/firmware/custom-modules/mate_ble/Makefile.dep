@@ -1,0 +1,21 @@
+### This file is where the used modules are included
+# Add the NimBLE package which provides the bluetooth stack
+USEPKG += nimble
+
+# enable the extended advertisement feature of nimble
+USEMODULE += nimble_adv_ext
+
+# enable the scanner feature of NimBLE
+USEMODULE += nimble_scanner
+USEMODULE += nimble_addr
+
+# enable utility features for crafting advertisements
+USEMODULE += bluetil_ad
+
+USEMODULE += tables
+USEMODULE += posix_semaphore
+
+# Add the tinycbor package
+USEPKG += tinycbor
+
+USEMODULE += cose-service

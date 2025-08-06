@@ -17,11 +17,11 @@ Desktop.ini
 # VSCode
 .vscode/
 .history/
-
+compile_commands.json
 # JetBrains (CLion, IntelliJ, PyCharm…)
 .idea/
 *.iml
-
+bin/
 # ----------------------------------------
 # Node.js / JavaScript
 # ----------------------------------------
@@ -69,7 +69,8 @@ pip-log.txt
 build/
 out/
 *.map
-
+bin/
+.cache/
 # PlatformIO
 .pio/
 .pioenvs/
@@ -99,4 +100,9 @@ coverage/
 *.crt
 *.key
 
-nodes/lab_workarounds.mk
+*/lab_workarounds.mk
+*/secrets
+*/ttn_configs
+*/secrets.yaml
+
+*.d

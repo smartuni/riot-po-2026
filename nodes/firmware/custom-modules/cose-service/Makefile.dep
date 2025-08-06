@@ -1,0 +1,8 @@
+# custom-modules/cose-service/Makefile.dep
+
+ifneq (,$(filter cose-service,$(USEMODULE)))
+  USEMODULE += key-distro
+  USEPKG    += tinycbor
+  USEPKG    += libcose
+  USEMODULE += libcose_crypt_monocypher
+endif
