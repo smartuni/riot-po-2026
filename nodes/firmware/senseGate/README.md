@@ -1,7 +1,7 @@
 # SenseGate
 
 ### Description
-SenseGate is a device which detects the status (open/close) of a flood gate.
+This Module provides the SenseGate Application which detects the status (open/close) of a flood gate. 
 
 ### Startup and operation
 
