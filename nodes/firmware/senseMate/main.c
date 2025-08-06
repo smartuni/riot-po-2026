@@ -15,7 +15,7 @@
 
 #include "mate_ble.h"
 
-void fill_tables_test(void);
+//void fill_tables_test(void); //for menu testing purposes
 
 char ble_send_stack[2*THREAD_STACKSIZE_DEFAULT];
 char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
@@ -72,7 +72,7 @@ int main(void) {
        "bleSend"
     );
 
-    ble_received_thread_args_t args = {
+    ble_receive_thread_args_t args = {
         .receive_queue = &events_creation_queue,
         .receive_event = &eventBleNews,
 
