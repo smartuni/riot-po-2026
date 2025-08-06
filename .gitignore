@@ -99,9 +99,9 @@ coverage/
 *.crt
 *.key
 
-nodes/lab_workarounds.mk
-nodes/custom-modules/key-distro/include/secrets
-nodes/custom-modules/key-distro/ttn_configs
-nodes/custom-modules/key-distro/util_scripts/secrets.yaml
+*/lab_workarounds.mk
+*/secrets
+*/ttn_configs
+*/secrets.yaml
 
 *.d
