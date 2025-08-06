@@ -5,8 +5,8 @@ APPLICATION = sensegate
 BOARD ?= feather-nrf52840-sense
 
 # This has to be the absolute path to the RIOT base directory:
-RIOTBASE ?= $(CURDIR)/../../../RIOT
-PROJECT_BASE ?= $(CURDIR)/../../../
+RIOTBASE ?= $(CURDIR)/../RIOT
+PROJECT_BASE ?= $(CURDIR)/../
 EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
 

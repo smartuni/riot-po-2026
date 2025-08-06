@@ -1,4 +1,4 @@
-#include "header/detectDoorStatus.h"
+#include "include/detectDoorStatus.h"
 
 #define TRIGGER GPIO_PIN(0, 3) // PIN A5
 //#define TRIGGER GPIO_PIN(1, 2) // Test Button

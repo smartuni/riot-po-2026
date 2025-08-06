@@ -33,11 +33,13 @@ extern void init_event(void);
 
 /**
 * sets current status of sensor. needed to set internal table after change
+* @param newStatus parameter if door is open/closed
 */
 void update_status(uint8_t newStatus);
 
 /**
 * return current status
+* @return  0 or 1 for defined door status
 */
 uint8_t get_status(void);
 
