@@ -1,6 +1,6 @@
 # Description
 
-This is the SenseMate directory of the hardware directory. It contains the SenseMate source code.
+This is the SenseMate hardware directory of the hardware directory. 
 
 # Overview
 
@@ -24,10 +24,3 @@ Additionally to the Nordic nRF52840 board, the following peripherals are require
 - Soundbuzzer​
 - Vibrationmotor​
 
-## Flashing
-
-In order to flash the node, enter logic
-
-```sh
-$ make all flash term
-```

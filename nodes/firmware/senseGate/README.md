@@ -3,11 +3,6 @@
 ### Description
 SenseGate is a device which detects the status (open/close) of a flood gate.
 
-### Flashing
-
-In directory 'logic':
-`make all flash` or with terminal output `make all flash term`
-
 ### Startup and operation
 
 Pins:
