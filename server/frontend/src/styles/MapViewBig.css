@@ -1,0 +1,16 @@
+.map-view-big {
+    width: 100%;
+    background: #156082;
+    border-radius: 8px;
+    padding: 5px;
+    color: white;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.map-container {
+    height: 400px;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}

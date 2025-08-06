@@ -1,0 +1,74 @@
+/* EventLogs.css */
+
+.event-logs-container {
+    padding: 1.5rem;
+    background-color: #f8fafc;
+    min-height: 100vh;
+}
+
+.event-logs-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #094059;
+    margin-bottom: 1.5rem;
+}
+
+.event-logs-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    max-width: 80rem;
+}
+
+@media (min-width: 768px) {
+    .event-logs-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.event-card {
+    background-color: #094059;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.event-header {
+    background-color: #156082;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #094059;
+}
+
+.event-title {
+    font-weight: 500;
+    color: white;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.event-content {
+    background-color: #156082;
+    padding: 0;
+}
+
+.event-table {
+    width: 100%;
+    color: white;
+    font-size: 0.875rem;
+    border-collapse: collapse;
+}
+
+.table-header-row {
+    border-bottom: 1px solid #094059;
+}
+
+.table-header {
+    text-align: left;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    background-color: #156082;
+}
+
+.table-cell {
+    padding: 0.75rem 1rem;
+}

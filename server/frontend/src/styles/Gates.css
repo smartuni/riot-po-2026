@@ -1,0 +1,110 @@
+.floodgate-card {
+    width: 100%;
+    background-color: #0a5275; /* dunkles Blau */
+    color: white;
+    padding: 16px;
+    border-radius: 12px;
+    font-family: sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.floodgate-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.floodgate-header, .floodgate-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    text-align: center;
+    font-size: 14px;
+}
+
+.floodgate-header {
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+
+.status-open {
+    background-color: #28a745; /* grün */
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.status-closed {
+    background-color: #dc3545; /* grün */
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.status-unknown {
+    background-color: #ff8e13; /* grau */
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.close-button {
+    background-color: #dc3545; /* rot */
+    color: white;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.close-button:hover {
+    background-color: #c82333;
+}
+
+.open-button {
+    background-color: #28a745; /* rot */
+    color: white;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.open-button:hover {
+    background-color: #1c8a34;
+}
+
+.support-button {
+    background-color: #094059; /* rot */
+    color: white;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.support-button:hover {
+    background-color: #042b3e;
+}
+
+
+.gate-boxes{
+    display: flex;
+    justify-content: space-around;
+    align-content: flex-start;
+    width: 100%;
+    flex-wrap: wrap;
+}
+.gate-box{
+    width: 40%;
+    flex-direction: row;
+    margin: 16px;
+}

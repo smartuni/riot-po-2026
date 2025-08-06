@@ -1,18 +1,18 @@
 
 
 
-# Ed25519 Key-Setup & TTN-Gerätekonfiguration
+# Ed25519 Key-Setup & TTN-Device-configuration
 
-Dieses Modul dient zur automatisierten Erstellung von Ed25519-Schlüsseln sowie zur Registrierung von Geräten in einer bestehenden TTN-Anwendung.
+This module automatically generates Ed25519-Keys as well as registers devices inside an existing TTN-Application.
 
 ---
 
-## Voraussetzungen
+## Requirements
 
-* Eine **bestehende LoRaWAN-Application** in [The Things Stack (TTN)](https://www.thethingsnetwork.org/)
-* Ein **TTN API Token** mit vollständigen Anwendungsrechten (z. B. über [TTN Console → API Keys](https://console.cloud.thethings.network/))
-* Python 3.6 oder neuer
-* Abhängigkeiten:
+* An **existing LoRaWAN-Application** in [The Things Stack (TTN)](https://www.thethingsnetwork.org/)
+* A **TTN API Token** with full application accessn (e.g. via [TTN Console → API Keys](https://console.cloud.thethings.network/))
+* Python 3.6 or later
+* Dependencies:
 
   ```bash
   pip install pynacl requests pyyaml
@@ -20,15 +20,15 @@ Dieses Modul dient zur automatisierten Erstellung von Ed25519-Schlüsseln sowie 
 
 ---
 
-## Konfigurationsdateien
+## Configuration files
 
 ### 1. `config.yaml`
 
-Enthält die Gerätekonfiguration sowie Basisinformationen zur TTN-Instanz und Anwendung:
+Contains the device configuration as well as basic information regarding the TTN instance and usage:
 
 ```yaml
-tti_instance: eu1.cloud.thethings.network  # TTN Instanz (z. B. eu1, nam1, ...)
-application_id: my-application             # Name deiner existierenden TTN-Application
+tti_instance: eu1.cloud.thethings.network  # TTN instance (e.g. eu1, nam1, ...)
+application_id: my-application             # Name of your existing TTN application
 
 sensemates:
   count: 3
@@ -41,7 +41,7 @@ sensegates:
 
 ### 2. `secrets.yaml`
 
-Speichert den TTN-Auth-Token. **Diese Datei sollte nicht versioniert werden.**
+Saves TTN-Auth-Token. **Don't add version numbers to this file**
 
 ```yaml
 ttn_auth_token: "NNSXS.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
@@ -49,44 +49,44 @@ ttn_auth_token: "NNSXS.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
 ---
 
-## Nutzung
+## Usage
 
-### Schritt 1: Schlüssel generieren
+### Step 1: Generate Keys
 
 ```bash
 python util_scripts/generate_prod_keys.py
 ```
 
-Dies erzeugt:
+This generates:
 
-* Für jedes Gerät:
+* For every device:
 
-    * Einen privaten Ed25519-Schlüssel in `include/secrets/{device_id}_private_key.h`
-* Eine zentrale `public_keys.h`, die alle Geräte-IDs (`kid`) und zugehörigen Public Keys enthält
+    * A private Ed25519-Key in `include/secrets/{device_id}_private_key.h`
+* A central `public_keys.h`, which contains all device-IDs (`kid`) and all associated Public Keys
 
 ---
 
-### Schritt 2: TTN-Geräte erstellen
+### Step 2: Generate TTN-devices
 
 ```bash
 python util_scripts/generate_ttn_devices.py
 ```
 
-Das Skript:
+Script:
 
-* Prüft, ob Geräte bereits existieren, und löscht sie gegebenenfalls
-* Erstellt neue Geräte mit:
+* Checks whether devices already exists and deletes them if necessary
+* Generates new devices with:
 
-    * zufällig generiertem `DevEUI`
-    * `JoinEUI = 0000000000000000` (konfigurierbar)
-    * zufälligem `AppKey`
-* Legt für jedes Gerät eine entsprechende TTN-Konfigurationsdatei ab:
+    * randomly generated `DevEUI`
+    * `JoinEUI = 0000000000000000` (configurable)
+    * random `AppKey`
+* Generates a TTN-configuration file for each device
 
   ```
   ttn_configs/{device_id}_config.mk
   ```
 
-Die Dateien enthalten `CFLAGS`, die beim Kompilieren verwendet werden können:
+The files contain `CFLAGS`, which can be used at compilation:
 
 ```make
 CFLAGS += -DCONFIG_LORAMAC_DEV_EUI_DEFAULT=\"A1B2C3D4E5F6A7B8\"
@@ -96,19 +96,19 @@ CFLAGS += -DCONFIG_LORAMAC_APP_KEY_DEFAULT=\"ABCDEF1234567890...\"
 
 ---
 
-## Ergebnis
+## Result
 
-Nach dem Ausführen beider Skripte:
+After executing both scripts:
 
-* Sind alle Geräte bei TTN registriert
-* Liegen alle Schlüssel (privat + öffentlich) als C-Header vor
-* Kann jedes Gerät anhand seiner spezifischen `*_config.mk` direkt in RIOT OS oder anderen C-Projekten eingebunden werden
+* All devices are registered with TTN
+* All keys (private & public) can be accessed inside a c-header-file
+* Each device can be integrated directly into RIOT OS or another C-Project via its specific `*_config.mk`
 
 ---
 
-## Hinweis zur Sicherheit
+## Note regarding security
 
-* Private Schlüssel liegen im Klartext in den `.h`-Dateien – diese sollten **nicht in ein öffentliches Repository** gelangen.
-* Auch `secrets.yaml` enthält sensible Daten und sollte per `.gitignore` ausgeschlossen sein.
+* Private Keys can be accessed inside `.h`-files – these **should not be accessible from a public repository**.
+* `secrets.yaml` also contains sensitive data and should be excluded via `.gitignore`.
 
 ---
