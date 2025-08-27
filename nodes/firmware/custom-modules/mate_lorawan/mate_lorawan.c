@@ -72,6 +72,9 @@ cbor_buffer cbor_receive_buffer;
 event_timeout_t event_timeout;
 netif_t *netif = NULL;
 
+/* registration entry for incoming packets */
+static gnrc_netreg_entry_t netreg_entry;
+
 /**
  * @brief   Find the LoRaWAN network interface in the registry.
  * @return Pointer to the LoRaWAN network interface, or NULL if not found.
@@ -381,9 +384,11 @@ int start_lorawan(void)
         printf("[LoRaWAN]: Receive thread started successfully.\n");
     }
 
-    /* receive LoRaWAN packets in our reception thread] */
-    gnrc_netreg_entry_t entry = GNRC_NETREG_ENTRY_INIT_PID(GNRC_NETREG_DEMUX_CTX_ALL, rx_pid);
-    gnrc_netreg_register(GNRC_NETTYPE_UNDEF, &entry);
+    /* register for receiving  LoRaWAN packets in our rx thread */
+    gnrc_netreg_entry_init_pid(&netreg_entry,
+                               GNRC_NETREG_DEMUX_CTX_ALL,
+                               rx_pid);
+    gnrc_netreg_register(GNRC_NETTYPE_UNDEF, &netreg_entry);
     printf("[LoRaWAN]: Start up succesful.\n");
     return 0;
 }
