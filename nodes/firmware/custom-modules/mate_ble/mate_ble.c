@@ -17,7 +17,6 @@
 #include "timex.h"
 #include "ztimer.h"
 #include "cbor.h"
-#include "semaphore.h"
 #include "cose-service.h"
 #if DEVICE_TYPE == 1 // SenseMate
 #include "include/soundModule.h"
@@ -74,7 +73,12 @@ static uint8_t recv_buffer[MATE_BLE_MAX_CBOR_PACKAGE_SIZE * MATE_BLE_MAX_CBOR_PA
 static uint8_t recv_package_size_buffer[MATE_BLE_MAX_CBOR_PACKAGE_COUNT];
 uint8_t verify_outbuf[1024];  // ausreichend groß dimensionieren //TODO
 
-static sem_t adv_done_sem;
+/* TODO: This semaphore was previously used to synchronize to the advertisement done
+ * event. An unresolved bug resulted in endless waiting for the semaphore to be posted.
+ * It is currently worked around with a timer based delay but it should eventually be
+ * replaced by a proper synchronization method.
+ **/
+//static sem_t adv_done_sem;
 
 static int ble_gap_event_cb(struct ble_gap_event *event, void *arg);
 static void ad_append(bluetil_ad_t *ad, const uint8_t *data, unsigned len);
@@ -270,7 +274,7 @@ int ble_init(void)
 {
     puts("Initializing BLE extended advertisement!");
 
-    sem_init(&adv_done_sem, 0, 0);
+    //sem_init(&adv_done_sem, 0, 0);
 
     // Make sure we have proper identity address set (public preferred)
     int rc = ble_hs_util_ensure_addr(0);
