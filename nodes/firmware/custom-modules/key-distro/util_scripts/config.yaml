@@ -1,5 +1,5 @@
 tti_instance: "eu1.cloud.thethings.network"
-application_id: "riot-application-test-paul"
+application_id: "polder-test-1"
 
 sensemates:
   count: 3
