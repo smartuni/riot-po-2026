@@ -54,7 +54,8 @@ ttn_auth_token: "NNSXS.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 ### Step 1: Generate Keys
 
 ```bash
-python util_scripts/generate_prod_keys.py
+cd nodes/firmware/custom-modules/key-distro/util_scripts
+python generate_prod_keys.py
 ```
 
 This generates:
@@ -69,7 +70,8 @@ This generates:
 ### Step 2: Generate TTN-devices
 
 ```bash
-python util_scripts/generate_ttn_devices.py
+cd nodes/firmware/custom-modules/key-distro/util_scripts
+python generate_ttn_devices.py
 ```
 
 Script:
