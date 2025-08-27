@@ -44,7 +44,7 @@ DEVELHELP ?= 1
 
 # Some workarounds are needed in order to get the tutorial running on
 # some computers.
-PREFLASH_DELAY=4
+PREFLASH_DELAY=8
 
 BUILD_IN_DOCKER ?= 1
 
