@@ -60,7 +60,7 @@ int main(void){
     }
 
 
-        //start thread init bluetooth
+    //start thread init bluetooth
     puts("starting ble");
     if (BLE_SUCCESS == ble_init()){
         puts("Ble init complete");

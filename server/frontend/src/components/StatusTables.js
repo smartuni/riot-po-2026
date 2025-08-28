@@ -761,8 +761,6 @@ function StatusTables() {
                     </Button>
                 </DialogActions>
             </Dialog>
-            <AlertDialogUplink open={uplinkDialog} onClose={closeUplinkDialog} messageString={uplinkString}></AlertDialogUplink>
-            
         </div>
     );
 }
