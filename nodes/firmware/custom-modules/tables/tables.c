@@ -338,11 +338,6 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     memset(returnSeenTable, MAX_GATE_COUNT, sizeof(returnSeenTable));
     memset(returnJobsTable, MAX_GATE_COUNT, sizeof(returnJobsTable));
 
-    if (buffer->cbor_size != 1) {
-        mutex_unlock(&decode_mutex);
-        return -1;
-    }
-
     cbor_parser_init(buffer->buffer, buffer->package_size[0], 0, &parser, &value);
 
     if(cbor_value_enter_container(&value, &wrapperValue) != CborNoError) {
