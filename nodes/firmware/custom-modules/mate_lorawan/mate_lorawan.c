@@ -272,14 +272,20 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             received_buffer.cbor_size = pkt->size; 
             received_buffer.package_size[0] = pkt->size;
             print_hex_arr(received_buffer.buffer,received_buffer.package_size[0]);
-            if (cbor_to_table_test(&received_buffer, 0) == 0) {
+            //TODO: the table handling should either be fixed or replaced completely.
+            //      The return code handling is a mess.
+            int cttres = cbor_to_table_test(&received_buffer, 0);
+            if (cttres >= 0) {
 #if DEVICE_TYPE == 1
-                    
-                        event_post(EVENT_PRIO_MEDIUM, &eventNews);
+                if ((cttres & TABLE_NEW_RECORD) | (cttres & TABLE_UPDATED)) {
+                    event_post(EVENT_PRIO_MEDIUM, &eventNews);
+                    printf("[LoRaWAN]: Downlink received and table updated.\n");
+                } else {
+                    printf("[LoRaWAN]: Downlink received. No updates.\n");
+                }
 #endif
-                printf("[LoRaWAN]: Downlink received and table updated.\n");
             }else{
-                printf("[LoRaWAN]: Error updating table.\n");
+                printf("[LoRaWAN]: Error updating table. %d\n", cttres);
             }
         }
         snip = snip->next;
