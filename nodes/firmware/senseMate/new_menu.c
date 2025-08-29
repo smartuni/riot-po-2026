@@ -1295,25 +1295,27 @@ void display_confirmation(display_entry *entry, bool upper){
 void update_menu_display(void){
     new_page();
 
-    if(upper_entry.subentry == HEADER){
-        display_header(&upper_entry);
-    }else if(upper_entry.menu == MAIN){
-        display_main(&upper_entry, true);
-    }else if(upper_entry.menu == GATE_OVERVIEW || upper_entry.menu == JOB_PRIOS || upper_entry.menu == CLOSE_BY_MENU){
-        display_gate(&upper_entry, true);
-    }else if(upper_entry.menu == SELECTED_GATE || upper_entry.menu == SELECTED_JOB || upper_entry.menu == SELECTED_CLOSE_BY){
-        display_selected(&upper_entry, true);
-    }else{
-        display_confirmation(&upper_entry, true);
-    }
+    do{
+        if(upper_entry.subentry == HEADER){
+            display_header(&upper_entry);
+        }else if(upper_entry.menu == MAIN){
+            display_main(&upper_entry, true);
+        }else if(upper_entry.menu == GATE_OVERVIEW || upper_entry.menu == JOB_PRIOS || upper_entry.menu == CLOSE_BY_MENU){
+            display_gate(&upper_entry, true);
+        }else if(upper_entry.menu == SELECTED_GATE || upper_entry.menu == SELECTED_JOB || upper_entry.menu == SELECTED_CLOSE_BY){
+            display_selected(&upper_entry, true);
+        }else{
+            display_confirmation(&upper_entry, true);
+        }
 
-    if(lower_entry.menu == MAIN){
-        display_main(&lower_entry, false);
-    }else if(lower_entry.menu == GATE_OVERVIEW || lower_entry.menu == JOB_PRIOS || lower_entry.menu == CLOSE_BY_MENU){
-        display_gate(&lower_entry, false);
-    }else if(lower_entry.menu == SELECTED_GATE || lower_entry.menu == SELECTED_JOB || lower_entry.menu == SELECTED_CLOSE_BY){
-        display_selected(&lower_entry, false);
-    }else{
-        display_confirmation(&lower_entry, false);
-    }
+        if(lower_entry.menu == MAIN){
+            display_main(&lower_entry, false);
+        }else if(lower_entry.menu == GATE_OVERVIEW || lower_entry.menu == JOB_PRIOS || lower_entry.menu == CLOSE_BY_MENU){
+            display_gate(&lower_entry, false);
+        }else if(lower_entry.menu == SELECTED_GATE || lower_entry.menu == SELECTED_JOB || lower_entry.menu == SELECTED_CLOSE_BY){
+            display_selected(&lower_entry, false);
+        }else{
+            display_confirmation(&lower_entry, false);
+        }
+    } while(next_page());
 }

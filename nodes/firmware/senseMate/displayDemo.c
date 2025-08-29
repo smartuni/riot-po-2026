@@ -90,9 +90,7 @@ void display_menu_header_box(char *text, int num_after_text, bool use_num, int p
 }
 
 void display_menu_header(char *text, int num_after_text, bool use_num){
-    do{
-        display_menu_header_box(text, num_after_text, use_num, 0, (DISPLAY_HEIGHT/16), DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7);
-    }while (u8g2_NextPage(&u8g2));
+    display_menu_header_box(text, num_after_text, use_num, 0, (DISPLAY_HEIGHT/16), DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7);
 }
 
 void display_gate_state(int pos_x, int pos_y, bool gate_state_open, int relative_size){
@@ -155,53 +153,50 @@ void display_more_content(bool upper){
 }
 
 void display_ordinary_menu(char *text, int num_after_text, bool use_num, bool upper, bool selected, bool more_content){
-    do{
+    if(upper){
+        display_menu_box(text, num_after_text, use_num, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
+    }else{
+        display_menu_box(text, num_after_text, use_num, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
+    }
 
-        if(upper){
-            display_menu_box(text, num_after_text, use_num, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
-        }else{
-            display_menu_box(text, num_after_text, use_num, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);    
-        }
-
-        if(more_content){
-                display_more_content(upper);
-        }
-
-    } while (u8g2_NextPage(&u8g2));
+    if(more_content){
+        display_more_content(upper);
+    }
 }
 
 void display_gate_menu_box(char* text, int num_after_text, bool upper, bool selected, bool gate_state_open, bool target_match, int job_prio, bool more_content){
-    do{
-        char my_text[11];
-        u8g2_uint_t str_width = u8g2_GetStrWidth(&u8g2, text);
-        if (str_width > 23*(DISPLAY_WIDTH/32)-3*(DISPLAY_WIDTH/32)){
-            //int text_len = strlen(text);
-            strncpy(my_text, text, 10);
-            my_text[10] = '\0';
-            text = my_text;
-        }
+    char my_text[11];
+    u8g2_uint_t str_width = u8g2_GetStrWidth(&u8g2, text);
+    if (str_width > 23*(DISPLAY_WIDTH/32)-3*(DISPLAY_WIDTH/32)){
+        //int text_len = strlen(text);
+        strncpy(my_text, text, 10);
+        my_text[10] = '\0';
+        text = my_text;
+    }
 
-        if(upper){
-            display_menu_box(text, num_after_text, true, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
-            display_gate_state(23*(DISPLAY_WIDTH/32), 4*DISPLAY_HEIGHT/16, gate_state_open, DISPLAY_HEIGHT/16);
-            display_gate_target(28*(DISPLAY_WIDTH/32), 5*DISPLAY_HEIGHT/16, target_match);
-            display_job_prio(18*(DISPLAY_WIDTH/32), 6*DISPLAY_HEIGHT/16, job_prio);
+    if(upper){
+        display_menu_box(text, num_after_text, true, 0, DISPLAY_HEIGHT/16, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
+        display_gate_state(23*(DISPLAY_WIDTH/32), 4*DISPLAY_HEIGHT/16, gate_state_open, DISPLAY_HEIGHT/16);
+        display_gate_target(28*(DISPLAY_WIDTH/32), 5*DISPLAY_HEIGHT/16, target_match);
+        display_job_prio(18*(DISPLAY_WIDTH/32), 6*DISPLAY_HEIGHT/16, job_prio);
 
-        }else{
-            display_menu_box(text, num_after_text, true, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
-            display_gate_state(23*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*11, gate_state_open, DISPLAY_HEIGHT/16);
-            display_gate_target(28*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*12, target_match);
-            display_job_prio(18*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*13, job_prio);
-        }
+    }else{
+        display_menu_box(text, num_after_text, true, 0, (DISPLAY_HEIGHT/16)*8, DISPLAY_WIDTH, (DISPLAY_HEIGHT/16)*7, selected);
+        display_gate_state(23*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*11, gate_state_open, DISPLAY_HEIGHT/16);
+        display_gate_target(28*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*12, target_match);
+        display_job_prio(18*(DISPLAY_WIDTH/32), (DISPLAY_HEIGHT/16)*13, job_prio);
+    }
 
-        if(more_content){
-                display_more_content(upper);
-        }
-
-    } while (u8g2_NextPage(&u8g2));
+    if(more_content){
+        display_more_content(upper);
+    }
 }
 
 
 void new_page(void){
     u8g2_FirstPage(&u8g2);
+}
+
+uint8_t next_page(void){
+    return u8g2_NextPage(&u8g2);
 }

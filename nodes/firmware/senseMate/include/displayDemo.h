@@ -1,6 +1,7 @@
 #ifndef _MY_DISPLAY_DEMO_H
 #define _MY_DISPLAY_DEMO_H
 #include <stdbool.h>
+#include <stdint.h>
 
 /*
  * Initializes the display
@@ -48,5 +49,11 @@ extern void display_menu_header(char *text, int num_after_text, bool use_num);
  * creates a new page to draw elements on the display
 */
 extern void new_page(void);
+
+/*
+ * Switch to next page.
+ * @return 0 if last page was written.
+*/
+uint8_t next_page(void);
 
 #endif
