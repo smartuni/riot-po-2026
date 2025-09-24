@@ -57,7 +57,7 @@
 /* Duration to trigger send_event */
 #define TIMEOUT_DURATION 60000000
 /* Stack for reception thread */
-static char _rx_thread_stack[THREAD_STACKSIZE_DEFAULT];
+static char _rx_thread_stack[THREAD_STACKSIZE_MAIN];
 /* Message queue for reception thread] */
 static msg_t _rx_msg_queue[QUEUE_SIZE];
 
