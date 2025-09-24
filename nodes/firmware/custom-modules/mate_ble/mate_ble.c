@@ -18,7 +18,8 @@
 #include "ztimer.h"
 #include "cbor.h"
 #include "cose-service.h"
-#if DEVICE_TYPE == 1 // SenseMate
+/* include sound module only on SenseMate (gate has no audio) */
+#if DEVICE_TYPE == SENSEMATE_NODE
 #include "include/soundModule.h"
 #endif
 
@@ -441,7 +442,7 @@ void* ble_receive_loop(void* args)
                 event_post(thr_args->receive_queue, thr_args->receive_event);
                 printf("Event posted that table was updated\n");
             }
-#if DEVICE_TYPE == 1 // only for SenseMate            
+#if DEVICE_TYPE == SENSEMATE_NODE
             else{
                 event_post(&sound_queue, &ble_received_sound_event);
             }

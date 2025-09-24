@@ -11,7 +11,7 @@ EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
 
 RIOT_CONFIG_DEVICE_ID ?= 1
-DEVICE_TYPE := 0
+DEVICE_TYPE := GATE_NODE
 $(info Using device ID: $(RIOT_CONFIG_DEVICE_ID))
 
 USEMODULE += periph_gpio

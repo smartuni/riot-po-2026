@@ -16,7 +16,7 @@ EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 DEVELHELP ?= 1
 VERBOSE_ASSERT ?= 1
 RIOT_CONFIG_DEVICE_ID ?= 1
-DEVICE_TYPE := 1
+DEVICE_TYPE := SENSEMATE_NODE
 $(info Using device ID: $(RIOT_CONFIG_DEVICE_ID))
 # Some workarounds are needed in order to get the tutorial running on
 # some computers.
