@@ -187,12 +187,13 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     rc = ble_gap_ext_adv_set_data(MATE_BLE_NIMBLE_INSTANCE, data);
     assert (rc == 0);
 
+    printf("[mate_ble]: triggering advertisement...\n");
+    //print_hex_arr(payload, payload_len);
+    tables_print_all();
+
     // Start advertising
     rc = ble_gap_ext_adv_start(MATE_BLE_NIMBLE_INSTANCE, 0, 1);
     assert (rc == 0);
-
-    printf("Now advertising\n");
-    //print_hex_arr(payload, payload_len);
 }
 
 static void print_hex_arr(const uint8_t *data, unsigned len)
@@ -230,10 +231,10 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
                                 name, sizeof(name));
     // Output name, address, and data of the advertisement
     if (table_result == BLUETIL_AD_OK) {
-        printf("\n\"%s\" @", name);
+        printf("\n[mate_ble]: \"%s\" @", name);
     }
     nimble_addr_print(addr);
-    printf("sent %d bytes:\n", len);
+    printf("sent %d bytes\n", len);
     //print_hex_arr(ad, len);
 
     // output our payload marke# BUILD_IN_DOCKER ?= 1d by our custom byte pattern
@@ -247,7 +248,6 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
 
             // length of the payload without the marker
             int pl = msd.len - MATE_BLE_MSD_PAYLOAD_OFFS;
-            printf("Received: %.*s\n", pl, payload);
 
             ble_metadata_t metadata = {};
             metadata.rssi = info->rssi;
@@ -263,9 +263,11 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
 
             if(verify_result == 0) {
                 insert_message(verify_outbuf, verify_payload_len, metadata);
+                printf("[mate_ble]: %d bytes of playload verified.\n", verify_payload_len);
                 print_hex_arr(verify_outbuf,verify_payload_len);
+                tables_print_all();
             } else {
-                printf("Failed to verify: %.*s\n", pl, payload);
+                printf("[mate_ble]: Failed to verify!\n");
             }
         }
     }
@@ -396,22 +398,22 @@ void* ble_receive_loop(void* args)
             continue;
         }
 
-        printf("BLE: receive\n"
-            "metadata\n"
-            "\t.type %d\n"
-            "\t.rssi %d\n"
-            "buffer\n"
-            "\t.buffer %d\n"
-            "\t.cbor_size %d\n"
-            "\t.buffer_size[0] %d\n"
-            "\t.capacity %d\n",
-            metadata.message_type,
-            metadata.rssi,
-            (int)buffer.buffer,
-            buffer.cbor_size,
-            buffer.package_size[0],
-            buffer.capacity
-        );
+        //printf("BLE: receive\n"
+        //    "metadata\n"
+        //    "\t.type %d\n"
+        //    "\t.rssi %d\n"
+        //    "buffer\n"
+        //    "\t.buffer %d\n"
+        //    "\t.cbor_size %d\n"
+        //    "\t.buffer_size[0] %d\n"
+        //    "\t.capacity %d\n",
+        //    metadata.message_type,
+        //    metadata.rssi,
+        //    (int)buffer.buffer,
+        //    buffer.cbor_size,
+        //    buffer.package_size[0],
+        //    buffer.capacity
+        //);
 
         int table_result = cbor_to_table_test(&buffer, metadata.rssi);
         printf("cbor_to_table_test result: %d\n", table_result);
@@ -419,23 +421,6 @@ void* ble_receive_loop(void* args)
             continue;
         }
         
-        printf("BLE: receive success\n"
-            "metadata\n"
-            "\t.type %d\n"
-            "\t.rssi %d\n"
-            "buffer\n"
-            "\t.buffer %d\n"
-            "\t.cbor_size %d\n"
-            "\t.buffer_size[0] %d\n"
-            "\t.capacity %d\n",
-            metadata.message_type,
-            metadata.rssi,
-            (int)buffer.buffer,
-            buffer.cbor_size,
-            buffer.package_size[0],
-            buffer.capacity
-        );
-
         if (thr_args != NULL) {
             if ((thr_args->receive_queue != NULL) && (table_result & TABLE_NEW_RECORD_AND_UPDATE)) {
                 printf("Posting event to receive queue\n");
