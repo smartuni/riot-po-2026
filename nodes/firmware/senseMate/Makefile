@@ -15,9 +15,12 @@ EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 # development process:
 DEVELHELP ?= 1
 VERBOSE_ASSERT ?= 1
+
+# Configrue device id and device type.
+# This will instruct the key-distro module to include required credentials.
 RIOT_CONFIG_DEVICE_ID ?= 1
-DEVICE_TYPE := SENSEMATE_NODE
-$(info Using device ID: $(RIOT_CONFIG_DEVICE_ID))
+RIOT_CONFIG_DEVICE_TYPE ?= SENSEMATE_NODE
+
 # Some workarounds are needed in order to get the tutorial running on
 # some computers.
 -include ../../lab_workarounds.mk
@@ -46,9 +49,8 @@ USEMODULE += mate_lorawan
 USEMODULE += mate_ble
 
 
-
-CFLAGS += -DDEVICE_ID=$(RIOT_CONFIG_DEVICE_ID) #Device ID- change when flashing
-CFLAGS += -DDEVICE_TYPE=$(DEVICE_TYPE) #Device Type
+CFLAGS += -DRIOT_CONFIG_DEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
+CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=$(RIOT_CONFIG_DEVICE_TYPE)
 CFLAGS += -DI2C_DEVICE_IDX=0
 CFLAGS += -DI2C_DISPLAY_ADDR=0x3c
 CFLAGS += -DU8G2_DISPLAY_INIT_FUNC=u8g2_Setup_ssd1306_i2c_128x64_noname_f

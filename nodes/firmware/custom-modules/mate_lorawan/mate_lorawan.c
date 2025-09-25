@@ -41,7 +41,7 @@
 #include "tables.h"
 #include "event.h"
 #include "event/thread.h"
-#if DEVICE_TYPE == SENSEMATE_NODE
+#if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
 #include "include/events_creation.h"
 #endif
 
@@ -276,7 +276,7 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             //      The return code handling is a mess.
             int cttres = cbor_to_table_test(&received_buffer, 0);
             if (cttres >= 0) {
-#if DEVICE_TYPE == SENSEMATE_NODE
+#if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
                 if ((cttres & TABLE_NEW_RECORD) | (cttres & TABLE_UPDATED)) {
                     event_post(EVENT_PRIO_MEDIUM, &eventNews);
                     printf("[LoRaWAN]: Downlink received and table updated.\n");

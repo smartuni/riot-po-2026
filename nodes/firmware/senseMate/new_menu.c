@@ -12,7 +12,7 @@
 #define MAX_SENSE_MATES MAX_SENSE_COUNT
 #define MIN_SIGNAL_STRENGTH -80
 #define MIN_JOB_PRIO 1
-#define SENSEMATE_ID DEVICE_ID
+#define SENSEMATE_ID RIOT_CONFIG_DEVICE_ID
 
 /*sorted by gate_id*/
 gate_entry all_entries [MAX_GATES];

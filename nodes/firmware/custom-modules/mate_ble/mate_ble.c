@@ -19,7 +19,7 @@
 #include "cbor.h"
 #include "cose-service.h"
 /* include sound module only on SenseMate (gate has no audio) */
-#if DEVICE_TYPE == SENSEMATE_NODE
+#if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
 #include "include/soundModule.h"
 #endif
 
@@ -442,7 +442,7 @@ void* ble_receive_loop(void* args)
                 event_post(thr_args->receive_queue, thr_args->receive_event);
                 printf("Event posted that table was updated\n");
             }
-#if DEVICE_TYPE == SENSEMATE_NODE
+#if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
             else{
                 event_post(&sound_queue, &ble_received_sound_event);
             }

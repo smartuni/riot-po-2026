@@ -9,10 +9,10 @@ RIOTBASE ?= $(CURDIR)/../RIOT
 PROJECT_BASE ?= $(CURDIR)/../
 EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
-
+# Configrue device id and device type.
+# This will instruct the key-distro module to include required credentials.
 RIOT_CONFIG_DEVICE_ID ?= 1
-DEVICE_TYPE := GATE_NODE
-$(info Using device ID: $(RIOT_CONFIG_DEVICE_ID))
+RIOT_CONFIG_DEVICE_TYPE ?= GATE_NODE
 
 USEMODULE += periph_gpio
 USEMODULE += periph_gpio_irq
@@ -32,8 +32,8 @@ USEMODULE += tables
 USEMODULE += mate_lorawan
 USEMODULE += mate_ble
 
-CFLAGS += -DDEVICE_ID=$(RIOT_CONFIG_DEVICE_ID) #Device ID - when flashing for product change in make call RIOT_CONFIG_DEVICE_ID=X
-CFLAGS += -DDEVICE_TYPE=0 #Device Type 
+CFLAGS += -DRIOT_CONFIG_DEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
+CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=$(RIOT_CONFIG_DEVICE_TYPE)
 CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=3*1024
 CFLAGS += -DEVENT_THREAD_MEDIUM_STACKSIZE=3*1024
 
