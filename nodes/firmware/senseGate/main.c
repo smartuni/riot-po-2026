@@ -37,19 +37,16 @@ int main(void){
     table_entry.state = inital_door_state;
     table_entry.gateTime = get_device_timestamp();
 
-    // if (TABLE_SUCCESS == set_is_state_entry()){
-     if (TABLE_UPDATED == set_is_state_entry(&table_entry)){
-        
+    int sis_res = set_is_state_entry(&table_entry);
+    if (TABLE_NEW_RECORD == sis_res){
         if (!inital_door_state) {
-            
             puts("door closed initially");
         }
         else {
-            
             puts("door opened initially");
         }
     } else {
-        puts("could not write to table");
+        puts("could not write initial gate state to table");
     }
 
     // start lorawan
