@@ -271,6 +271,7 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             received_buffer.buffer = pkt->data;
             received_buffer.cbor_size = pkt->size; 
             received_buffer.package_size[0] = pkt->size;
+            printf("[LoRaWAN]: %d bytes: \n", pkt->size);
             print_hex_arr(received_buffer.buffer,received_buffer.package_size[0]);
             //TODO: the table handling should either be fixed or replaced completely.
             //      The return code handling is a mess.
