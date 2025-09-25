@@ -324,6 +324,55 @@ int timestamp_table_to_cbor(cbor_buffer* buffer) {
     return 1;
 }
 
+int tables_print_all(void){
+    printf("\n--- IS STATE TABLE ---\n");
+    for (int i = 0; i < MAX_GATE_COUNT; i++) {
+        if (is_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
+            printf("Gate: %d, State: %d, Time: %lu\n",
+                   is_state_entry_table[i].gateID,
+                   is_state_entry_table[i].state,
+                   is_state_entry_table[i].gateTime);
+        }
+    }
+    printf("\n--- TARGET STATE TABLE ---\n");
+    for (int i = 0; i < MAX_GATE_COUNT; i++) {
+        if (target_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
+            printf("Gate: %d, State: %d, Time: %d\n",
+                   target_state_entry_table[i].gateID,
+                   target_state_entry_table[i].state,
+                   target_state_entry_table[i].timestamp);
+        }
+    }
+    printf("\n--- SEEN STATE TABLE ---\n");
+    for (int i = 0; i < MAX_GATE_COUNT; i++) {
+        for (int j = 0; j < MAX_SENSE_COUNT; j++) {
+            if (seen_status_entry_table[i][j].gateID!= MAX_GATE_COUNT) { // Entry ist valid
+                printf("Gate: %d, State: %d, SenseMateID: %u, Time: %d\n",
+                       seen_status_entry_table[i][j].gateID,
+                       seen_status_entry_table[i][j].status,
+                       seen_status_entry_table[i][j].senseMateID,
+                       seen_status_entry_table[i][j].gateTime);
+            }
+        }
+    }
+    return 1;
+}
+
+const char* _table_type_to_str(int table_type)
+{
+    switch (table_type) {
+        case TARGET_STATE_KEY:
+            return "TARGET_STATE";
+        case IS_STATE_KEY:
+            return "IS_STATE";
+        case SEEN_STATUS_KEY:
+            return "SEEN_STATE";
+        case JOBS_KEY:
+            return "JOBS";
+        default:
+            return "TABLE_TYPE_INVALID";
+    }
+}
 
 int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     CborParser parser;
@@ -351,6 +400,9 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     } // get type of table
 
     // get header information depending on table type
+    printf("[tables]: CBOR tableType: %d == %s\n",
+            tableType, _table_type_to_str(tableType));
+
     switch (tableType)
     {
     case TARGET_STATE_KEY:
@@ -430,12 +482,26 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                     return -13;
                 }
                 cbor_value_advance(&entryValue);
+
                 if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
                     mutex_unlock(&decode_mutex);
                     return -14;
                 }
                 cbor_value_advance(&entryValue);
-                target_state_entry newTargetEntry = {id, s, timeStamp};
+
+                /* If msg comes from the server, the timestamp is only in the header.
+                 * If msg comes from a sensemate or gate, each table entry has its
+                 * own timestamp. */
+                int serverTimestamp = timeStamp;
+                if ((typeOfSender == SENSEMATE_NODE) ||
+                    (typeOfSender == GATE_NODE)) {
+                    if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &serverTimestamp) != CborNoError) {
+                        mutex_unlock(&decode_mutex);
+                        return -25;
+                    }
+                    cbor_value_advance(&entryValue);
+                }
+                target_state_entry newTargetEntry = {id, s, serverTimestamp};
                 returnTargetTable[i] = newTargetEntry;
                 break;
             case IS_STATE_KEY:
@@ -526,7 +592,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                 mutex_unlock(&decode_mutex);
                 return -24;
     }
-    
+
     mutex_unlock(&decode_mutex);
     return res;
 }
