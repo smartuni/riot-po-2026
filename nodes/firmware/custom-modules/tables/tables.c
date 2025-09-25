@@ -324,40 +324,6 @@ int timestamp_table_to_cbor(cbor_buffer* buffer) {
     return 1;
 }
 
-int tables_print_all(void){
-    printf("\n--- IS STATE TABLE ---\n");
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (is_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
-            printf("Gate: %d, State: %d, Time: %lu\n",
-                   is_state_entry_table[i].gateID,
-                   is_state_entry_table[i].state,
-                   is_state_entry_table[i].gateTime);
-        }
-    }
-    printf("\n--- TARGET STATE TABLE ---\n");
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (target_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
-            printf("Gate: %d, State: %d, Time: %d\n",
-                   target_state_entry_table[i].gateID,
-                   target_state_entry_table[i].state,
-                   target_state_entry_table[i].timestamp);
-        }
-    }
-    printf("\n--- SEEN STATE TABLE ---\n");
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        for (int j = 0; j < MAX_SENSE_COUNT; j++) {
-            if (seen_status_entry_table[i][j].gateID!= MAX_GATE_COUNT) { // Entry ist valid
-                printf("Gate: %d, State: %d, SenseMateID: %u, Time: %d\n",
-                       seen_status_entry_table[i][j].gateID,
-                       seen_status_entry_table[i][j].status,
-                       seen_status_entry_table[i][j].senseMateID,
-                       seen_status_entry_table[i][j].gateTime);
-            }
-        }
-    }
-    return 1;
-}
-
 const char* _table_type_to_str(int table_type)
 {
     switch (table_type) {
@@ -372,6 +338,52 @@ const char* _table_type_to_str(int table_type)
         default:
             return "TABLE_TYPE_INVALID";
     }
+}
+
+const char* _gate_state_to_str(gate_state_t gate_state)
+{
+    switch (gate_state) {
+        case GATE_CLOSED:
+            return "GATE_CLOSED";
+        case GATE_OPEN:
+            return "GATE_OPEN";
+        default:
+            return "GATE_STATE_INVALID";
+    }
+}
+
+int tables_print_all(void){
+    printf("\n--- IS STATE TABLE ---\n");
+    for (int i = 0; i < MAX_GATE_COUNT; i++) {
+        if (is_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
+            printf("Gate: %d, State: %s, Time: %lu\n",
+                   is_state_entry_table[i].gateID,
+                   _gate_state_to_str(is_state_entry_table[i].state),
+                   is_state_entry_table[i].gateTime);
+        }
+    }
+    printf("\n--- TARGET STATE TABLE ---\n");
+    for (int i = 0; i < MAX_GATE_COUNT; i++) {
+        if (target_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
+            printf("Gate: %d, State: %s, Time: %d\n",
+                   target_state_entry_table[i].gateID,
+                   _gate_state_to_str(target_state_entry_table[i].state),
+                   target_state_entry_table[i].timestamp);
+        }
+    }
+    printf("\n--- SEEN STATE TABLE ---\n");
+    for (int i = 0; i < MAX_GATE_COUNT; i++) {
+        for (int j = 0; j < MAX_SENSE_COUNT; j++) {
+            if (seen_status_entry_table[i][j].gateID!= MAX_GATE_COUNT) { // Entry ist valid
+                printf("Gate: %d, State: %s, SenseMateID: %u, Time: %d\n",
+                       seen_status_entry_table[i][j].gateID,
+                       _gate_state_to_str(seen_status_entry_table[i][j].status),
+                       seen_status_entry_table[i][j].senseMateID,
+                       seen_status_entry_table[i][j].gateTime);
+            }
+        }
+    }
+    return 1;
 }
 
 int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {

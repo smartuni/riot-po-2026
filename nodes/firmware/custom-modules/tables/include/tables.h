@@ -79,6 +79,11 @@
     #define SENSEMATE_NODE 0x01
     #define SERVER_SENDER 0x02
 
+    typedef enum {
+        GATE_CLOSED = 0,
+        GATE_OPEN = 1,
+    } gate_state_t;
+
     typedef struct {
         uint8_t gateID;
         uint8_t state;
