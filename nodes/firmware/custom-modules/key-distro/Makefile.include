@@ -1,10 +1,12 @@
 USEMODULE_INCLUDES_key_distro := $(LAST_MAKEFILEDIR)/include
 USEMODULE_INCLUDES += $(USEMODULE_INCLUDES_key_distro)
 
-ifeq ($(DEVICE_TYPE),1)
-    DEVICE_PREFIX := sensemate
+ifeq ($(RIOT_CONFIG_DEVICE_TYPE),SENSEMATE_NODE)
+  DEVICE_PREFIX := sensemate
+else ifeq ($(RIOT_CONFIG_DEVICE_TYPE),GATE_NODE)
+  DEVICE_PREFIX := sensegate
 else
-    DEVICE_PREFIX := sensegate
+  $(error Invalid RIOT_CONFIG_DEVICE_TYPE value! Must be either SENSEMATE_NODE or GATE_NODE)
 endif
 
 ifneq (,$(RIOT_CONFIG_USE_TEST_KEYS))
@@ -12,6 +14,9 @@ ifneq (,$(RIOT_CONFIG_USE_TEST_KEYS))
 else
     CFLAGS += -DKEY_ID=$(DEVICE_PREFIX)-$(RIOT_CONFIG_DEVICE_ID)
 endif
+
+$(info [key-distro] Building for device type: $(RIOT_CONFIG_DEVICE_TYPE))
+$(info [key-distro] Building for device ID:   $(RIOT_CONFIG_DEVICE_ID))
 
 # Dynamisch die passende Konfigurationsdatei aus ttn_configs einbinden
 CONFIG_FILE := $(LAST_MAKEFILEDIR)/ttn_configs/$(DEVICE_PREFIX)-$(RIOT_CONFIG_DEVICE_ID)_config.mk

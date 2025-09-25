@@ -32,7 +32,8 @@ int main(void) {
 
     //printf("Display demo started.\n");
     init_display();
-    printf("Device Type: %d device id: %d\n",DEVICE_TYPE, DEVICE_ID);
+    printf("Device Type: %d device id: %d\n", RIOT_CONFIG_DEVICE_TYPE,
+                                              RIOT_CONFIG_DEVICE_ID);
     printf("Display initialized.\n");
     //init_menu();
     init_new_menu();

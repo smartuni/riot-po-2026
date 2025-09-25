@@ -46,7 +46,7 @@ void event_handler_reactivate(event_t *event)
     event_accepted = true; // Allow the event handler to be called again
 
     // UPDATE TABLE
-    table_entry.gateID = GATE_ID;
+    table_entry.gateID = RIOT_CONFIG_DEVICE_ID;
     table_entry.state = event_status;
     table_entry.gateTime = get_device_timestamp();
     

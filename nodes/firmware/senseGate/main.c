@@ -33,7 +33,7 @@ int main(void){
     // write to table
     puts("write to table");
     is_state_entry table_entry;
-    table_entry.gateID = GATE_ID;
+    table_entry.gateID = RIOT_CONFIG_DEVICE_ID;
     table_entry.state = inital_door_state;
     table_entry.gateTime = get_device_timestamp();
 
@@ -103,7 +103,7 @@ int main(void){
     
         if (timeToUpdateTable == TIME_PERIOD_TABLE_UPDATE) {
             is_state_entry table_update_entry;
-            table_update_entry.gateID = GATE_ID;
+            table_update_entry.gateID = RIOT_CONFIG_DEVICE_ID;
             table_update_entry.state = get_status();
             table_update_entry.gateTime = get_device_timestamp();
 
