@@ -36,7 +36,6 @@ void play_sound(int frequency, int duration_ms) {
 
 
 void internal_startup(void){
-    start_vibration();
     play_sound(1318, 500); // e'''
     play_sound(659, 500);  // e''
     play_sound(988, 500);  // h''
@@ -45,7 +44,6 @@ void internal_startup(void){
     play_sound(988, 800);  // h''
 
     gpio_clear(sound); // Ensure sound is off after startup sound
-    stop_vibration();
 }
 
 void internal_downlink_reveived(void) {
