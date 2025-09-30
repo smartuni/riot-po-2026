@@ -127,6 +127,7 @@ public class GateActivityService {
     }
 
     /**
+     * TODO: refactor/rename to cleanly represent that this is only intended to be used to get sensemate reports (no sensor readings, no UI-user-requests)
      * For the given gate id returns the latest activities which resemble seen-reports.
      * This only includes reports which originate from a SenseMate. For each SenseMate only the latest report about the given gate is returned.
      * @param gateId from the gate
@@ -147,7 +148,11 @@ public class GateActivityService {
         List<GateActivity> customGateActivities = new ArrayList<>();
         for (WorkerIdView w: workers) {
             List<GateActivityEntity> gateActivities = gateActivityRepository.findAll().stream().filter(
-                    e -> e.getGateId().equals(gateId) && (e.getWorkerId() != null) && (e.getWorkerId().equals(w.getWorkerId())))
+                    e -> e.getGateId().equals(gateId) &&
+                                         (e.getWorkerId() != null) &&
+                                         (e.getWorkerId().equals(w.getWorkerId())) &&
+                                         (!e.getMessage().contains("requested the Status"))) //this is an ugly quickfix to ignore requests from the dashboard when looking at the reports
+                    //TODO: the activities should be separated between sensemate reports and state change requests (or at least distinguishable)
                     .sorted(Comparator.reverseOrder()).limit(1).toList();
             System.out.println(gateActivities);
 
