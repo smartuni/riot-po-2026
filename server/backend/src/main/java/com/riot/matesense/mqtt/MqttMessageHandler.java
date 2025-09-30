@@ -6,13 +6,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.MsgType;
+import com.riot.matesense.enums.StateConfirmation;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.exceptions.GateNotFoundException;
+import com.riot.matesense.model.GateActivity;
 import com.riot.matesense.registry.DeviceRegistry;
 import com.riot.matesense.service.GateActivityService;
 import com.riot.matesense.service.GateService;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -65,34 +68,29 @@ public class MqttMessageHandler {
                     for (JsonNode statusNode : root.get("statuses")) {
                         long gateId = statusNode.get("gateId").asLong();
                         int statusCode = statusNode.get("status").asInt();
-                        // Timestamp timestamp = new Timestamp(statusNode.get("timestamp").asLong());    // GateTime
-                        Timestamp timestamp = new Timestamp(System.currentTimeMillis());    // GateTime
+                        Timestamp gateTimeStamp = new Timestamp(statusNode.get("timestamp").asLong());
+                        Timestamp localTimeStamp = new Timestamp(System.currentTimeMillis());
                         Status status = Status.fromCode(statusCode);
 
                         try {
-                            //update Existing Gate
                             GateEntity existingGate = gateService.getGateEntityById(gateId);
-                            //if(Math.abs(timestamp.getTime() - existingGate.getLastTimeStamp().getTime()) < 10){
-                                //System.out.println("Timestamp are Equal");
-                                //System.out.println("GateID:" + gateId + "Timestamp" + timestamp.getTime());
-                                //continue;
-                            //}
-                        
-//                            int confidence = existingGate.getConfidence();
-                            // existingGate.setStatus(status);
 
+                            if (!existingGate.getStatus().equals(status)) {
+                                // on changes mark the new state as unconfirmed
+                                gateService.changeGateStateConfirmation(gateId, StateConfirmation.UNCONFIRMED);
+                            }
                             gateService.changeGateStatus(gateId, status, MsgType.IST_STATE);
-                            gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "Gate " + gateId + " has changed to status " + status.toString(), null));
+                            gateActivityService.addGateActivity(new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), "Gate " + gateId + " has changed to status " + status.toString(), null));
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
                             //add new Gate
 
                             // GateEntity newGate = new GateEntity(); //Need to be changed
-                            GateEntity newGate = new GateEntity(gateId,status, timestamp, 53.557120, 10.022826, "HAW", "REQUESTED_NONE", 0, "PENDING_NONE", 3  ); //Need to be changed
+                            GateEntity newGate = new GateEntity(gateId,status, localTimeStamp, 53.557120, 10.022826, "HAW", "REQUESTED_NONE", 0, "PENDING_NONE", 3  ); //Need to be changed
                             gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
-                            System.out.println("GateID:" + gateId + "Timestamp" + timestamp.getTime());
-                            gateActivityService.addGateActivity(new GateActivityEntity(timestamp, gateId, status.toString(), "New Gate " + gateId + " has been added with status " + status.toString(), null));
+                            System.out.println("GateID:" + gateId + "Timestamp" + localTimeStamp.getTime());
+                            gateActivityService.addGateActivity(new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), "New Gate " + gateId + " has been added with status " + status.toString(), null));
 
                         }
                     }
@@ -102,19 +100,34 @@ public class MqttMessageHandler {
                     for (JsonNode statusNode : payload) {
                         long gateId = statusNode.get("gateId").asLong();        // GateID
                         int statusCode = statusNode.get("status").asInt();      // Status
-                        // Timestamp gateTime = new Timestamp(statusNode.get("gateTime").asLong());    // GateTime
-                        Timestamp gateTime = new Timestamp(System.currentTimeMillis());    // GateTime
+                        long gateTime = statusNode.get("gateTime").asLong();
+                        Timestamp gateTimeStamp = new Timestamp(gateTime);
+                        Timestamp localTimeStamp = new Timestamp(System.currentTimeMillis());
+                        System.out.println(gateTime);
+                        System.out.println(gateTimeStamp);
+                        System.out.println(localTimeStamp);
                         Long senseMateId = statusNode.get("senseMateId").asLong(); // SenseMateID
 
+                        List<GateActivity> allGateActivities = gateActivityService.getGateActivitiesByGateId(gateId);
                         Status status = Status.fromCode(statusCode);
+                        GateActivityEntity ngae = new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), "Gate "+ gateId +" was reported as " + status.toString() + " by sensemate-" + senseMateId, senseMateId);
+                        GateActivity nga = new GateActivity(ngae.getLocalTimeStamp(), ngae.getGateTimeStamp(), ngae.getGateId(), ngae.getRequestedStatus(), ngae.getMessage(), ngae.getId(), ngae.getWorkerId());
+                        boolean already_exists = false;
+                        for (GateActivity ega: allGateActivities) {
+                            if (ega.getGateTimeStamp().equals(nga.getGateTimeStamp())) {
+                                System.out.println("This seen state was already reported!");
+                                already_exists = true;
+                                break;
+                            }
+                        }
 
-                        gateService.changeGateStatus(gateId, status, MsgType.SEEN_TABLE_STATE);
-                        gateActivityService.addGateActivity(new GateActivityEntity(gateTime, gateId, status.toString(), "Gate "+ gateId +" has changed to status " + status.toString() + "by sensemate " + senseMateId, senseMateId));
-                        System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
-                                ", Status: " + status +
-                                ", GateTime: " + gateTime +
-                                ", SenseMateID: " + senseMateId);
-
+                        if (!already_exists) { //TODO: move this to the gateActivityService itself!
+                            gateActivityService.addGateActivity(ngae);
+                            System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
+                                    ", Status: " + status +
+                                    ", GateTime: " + gateTime +
+                                    ", SenseMateID: " + senseMateId);
+                        }
                     }
                 }
 

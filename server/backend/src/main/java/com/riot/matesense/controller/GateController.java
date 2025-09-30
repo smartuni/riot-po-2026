@@ -85,7 +85,12 @@ public class GateController {
             throws GateNotFoundException {
         String targetStatus = body.get("requestedStatus");
         gateService.requestGateStatusChange(gateId, targetStatus);
-        gateActivityService.addGateActivity(new GateActivityEntity(new Timestamp(System.currentTimeMillis()), gateId, targetStatus, "The worker with ID: " + workerId + " requested the Status: "+ targetStatus + " to the gate with Gate-ID: " +gateId, workerId));
+        gateActivityService.addGateActivity(
+                new GateActivityEntity(new Timestamp(System.currentTimeMillis()),
+                                       new Timestamp(System.currentTimeMillis()),
+                                       gateId,
+                                       targetStatus,
+                                       "The worker with ID: " + workerId + " requested the Status: "+ targetStatus + " to the gate with Gate-ID: " + gateId, workerId));
     }
 
     /**

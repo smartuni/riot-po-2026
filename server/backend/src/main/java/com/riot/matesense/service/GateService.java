@@ -2,6 +2,7 @@ package com.riot.matesense.service;
 
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.MsgType;
+import com.riot.matesense.enums.StateConfirmation;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
@@ -41,7 +42,7 @@ public class GateService {
         List<GateEntity> gates = gateRepository.findAll();
         List<Gate> customGates = new ArrayList<>();
         gates.forEach(e -> {
-            Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(),
+            Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(), e.getStateConfirmation(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), 
                     e.getWorkerConfidence(), e.getSensorConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getQuality(), e.getPendingJob(), e.getPriority());
             customGates.add(gate);
@@ -133,7 +134,7 @@ public class GateService {
      */
     public Gate getGateById(Long id) throws GateNotFoundException {
         GateEntity gate = gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
-        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(),
+        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(), gate.getStateConfirmation(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
                 gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality(), gate.getPendingJob(), gate.getPriority());
     }
@@ -190,6 +191,13 @@ public class GateService {
         // }
 
         gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        gateRepository.save(gate);
+    }
+
+    public void changeGateStateConfirmation(Long gateId, StateConfirmation state) {
+        GateEntity gate = gateRepository.getById(gateId);
+        gate.setStateConfirmation(state);
+        messagingTemplate.convertAndSend("/topic/gates/updates", gate);
         gateRepository.save(gate);
     }
 

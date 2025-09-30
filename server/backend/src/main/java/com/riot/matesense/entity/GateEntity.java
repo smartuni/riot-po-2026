@@ -1,6 +1,7 @@
 package com.riot.matesense.entity;
 
 import com.riot.matesense.enums.ConfidenceQuality;
+import com.riot.matesense.enums.StateConfirmation;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.enums.MsgType;
 import jakarta.persistence.*;
@@ -23,6 +24,7 @@ public class GateEntity {
 	//@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private Status status;
+	private StateConfirmation stateConfirmation;
 	private Timestamp lastTimeStamp;
 	private Long deviceId;
 	private String location;
@@ -48,6 +50,7 @@ public class GateEntity {
 					  int confidence,  String pendingJob, int priority) {
 		this.id = gateID;
 		this.status = status;
+		this.stateConfirmation = StateConfirmation.UNCONFIRMED;
 		this.lastTimeStamp = lastTimeStamp;
 		// this.deviceId = deviceId;
 		this.location = location;
