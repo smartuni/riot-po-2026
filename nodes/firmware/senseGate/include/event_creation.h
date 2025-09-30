@@ -14,7 +14,7 @@
 #include "tables.h" 
 #include "mate_lorawan.h"
 
-#define DEBOUNCE_TIME 5000
+#define DEBOUNCE_TIME 2000
 
 extern event_t eventA0;
 extern event_t event_reactivate;

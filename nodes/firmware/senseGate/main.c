@@ -19,6 +19,8 @@ char ble_send_stack[2*THREAD_STACKSIZE_DEFAULT];
 char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
 int main(void){
+    /* Sleep so that we do not miss this message while connecting */
+    ztimer_sleep(ZTIMER_SEC, 3);
 
     puts("starting");
     init__door_interrupt();
