@@ -18,7 +18,7 @@ public class DownlinkController {
 
     @PostMapping
     public ResponseEntity<String> sendDownlink(
-            @RequestBody DownPayload payload){
+            @RequestBody DownPayload payload) {
         downlinkService.sendDownlinkToDevice(payload);
         return ResponseEntity.ok("Downlink vorbereitet.");
     }

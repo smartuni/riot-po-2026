@@ -13,37 +13,37 @@ import java.util.List;
 // @CrossOrigin(origins = "*")
 public class GateActivityController {
 
-	@Autowired
-	GateActivityService gateActivityService;
-	
-	@RequestMapping(value = "gate-activities", method = RequestMethod.GET)
-	public List<GateActivity> getAllGates(){
-		return gateActivityService.getAllGateActivities();
-	}
+    @Autowired
+    GateActivityService gateActivityService;
 
-	@RequestMapping(value = "add-activity", method = RequestMethod.POST)
-	public String addGate(@RequestBody GateActivityEntity gateActivityEntity){
-		return gateActivityService.addGateActivity(gateActivityEntity);
-	}
+    @RequestMapping(value = "gate-activities", method = RequestMethod.GET)
+    public List<GateActivity> getAllGates() {
+        return gateActivityService.getAllGateActivities();
+    }
 
-	@RequestMapping(value = "add-activities", method = RequestMethod.POST)
-	public void addGate(@RequestBody List<GateActivityEntity> gateActivityEntity){
-		gateActivityService.addGateActivities(gateActivityEntity);
-	}
-	
-	@RequestMapping(value = "delete-activitiy", method = RequestMethod.DELETE)
-	public void removeCustomer(@RequestBody GateActivityEntity gateActivityEntity){
-		gateActivityService.removeGateActivity(gateActivityEntity);
-	}
+    @RequestMapping(value = "add-activity", method = RequestMethod.POST)
+    public String addGate(@RequestBody GateActivityEntity gateActivityEntity) {
+        return gateActivityService.addGateActivity(gateActivityEntity);
+    }
 
-	@RequestMapping(value = "activities/{gateId}", method = RequestMethod.GET)
-	public List<GateActivity> getGateActivitiesByGateId(@PathVariable Long gateId) {
-		return gateActivityService.getGateActivitiesByGateId(gateId);
-	}
+    @RequestMapping(value = "add-activities", method = RequestMethod.POST)
+    public void addGate(@RequestBody List<GateActivityEntity> gateActivityEntity) {
+        gateActivityService.addGateActivities(gateActivityEntity);
+    }
 
-	@RequestMapping(value = "activities-latest/{gateId}", method = RequestMethod.GET)
-	public List<GateActivity> getLatestGateActivitiesByGateId(@PathVariable Long gateId) {
-		return gateActivityService.getLatestGateActivitiesByGateId(gateId);
-	}
+    @RequestMapping(value = "delete-activitiy", method = RequestMethod.DELETE)
+    public void removeCustomer(@RequestBody GateActivityEntity gateActivityEntity) {
+        gateActivityService.removeGateActivity(gateActivityEntity);
+    }
+
+    @RequestMapping(value = "activities/{gateId}", method = RequestMethod.GET)
+    public List<GateActivity> getGateActivitiesByGateId(@PathVariable Long gateId) {
+        return gateActivityService.getGateActivitiesByGateId(gateId);
+    }
+
+    @RequestMapping(value = "activities-latest/{gateId}", method = RequestMethod.GET)
+    public List<GateActivity> getLatestGateActivitiesByGateId(@PathVariable Long gateId) {
+        return gateActivityService.getLatestGateActivitiesByGateId(gateId);
+    }
 }
 

@@ -22,6 +22,7 @@ public class NotificationController {
 
     /**
      * AN API Call to get all the notifications from the database
+     *
      * @return a list of the notifications
      */
     @GetMapping
@@ -31,6 +32,7 @@ public class NotificationController {
 
     /**
      * AN API Call to add a Notification
+     *
      * @param notification that should be added
      * @return thee notification that has been added
      * @throws GateAlreadyExistingException
@@ -43,6 +45,7 @@ public class NotificationController {
 
     /**
      * AN API Call to delete a Notification
+     *
      * @param notification the notification that should be deleted
      * @throws GateNotFoundException
      */
@@ -54,6 +57,7 @@ public class NotificationController {
 
     /**
      * AN API Call that gets all the notifications from a worker by their worker ID
+     *
      * @param workerId from the worker
      * @return all the notifications from a worker in a list
      */
@@ -64,6 +68,7 @@ public class NotificationController {
 
     /**
      * AN API Call to set a notifications a read
+     *
      * @param notificationId of the notification
      * @throws GateNotFoundException
      */

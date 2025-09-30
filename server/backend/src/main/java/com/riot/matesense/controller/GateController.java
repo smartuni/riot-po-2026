@@ -33,6 +33,7 @@ public class GateController {
 
     /**
      * AN API Call to get all the gates that are stored in the database
+     *
      * @return
      */
     @RequestMapping(value = "gates", method = RequestMethod.GET)
@@ -43,6 +44,7 @@ public class GateController {
 
     /**
      * AN API Call to add a Gate to the Database
+     *
      * @param gateEntity the Gate that should be added
      * @return returns the added gate
      * @throws GateAlreadyExistingException
@@ -54,6 +56,7 @@ public class GateController {
 
     /**
      * AN API Call to update a Gate
+     *
      * @param gate that should be updatet
      * @throws GateNotFoundException
      */
@@ -65,6 +68,7 @@ public class GateController {
 
     /**
      * AN API Call to delete a Gate through the ID from it
+     *
      * @param id of the gate that should be deletet
      * @throws GateNotFoundException
      */
@@ -75,26 +79,28 @@ public class GateController {
 
     /**
      * AN API Call to change the requested status of the Gate
-     * @param gateId of the gate that should be changed
+     *
+     * @param gateId   of the gate that should be changed
      * @param workerId of the worker that wants to change the status
-     * @param body the requested statuses of the gates
+     * @param body     the requested statuses of the gates
      * @throws GateNotFoundException
      */
     @PostMapping("/{gateId}/{workerId}/request-status-change/")
-    public void requestGateStatusChange(@PathVariable Long gateId, @PathVariable Long workerId,  @RequestBody Map<String, String> body)
+    public void requestGateStatusChange(@PathVariable Long gateId, @PathVariable Long workerId, @RequestBody Map<String, String> body)
             throws GateNotFoundException {
         String targetStatus = body.get("requestedStatus");
         gateService.requestGateStatusChange(gateId, targetStatus);
         gateActivityService.addGateActivity(
                 new GateActivityEntity(new Timestamp(System.currentTimeMillis()),
-                                       new Timestamp(System.currentTimeMillis()),
-                                       gateId,
-                                       targetStatus,
-                                       "The worker with ID: " + workerId + " requested the Status: "+ targetStatus + " to the gate with Gate-ID: " + gateId, workerId));
+                        new Timestamp(System.currentTimeMillis()),
+                        gateId,
+                        targetStatus,
+                        "The worker with ID: " + workerId + " requested the Status: " + targetStatus + " to the gate with Gate-ID: " + gateId, workerId));
     }
 
     /**
      * AN API Call to get all the GateForDownLink Entities in a List
+     *
      * @return the List of all the GateForDownLink Entities
      */
     @RequestMapping(value = "gates_for_downlink", method = RequestMethod.GET)
@@ -105,7 +111,8 @@ public class GateController {
 
     /**
      * AN API Call to update the priority of a Gate
-     * @param gateId of the gate
+     *
+     * @param gateId  of the gate
      * @param request the data
      */
     @PutMapping("/update-priority/{gateId}")
@@ -116,6 +123,4 @@ public class GateController {
         Integer priority = request.get("priority");
         gateService.updatePriority(gateId, priority);
     }
-
-
 }
