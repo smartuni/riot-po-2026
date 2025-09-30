@@ -44,21 +44,6 @@ void event_handler_reactivate(event_t *event)
     gpio_set(led0);
     (void) event;   /* Not used */
     event_accepted = true; // Allow the event handler to be called again
-
-    // UPDATE TABLE
-    table_entry.gateID = RIOT_CONFIG_DEVICE_ID;
-    table_entry.state = event_status;
-    table_entry.gateTime = get_device_timestamp();
-    
-    int tableUpdate = set_is_state_entry(&table_entry);
-    if( TABLE_UPDATED == tableUpdate){
-        // TELL LORAWAN
-        event_post(EVENT_PRIO_MEDIUM, &send_is_state_table);
-       
-    } else {
-        puts("writing to table failed!");
-    } 
-    
 }
 
 void event_handlerA0(event_t *event)
@@ -67,6 +52,20 @@ void event_handlerA0(event_t *event)
     gpio_clear(led0); 
     if(event_accepted){
         event_accepted = false; // Prevent further calls until reset
+
+        // UPDATE TABLE
+        table_entry.gateID = RIOT_CONFIG_DEVICE_ID;
+        table_entry.state = event_status;
+        table_entry.gateTime = get_device_timestamp();
+
+        int tableUpdate = set_is_state_entry(&table_entry);
+        if( TABLE_UPDATED == tableUpdate){
+            // TELL LORAWAN
+            event_post(EVENT_PRIO_MEDIUM, &send_is_state_table);
+        } else {
+            puts("writing to table failed!");
+        }
+
         event_timeout_set(&reactivate, DEBOUNCE_TIME); // Set a timeout to allow reactivation
     }else{
         event_timeout_set(&reactivate, DEBOUNCE_TIME); // Set a timeout to allow reactivation    
