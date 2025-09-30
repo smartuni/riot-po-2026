@@ -13,7 +13,6 @@ import lombok.Setter;
 @Table(name = "counter_downlink")
 public class DownlinkCounterEntity {
 
-
     @Id
     private Long id = 1L;
 
