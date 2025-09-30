@@ -429,7 +429,10 @@ void* ble_receive_loop(void* args)
             }
 #if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
             else{
-                event_post(&sound_queue, &ble_received_sound_event);
+                /* only play sound on the is_state table */
+                if (metadata.message_type == IS_STATE_KEY) {
+                    event_post(&sound_queue, &ble_received_sound_event);
+                }
             }
 #endif            
         }
