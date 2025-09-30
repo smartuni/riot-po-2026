@@ -90,13 +90,13 @@
 }
 
 .badge.opened {
-    background: #e6f4ea;
-    color: #1a7f37;
+    background: #fdecea;
+    color: #b3261e;
 }
 
 .badge.closed {
-    background: #fdecea;
-    color: #b3261e;
+    background: #e6f4ea;
+    color: #1a7f37;
 }
 
 .badge.none {

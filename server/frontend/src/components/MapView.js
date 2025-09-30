@@ -13,7 +13,7 @@ const getArrowIcon = (status) => {
       transform: rotate(45deg);
       width: 12px;
       height: 12px;
-      background-color: ${status === "OPENED" ? "green" : "red"};
+      background-color: ${status === "OPENED" ? "red" : "green" };
       border-radius: 3px;
       transform-origin: center;
     "></div>`,
