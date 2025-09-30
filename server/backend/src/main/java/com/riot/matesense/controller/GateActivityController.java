@@ -20,7 +20,7 @@ public class GateActivityController {
 	public List<GateActivity> getAllGates(){
 		return gateActivityService.getAllGateActivities();
 	}
-	
+
 	@RequestMapping(value = "add-activity", method = RequestMethod.POST)
 	public String addGate(@RequestBody GateActivityEntity gateActivityEntity){
 		return gateActivityService.addGateActivity(gateActivityEntity);
@@ -41,5 +41,9 @@ public class GateActivityController {
 		return gateActivityService.getGateActivitiesByGateId(gateId);
 	}
 
+	@RequestMapping(value = "activities-latest/{gateId}", method = RequestMethod.GET)
+	public List<GateActivity> getLatestGateActivitiesByGateId(@PathVariable Long gateId) {
+		return gateActivityService.getLatestGateActivitiesByGateId(gateId);
+	}
 }
 
