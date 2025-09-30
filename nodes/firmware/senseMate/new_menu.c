@@ -1240,7 +1240,8 @@ void display_gate(display_entry *entry, bool upper){
             upper, //if upper
             entry->selected, // if selected
             entry->current_gate->gate_is_state == OPEN, // gate_state_open
-            entry->current_gate->gate_requested_state == entry->current_gate->gate_is_state, // requested_match
+            (entry->current_gate->gate_requested_state == UNKNOWN) ||
+             (entry->current_gate->gate_requested_state == entry->current_gate->gate_is_state), // requested_match
             job_prio, // job_prio
             (!upper || (entry->current_gate->gate_id != all_entries[0].gate_id)) // if more content
         );
