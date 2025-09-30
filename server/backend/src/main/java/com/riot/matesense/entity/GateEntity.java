@@ -26,6 +26,7 @@ public class GateEntity {
     private Status status;
     private StateConfirmation stateConfirmation;
     private Timestamp lastTimeStamp;
+    private Timestamp lastTransitionGateTimeStamp;
     private Long deviceId;
     private String location;
     private Double latitude;
@@ -52,6 +53,7 @@ public class GateEntity {
         this.status = status;
         this.stateConfirmation = StateConfirmation.UNCONFIRMED;
         this.lastTimeStamp = lastTimeStamp;
+        this.lastTransitionGateTimeStamp = new Timestamp(0);
         // this.deviceId = deviceId;
         this.location = location;
         // this.workerConfidence = workerConfidence;

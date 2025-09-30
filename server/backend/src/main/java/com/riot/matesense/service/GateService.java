@@ -179,10 +179,11 @@ public class GateService {
         gateRepository.save(gate);
     }
 
-    public void changeGateStatus(Long gateId, Status status, MsgType reportType) {
+    public void changeGateStatus(Long gateId, Status status, MsgType reportType, Timestamp gateTimestamp) {
         GateEntity gate = gateRepository.getById(gateId);
         int confidence = gate.getConfidence();
 
+        gate.setLastTransitionGateTimeStamp(gateTimestamp);
         gate.setStatus(status);
         //dont be surprised if pending job didn't change after the first status change! It need to be 100% confidence
         calculator.changeConfidence(gate, confidence, reportType);

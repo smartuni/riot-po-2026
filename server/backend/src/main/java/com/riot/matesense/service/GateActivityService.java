@@ -64,9 +64,12 @@ public class GateActivityService {
                 Status gateState = gate.getStatus();
                 List<GateActivity> gas = this.getLatestGateActivitiesByGateId(gateActivity.getGateId());
                 //TODO filter list for *relevant* reports (report time after last gate state change)
-                //gas.removeIf(ga -> ga.)
+                // remove from list if confirmation happened before the last state transition
+                gas.removeIf(ga -> ga.getGateTimeStamp().compareTo(gate.getLastTransitionGateTimeStamp()) < 0);
+                System.out.println(gas.size() + " relevant reports after " + gate.getLastTransitionGateTimeStamp() +  ":");
                 int conflicts = 0;
                 for (GateActivity g : gas) {
+                    System.out.println("worker " + g.getWorkerId() + "reported gate " + g.getGateId() + " as " + g.getRequestedStatus());
                     if (!g.getRequestedStatus().equals(gateState.toString())) {
                         conflicts++;
                         gateService.changeGateStateConfirmation(gate.getId(), StateConfirmation.WORKER_CONFLICT);
@@ -143,13 +146,13 @@ public class GateActivityService {
         System.out.println(workers);
         List<GateActivity> customGateActivities = new ArrayList<>();
         for (WorkerIdView w: workers) {
-            System.out.println(w.getWorkerId());
             List<GateActivityEntity> gateActivities = gateActivityRepository.findAll().stream().filter(
                     e -> e.getGateId().equals(gateId) && (e.getWorkerId() != null) && (e.getWorkerId().equals(w.getWorkerId())))
                     .sorted(Comparator.reverseOrder()).limit(1).toList();
             System.out.println(gateActivities);
 
             for (GateActivityEntity gae: gateActivities) {
+                System.out.println("worker " + w.getWorkerId() + " reported gate " + gae.getGateId() + " as " + gae.getRequestedStatus() + " @ " + gae.getGateTimeStamp());
                 customGateActivities.add(new GateActivity(gae.getLocalTimeStamp(),
                         gae.getGateTimeStamp(),
                         gae.getGateId(),
