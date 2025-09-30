@@ -79,7 +79,7 @@ public class MqttMessageHandler {
                                 // on changes mark the new state as unconfirmed
                                 gateService.changeGateStateConfirmation(gateId, StateConfirmation.UNCONFIRMED);
                             }
-                            gateService.changeGateStatus(gateId, status, MsgType.IST_STATE);
+                            gateService.changeGateStatus(gateId, status, MsgType.IST_STATE, gateTimeStamp);
                             gateActivityService.addGateActivity(new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), "Gate " + gateId + " has changed to status " + status.toString(), null));
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
