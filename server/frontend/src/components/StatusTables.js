@@ -27,6 +27,10 @@ import LockIcon from '@mui/icons-material/Lock';
 import CircleIcon from '@mui/icons-material/Circle';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
+import Badge from '@mui/material/Badge';
+import CheckIcon from '@mui/icons-material/Check';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import MapView from "../components/MapView";
 import StatusChangedDialog from "../components/StatusChangedDialog";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -281,6 +285,37 @@ function StatusTables() {
         }
     };
 
+    const confirmationBadgeContent = (status) => {
+        switch (status) {
+            case "WORKER_CONFLICT":
+                return <><PriorityHighIcon fontSize="small"/></>;
+            case "UNCONFIRMED":
+                return <> - </>;
+            case "WORKER_CONFIRMED_SINGLE":
+                return <><CheckIcon fontSize="small"/></>;
+            case "WORKER_CONFIRMED_MULTI":
+                return <><DoneAllIcon fontSize="small"/></>;
+            case "WORKER_CONFIRMED_ALL":
+                return <><DoneAllIcon fontSize="small"/></>;
+            default:
+                return <><CircleIcon fontSize="small"/></>;
+        }
+    };
+
+    const confirmationBadgeColor = (status) => {
+        switch (status) {
+            case "WORKER_CONFLICT":
+                return "error";
+            case "WORKER_CONFIRMED_SINGLE":
+                return "info";
+            case "WORKER_CONFIRMED_MULTI":
+            case "WORKER_CONFIRMED_ALL":
+                return "success";
+            default:
+                return "error";
+        }
+    };
+
     /**
      * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
      * @type {*[]}
@@ -529,14 +564,21 @@ function StatusTables() {
                                         <span className="coords">{gate.latitude}, {gate.longitude}</span>
                                     </td>
                                     <td data-label="Status">
-                                            <span className={`badge ${gate.status.toLowerCase()}`}>
-                                                {
-                                                    gate.status === "OPENED"
-                                                    ? <LockOpenIcon fontSize="small"/> :
-                                                    gate.status === "CLOSED" ? <LockIcon fontSize="small"/> :
-                                                    <QuestionMarkIcon fontSize="small"/>
-                                                } {gate.status}
-                                            </span>
+                                            <Badge
+                                                    color={confirmationBadgeColor(gate.stateConfirmation)}
+                                                    invisible={`${gate.stateConfirmation}` == "UNCONFIRMED"}
+                                                    anchorOrigin={{vertical: 'top', horizontal: 'right',}}
+                                                    variant="standard"
+                                                    badgeContent={confirmationBadgeContent(gate.stateConfirmation)} >
+                                                <span className={`badge ${gate.status.toLowerCase()}`}>
+                                                    {
+                                                        gate.status === "OPENED"
+                                                        ? <LockOpenIcon fontSize="small"/> :
+                                                        gate.status === "CLOSED" ? <LockIcon fontSize="small"/> :
+                                                        <QuestionMarkIcon fontSize="small"/>
+                                                    } {gate.status}
+                                                </span>
+                                            </Badge>
                                     </td>
                                     <td data-label="Requested Status">
                                             <span
