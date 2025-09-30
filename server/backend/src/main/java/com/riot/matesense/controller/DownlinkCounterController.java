@@ -16,15 +16,17 @@ public class DownlinkCounterController {
 
     /**
      * A API call to get the counter off the Downlink-Counter
+     *
      * @return the counter of the class
      */
     @RequestMapping(value = "/counter", method = RequestMethod.GET)
-    public int getCounter(){
+    public int getCounter() {
         return counterService.getCounter();
     }
 
     /**
      * A API call to increment the counter of the Downlink-Counter Entity
+     *
      * @return a boolean if the counter is successfully increased
      */
 
