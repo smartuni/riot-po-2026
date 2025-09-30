@@ -335,6 +335,7 @@ function StatusTables() {
      */
     const sendManualDownlink = async () => {
         const statusIntMap = {
+            null: 2,
             "REQUESTED_OPEN": 1,
             "REQUESTED_CLOSE": 0
         };
@@ -348,7 +349,7 @@ function StatusTables() {
         ];
 
         if (payload[2].length === 0) {
-            alert("No gates with requested OPEN or CLOSE status.");
+            alert("No gates with requested state. Downlink won't be sent.");
             return;
         }
 
