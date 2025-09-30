@@ -19,8 +19,8 @@ typedef enum{
 */
 typedef enum{
     CLOSED = 0,
-    OPEN,
-    UNKNOWN
+    OPEN = 1,
+    UNKNOWN = 2
 } gate_state;
 
 /*
