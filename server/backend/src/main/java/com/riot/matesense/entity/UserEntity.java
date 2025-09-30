@@ -26,7 +26,8 @@ public class UserEntity {
     private String role;
 
     // Constructors
-    public UserEntity() {}
+    public UserEntity() {
+    }
 
     public UserEntity(String email, String password, String name, String role) {
         this.email = email;
