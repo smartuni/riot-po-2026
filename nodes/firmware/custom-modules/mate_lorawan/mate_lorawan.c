@@ -351,22 +351,17 @@ static void send_handler_seen_status_table(event_t *event){
 
 int start_lorawan(void)
 {
-    /* Sleep so that we do not miss this message while connecting */
-    ztimer_sleep(ZTIMER_SEC, 3);
     printf("[LoRaWAN]: Starting module.\n");
     //event_queue_init(&lorawan_queue);
     
     cbor_send_buffer.buffer = send_buffer;
     cbor_send_buffer.package_size = msg_sizes;
 
-    void event_timeout_init(event_timeout_t *event_timeout, event_queue_t *queue, event_t *event);
+    //void event_timeout_init(event_timeout_t *event_timeout, event_queue_t *queue, event_t *event);
     /* Init timeout event */
     event_timeout_init(&event_timeout, EVENT_PRIO_HIGHEST, (event_t*)&send_event_timeout);
     event_timeout_set(&event_timeout, TIMEOUT_DURATION);
     
-    /* Sleep so that we do not miss this message while connecting */
-    ztimer_sleep(ZTIMER_SEC, 3);
-
     /* find the LoRaWAN network interface and connect */
     netif = _find_lorawan_network_interface();
     if (netif == NULL) {
@@ -390,6 +385,9 @@ int start_lorawan(void)
     }else{
         printf("[LoRaWAN]: Receive thread started successfully.\n");
     }
+
+    /* send the first uplink right away so that the device shows up fast */
+    event_post(EVENT_PRIO_HIGHEST, &send_event_timeout);
 
     /* register for receiving  LoRaWAN packets in our rx thread */
     gnrc_netreg_entry_init_pid(&netreg_entry,
