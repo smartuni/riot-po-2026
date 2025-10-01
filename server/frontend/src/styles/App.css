@@ -105,13 +105,13 @@
 }
 
 .badge.requested_open {
-    background: #e6f4ea;
-    color: #1a7f37;
+    background: #fdecea;
+    color: #b3261e;
 }
 
 .badge.requested_close {
-    background: #fdecea;
-    color: #b3261e;
+    background: #e6f4ea;
+    color: #1a7f37;
 }
 
 .badge.requested_none {
@@ -120,13 +120,13 @@
 }
 
 .badge.pending_open {
-    background: #e6f4ea;
-    color: #1a7f37;
+    background: #fdecea;
+    color: #b3261e;
 }
 
 .badge.pending_close {
-    background: #fdecea;
-    color: #b3261e;
+    background: #e6f4ea;
+    color: #1a7f37;
 }
 
 .badge.pending_none {
