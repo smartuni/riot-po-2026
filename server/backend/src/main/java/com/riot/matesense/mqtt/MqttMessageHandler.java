@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
+import com.riot.matesense.enums.ActivityType;
 import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.StateConfirmation;
 import com.riot.matesense.enums.Status;
@@ -75,12 +76,14 @@ public class MqttMessageHandler {
                         try {
                             GateEntity existingGate = gateService.getGateEntityById(gateId);
 
+                            ActivityType activity = ActivityType.SENSOR_VALUE_KEEPALIVE;
                             if (!existingGate.getStatus().equals(status)) {
                                 // on changes mark the new state as unconfirmed
                                 gateService.changeGateStateConfirmation(gateId, StateConfirmation.UNCONFIRMED);
+                                activity = ActivityType.SENSOR_VALUE_CHANGED;
                             }
                             gateService.changeGateStatus(gateId, status, MsgType.IST_STATE, gateTimeStamp);
-                            gateActivityService.addGateActivity(new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), "Gate " + gateId + " has changed to status " + status.toString(), null));
+                            gateActivityService.addGateActivity(new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), activity,null));
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
                             //add new Gate
@@ -90,7 +93,7 @@ public class MqttMessageHandler {
                             gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
                             System.out.println("GateID:" + gateId + "Timestamp" + localTimeStamp.getTime());
-                            gateActivityService.addGateActivity(new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), "New Gate " + gateId + " has been added with status " + status.toString(), null));
+                            gateActivityService.addGateActivity(new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), ActivityType.SENSOR_NEW, null));
 
                         }
                     }
@@ -110,7 +113,7 @@ public class MqttMessageHandler {
 
                         List<GateActivity> allGateActivities = gateActivityService.getGateActivitiesByGateId(gateId);
                         Status status = Status.fromCode(statusCode);
-                        GateActivityEntity ngae = new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), "Gate "+ gateId +" was reported as " + status.toString() + " by sensemate-" + senseMateId, senseMateId);
+                        GateActivityEntity ngae = new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), ActivityType.SENSEMATE_WORKER_REPORT, senseMateId);
                         GateActivity nga = new GateActivity(ngae.getLocalTimeStamp(), ngae.getGateTimeStamp(), ngae.getGateId(), ngae.getRequestedStatus(), ngae.getMessage(), ngae.getId(), ngae.getWorkerId());
                         boolean already_exists = false;
                         for (GateActivity ega: allGateActivities) {

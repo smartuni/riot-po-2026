@@ -2,6 +2,7 @@ package com.riot.matesense.controller;
 
 import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
+import com.riot.matesense.enums.ActivityType;
 import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.exceptions.GateAlreadyExistingException;
 import com.riot.matesense.exceptions.GateNotFoundException;
@@ -95,7 +96,8 @@ public class GateController {
                         new Timestamp(System.currentTimeMillis()),
                         gateId,
                         targetStatus,
-                        "The worker with ID: " + workerId + " requested the Status: " + targetStatus + " to the gate with Gate-ID: " + gateId, workerId));
+                        ActivityType.TARGET_STATE_REQUEST,
+                        workerId));
     }
 
     /**
