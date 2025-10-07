@@ -1,5 +1,6 @@
 package com.riot.matesense.entity;
 
+import com.riot.matesense.enums.ActivityType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,16 +27,25 @@ public class GateActivityEntity implements Comparable<GateActivityEntity> {
     private String requestedStatus;
     private String message;
     private Long workerId;
+    private ActivityType activityType;
 
     public GateActivityEntity(Timestamp localTimeStamp, Timestamp gateTimeStamp, Long gateId,
-                              String requestedStatus, String message, Long workerId) {
+                              String state, ActivityType activityType, Long workerId) {
         this.lastTimeStamp = localTimeStamp;
         this.localTimeStamp = localTimeStamp;
         this.gateTimeStamp = gateTimeStamp;
         this.gateId = gateId;
-        this.requestedStatus = requestedStatus;
-        this.message = message;
+        this.requestedStatus = state;
         this.workerId = workerId;
+        this.activityType = activityType;
+        switch (activityType) {
+            case SENSOR_NEW -> this.message = "New Gate " + gateId + " has been added with status " + state.toString();
+            case SENSOR_VALUE_CHANGED -> this.message = "Gate " + gateId + " has changed to status " + state.toString();
+            case SENSOR_VALUE_KEEPALIVE -> this.message = "Gate " + gateId + " reported its state as " + state.toString();
+            case SENSEMATE_WORKER_REPORT -> this.message = "Gate "+ gateId + " was reported as " + state.toString() + " by SenseMate-" + workerId;
+            case TARGET_STATE_REQUEST -> this.message = "The worker with ID: " + workerId + " requested the Status: " + state.toString() + " to the gate with Gate-ID: " + gateId;
+            default -> throw new IllegalStateException("Unexpected value: " + activityType);
+        }
     }
 
     public GateActivityEntity() {

@@ -1,5 +1,6 @@
 package com.riot.matesense.service;
 
+import com.riot.matesense.enums.ActivityType;
 import com.riot.matesense.enums.StateConfirmation;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.entity.GateActivityEntity;
@@ -134,13 +135,6 @@ public class GateActivityService {
      * @return the latest activities
      */
     public List<GateActivity> getLatestGateActivitiesByGateId(Long gateId) {
-        //List<GateActivityEntity> gateActivities = gateActivityRepository.findAll().stream().filter(e -> e.getGateId().equals(gateId) && (e.getWorkerId() != null) ).sorted(Comparator.reverseOrder()).collect(Collectors.toList());
-        //List<GateActivity> customGateActivities = new ArrayList<>();
-        //for (GateActivityEntity gateActivityEntity : gateActivities) {
-        //    GateActivity gateActivity = new GateActivity(gateActivityEntity.getLocalTimeStamp(), gateActivityEntity.getGateTimeStamp(), gateActivityEntity.getGateId(), gateActivityEntity.getRequestedStatus(), gateActivityEntity.getMessage(), gateActivityEntity.getId(), gateActivityEntity.getWorkerId());
-        //    customGateActivities.add(gateActivity);
-        //}
-        //return customGateActivities;
         List<Long> senseMateIDs = new ArrayList<Long>();
         List<WorkerIdView> workers = gateActivityRepository.findDistinctWorkerIdByGateId(gateId).stream().filter(Objects::nonNull).toList();
         System.out.println("########################");
@@ -151,7 +145,7 @@ public class GateActivityService {
                     e -> e.getGateId().equals(gateId) &&
                                          (e.getWorkerId() != null) &&
                                          (e.getWorkerId().equals(w.getWorkerId())) &&
-                                         (!e.getMessage().contains("requested the Status"))) //this is an ugly quickfix to ignore requests from the dashboard when looking at the reports
+                                         (!e.getActivityType().equals(ActivityType.SENSEMATE_WORKER_REPORT)))
                     //TODO: the activities should be separated between sensemate reports and state change requests (or at least distinguishable)
                     .sorted(Comparator.reverseOrder()).limit(1).toList();
             System.out.println(gateActivities);
