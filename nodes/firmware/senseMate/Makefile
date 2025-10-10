@@ -58,6 +58,20 @@ CFLAGS += -DU8G2_DISPLAY_INIT_FUNC=u8g2_Setup_ssd1306_i2c_128x64_noname_f
 CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=1024*3
 CFLAGS += -DEVENT_THREAD_MEDIUM_STACKSIZE=1024*3
 
+# stuff for new lvgl-based menu implementation
+USEPKG += lvgl
+USEMODULE += lvgl_contrib
+USEMODULE += lvgl_extra_widget_chart
+USEMODULE += lvgl_extra_widget_win
+USEMODULE += lvgl_extra_widget_list
+USEMODULE += lvgl_extra_widget_tileview
+USEMODULE += lvgl_extra_layout_flex
+USEMODULE += lvgl_extra_theme_mono
+USEMODULE += u8g2_disp_dev
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=2*4096
+CFLAGS += -DLV_MEM_SIZE=1024*16
+DIRS += ui
+USEMODULE += ui
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
