@@ -61,6 +61,7 @@ CFLAGS += -DEVENT_THREAD_MEDIUM_STACKSIZE=1024*3
 # stuff for new lvgl-based menu implementation
 USEPKG += lvgl
 USEMODULE += lvgl_contrib
+USEMODULE += lvgl_widget_slider
 USEMODULE += lvgl_extra_widget_chart
 USEMODULE += lvgl_extra_widget_win
 USEMODULE += lvgl_extra_widget_list
