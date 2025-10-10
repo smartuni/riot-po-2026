@@ -2,6 +2,7 @@
 #include "lvgl/lvgl.h"
 #include "lvgl_riot.h"
 #include "disp_dev.h"
+#include "lvgl/src/widgets/lv_slider.h"
 #include "lvgl/src/extra/widgets/list/lv_list.h"
 #include "lvgl/src/extra/widgets/tileview/lv_tileview.h"
 #include "lvgl/src/core/lv_theme.h"
@@ -27,7 +28,27 @@ static lv_style_t style_noborder;
 static lv_indev_drv_t indev_drv;
 static lv_group_t *nav_group;
 static lv_indev_t *indev;
-static lv_obj_t * tileview;
+static lv_obj_t *tileview;
+
+static lv_obj_t *submenu_tile;
+
+struct ui_dyn_menu_ctx_t;
+
+typedef void (*ui_dyn_menu_enter_cb_t)(struct ui_dyn_menu_ctx_t *ctx);
+typedef void (*ui_dyn_menu_leave_cb_t)(struct ui_dyn_menu_ctx_t *ctx);
+
+typedef struct ui_dyn_menu_ctx_t {
+    lv_obj_t *tileview;
+    lv_obj_t *tile;
+    lv_group_t *nav_group;
+    ui_dyn_menu_enter_cb_t enter;
+    ui_dyn_menu_leave_cb_t leave;
+} ui_dyn_menu_ctx_t;
+
+ui_dyn_menu_ctx_t main_menu_ctx;
+ui_dyn_menu_ctx_t gate_menu_ctx;
+ui_dyn_menu_ctx_t settings_menu_ctx;
+ui_dyn_menu_ctx_t *current_menu_ctx = NULL;
 
 static void wakeup_task(lv_timer_t *param)
 {
@@ -61,6 +82,17 @@ static void _btn_event_handler(lv_event_t * e)
     (void)obj;
     if(code == LV_EVENT_CLICKED) {
         printf("CLICKED %d@%p\n", code, obj);
+        void *usr_data = lv_event_get_user_data(e);
+        if (usr_data) {
+            if (current_menu_ctx && current_menu_ctx->leave) {
+                current_menu_ctx->leave(current_menu_ctx);
+            }
+            ui_dyn_menu_ctx_t *ctx = (ui_dyn_menu_ctx_t*)usr_data;
+            current_menu_ctx = ctx;
+            if (ctx->enter) {
+                ctx->enter(ctx);
+            }
+        }
     } else if(code == LV_EVENT_FOCUSED) {
         printf("FOCUSED: %s\n", lv_label_get_text(lv_obj_get_child(obj, 0)));
     }
@@ -71,15 +103,15 @@ static void _create_list_menu(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_t *list1 = lv_list_create(parent);
     lv_obj_set_size(list1, LV_PCT(100), LV_PCT(100));
     lv_obj_center(list1);
-    lv_obj_add_style(list1, &style_noborder, 0); 
+    lv_obj_add_style(list1, &style_noborder, 0);
 
     lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_GPS, "Closeby Gates");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, &gate_menu_ctx);
 
     btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, "All Gates");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, &gate_menu_ctx);
 
     btn = lv_list_add_btn(list1, LV_SYMBOL_OK, "Jobs");
     lv_group_add_obj(grp, btn);
@@ -91,11 +123,39 @@ static void _create_list_menu(lv_obj_t *parent, lv_group_t *grp)
 
     btn = lv_list_add_btn(list1, LV_SYMBOL_SETTINGS, "Settings");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, &settings_menu_ctx);
 
     lv_obj_add_flag(list1, LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(list1, LV_SCROLLBAR_MODE_OFF);
 }
+
+static void _create_gate_list(lv_obj_t *parent, lv_group_t *grp)
+{
+    lv_obj_t *list1 = lv_list_create(parent);
+    lv_obj_set_size(list1, LV_PCT(100), LV_PCT(100));
+    lv_obj_center(list1);
+    lv_obj_add_style(list1, &style_noborder, 0);
+
+    lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, "Gate 1");
+    lv_group_add_obj(grp, btn);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+
+    btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, "Gate 2");
+    lv_group_add_obj(grp, btn);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+
+    btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, "Gate 3");
+    lv_group_add_obj(grp, btn);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+
+    btn = lv_list_add_btn(list1, LV_SYMBOL_NEW_LINE, "back");
+    lv_group_add_obj(grp, btn);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, &main_menu_ctx);
+
+    lv_obj_add_flag(list1, LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(list1, LV_SCROLLBAR_MODE_OFF);
+}
+
 
 static lv_obj_t *_add_badged_icon(lv_obj_t *parent, const void *img_src, const char *badge_str) {
     lv_obj_t *badged_icon_cont = lv_obj_create(parent);
@@ -207,6 +267,89 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     (void)badge_lbl_persons;
 }
 
+static void _gate_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
+{
+    c->nav_group = lv_group_create();
+    lv_group_set_wrap(c->nav_group, true);
+    _create_gate_list(c->tile, c->nav_group);
+    lv_obj_set_tile(c->tileview, c->tile, LV_ANIM_ON);
+    lv_indev_set_group(indev, c->nav_group);
+}
+
+static void _clear_tile_dyn_leave(ui_dyn_menu_ctx_t *c)
+{
+    /* remove group from input device */
+    lv_indev_set_group(indev, NULL);
+
+    /* delete group */
+    lv_group_del(c->nav_group);
+
+    uint32_t child_cnt = lv_obj_get_child_cnt(c->tile);
+    printf("leave! (delete %lu children)\n", child_cnt);
+    for (uint32_t i = 0; i < child_cnt; i++) {
+        lv_obj_t *child = lv_obj_get_child(c->tile, i);
+        lv_obj_del(child);
+    }
+}
+
+static void slider_event_cb(lv_event_t * e)
+{
+    lv_obj_t * slider = lv_event_get_target(e);
+    void *user_data = lv_event_get_user_data(e);
+    if (user_data) {
+        lv_obj_t *slider_label = (lv_obj_t*)user_data;
+        char buf[8];
+        lv_snprintf(buf, sizeof(buf), "%d%%", (int)lv_slider_get_value(slider));
+        lv_label_set_text(slider_label, buf);
+        lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+    }
+}
+
+static void _settings_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
+{
+    c->nav_group = lv_group_create();
+    lv_group_set_wrap(c->nav_group, true);
+
+    lv_obj_t *list1 = lv_list_create(c->tile);
+    lv_obj_set_size(list1, LV_PCT(100), LV_PCT(100));
+    lv_obj_center(list1);
+    lv_obj_add_style(list1, &style_noborder, 0);
+
+    //TODO: move to create function so this can be used with dynamic and static loading
+    lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, "Bluetooth");
+    lv_group_add_obj(c->nav_group, btn);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+
+    /*Create a slider in the center of the display*/
+    lv_obj_t * slider = lv_slider_create(list1);
+    lv_obj_center(slider);
+    lv_obj_set_size(slider, LV_PCT(80), LV_SIZE_CONTENT);
+    lv_group_add_obj(c->nav_group, slider);
+
+    /*Create a label below the slider*/
+    lv_obj_t *slider_label = lv_label_create(list1);
+    lv_label_set_text(slider_label, "0%");
+    lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+    lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, slider_label);
+
+    btn = lv_list_add_btn(list1, LV_SYMBOL_NEW_LINE, "back");
+    lv_group_add_obj(c->nav_group, btn);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, &main_menu_ctx);
+
+    lv_obj_add_flag(list1, LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_scrollbar_mode(list1, LV_SCROLLBAR_MODE_OFF);
+
+    lv_obj_set_tile(c->tileview, c->tile, LV_ANIM_ON);
+    lv_indev_set_group(indev, c->nav_group);
+}
+
+static void _switch_to_contex_tile_enter_cb(ui_dyn_menu_ctx_t *c)
+{
+    (void)c;
+    lv_obj_set_tile(c->tileview, c->tile, LV_ANIM_ON);
+    lv_indev_set_group(indev, c->nav_group);
+}
+
 int sensemate_ui_init(void)
 {
 
@@ -254,7 +397,25 @@ int sensemate_ui_init(void)
     tile = lv_tileview_add_tile(tileview, 0, 1, LV_DIR_VER);
     lv_obj_set_size(tile, LV_PCT(100), LV_PCT(100));
     _create_list_menu(tile, nav_group);
+    main_menu_ctx.tileview = tileview;
+    main_menu_ctx.tile = tile;
+    main_menu_ctx.nav_group = nav_group;
+    main_menu_ctx.enter = _switch_to_contex_tile_enter_cb;
+
+    /* Menu list tile: a scrollable list for navigating to submenues, details, settings etc. */
+    submenu_tile = lv_tileview_add_tile(tileview, 1, 1, LV_DIR_HOR);
+    lv_obj_set_size(tile, LV_PCT(100), LV_PCT(100));
+
+    gate_menu_ctx.tileview = tileview;
+    gate_menu_ctx.tile = submenu_tile;
+    gate_menu_ctx.enter = _gate_menu_dyn_enter;
+    gate_menu_ctx.leave = _clear_tile_dyn_leave;
     
+    settings_menu_ctx.tileview = tileview;
+    settings_menu_ctx.tile = submenu_tile;
+    settings_menu_ctx.enter = _settings_menu_dyn_enter;
+    settings_menu_ctx.leave = _clear_tile_dyn_leave;
+
     /* Create the task used to force refresh the UI */
     refr_task = lv_timer_create(wakeup_task, REFR_TIME, NULL);
 
