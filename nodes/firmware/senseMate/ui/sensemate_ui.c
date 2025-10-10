@@ -17,9 +17,9 @@
 
 extern lv_font_t helvetica_light_12;
 extern lv_font_t helvetica10;
-extern const lv_img_dsc_t gate_icon;
-extern const lv_img_dsc_t tasks_icon_32;
-extern const lv_img_dsc_t person_icon_32;
+extern const lv_img_dsc_t gate_icon_32x32;
+extern const lv_img_dsc_t tasks_icon_25x32;
+extern const lv_img_dsc_t person_icon_32x32;
 extern const lv_img_dsc_t bluetooth_icon_7x11;
 
 static lv_timer_t *refr_task;
@@ -193,9 +193,9 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_set_local_style_prop(dash_cont, LV_STYLE_BORDER_WIDTH, bord_top_val, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_flex_align(dash_cont, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_SPACE_EVENLY);
     
-    lv_obj_t *badge_lbl_gates = _add_badged_icon(dash_cont, &gate_icon, "5");
-    lv_obj_t *badge_lbl_tasks = _add_badged_icon(dash_cont, &tasks_icon_32, "3");
-    lv_obj_t *badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32, "2");
+    lv_obj_t *badge_lbl_gates = _add_badged_icon(dash_cont, &gate_icon_32x32, "5");
+    lv_obj_t *badge_lbl_tasks = _add_badged_icon(dash_cont, &tasks_icon_25x32, "3");
+    lv_obj_t *badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32x32, "2");
     
     //TODO: store label references for status/visibility updates
     (void)alert_lbl;
