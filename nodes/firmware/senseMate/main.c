@@ -22,12 +22,12 @@ char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
 int lorawan_started = -1;
 
-int sensemate_menu_init(void);
+int sensemate_ui_init(void);
 
 int main(void) {
     ztimer_sleep(ZTIMER_MSEC, 3000);
     printf("init menu...\n");
-    sensemate_menu_init();
+    sensemate_ui_init();
     return 0;
     //ztimer_sleep(ZTIMER_MSEC, 3000); //if use term activate sleep to see all prints
     init_interrupt();

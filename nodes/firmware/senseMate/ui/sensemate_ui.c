@@ -15,7 +15,6 @@
 /* Must be lower than LVGL_INACTIVITY_PERIOD_MS for autorefresh */
 #define REFR_TIME           200
 
-lv_timer_t *refr_task;
 extern lv_font_t helvetica_light_12;
 extern lv_font_t helvetica10;
 extern const lv_img_dsc_t gate_icon;
@@ -23,13 +22,14 @@ extern const lv_img_dsc_t tasks_icon_32;
 extern const lv_img_dsc_t person_icon_32;
 extern const lv_img_dsc_t bluetooth_icon_7x11;
 
+static lv_timer_t *refr_task;
 static lv_style_t style_noborder;
 static lv_indev_drv_t indev_drv;
 static lv_group_t *nav_group;
 static lv_indev_t *indev;
 static lv_obj_t * tileview;
 
-void wakeup_task(lv_timer_t *param)
+static void wakeup_task(lv_timer_t *param)
 {
     (void)param;
     /* Force a wakeup of lvgl when each task is called: this ensures an activity
@@ -37,7 +37,7 @@ void wakeup_task(lv_timer_t *param)
     lvgl_wakeup();
 }
 
-void encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data){
+static void _encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data){
   static lv_key_t last_key = LV_KEY_ENTER;
   (void)drv;
   data->state = LV_INDEV_STATE_PRESSED;
@@ -54,7 +54,7 @@ void encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data){
   last_key = data->key;
 }
 
-void event_handler(lv_event_t * e)
+static void _btn_event_handler(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t * obj = lv_event_get_target(e);
@@ -66,7 +66,7 @@ void event_handler(lv_event_t * e)
     }
 }
 
-void create_list_menu(lv_obj_t *parent, lv_group_t *grp)
+static void _create_list_menu(lv_obj_t *parent, lv_group_t *grp)
 {
     lv_obj_t *list1 = lv_list_create(parent);
     lv_obj_set_size(list1, LV_PCT(100), LV_PCT(100));
@@ -75,29 +75,29 @@ void create_list_menu(lv_obj_t *parent, lv_group_t *grp)
 
     lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_GPS, "Closeby Gates");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
 
     btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, "All Gates");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
 
     btn = lv_list_add_btn(list1, LV_SYMBOL_OK, "Jobs");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
     
     btn = lv_list_add_btn(list1, LV_SYMBOL_WARNING, "Messages");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
 
     btn = lv_list_add_btn(list1, LV_SYMBOL_SETTINGS, "Settings");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
 
     lv_obj_add_flag(list1, LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(list1, LV_SCROLLBAR_MODE_OFF);
 }
 
-lv_obj_t *add_badged_icon(lv_obj_t *parent, const void *img_src, const char *badge_str) {
+static lv_obj_t *_add_badged_icon(lv_obj_t *parent, const void *img_src, const char *badge_str) {
     lv_obj_t *badged_icon_cont = lv_obj_create(parent);
     lv_obj_add_style(badged_icon_cont, &style_noborder, 0); 
     lv_obj_set_size(badged_icon_cont, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -129,7 +129,7 @@ lv_obj_t *add_badged_icon(lv_obj_t *parent, const void *img_src, const char *bad
     return badge_lbl;
 }
 
-lv_obj_t *add_header_label(lv_obj_t *parent, const char *txt)
+static lv_obj_t *_add_header_label(lv_obj_t *parent, const char *txt)
 {
     lv_obj_t *lbl = lv_label_create(parent);
     lv_label_set_text(lbl, txt);
@@ -138,7 +138,7 @@ lv_obj_t *add_header_label(lv_obj_t *parent, const char *txt)
     return lbl;
 }
 
-void create_dashboard(lv_obj_t *parent, lv_group_t *grp)
+static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
 {
     lv_obj_t *root_cont = lv_obj_create(parent);
     lv_obj_set_size(root_cont, LV_PCT(100), LV_PCT(100));
@@ -166,8 +166,8 @@ void create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_t * icon = lv_img_create(header_cont);
     lv_img_set_src(icon, &bluetooth_icon_7x11);
     
-    lv_obj_t *lora_lbl = add_header_label(header_cont, "LoRa");
-    lv_obj_t *usb_lbl = add_header_label(header_cont, LV_SYMBOL_USB);
+    lv_obj_t *lora_lbl = _add_header_label(header_cont, "LoRa");
+    lv_obj_t *usb_lbl = _add_header_label(header_cont, LV_SYMBOL_USB);
     
     /* empty space between left and right part of the header/status bar */
     lv_obj_t * header_pad;
@@ -178,8 +178,8 @@ void create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_set_style_pad_all(header_pad, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     
     /* right part of the header symbols */
-    lv_obj_t *alert_lbl = add_header_label(header_cont, LV_SYMBOL_BELL);
-    lv_obj_t *bat_lbl = add_header_label(header_cont, LV_SYMBOL_BATTERY_FULL);
+    lv_obj_t *alert_lbl = _add_header_label(header_cont, LV_SYMBOL_BELL);
+    lv_obj_t *bat_lbl = _add_header_label(header_cont, LV_SYMBOL_BATTERY_FULL);
 
     lv_obj_t *dash_cont = lv_obj_create(root_cont);
     lv_obj_set_width(dash_cont, LV_PCT(100));
@@ -193,9 +193,9 @@ void create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_set_local_style_prop(dash_cont, LV_STYLE_BORDER_WIDTH, bord_top_val, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_flex_align(dash_cont, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_SPACE_EVENLY);
     
-    lv_obj_t *badge_lbl_gates = add_badged_icon(dash_cont, &gate_icon, "5");
-    lv_obj_t *badge_lbl_tasks = add_badged_icon(dash_cont, &tasks_icon_32, "3");
-    lv_obj_t *badge_lbl_persons = add_badged_icon(dash_cont, &person_icon_32, "2");
+    lv_obj_t *badge_lbl_gates = _add_badged_icon(dash_cont, &gate_icon, "5");
+    lv_obj_t *badge_lbl_tasks = _add_badged_icon(dash_cont, &tasks_icon_32, "3");
+    lv_obj_t *badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32, "2");
     
     //TODO: store label references for status/visibility updates
     (void)alert_lbl;
@@ -207,7 +207,7 @@ void create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     (void)badge_lbl_persons;
 }
 
-int sensemate_menu_init(void)
+int sensemate_ui_init(void)
 {
 
     gpio_init(THUMBWHEEL_PIN_DOWN, GPIO_IN_PU);
@@ -217,7 +217,7 @@ int sensemate_menu_init(void)
     /* create a new input device */
     lv_indev_drv_init(&indev_drv);
     indev_drv.type = LV_INDEV_TYPE_ENCODER;
-    indev_drv.read_cb = encoder_with_keys_read;
+    indev_drv.read_cb = _encoder_with_keys_read;
     /*Register the driver in LVGL and save the created input device object*/
     indev = lv_indev_drv_register(&indev_drv);
     
@@ -248,12 +248,12 @@ int sensemate_menu_init(void)
     /* Homescreen tile: provides an overview of the most important states */
     lv_obj_t * tile = lv_tileview_add_tile(tileview, 0, 0, LV_DIR_VER);
     lv_obj_set_size(tile, LV_PCT(100), LV_PCT(100));
-    create_dashboard(tile, nav_group);
+    _create_dashboard(tile, nav_group);
 
     /* Menu list tile: a scrollable list for navigating to submenues, details, settings etc. */
     tile = lv_tileview_add_tile(tileview, 0, 1, LV_DIR_VER);
     lv_obj_set_size(tile, LV_PCT(100), LV_PCT(100));
-    create_list_menu(tile, nav_group);
+    _create_list_menu(tile, nav_group);
     
     /* Create the task used to force refresh the UI */
     refr_task = lv_timer_create(wakeup_task, REFR_TIME, NULL);
