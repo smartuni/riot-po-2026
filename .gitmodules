@@ -1,4 +1,4 @@
 
 [submodule "nodes/firmware/RIOT"]
 	path = nodes/firmware/RIOT
-	url = https://github.com/smartuni/riot-fork-po-2025
+	url = git@git.inet.haw-hamburg.de:user/rottleuthner/riot.git
