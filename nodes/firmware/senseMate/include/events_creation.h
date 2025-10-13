@@ -37,15 +37,6 @@ void event_handlerNews(event_t *event);
 */
 void event_handlerBleNews(event_t *event);
 
-// event for event at Pin A0
-extern event_t eventA0;
-
-// event for event at Pin A1
-extern event_t eventA1;
-
-// event for event at Pin A3
-extern event_t eventA3;
-
 // event for news received through LoRaWAN
 extern event_t eventNews;
 
