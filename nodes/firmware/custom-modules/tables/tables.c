@@ -45,6 +45,31 @@ static mutex_t decode_mutex = MUTEX_INIT;
 
 static volatile uint32_t device_timestamp = 0;
 
+int tables_get_target_state_entry_count(void)
+{
+    return target_state_entry_count;
+}
+
+int tables_get_is_state_entry_count(void)
+{
+    return is_state_entry_count;
+}
+
+int tables_get_seen_state_entry_count(void)
+{
+    return seen_status_entry_count;
+}
+
+int tables_get_jobs_entry_count(void)
+{
+    return jobs_entry_count;
+}
+
+int tables_get_timestamp_entry_count(void)
+{
+    return timestamp_entry_count;
+}
+
 void increment_device_timestamp(void) {
     atomic_fetch_add_u32(&device_timestamp, 1);
 }
