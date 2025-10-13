@@ -7,10 +7,10 @@
 #include "include/soundModule.h"
 #include "include/vibrationModule.h"
 #include "tables.h"
+#include "include/ui.h"
 #define MIN_SIGNAL_STRENGTH -100 // Minimum signal strength for events
 #define DECREMENT_RSSI 10 // decrement rssi by 10
 #define RSSI_DECREMENT_TIMEOUT 5000 // in milliseconds
-
 
 bool event_accepted = true;
 event_timeout_t reactivate;
@@ -20,6 +20,16 @@ static char thread_stack[THREAD_STACKSIZE_DEFAULT];
 static timestamp_entry timestamp_tbl_entry_buf;
 void event_handler_decrement_rssi_timeout(event_t *event);
 event_t event_rssi_timeout = { .handler = event_handler_decrement_rssi_timeout };
+
+static void _update_ui(void){
+    ui_data_t data = {
+        .visible_gate_cnt = tables_get_is_state_entry_count(),
+        .pending_jobs_cnt = tables_get_jobs_entry_count(),
+        .visible_mate_cnt = tables_get_seen_state_entry_count(),
+    };
+
+    sensemate_ui_update(&data);
+}
 
 void* thread_events_function(void *arg) {
     (void)arg; // Unused argument
@@ -67,8 +77,7 @@ void event_handler_decrement_rssi_timeout(event_t *event)
             });
         };
     }
-    update_menu_from_tables();
-    update_menu_display();
+    _update_ui();
     event_timeout_set(&decrement_rssi_timeout, RSSI_DECREMENT_TIMEOUT); // Set a timeout for the next decrement
 }
 
@@ -79,67 +88,16 @@ void event_handler_reactivate(event_t *event)
     
 }
 
-
-void event_handlerA0(event_t *event)
-{
-    (void) event;   /* Not used */
-    if(event_accepted){
-        event_accepted = false; // Prevent further calls until reset
-        menu_input(DOWN);
-        //set_current_meustate(DOWN);
-        puts("A0 event handler was called.");
-
-        event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-        //refresh_display();
-    }else{
-        puts("event A0 ignored");
-    }
-    
-}
-
-void event_handlerA1(event_t *event)
-{
-    (void) event;   /* Not used */
-    if(event_accepted){
-        event_accepted = false; // Prevent further calls until reset
-        //set_current_meustate(SELECT);
-        menu_input(SELECT);
-        puts("A1 event handler was called.");
-        event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-        ///refresh_display();
-    }else{
-        puts("event A1 ignored");
-    }
-}
-
-void event_handlerA3(event_t *event)
-{
-    (void) event;   /* Not used */
-    if(event_accepted){
-        event_accepted = false; // Prevent further calls until reset
-        //set_current_meustate(UP);
-        menu_input(UP);
-        puts("A3 event handler was called.");
-        event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-        //refresh_display();
-    }else{
-        puts("event A3 ignored");
-    }
-    
-}
-
-
 void event_handlerNews(event_t *event)
 {
     (void) event;   /* Not used */
     
     puts("got news");
     start_vibration();
-    update_menu_from_tables();
+    _update_ui();
     event_post(&sound_queue, &downlink_sound_event);
     //downlink_reveived_sound();
     event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-    update_menu_display();
     stop_vibration();
 }
 
@@ -149,11 +107,10 @@ void event_handlerBleNews(event_t *event)
     
     puts("got ble news");
     start_vibration();
-    update_menu_from_tables();
+    _update_ui();
     event_post(&sound_queue, &tables_news_sound_event);
     //ble_reveived_sound();
     event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-    update_menu_display();
     stop_vibration();
     
 }
