@@ -28,40 +28,16 @@ int main(void) {
     ztimer_sleep(ZTIMER_MSEC, 3000);
     printf("init menu...\n");
     sensemate_ui_init();
-    return 0;
-    //ztimer_sleep(ZTIMER_MSEC, 3000); //if use term activate sleep to see all prints
     init_interrupt();
     init_sound_module();
     init_vibration_module();
-    event_post(&sound_queue, &start_sound_event);
-    //startup_sound();
+    //event_post(&sound_queue, &start_sound_event);
 
-    //printf("Display demo started.\n");
-    init_display();
     printf("Device Type: %d device id: %d\n", RIOT_CONFIG_DEVICE_TYPE,
                                               RIOT_CONFIG_DEVICE_ID);
-    printf("Display initialized.\n");
-    //init_menu();
-    init_new_menu();
-    //set_current_meustate(INIT);
-    update_menu_display();
     init_event();
     init_tables();
-    //is_state_entry receiveide_is_state;
-    //int hallo = get_is_state_entry(1, &receiveide_is_state);
-    //printf("Gate Id %d\n", receiveide_is_state.gateID);
-    //fill_tables_test();
     
-    update_menu_from_tables();
-    //(void) test_merge;
-    //(void) hallo;
-    // const is_state_entry* table = get_is_state_table();
-    // for (int i = 0; i < 255; i++){
-    //     printf("ID: %d, State: %d, Time: %d\n", table[i].gateID, table[i].state, table[i].gateTime);
-    // }
-
-    
-
     puts("starting ble");
     if (BLE_SUCCESS == ble_init()){
         puts("Ble init complete");
