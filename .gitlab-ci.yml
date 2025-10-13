@@ -1,0 +1,61 @@
+stages:
+  - generate
+  - test
+
+variables:
+  # Directory where tests should be executed. Can be overridden per pipeline or job.
+  TEST_DIR: "nodes/firmware/tests"
+  IMAGE: "riot/riotbuild:2025.07"
+
+workflow:
+  rules:
+    # Restrict the number of times the pipeline runs to save resources/limits
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      variables:
+        # Specific merge request configurations for coveralls
+        CI_BRANCH: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+        CI_PULL_REQUEST: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == 'push'
+      when: never  # Avoid running the pipeline twice (push + merge request)
+    - if: $CI_COMMIT_BRANCH || $CI_COMMIT_TAG
+
+# This job discovers subdirectories under $TEST_DIR and emits a child pipeline YAML
+# (child-pipeline.yml) as an artifact. Each discovered directory becomes a separate job.
+generate_tests:
+  stage: generate
+  before_script:
+    - apt-get update -y -qq && apt-get install -y -qq git make openssh-client
+    - eval $(ssh-agent -s)
+    # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent
+    - ssh-add <(echo "$SSH_PRIVATE_KEY" | base64 --decode)
+    # Create the SSH directory and set permissions
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan git.inet.haw-hamburg.de >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
+    - chmod +x ./ci/generate_child_pipeline.sh
+  script:
+    - ./ci/generate_child_pipeline.sh child-pipeline.yml
+  artifacts:
+    paths:
+      - child-pipeline.yml
+    expire_in: 1h
+  cache:
+    key: "$CI_PROJECT_PATH-$CI_COMMIT_REF_SLUG-submodules"
+    paths:
+      - nodes/firmware/RIOT/
+
+run_subtests:
+  stage: test
+  needs:
+    - job: generate_tests
+      artifacts: true
+  trigger:
+    include:
+      - artifact: child-pipeline.yml
+        job: generate_tests
+    strategy: depend
+  rules:
+    - when: always
