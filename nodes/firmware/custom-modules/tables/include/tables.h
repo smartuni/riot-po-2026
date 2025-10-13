@@ -327,6 +327,37 @@ const jobs_entry* get_jobs_table(void);
  */
 const timestamp_entry* get_timestamp_table(void);
 
+/**
+ * Get count of entries in the target state table.
+ * @return the count of entries
+ */
+int tables_get_target_state_entry_count(void);
+
+/**
+ * Get count of entries in the is/current state table.
+ * @return the count of entries
+ */
+int tables_get_is_state_entry_count(void);
+
+
+/**
+ * Get count of entries in the seen state table.
+ * @return the count of entries
+ */
+int tables_get_seen_state_entry_count(void);
+
+/**
+ * Get count of entries in the jobs table.
+ * @return the count of entries
+ */
+int tables_get_jobs_entry_count(void);
+
+/**
+ * Get count of entries in the timestamp table.
+ * @return the count of entries
+ */
+int tables_get_timestamp_entry_count(void);
+
     /**
      * only for testing purposes
     */
