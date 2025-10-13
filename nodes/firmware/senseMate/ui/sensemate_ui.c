@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include "lvgl/lvgl.h"
 #include "lvgl_riot.h"
@@ -8,10 +9,14 @@
 #include "lvgl/src/core/lv_theme.h"
 #include "lvgl/src/extra/themes/mono/lv_theme_mono.h"
 #include "periph/gpio.h"
+#include "include/ui.h"
 
 #define THUMBWHEEL_PIN_DOWN   GPIO_PIN(0, 4)
 #define THUMBWHEEL_PIN_SELECT GPIO_PIN(0, 5)
 #define THUMBWHEEL_PIN_UP     GPIO_PIN(0, 28)
+
+/* Stack for the ui thread */
+static char _ui_thread_stack[THREAD_STACKSIZE_UI];
 
 /* Must be lower than LVGL_INACTIVITY_PERIOD_MS for autorefresh */
 #define REFR_TIME           200
@@ -33,6 +38,10 @@ static lv_obj_t *tileview;
 static lv_obj_t *submenu_tile;
 
 struct ui_dyn_menu_ctx_t;
+
+static lv_obj_t *badge_lbl_gates;
+static lv_obj_t *badge_lbl_tasks;
+static lv_obj_t *badge_lbl_persons;
 
 typedef void (*ui_dyn_menu_enter_cb_t)(struct ui_dyn_menu_ctx_t *ctx);
 typedef void (*ui_dyn_menu_leave_cb_t)(struct ui_dyn_menu_ctx_t *ctx);
@@ -253,18 +262,15 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_set_local_style_prop(dash_cont, LV_STYLE_BORDER_WIDTH, bord_top_val, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_flex_align(dash_cont, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_SPACE_EVENLY);
     
-    lv_obj_t *badge_lbl_gates = _add_badged_icon(dash_cont, &gate_icon_32x32, "5");
-    lv_obj_t *badge_lbl_tasks = _add_badged_icon(dash_cont, &tasks_icon_25x32, "3");
-    lv_obj_t *badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32x32, "2");
+    badge_lbl_gates = _add_badged_icon(dash_cont, &gate_icon_32x32, "5");
+    badge_lbl_tasks = _add_badged_icon(dash_cont, &tasks_icon_25x32, "3");
+    badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32x32, "2");
     
     //TODO: store label references for status/visibility updates
     (void)alert_lbl;
     (void)bat_lbl;
     (void)lora_lbl;
     (void)usb_lbl;
-    (void)badge_lbl_gates;
-    (void)badge_lbl_tasks;
-    (void)badge_lbl_persons;
 }
 
 static void _gate_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
@@ -350,9 +356,9 @@ static void _switch_to_contex_tile_enter_cb(ui_dyn_menu_ctx_t *c)
     lv_indev_set_group(indev, c->nav_group);
 }
 
-int sensemate_ui_init(void)
+static void *_ui_thread(void *arg)
 {
-
+    (void)arg;
     gpio_init(THUMBWHEEL_PIN_DOWN, GPIO_IN_PU);
     gpio_init(THUMBWHEEL_PIN_SELECT, GPIO_IN_PU);
     gpio_init(THUMBWHEEL_PIN_UP, GPIO_IN_PU);
@@ -420,5 +426,36 @@ int sensemate_ui_init(void)
     refr_task = lv_timer_create(wakeup_task, REFR_TIME, NULL);
 
     lvgl_run();
+
+    /* will never be reached, lvgl_run() is blocking */
+    return NULL;
+}
+
+void sensemate_ui_update(ui_data_t *data)
+{
+    char buf[8];
+    lv_snprintf(buf, sizeof(buf), "%d", data->visible_gate_cnt);
+    lv_label_set_text(badge_lbl_gates, buf);
+
+    lv_snprintf(buf, sizeof(buf), "%d", data->pending_jobs_cnt);
+    lv_label_set_text(badge_lbl_tasks, buf);
+
+    lv_snprintf(buf, sizeof(buf), "%d", data->visible_mate_cnt);
+    lv_label_set_text(badge_lbl_persons, buf);
+}
+
+int sensemate_ui_init(void)
+{
+    /* create the reception thread] */
+    kernel_pid_t ui_pid = thread_create(_ui_thread_stack, sizeof(_ui_thread_stack),
+                                        THREAD_PRIORITY_MAIN - 1,
+                                        THREAD_CREATE_STACKTEST, _ui_thread, NULL,
+                                        "ui");
+    if (-EINVAL == ui_pid) {
+        puts("[ui]: failed to create ui thread.");
+        return -1;
+    }else{
+        printf("[ui]: thread started successfully.\n");
+    }
     return 0;
 }

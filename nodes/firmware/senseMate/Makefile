@@ -70,6 +70,7 @@ USEMODULE += lvgl_extra_layout_flex
 USEMODULE += lvgl_extra_theme_mono
 USEMODULE += u8g2_disp_dev
 CFLAGS += -DTHREAD_STACKSIZE_MAIN=2*4096
+CFLAGS += -DTHREAD_STACKSIZE_UI=2*4096
 CFLAGS += -DLV_MEM_SIZE=1024*16
 DIRS += ui
 USEMODULE += ui
