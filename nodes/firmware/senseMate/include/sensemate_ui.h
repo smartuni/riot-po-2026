@@ -1,5 +1,5 @@
-#ifndef UI_H
-#define UI_H
+#ifndef SENSEMATE_UI_H
+#define SENSEMATE_UI_H
 
 typedef struct {
     uint16_t visible_gate_cnt;
