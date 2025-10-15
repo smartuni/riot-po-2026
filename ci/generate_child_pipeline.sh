@@ -36,7 +36,8 @@ ${name}_test:
   script:
     - cd "$d"
     - make clean
-    - make all test
+    - make all
+    - make cleanterm
 YAML
 done
 
