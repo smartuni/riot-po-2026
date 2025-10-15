@@ -46,20 +46,25 @@ int main(void) {
         puts("BLE not started");
     }
 
+    ble_tx_thread_args_t ble_tx_args = {
+        .event_queue = &events_creation_queue,
+        .tx_event = &eventBleTx,
+    };
+
     thread_create(
         ble_send_stack,
         sizeof(ble_send_stack),
         THREAD_PRIORITY_MAIN - 1,
         THREAD_CREATE_STACKTEST,
         ble_send_loop,
-        NULL,
+        &ble_tx_args,
        "bleSend"
     );
 
     ble_receive_thread_args_t args = {
         .receive_queue = &events_creation_queue,
-        .receive_event = &eventBleNews,
-
+        .receive_news_event = &eventBleNews,
+        .receive_any_event = &eventBleRx,
     };
 
     thread_create(
