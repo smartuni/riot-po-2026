@@ -29,7 +29,7 @@ void play_sound(int frequency, int duration_ms) {
 
     for (int i = 0; i < cycles; i++) {
         gpio_toggle(sound);
-        ztimer_sleep(ZTIMER_USEC, delay / 2); // Half period for toggle
+        ztimer_spin(ZTIMER_USEC, delay / 2); // Half period for toggle
     }
     gpio_clear(sound); // Ensure sound is off after playing
 }
@@ -99,14 +99,11 @@ void internal_close_by_todo(void) {
 }
 
 static void sound_handler(event_t *event){
-    puts("Sound handler called.");
     if(event == &start_sound_event){
         internal_startup();
-        puts("Playing startup sound.");
     }
     else if(event == &downlink_sound_event){
         internal_downlink_reveived();
-        puts("Playing downlink sound.");
     }
     else if(event == &uplink_sound_event){
         internal_uplink_send();
@@ -121,9 +118,7 @@ static void sound_handler(event_t *event){
         internal_tables_news();
     }else if(event == &close_by_todo_sound_event){
         internal_close_by_todo();
-    }
-
-    else {
+    } else {
         puts("Unknown sound event received.");
     }
 }
