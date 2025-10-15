@@ -72,8 +72,8 @@ USEMODULE += u8g2_disp_dev
 CFLAGS += -DTHREAD_STACKSIZE_MAIN=2*4096
 CFLAGS += -DTHREAD_STACKSIZE_UI=2*4096
 CFLAGS += -DLV_MEM_SIZE=1024*16
-DIRS += ui
-USEMODULE += ui
+DIRS += sensemate_ui
+USEMODULE += sensemate_ui
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1

@@ -9,7 +9,7 @@
 #include "lvgl/src/core/lv_theme.h"
 #include "lvgl/src/extra/themes/mono/lv_theme_mono.h"
 #include "periph/gpio.h"
-#include "include/ui.h"
+#include "include/sensemate_ui.h"
 
 #define THUMBWHEEL_PIN_DOWN   GPIO_PIN(0, 4)
 #define THUMBWHEEL_PIN_SELECT GPIO_PIN(0, 5)
@@ -262,9 +262,9 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_set_local_style_prop(dash_cont, LV_STYLE_BORDER_WIDTH, bord_top_val, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_flex_align(dash_cont, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_SPACE_EVENLY);
     
-    badge_lbl_gates = _add_badged_icon(dash_cont, &gate_icon_32x32, "5");
-    badge_lbl_tasks = _add_badged_icon(dash_cont, &tasks_icon_25x32, "3");
-    badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32x32, "2");
+    badge_lbl_gates = _add_badged_icon(dash_cont, &gate_icon_32x32, "0");
+    badge_lbl_tasks = _add_badged_icon(dash_cont, &tasks_icon_25x32, "0");
+    badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32x32, "0");
     
     //TODO: store label references for status/visibility updates
     (void)alert_lbl;
@@ -436,12 +436,30 @@ void sensemate_ui_update(ui_data_t *data)
     char buf[8];
     lv_snprintf(buf, sizeof(buf), "%d", data->visible_gate_cnt);
     lv_label_set_text(badge_lbl_gates, buf);
+    if (!data->visible_gate_cnt) {
+        lv_obj_add_flag(badge_lbl_gates, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_clear_flag(badge_lbl_gates, LV_OBJ_FLAG_HIDDEN);
+    }
 
     lv_snprintf(buf, sizeof(buf), "%d", data->pending_jobs_cnt);
     lv_label_set_text(badge_lbl_tasks, buf);
+    if (!data->pending_jobs_cnt) {
+        lv_obj_add_flag(badge_lbl_tasks, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_clear_flag(badge_lbl_tasks, LV_OBJ_FLAG_HIDDEN);
+    }
 
     lv_snprintf(buf, sizeof(buf), "%d", data->visible_mate_cnt);
     lv_label_set_text(badge_lbl_persons, buf);
+    if (!data->visible_mate_cnt) {
+        lv_obj_add_flag(badge_lbl_persons, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_clear_flag(badge_lbl_persons, LV_OBJ_FLAG_HIDDEN);
+    }
+    
+    
+    
 }
 
 int sensemate_ui_init(void)

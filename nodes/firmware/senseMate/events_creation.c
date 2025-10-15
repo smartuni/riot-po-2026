@@ -7,7 +7,7 @@
 #include "include/soundModule.h"
 #include "include/vibrationModule.h"
 #include "tables.h"
-#include "include/ui.h"
+#include "include/sensemate_ui.h"
 #define MIN_SIGNAL_STRENGTH -100 // Minimum signal strength for events
 #define DECREMENT_RSSI 10 // decrement rssi by 10
 #define RSSI_DECREMENT_TIMEOUT 5000 // in milliseconds
