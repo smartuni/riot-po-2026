@@ -22,13 +22,13 @@ void event_handler_decrement_rssi_timeout(event_t *event);
 event_t event_rssi_timeout = { .handler = event_handler_decrement_rssi_timeout };
 
 static void _update_ui(void){
-    ui_data_t data = {
-        .visible_gate_cnt = tables_get_is_state_entry_count(),
-        .pending_jobs_cnt = tables_get_jobs_entry_count(),
-        .visible_mate_cnt = tables_get_seen_state_entry_count(),
-    };
+    ui_data_t *ui_state = sensemate_ui_get_state();
 
-    sensemate_ui_update(&data);
+    ui_state->visible_gate_cnt = tables_get_is_state_entry_count();
+    ui_state->pending_jobs_cnt = tables_get_jobs_entry_count();
+    ui_state->visible_mate_cnt = tables_get_seen_state_entry_count();
+
+    sensemate_ui_update();
 }
 
 void* thread_events_function(void *arg) {
