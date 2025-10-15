@@ -94,6 +94,8 @@ void event_handlerNews(event_t *event)
     
     puts("got news");
     start_vibration();
+    ui_data_t *ui_state = sensemate_ui_get_state();
+    ui_state->lora_state = RECEIVED;
     _update_ui();
     event_post(&sound_queue, &downlink_sound_event);
     //downlink_reveived_sound();
@@ -107,6 +109,8 @@ void event_handlerBleNews(event_t *event)
     
     puts("got ble news");
     start_vibration();
+    ui_data_t *ui_state = sensemate_ui_get_state();
+    ui_state->ble_state = RECEIVED;
     _update_ui();
     event_post(&sound_queue, &tables_news_sound_event);
     //ble_reveived_sound();
@@ -115,9 +119,25 @@ void event_handlerBleNews(event_t *event)
     
 }
 
-event_t eventA0 = { .handler = event_handlerA0 };
-event_t eventA1 = { .handler = event_handlerA1 };
-event_t eventA3 = { .handler = event_handlerA3 };
+void event_handlerBleRx(event_t *event)
+{
+    (void) event;   /* Not used */
+    ui_data_t *ui_state = sensemate_ui_get_state();
+    ui_state->ble_state = RECEIVED;
+    _update_ui();
+    event_post(&sound_queue, &ble_received_sound_event);
+}
+
+void event_handlerBleTx(event_t *event)
+{
+    (void) event;   /* Not used */
+    ui_data_t *ui_state = sensemate_ui_get_state();
+    ui_state->ble_state = TRANSMITTED;
+    _update_ui();
+}
+
 event_t eventNews = { .handler = event_handlerNews };
 event_t eventBleNews = { .handler = event_handlerBleNews };
+event_t eventBleRx = { .handler = event_handlerBleRx };
+event_t eventBleTx = { .handler = event_handlerBleTx };
 event_t event_reactivate = { .handler = event_handler_reactivate };
