@@ -353,7 +353,7 @@ static void wait_for_ble_init(void)
 
 void* ble_send_loop(void* arg)
 {
-    (void)arg;
+    ble_tx_thread_args_t *thr_args = (ble_tx_thread_args_t*)arg;
 
     wait_for_ble_init();
 
@@ -370,6 +370,7 @@ void* ble_send_loop(void* arg)
     };
 
     for (;;) {
+        event_post(thr_args->event_queue, thr_args->tx_event);
         for (size_t i = 0; i < sizeof(cbor_fns) / sizeof(*cbor_fns); ++i) {
             int count = cbor_fns[i](MATE_BLE_MAX_CBOR_PACKAGE_SIZE, &buffer);
             if (count > 0) {
@@ -424,14 +425,14 @@ void* ble_receive_loop(void* args)
         if (thr_args != NULL) {
             if ((thr_args->receive_queue != NULL) && (table_result & TABLE_NEW_RECORD_AND_UPDATE)) {
                 printf("Posting event to receive queue\n");
-                event_post(thr_args->receive_queue, thr_args->receive_event);
+                event_post(thr_args->receive_queue, thr_args->receive_news_event);
                 printf("Event posted that table was updated\n");
             }
 #if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
             else{
                 /* only play sound on the is_state table */
                 if (metadata.message_type == IS_STATE_KEY) {
-                    event_post(&sound_queue, &ble_received_sound_event);
+                    event_post(thr_args->receive_queue, thr_args->receive_any_event);
                 }
             }
 #endif            
