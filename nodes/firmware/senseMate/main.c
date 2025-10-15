@@ -12,6 +12,7 @@
 #include "include/new_menu.h"
 #include "include/soundModule.h"
 #include "include/vibrationModule.h"
+#include "include/sensemate_ui.h"
 
 #include "mate_ble.h"
 
@@ -22,12 +23,12 @@ char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
 int lorawan_started = -1;
 
-int sensemate_ui_init(void);
-
 int main(void) {
     ztimer_sleep(ZTIMER_MSEC, 3000);
     printf("init menu...\n");
     sensemate_ui_init();
+    ui_data_t *ui_state = sensemate_ui_get_state();
+
     init_interrupt();
     init_sound_module();
     init_vibration_module();
@@ -71,13 +72,26 @@ int main(void) {
        "bleRecv"
     );
 
+    ui_state->lora_state = ESTABLISHING_CONNECTION;
+    ui_state->ble_state = CONNECTED;
+    sensemate_ui_update();
+
     lorawan_started = start_lorawan();
+
+    if (lorawan_started == 0) {
+        ui_state->lora_state = CONNECTED;
+        sensemate_ui_update();
+    }
 
     puts("entering main loop");
     while (1)
     {
         if(lorawan_started == -1){
             lorawan_started = start_lorawan();
+            if (lorawan_started == 0) {
+                ui_state->lora_state = CONNECTED;
+                sensemate_ui_update();
+            }
         }
         ztimer_sleep(ZTIMER_MSEC, 1000);
         //refresh_display();
