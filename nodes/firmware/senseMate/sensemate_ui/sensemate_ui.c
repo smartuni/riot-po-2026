@@ -21,12 +21,17 @@ static char _ui_thread_stack[THREAD_STACKSIZE_UI];
 /* Must be lower than LVGL_INACTIVITY_PERIOD_MS for autorefresh */
 #define REFR_TIME           200
 
+static ui_data_t _ui_state;
+
 extern lv_font_t helvetica_light_12;
 extern lv_font_t helvetica10;
 extern const lv_img_dsc_t gate_icon_32x32;
 extern const lv_img_dsc_t tasks_icon_25x32;
 extern const lv_img_dsc_t person_icon_32x32;
 extern const lv_img_dsc_t bluetooth_icon_7x11;
+extern const lv_img_dsc_t arrow_up_icon_5x9;
+extern const lv_img_dsc_t arrow_down_icon_5x9;
+extern const lv_img_dsc_t arrow_up_down_icon_5x9;
 
 static lv_timer_t *refr_task;
 static lv_style_t style_noborder;
@@ -42,6 +47,9 @@ struct ui_dyn_menu_ctx_t;
 static lv_obj_t *badge_lbl_gates;
 static lv_obj_t *badge_lbl_tasks;
 static lv_obj_t *badge_lbl_persons;
+
+static lv_obj_t *alert_lbl;
+static lv_obj_t *bat_lbl;
 
 typedef void (*ui_dyn_menu_enter_cb_t)(struct ui_dyn_menu_ctx_t *ctx);
 typedef void (*ui_dyn_menu_leave_cb_t)(struct ui_dyn_menu_ctx_t *ctx);
@@ -59,12 +67,67 @@ ui_dyn_menu_ctx_t gate_menu_ctx;
 ui_dyn_menu_ctx_t settings_menu_ctx;
 ui_dyn_menu_ctx_t *current_menu_ctx = NULL;
 
+/* how long to show/hide a "connectivity state" ui element
+ * which blinks while establishing the connection. */
+#define CONNECTING_BLINK_TIME_MS        500
+//static lv_timer_t *_lora_conn_state_blink_timer = NULL;
+
+typedef struct {
+    lv_obj_t *obj;
+    lv_obj_t *rx_tx_icon_obj;
+    ui_connection_state_t *conn_state;
+    lv_timer_t *blink_timer;
+} ui_conn_state_obj_ctx_t;
+
+static ui_conn_state_obj_ctx_t _ble_conn_state_ctx = {
+    .obj = NULL,
+    .conn_state = &_ui_state.ble_state,
+    .blink_timer = NULL,
+};
+
+static ui_conn_state_obj_ctx_t _lora_conn_state_ctx = {
+    .obj = NULL,
+    .conn_state = &_ui_state.lora_state,
+    .blink_timer = NULL,
+};
+
+static ui_conn_state_obj_ctx_t _usb_conn_state_ctx = {
+    .obj = NULL,
+    .conn_state = &_ui_state.usb_state,
+    .blink_timer = NULL,
+};
+
 static void wakeup_task(lv_timer_t *param)
 {
     (void)param;
     /* Force a wakeup of lvgl when each task is called: this ensures an activity
        is triggered and wakes up lvgl during the next LVGL_INACTIVITY_PERIOD ms */
     lvgl_wakeup();
+}
+
+static void establ_conn_blink_task(lv_timer_t *timer)
+{
+    ui_conn_state_obj_ctx_t *ctx = timer->user_data;
+    if (*ctx->conn_state == ESTABLISHING_CONNECTION) {
+        if (lv_obj_has_flag(ctx->obj, LV_OBJ_FLAG_HIDDEN)) {
+            lv_obj_clear_flag(ctx->obj, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_add_flag(ctx->obj, LV_OBJ_FLAG_HIDDEN);
+        }
+    } else {
+       lv_timer_del(timer);
+       ctx->blink_timer = NULL;
+    }
+}
+
+static void rx_tx_hide_task(lv_timer_t *timer)
+{
+    ui_conn_state_obj_ctx_t *ctx = timer->user_data;
+    lv_obj_add_flag(ctx->rx_tx_icon_obj, LV_OBJ_FLAG_HIDDEN);
+    lv_timer_del(timer);
+    ctx->blink_timer = NULL;
+    /* reset RX or TX state to connected */
+    *ctx->conn_state = CONNECTED;
 }
 
 static void _encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data){
@@ -197,7 +260,9 @@ static lv_obj_t *_add_badged_icon(lv_obj_t *parent, const void *img_src, const c
     lv_obj_set_local_style_prop(badge_lbl, LV_STYLE_OUTLINE_WIDTH, local_style_val, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     /* hide by default, should be updated dynamically on value changes */
-    lv_obj_add_flag(badge_lbl, LV_OBJ_FLAG_HIDDEN);
+    // TODO: this should be done during setup but currently causes a layout artifact
+    //       where the bottom right bart of the badge is cut of once visible again
+    //lv_obj_add_flag(badge_lbl, LV_OBJ_FLAG_HIDDEN);
     return badge_lbl;
 }
 
@@ -220,6 +285,14 @@ static void _update_badge_counter_label(lv_obj_t *lbl, int value)
     } else {
         lv_obj_clear_flag(lbl, LV_OBJ_FLAG_HIDDEN);
     }
+}
+
+static lv_obj_t* _add_rx_tx_icon_obj(lv_obj_t *parent)
+{
+    lv_obj_t *icon = lv_img_create(parent);
+    lv_img_set_src(icon, &arrow_up_down_icon_5x9);
+    lv_obj_add_flag(icon, LV_OBJ_FLAG_HIDDEN);
+    return icon;
 }
 
 static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
@@ -249,10 +322,15 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     /* left part of the header symbols */
     lv_obj_t * icon = lv_img_create(header_cont);
     lv_img_set_src(icon, &bluetooth_icon_7x11);
+    _ble_conn_state_ctx.obj = icon;
+    _ble_conn_state_ctx.rx_tx_icon_obj = _add_rx_tx_icon_obj(header_cont);
+
+    _lora_conn_state_ctx.obj = _add_header_label(header_cont, "LoRa");
+    _lora_conn_state_ctx.rx_tx_icon_obj = _add_rx_tx_icon_obj(header_cont);
     
-    lv_obj_t *lora_lbl = _add_header_label(header_cont, "LoRa");
-    lv_obj_t *usb_lbl = _add_header_label(header_cont, LV_SYMBOL_USB);
-    
+    _usb_conn_state_ctx.obj = _add_header_label(header_cont, LV_SYMBOL_USB);
+    _usb_conn_state_ctx.rx_tx_icon_obj = _add_rx_tx_icon_obj(header_cont);
+
     /* empty space between left and right part of the header/status bar */
     lv_obj_t * header_pad;
     header_pad = lv_obj_create(header_cont);
@@ -262,8 +340,8 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_set_style_pad_all(header_pad, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     
     /* right part of the header symbols */
-    lv_obj_t *alert_lbl = _add_header_label(header_cont, LV_SYMBOL_BELL);
-    lv_obj_t *bat_lbl = _add_header_label(header_cont, LV_SYMBOL_BATTERY_FULL);
+    alert_lbl = _add_header_label(header_cont, LV_SYMBOL_BELL);
+    bat_lbl = _add_header_label(header_cont, LV_SYMBOL_BATTERY_FULL);
 
     lv_obj_t *dash_cont = lv_obj_create(root_cont);
     lv_obj_set_width(dash_cont, LV_PCT(100));
@@ -280,12 +358,6 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     badge_lbl_gates = _add_badged_icon(dash_cont, &gate_icon_32x32, "0");
     badge_lbl_tasks = _add_badged_icon(dash_cont, &tasks_icon_25x32, "0");
     badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32x32, "0");
-
-    //TODO: store label references for status/visibility updates
-    (void)alert_lbl;
-    (void)bat_lbl;
-    (void)lora_lbl;
-    (void)usb_lbl;
 }
 
 static void _gate_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
@@ -446,15 +518,15 @@ static void *_ui_thread(void *arg)
     return NULL;
 }
 
-void sensemate_ui_update(ui_data_t *data)
-{
-    _update_badge_counter_label(badge_lbl_gates, data->visible_gate_cnt);
-    _update_badge_counter_label(badge_lbl_tasks, data->pending_jobs_cnt);
-    _update_badge_counter_label(badge_lbl_persons, data->visible_mate_cnt);
-}
-
 int sensemate_ui_init(void)
 {
+    _ui_state.visible_gate_cnt = 0;
+    _ui_state.pending_jobs_cnt = 0;
+    _ui_state.visible_mate_cnt = 0;
+    _ui_state.lora_state = DISCONNECTED;
+    _ui_state.ble_state = DISCONNECTED;
+    _ui_state.usb_state = DISCONNECTED;
+
     /* create the reception thread] */
     kernel_pid_t ui_pid = thread_create(_ui_thread_stack, sizeof(_ui_thread_stack),
                                         THREAD_PRIORITY_MAIN - 1,
@@ -467,4 +539,56 @@ int sensemate_ui_init(void)
         printf("[ui]: thread started successfully.\n");
     }
     return 0;
+}
+
+ui_data_t *sensemate_ui_get_state(void)
+{
+    return &_ui_state;
+}
+
+static void _update_connection_state_obj(ui_conn_state_obj_ctx_t *ctx)
+{
+    ui_connection_state_t conn_state = *ctx->conn_state;
+    lv_obj_t *obj = ctx->obj;
+
+    if (conn_state == CONNECTED) {
+        lv_obj_clear_flag(obj, LV_OBJ_FLAG_HIDDEN);
+    } else if (conn_state == DISCONNECTED){
+        lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+    } else if (conn_state == ESTABLISHING_CONNECTION){
+        /* only if not set up already */
+        if (!ctx->blink_timer) {
+            /* setup a timer which toggles the visibility of the lora label object.
+             * The timer is automatically deleted after the linked state is set
+             * to CONNECTED */
+            ctx->blink_timer = lv_timer_create(establ_conn_blink_task,
+                                               CONNECTING_BLINK_TIME_MS,
+                                               ctx);
+        }
+    } else if (conn_state == RECEIVED || conn_state == TRANSMITTED){
+        if (!ctx->blink_timer) {
+            if (conn_state == RECEIVED) {
+                lv_img_set_src(ctx->rx_tx_icon_obj, &arrow_down_icon_5x9);
+            } else {
+                lv_img_set_src(ctx->rx_tx_icon_obj, &arrow_up_icon_5x9);
+            }
+
+            lv_obj_clear_flag(ctx->rx_tx_icon_obj, LV_OBJ_FLAG_HIDDEN);
+
+            ctx->blink_timer = lv_timer_create(rx_tx_hide_task,
+                                               CONNECTING_BLINK_TIME_MS,
+                                               ctx);
+        }
+
+    }
+}
+void sensemate_ui_update(void)
+{
+    _update_badge_counter_label(badge_lbl_gates, _ui_state.visible_gate_cnt);
+    _update_badge_counter_label(badge_lbl_tasks, _ui_state.pending_jobs_cnt);
+    _update_badge_counter_label(badge_lbl_persons, _ui_state.visible_mate_cnt);
+
+    _update_connection_state_obj(&_lora_conn_state_ctx);
+    _update_connection_state_obj(&_ble_conn_state_ctx);
+    _update_connection_state_obj(&_usb_conn_state_ctx);
 }
