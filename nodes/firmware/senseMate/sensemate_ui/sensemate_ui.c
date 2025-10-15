@@ -195,6 +195,9 @@ static lv_obj_t *_add_badged_icon(lv_obj_t *parent, const void *img_src, const c
     lv_obj_set_local_style_prop(badge_lbl, LV_STYLE_OUTLINE_COLOR, local_style_val, LV_PART_MAIN | LV_STATE_DEFAULT);
     local_style_val.num = 3;
     lv_obj_set_local_style_prop(badge_lbl, LV_STYLE_OUTLINE_WIDTH, local_style_val, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    /* hide by default, should be updated dynamically on value changes */
+    lv_obj_add_flag(badge_lbl, LV_OBJ_FLAG_HIDDEN);
     return badge_lbl;
 }
 
@@ -205,6 +208,18 @@ static lv_obj_t *_add_header_label(lv_obj_t *parent, const char *txt)
     lv_obj_center(lbl);
     lv_obj_set_style_pad_all(lbl, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     return lbl;
+}
+
+static void _update_badge_counter_label(lv_obj_t *lbl, int value)
+{
+    char buf[8];
+    lv_snprintf(buf, sizeof(buf), "%d", value);
+    lv_label_set_text(lbl, buf);
+    if (!value) {
+        lv_obj_add_flag(lbl, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_clear_flag(lbl, LV_OBJ_FLAG_HIDDEN);
+    }
 }
 
 static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
@@ -265,7 +280,7 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     badge_lbl_gates = _add_badged_icon(dash_cont, &gate_icon_32x32, "0");
     badge_lbl_tasks = _add_badged_icon(dash_cont, &tasks_icon_25x32, "0");
     badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32x32, "0");
-    
+
     //TODO: store label references for status/visibility updates
     (void)alert_lbl;
     (void)bat_lbl;
@@ -433,33 +448,9 @@ static void *_ui_thread(void *arg)
 
 void sensemate_ui_update(ui_data_t *data)
 {
-    char buf[8];
-    lv_snprintf(buf, sizeof(buf), "%d", data->visible_gate_cnt);
-    lv_label_set_text(badge_lbl_gates, buf);
-    if (!data->visible_gate_cnt) {
-        lv_obj_add_flag(badge_lbl_gates, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_clear_flag(badge_lbl_gates, LV_OBJ_FLAG_HIDDEN);
-    }
-
-    lv_snprintf(buf, sizeof(buf), "%d", data->pending_jobs_cnt);
-    lv_label_set_text(badge_lbl_tasks, buf);
-    if (!data->pending_jobs_cnt) {
-        lv_obj_add_flag(badge_lbl_tasks, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_clear_flag(badge_lbl_tasks, LV_OBJ_FLAG_HIDDEN);
-    }
-
-    lv_snprintf(buf, sizeof(buf), "%d", data->visible_mate_cnt);
-    lv_label_set_text(badge_lbl_persons, buf);
-    if (!data->visible_mate_cnt) {
-        lv_obj_add_flag(badge_lbl_persons, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_clear_flag(badge_lbl_persons, LV_OBJ_FLAG_HIDDEN);
-    }
-    
-    
-    
+    _update_badge_counter_label(badge_lbl_gates, data->visible_gate_cnt);
+    _update_badge_counter_label(badge_lbl_tasks, data->pending_jobs_cnt);
+    _update_badge_counter_label(badge_lbl_persons, data->visible_mate_cnt);
 }
 
 int sensemate_ui_init(void)
