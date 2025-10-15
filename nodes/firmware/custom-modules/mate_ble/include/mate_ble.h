@@ -51,10 +51,14 @@ typedef struct ble_metadata {
 
 typedef struct ble_receive_thread_args {
    event_queue_t* receive_queue;
-   event_t* receive_event;
-
+   event_t* receive_news_event;
+   event_t* receive_any_event;
 } ble_receive_thread_args_t, *ble_receive_thread_args_ptr_t;
 
+typedef struct ble_tx_thread_args {
+   event_queue_t* event_queue;
+   event_t* tx_event;
+} ble_tx_thread_args_t;
 
 /**
  * @brief           Loop that manages the propagation of state tables via ble
