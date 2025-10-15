@@ -91,7 +91,7 @@ int init_tables(void) {
     mutex_lock(&seen_status_mutex);
     mutex_lock(&jobs_mutex);
     mutex_lock(&timestamp_mutex);
-    
+
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
         target_state_entry_table[i].gateID = MAX_GATE_COUNT;  // Mark as empty
         is_state_entry_table[i].gateID = MAX_GATE_COUNT;
@@ -105,13 +105,13 @@ int init_tables(void) {
             seen_status_entry_table[i][j].senseMateID = MAX_SENSE_COUNT;
         }
     }
-    
+
     mutex_unlock(&timestamp_mutex);
     mutex_unlock(&jobs_mutex);
     mutex_unlock(&seen_status_mutex);
     mutex_unlock(&is_state_mutex);
     mutex_unlock(&target_state_mutex);
-    
+
     return TABLE_SUCCESS;
 }
 
@@ -136,9 +136,9 @@ static int is_seen_status_entry_present_internal(uint8_t gate_id, uint8_t sense_
         return 0;
     }
     seen_status_entry entry = seen_status_entry_table[gate_id][sense_id];
-    return entry.gateID != MAX_GATE_COUNT 
-            && entry.gateID == gate_id 
-            && entry.senseMateID != MAX_SENSE_COUNT 
+    return entry.gateID != MAX_GATE_COUNT
+            && entry.gateID == gate_id
+            && entry.senseMateID != MAX_SENSE_COUNT
             && entry.senseMateID == sense_id;
 }
 
@@ -340,7 +340,7 @@ int timestamp_table_to_cbor(cbor_buffer* buffer) {
 
  int print_target_table_test(void){
     printf("\n--- TARGET STATE TABLE ---\n");
-    
+
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
         if (target_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
             printf("Gate: %d, State: %d, Time: %d\n", target_state_entry_table[i].gateID, target_state_entry_table[i].state, target_state_entry_table[i].timestamp);
@@ -381,7 +381,7 @@ int tables_print_all(void){
     printf("\n--- IS STATE TABLE ---\n");
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
         if (is_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
-            printf("Gate: %d, State: %s, Time: %lu\n",
+            printf("Gate: %" PRId8 ", State: %s, Time: %" PRId32 "\n",
                    is_state_entry_table[i].gateID,
                    _gate_state_to_str(is_state_entry_table[i].state),
                    is_state_entry_table[i].gateTime);
@@ -412,13 +412,17 @@ int tables_print_all(void){
 }
 
 int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
+    int tableType = 0;
+    int timeStamp = 0;
+    int typeOfSender = 0;
+    int deviceID = 0;
+
     CborParser parser;
     CborValue value;
     CborValue wrapperValue;
     CborValue fieldsValue;
     CborValue entryValue;
     mutex_lock(&decode_mutex);
-    int tableType, timeStamp, typeOfSender, deviceID;
     memset(returnTargetTable, MAX_GATE_COUNT, sizeof(returnTargetTable));
     memset(returnIsTable, MAX_GATE_COUNT, sizeof(returnIsTable));
     memset(returnSeenTable, MAX_GATE_COUNT, sizeof(returnSeenTable));
@@ -506,10 +510,10 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
         mutex_unlock(&decode_mutex);
         return -12;
     }
-    
+
     int id, s, sID, p, gt;
     size_t length = 0;
-    cbor_value_get_array_length(&wrapperValue, &length); 	
+    cbor_value_get_array_length(&wrapperValue, &length);
     for(size_t i = 0; i < length; i++) {
         cbor_value_enter_container(&fieldsValue, &entryValue); // [
         switch(tableType) {
@@ -602,8 +606,8 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
         cbor_value_leave_container(&fieldsValue,&entryValue); // ]
     }
 
-    cbor_value_leave_container(&wrapperValue, &fieldsValue); // ]	
-    cbor_value_leave_container(&value, &wrapperValue); // ]	
+    cbor_value_leave_container(&wrapperValue, &fieldsValue); // ]
+    cbor_value_leave_container(&value, &wrapperValue); // ]
 
     // Integrate local data into global table
     if(typeOfSender == GATE_NODE) {
@@ -638,12 +642,12 @@ int set_target_state_entry(const target_state_entry* entry) {
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     uint8_t gate_id = entry->gateID;
     if (!is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     mutex_lock(&target_state_mutex);
     int res = TABLE_NO_UPDATES;
     if (!is_target_state_entry_present_internal(gate_id)) {
@@ -657,7 +661,7 @@ int set_target_state_entry(const target_state_entry* entry) {
         target_state_entry_table[gate_id] = *entry;
         res |= TABLE_UPDATED;
     }
-    
+
     mutex_unlock(&target_state_mutex);
     return res;
 }
@@ -667,12 +671,12 @@ int set_is_state_entry(const is_state_entry* entry) {
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     uint8_t gate_id = entry->gateID;
     if (!is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     mutex_lock(&is_state_mutex);
     int res = TABLE_NO_UPDATES;
     if (!is_is_state_entry_present_internal(gate_id)) {
@@ -686,7 +690,7 @@ int set_is_state_entry(const is_state_entry* entry) {
         is_state_entry_table[gate_id] = *entry;
         res |= TABLE_UPDATED;
     }
-    
+
     mutex_unlock(&is_state_mutex);
     return res;
 }
@@ -695,13 +699,13 @@ int set_seen_status_entry(const seen_status_entry* entry) {
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     uint8_t gate_id = entry->gateID;
     uint8_t sense_id = entry->senseMateID;
     if (!is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     mutex_lock(&seen_status_mutex);
     int res = TABLE_NO_UPDATES;
     if (!is_seen_status_entry_present_internal(gate_id, sense_id)) {
@@ -715,7 +719,7 @@ int set_seen_status_entry(const seen_status_entry* entry) {
         seen_status_entry_table[gate_id][sense_id] = *entry;
         res |= TABLE_UPDATED;
     }
-    
+
     mutex_unlock(&seen_status_mutex);
     return res;
 }
@@ -724,12 +728,12 @@ int set_jobs_entry(const jobs_entry* entry) {
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     uint8_t gate_id = entry->gateID;
     if (!is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     mutex_lock(&jobs_mutex);
     int res = TABLE_UPDATED;
     if (!is_jobs_entry_present_internal(gate_id)) {
@@ -738,7 +742,7 @@ int set_jobs_entry(const jobs_entry* entry) {
     }
     jobs_entry_table[gate_id] = *entry;
     mutex_unlock(&jobs_mutex);
-    
+
     return res;
 }
 
@@ -746,12 +750,12 @@ int set_timestamp_entry(const timestamp_entry* entry) {
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     uint8_t gate_id = entry->gateID;
     if (!is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     mutex_lock(&timestamp_mutex);
     int res = TABLE_NO_UPDATES;
     if (!is_timestamp_entry_present_internal(gate_id)) {
@@ -763,7 +767,7 @@ int set_timestamp_entry(const timestamp_entry* entry) {
     }
     timestamp_table[gate_id] = *entry;
     mutex_unlock(&timestamp_mutex);
-    
+
     return res;
 }
 
@@ -771,16 +775,16 @@ int force_set_target_state_entry(const target_state_entry* entry) {
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     uint8_t gate_id = entry->gateID;
     if (!is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     mutex_lock(&target_state_mutex);
     target_state_entry_table[gate_id] = *entry;
     mutex_unlock(&target_state_mutex);
-    
+
     return TABLE_UPDATED;
 }
 
@@ -792,7 +796,7 @@ int merge_target_state_entry_table(const target_state_entry* other, uint8_t size
     for (int i = 0; i < size; i++) {
         int result = set_target_state_entry(&other[i]);
         if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
-            merge_result |= result; 
+            merge_result |= result;
         }
     }
     return merge_result;
@@ -806,7 +810,7 @@ int merge_is_state_entry_table(const is_state_entry* other, uint8_t size) {
     for (int i = 0; i < size; i++) {
         int result = set_is_state_entry(&other[i]);
         if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
-            merge_result |= result; 
+            merge_result |= result;
         }
     }
     return merge_result;
@@ -820,7 +824,7 @@ int merge_seen_status_entry_table(const seen_status_entry* other, uint8_t size) 
     for (int i = 0; i < size; i++) {
         int result = set_seen_status_entry(&other[i]);
         if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
-            merge_result |= result; 
+            merge_result |= result;
         }
     }
     return merge_result;
@@ -834,7 +838,7 @@ int merge_timestamp_entry_table(const timestamp_entry* other, uint8_t size) {
     for (int i = 0; i < size; i++) {
         int result = set_timestamp_entry(&other[i]);
         if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
-            merge_result |= result; 
+            merge_result |= result;
         }
     }
     return merge_result;
@@ -848,7 +852,7 @@ int merge_jobs_entry_table(const jobs_entry* other, uint8_t size) {
     for (int i = 0; i < size; i++) {
         int result = set_jobs_entry(&other[i]);
         if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
-            merge_result |= result; 
+            merge_result |= result;
         }
     }
     return merge_result;
@@ -858,17 +862,17 @@ int get_target_state_entry(uint8_t gate_id, target_state_entry* entry) {
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     mutex_lock(&target_state_mutex);
-    
+
     if (!is_target_state_entry_present_internal(gate_id)) {
         mutex_unlock(&target_state_mutex);
         return TABLE_ERROR_NOT_FOUND;
     }
-    
+
     *entry = target_state_entry_table[gate_id];
     mutex_unlock(&target_state_mutex);
-    
+
     return TABLE_SUCCESS;
 }
 
@@ -876,17 +880,17 @@ int get_is_state_entry(uint8_t gate_id, is_state_entry* entry) {
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     mutex_lock(&is_state_mutex);
-    
+
     if (!is_is_state_entry_present_internal(gate_id)) {
         mutex_unlock(&is_state_mutex);
         return TABLE_ERROR_NOT_FOUND;
     }
-    
+
     *entry = is_state_entry_table[gate_id];
     mutex_unlock(&is_state_mutex);
-    
+
     return TABLE_SUCCESS;
 }
 
@@ -894,17 +898,17 @@ int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, seen_status_entry* 
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     mutex_lock(&seen_status_mutex);
-    
+
     if (!is_seen_status_entry_present_internal(gate_id, sense_id)) {
         mutex_unlock(&seen_status_mutex);
         return TABLE_ERROR_NOT_FOUND;
     }
-    
+
     *entry = seen_status_entry_table[gate_id][sense_id];
     mutex_unlock(&seen_status_mutex);
-    
+
     return TABLE_SUCCESS;
 }
 
@@ -912,17 +916,17 @@ int get_jobs_entry(uint8_t gate_id, jobs_entry* entry) {
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     mutex_lock(&jobs_mutex);
-    
+
     if (!is_jobs_entry_present_internal(gate_id)) {
         mutex_unlock(&jobs_mutex);
         return TABLE_ERROR_NOT_FOUND;
     }
-    
+
     *entry = jobs_entry_table[gate_id];
     mutex_unlock(&jobs_mutex);
-    
+
     return TABLE_SUCCESS;
 }
 
@@ -930,17 +934,17 @@ int get_timestamp_entry(uint8_t gate_id, timestamp_entry* entry) {
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
-    
+
     mutex_lock(&timestamp_mutex);
-    
+
     if (!is_timestamp_entry_present_internal(gate_id)) {
         mutex_unlock(&timestamp_mutex);
         return TABLE_ERROR_NOT_FOUND;
     }
-    
+
     *entry = timestamp_table[gate_id];
     mutex_unlock(&timestamp_mutex);
-    
+
     return TABLE_SUCCESS;
 }
 
@@ -959,7 +963,7 @@ const seen_status_entry* get_seen_status_table(void) {
 const jobs_entry* get_jobs_table(void) {
     return jobs_entry_table;
 }
- 
+
 const timestamp_entry* get_timestamp_table(void) {
     return timestamp_table;
 }
@@ -1085,9 +1089,9 @@ int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_TYPE); // Entry 3
                 cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_ID); // Entry 4
                 if(is_state_entry_count - is_states_entry_processed < calculated_array_entries){
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);  
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);
                 }else{
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries); 
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
                 }
             } // Entry 1
             if (is_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
@@ -1138,9 +1142,9 @@ int is_state_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer)
                 cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
                 cbor_encode_int(&arrayEncoder, IS_STATE_KEY);
                 if(is_state_entry_count - is_states_entry_processed < calculated_array_entries){
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);  
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);
                 }else{
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries); 
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
                 }
             } // Entry 1
             if (is_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
@@ -1340,9 +1344,9 @@ int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_TYPE); // Entry 3
                 cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_ID); // Entry 4
                 if(jobs_entry_count - jobs_entry_processed < calculated_array_entries){
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, jobs_entry_count - jobs_entry_processed);  
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, jobs_entry_count - jobs_entry_processed);
                 }else{
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries); 
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
                 }
             }
             if (jobs_entry_table[table_index].gateID != MAX_GATE_COUNT) {
@@ -1396,9 +1400,9 @@ int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                 cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_TYPE); // Entry 3
                 cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_ID); // Entry 4
                 if(timestamp_entry_count - timestamp_entry_processed < calculated_array_entries){
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, timestamp_entry_count - timestamp_entry_processed);  
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, timestamp_entry_count - timestamp_entry_processed);
                 }else{
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries); 
+                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
                 }
             }
             if (timestamp_table[table_index].gateID != MAX_GATE_COUNT) {
