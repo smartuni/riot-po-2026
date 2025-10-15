@@ -7,10 +7,7 @@ DEVELHELP = 1
 PROJECT_BASE = $(CURDIR)/../..
 RIOTBASE = $(PROJECT_BASE)/RIOT
 EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
-
-# print stack usage by default when automated testing is available
-DEFAULT_MODULE += test_utils_print_stack_usage
-
+EXTERNAL_PKG_DIRS += $(PROJECT_BASE)/custom_packages
 
 # terminate native when the test is complete
 CFLAGS += -DNATIVE_AUTO_EXIT=1
@@ -19,7 +16,7 @@ CFLAGS += -DNATIVE_AUTO_EXIT=1
 CFLAGS += -DRIOT_CONFIG_DEVICE_ID=1
 CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=0
 
-USEMODULE += embunit
+USEPKG += unity
 
 # TODO: need to disable?
 DISABLE_MODULE += auto_init auto_init_%
