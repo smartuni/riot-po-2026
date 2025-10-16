@@ -3,7 +3,6 @@
 #include "ztimer.h"
 #include "board.h"
 #include "event/timeout.h"
-#include "include/new_menu.h"
 #include "include/soundModule.h"
 #include "include/vibrationModule.h"
 #include "tables.h"
