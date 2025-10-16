@@ -1,5 +1,6 @@
 #ifndef SENSEMATE_UI_H
 #define SENSEMATE_UI_H
+#include "mate_types.h"
 
 typedef enum {
     DISCONNECTED,
@@ -8,6 +9,32 @@ typedef enum {
     RECEIVED,
     TRANSMITTED,
 } ui_connection_state_t;
+
+/* type used to pass a gate state to the UI */
+typedef struct {
+    union {
+        gate_state_entry_t gate_state;
+    } data;
+    union {
+        void *ptr;
+        int  idx;
+    } iter_ctx;
+} ui_data_element_t;
+
+/*
+ * Generic callback type used for iterating over objects to be displayed.
+ * @param  prev   caller allocated ui_data_element_t
+ *                set iter_ctx.ptr == NULL to start iteration.
+ * @return true  if there was a next element
+ *         false if iteration finished
+ */
+typedef bool (*ui_data_element_iter_cb_t)(ui_data_element_t *prev);
+
+typedef struct {
+    ui_data_element_iter_cb_t all_gates_iter;
+    ui_data_element_iter_cb_t closeby_gates_iter;
+    ui_data_element_iter_cb_t jobs_iter;
+} ui_data_cbs_t;
 
 typedef struct {
     uint16_t visible_gate_cnt;
@@ -22,9 +49,10 @@ typedef struct {
 /*
  * Initializes sensemate UI (starts a background thread).
  *
+ * @param  data_cbs    callbacks used by the UI to read data elements to be displayed.
  * @return 0 on success
  */
-int sensemate_ui_init(void);
+int sensemate_ui_init(ui_data_cbs_t *data_cbs);
 
 /*
  * Get the object that holds the UI state.

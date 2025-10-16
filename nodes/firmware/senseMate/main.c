@@ -21,10 +21,29 @@ char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
 int lorawan_started = -1;
 
+static bool _all_gates_iter(ui_data_element_t *prev)
+{
+    gate_id_t next_id = prev->iter_ctx.idx;
+
+    for (gate_id_t i = next_id; i < MAX_GATE_COUNT; i++) {
+        if (get_is_state_entry(i, &prev->data.gate_state) == TABLE_SUCCESS) {
+            prev->iter_ctx.idx = i + 1;
+            return true;
+        }
+    }
+    return false;
+}
+
+static ui_data_cbs_t _ui_data_cbs = {
+    .all_gates_iter = _all_gates_iter,
+    .closeby_gates_iter = NULL,
+    .jobs_iter = NULL,
+};
+
 int main(void) {
-    ztimer_sleep(ZTIMER_MSEC, 3000);
+    //ztimer_sleep(ZTIMER_MSEC, 3000);
     printf("init menu...\n");
-    sensemate_ui_init();
+    sensemate_ui_init(&_ui_data_cbs);
     ui_data_t *ui_state = sensemate_ui_get_state();
 
     init_interrupt();
