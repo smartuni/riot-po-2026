@@ -28,9 +28,6 @@ RIOT_CONFIG_DEVICE_TYPE ?= SENSEMATE_NODE
 # This board requires a start sleep to actually catch the printed output
 USEMODULE += ztimer_sec
 
-USEPKG += u8g2
-USEMODULE += periph_i2c
-
 USEMODULE += periph_gpio
 USEMODULE += periph_gpio_irq
 
@@ -59,6 +56,8 @@ CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=1024*3
 CFLAGS += -DEVENT_THREAD_MEDIUM_STACKSIZE=1024*3
 
 # stuff for new lvgl-based menu implementation
+USEPKG += u8g2
+USEMODULE += periph_i2c
 USEPKG += lvgl
 USEMODULE += lvgl_contrib
 USEMODULE += lvgl_widget_slider
