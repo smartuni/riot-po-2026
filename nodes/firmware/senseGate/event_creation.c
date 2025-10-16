@@ -56,7 +56,7 @@ void event_handlerA0(event_t *event)
         // UPDATE TABLE
         table_entry.gateID = RIOT_CONFIG_DEVICE_ID;
         table_entry.state = event_status;
-        table_entry.gateTime = get_device_timestamp();
+        table_entry.timestamp = get_device_timestamp();
 
         int tableUpdate = set_is_state_entry(&table_entry);
         if( TABLE_UPDATED == tableUpdate){

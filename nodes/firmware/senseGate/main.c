@@ -37,7 +37,7 @@ int main(void){
     is_state_entry table_entry;
     table_entry.gateID = RIOT_CONFIG_DEVICE_ID;
     table_entry.state = inital_door_state;
-    table_entry.gateTime = get_device_timestamp();
+    table_entry.timestamp = get_device_timestamp();
 
     int sis_res = set_is_state_entry(&table_entry);
     if (TABLE_NEW_RECORD == sis_res){
@@ -104,7 +104,7 @@ int main(void){
             is_state_entry table_update_entry;
             table_update_entry.gateID = RIOT_CONFIG_DEVICE_ID;
             table_update_entry.state = get_status();
-            table_update_entry.gateTime = get_device_timestamp();
+            table_update_entry.timestamp = get_device_timestamp();
 
             if (TABLE_UPDATED == set_is_state_entry(&table_update_entry)){
                 puts("Table updated with newest timestamp");
