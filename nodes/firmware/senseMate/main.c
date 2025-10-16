@@ -107,7 +107,7 @@ int main(void) {
 }
 
 void fill_tables_test(void){
-    is_state_entry test;
+    gate_sensor_state_entry_t test;
     test.gateID = 1;
     test.state = 1;
     test.timestamp = 20000;
@@ -176,7 +176,7 @@ void fill_tables_test(void){
     test_seen_merge = set_seen_status_entry(&test_seen);
     printf("Test merge: %d\n", test_seen_merge);
     
-    target_state_entry test_target;
+    gate_target_state_entry_t test_target;
     test_target.gateID = 1;
     test_target.state = 1;
     test_target.timestamp = 20000;

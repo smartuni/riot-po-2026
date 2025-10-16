@@ -19,16 +19,15 @@ typedef struct {
     mate_timestamp_t timestamp;
     gate_id_t gateID;
     gate_state_t state;
-} target_state_entry;
+} gate_state_entry_t;
+
+/* A gate state as requested by a pilot-worker.
+ * The timestamp is always based on the gate sensor reported time. */
+typedef gate_state_entry_t gate_target_state_entry_t;
 
 /* A gate state as reported by a sensor.
- * The timestamp is always based on the
- * gate sensor reported time */
-typedef struct {
-    mate_timestamp_t timestamp;
-    gate_id_t gateID;
-    gate_state_t state;
-} is_state_entry;
+ * The timestamp is always based on the gate sensor reported time. */
+typedef gate_state_entry_t gate_sensor_state_entry_t;
 
 /* A gate state as seen and reported by a worker.
  * The timestamp is always based on the
