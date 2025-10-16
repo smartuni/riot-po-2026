@@ -16,27 +16,27 @@ typedef enum {
 } gate_state_t;
 
 typedef struct {
+    mate_timestamp_t timestamp;
     gate_id_t gateID;
     gate_state_t state;
-    mate_timestamp_t timestamp;
 } target_state_entry;
 
 typedef struct {
+    mate_timestamp_t gateTime;
     gate_id_t gateID;
     gate_state_t state;
-    mate_timestamp_t gateTime;
 } is_state_entry;
 
 typedef struct {
-    gate_id_t gateID;
     mate_timestamp_t gateTime;
+    gate_id_t gateID;
     gate_state_t status;
     mate_id_t senseMateID;
 } seen_status_entry;
 
 typedef struct {
-    gate_id_t gateID;
     mate_timestamp_t timestamp;
+    gate_id_t gateID;
     int8_t rssi;
 } timestamp_entry;
 
