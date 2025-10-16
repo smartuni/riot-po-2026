@@ -46,9 +46,6 @@ DEVELHELP ?= 1
 # some computers.
 PREFLASH_DELAY=8
 
-BUILD_IN_DOCKER ?= 1
-
-
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 CFLAGS += -DDEBUG_ASSERT_VERBOSE
