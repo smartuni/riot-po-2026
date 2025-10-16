@@ -25,7 +25,7 @@ static gate_sensor_state_entry_t is_state_entry_table[MAX_GATE_COUNT];
 static int is_state_entry_count = 0;
 static gate_seen_state_entry_t seen_status_entry_table[MAX_GATE_COUNT][MAX_SENSE_COUNT];
 static int seen_status_entry_count = 0;
-static jobs_entry jobs_entry_table[MAX_GATE_COUNT];
+static gate_job_entry_t jobs_entry_table[MAX_GATE_COUNT];
 static int jobs_entry_count = 0;
 static gate_timestamp_entry_t timestamp_table[MAX_GATE_COUNT];
 static int timestamp_entry_count = 0;
@@ -33,7 +33,7 @@ static int timestamp_entry_count = 0;
 static gate_target_state_entry_t returnTargetTable[MAX_GATE_COUNT];
 static gate_sensor_state_entry_t returnIsTable[MAX_GATE_COUNT];
 static gate_seen_state_entry_t returnSeenTable[MAX_GATE_COUNT];
-static jobs_entry returnJobsTable[MAX_GATE_COUNT];
+static gate_job_entry_t returnJobsTable[MAX_GATE_COUNT];
 
 // Mutexes for thread safety
 static mutex_t target_state_mutex = MUTEX_INIT;
@@ -599,7 +599,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                     return -23;
                 }
                 cbor_value_advance(&entryValue);
-                jobs_entry newJobsEntry = {id, JOB_IN_PROGRESS, p};
+                gate_job_entry_t newJobsEntry = {id, JOB_IN_PROGRESS, p};
                 returnJobsTable[i] = newJobsEntry;
                 break;
         }
@@ -724,7 +724,7 @@ int set_seen_status_entry(const gate_seen_state_entry_t* entry) {
     return res;
 }
 
-int set_jobs_entry(const jobs_entry* entry) {
+int set_jobs_entry(const gate_job_entry_t* entry) {
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
@@ -844,7 +844,7 @@ int merge_timestamp_entry_table(const gate_timestamp_entry_t* other, uint8_t siz
     return merge_result;
 }
 
-int merge_jobs_entry_table(const jobs_entry* other, uint8_t size) {
+int merge_jobs_entry_table(const gate_job_entry_t* other, uint8_t size) {
     if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
@@ -912,7 +912,7 @@ int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, gate_seen_state_ent
     return TABLE_SUCCESS;
 }
 
-int get_jobs_entry(uint8_t gate_id, jobs_entry* entry) {
+int get_jobs_entry(uint8_t gate_id, gate_job_entry_t* entry) {
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
@@ -960,7 +960,7 @@ const gate_seen_state_entry_t* get_seen_status_table(void) {
     return &seen_status_entry_table[0][0];
 }
 
-const jobs_entry* get_jobs_table(void) {
+const gate_job_entry_t* get_jobs_table(void) {
     return jobs_entry_table;
 }
 

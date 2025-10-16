@@ -164,7 +164,7 @@ int merge_seen_status_entry_table(const gate_seen_state_entry_t* other, uint8_t 
  * @param size Number of entries in other array
  * @return TABLE_SUCCESS on success, error code on failure
  */
-int merge_jobs_entry_table(const jobs_entry* other, uint8_t size);
+int merge_jobs_entry_table(const gate_job_entry_t* other, uint8_t size);
 
 /**
  * Merge seen timestamp entries from another table
@@ -201,10 +201,10 @@ int set_seen_status_entry(const gate_seen_state_entry_t* entry);
 /**
  * Set/update a single jobs entry
  * Note: Jobs are always overwritten (no timestamp comparison)
- * @param entry Pointer to jobs_entry to set
+ * @param entry Pointer to gate_job_entry_t to set
  * @return TABLE_SUCCESS on success, error code on failure
  */
-int set_jobs_entry(const jobs_entry* entry);
+int set_jobs_entry(const gate_job_entry_t* entry);
 
 /**
  * Set/update a single timestamp entry
@@ -249,10 +249,10 @@ int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, gate_seen_state_ent
 /**
  * Get a single jobs entry by gate ID
  * @param gate_id Gate ID to look up
- * @param entry Pointer to jobs_entry to store result
+ * @param entry Pointer to gate_job_entry_t to store result
  * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
  */
-int get_jobs_entry(uint8_t gate_id, jobs_entry* entry);
+int get_jobs_entry(uint8_t gate_id, gate_job_entry_t* entry);
 
 /**
  * Get a single timestamp entry by gate ID
@@ -284,7 +284,7 @@ const gate_seen_state_entry_t* get_seen_status_table(void);
  * Get direct pointer to jobs table 
  * @return Pointer to internal table array
  */
-const jobs_entry* get_jobs_table(void);
+const gate_job_entry_t* get_jobs_table(void);
 
 /**
  * Get direct pointer to jobs table 
