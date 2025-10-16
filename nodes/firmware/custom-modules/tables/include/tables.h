@@ -155,7 +155,7 @@ int merge_is_state_entry_table(const gate_sensor_state_entry_t* other, uint8_t s
  * @param size Number of entries in other array
  * @return TABLE_SUCCESS on success, error code on failure
  */
-int merge_seen_status_entry_table(const seen_status_entry* other, uint8_t size);
+int merge_seen_status_entry_table(const gate_seen_state_entry_t* other, uint8_t size);
 
 /**
  * Merge jobs entries from another table
@@ -193,10 +193,10 @@ int set_is_state_entry(const gate_sensor_state_entry_t* entry);
 /**
  * Set/update a single seen status entry
  * Updates only if new entry has newer gateTime
- * @param entry Pointer to seen_status_entry to set
+ * @param entry Pointer to gate_seen_state_entry_t to set
  * @return TABLE_SUCCESS on success, error code on failure
  */
-int set_seen_status_entry(const seen_status_entry* entry);
+int set_seen_status_entry(const gate_seen_state_entry_t* entry);
 
 /**
  * Set/update a single jobs entry
@@ -241,10 +241,10 @@ int get_is_state_entry(uint8_t gate_id, gate_sensor_state_entry_t* entry);
 /**
  * Get a single seen status entry by gate ID
  * @param gate_id Gate ID to look up
- * @param entry Pointer to seen_status_entry to store result
+ * @param entry Pointer to gate_seen_state_entry_t to store result
  * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
  */
-int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, seen_status_entry* entry);
+int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, gate_seen_state_entry_t* entry);
 
 /**
  * Get a single jobs entry by gate ID
@@ -278,7 +278,7 @@ const gate_sensor_state_entry_t* get_is_state_table(void);
  * Get direct pointer to seen status table 
  * @return Pointer to internal table array
  */
-const seen_status_entry* get_seen_status_table(void);
+const gate_seen_state_entry_t* get_seen_status_table(void);
 
 /**
  * Get direct pointer to jobs table 

@@ -23,7 +23,7 @@ static gate_target_state_entry_t target_state_entry_table[MAX_GATE_COUNT];
 static int target_state_entry_count = 0;
 static gate_sensor_state_entry_t is_state_entry_table[MAX_GATE_COUNT];
 static int is_state_entry_count = 0;
-static seen_status_entry seen_status_entry_table[MAX_GATE_COUNT][MAX_SENSE_COUNT];
+static gate_seen_state_entry_t seen_status_entry_table[MAX_GATE_COUNT][MAX_SENSE_COUNT];
 static int seen_status_entry_count = 0;
 static jobs_entry jobs_entry_table[MAX_GATE_COUNT];
 static int jobs_entry_count = 0;
@@ -32,7 +32,7 @@ static int timestamp_entry_count = 0;
 
 static gate_target_state_entry_t returnTargetTable[MAX_GATE_COUNT];
 static gate_sensor_state_entry_t returnIsTable[MAX_GATE_COUNT];
-static seen_status_entry returnSeenTable[MAX_GATE_COUNT];
+static gate_seen_state_entry_t returnSeenTable[MAX_GATE_COUNT];
 static jobs_entry returnJobsTable[MAX_GATE_COUNT];
 
 // Mutexes for thread safety
@@ -135,7 +135,7 @@ static int is_seen_status_entry_present_internal(uint8_t gate_id, uint8_t sense_
     if (gate_id >= MAX_GATE_COUNT || sense_id >= MAX_SENSE_COUNT) {
         return 0;
     }
-    seen_status_entry entry = seen_status_entry_table[gate_id][sense_id];
+    gate_seen_state_entry_t entry = seen_status_entry_table[gate_id][sense_id];
     return entry.gateID != MAX_GATE_COUNT
             && entry.gateID == gate_id
             && entry.senseMateID != MAX_SENSE_COUNT
@@ -585,7 +585,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                     return -21;
                 }
                 cbor_value_advance(&entryValue);
-                seen_status_entry newSeenEntry = {id, gt, s, sID};
+                gate_seen_state_entry_t newSeenEntry = {id, gt, s, sID};
                 returnSeenTable[i] = newSeenEntry;
                 break;
             case JOBS_KEY:
@@ -695,7 +695,7 @@ int set_is_state_entry(const gate_sensor_state_entry_t* entry) {
     return res;
 }
 
-int set_seen_status_entry(const seen_status_entry* entry) {
+int set_seen_status_entry(const gate_seen_state_entry_t* entry) {
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
@@ -816,7 +816,7 @@ int merge_is_state_entry_table(const gate_sensor_state_entry_t* other, uint8_t s
     return merge_result;
 }
 
-int merge_seen_status_entry_table(const seen_status_entry* other, uint8_t size) {
+int merge_seen_status_entry_table(const gate_seen_state_entry_t* other, uint8_t size) {
     if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
@@ -894,7 +894,7 @@ int get_is_state_entry(uint8_t gate_id, gate_sensor_state_entry_t* entry) {
     return TABLE_SUCCESS;
 }
 
-int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, seen_status_entry* entry) {
+int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, gate_seen_state_entry_t* entry) {
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
@@ -956,7 +956,7 @@ const gate_sensor_state_entry_t* get_is_state_table(void) {
     return is_state_entry_table;
 }
 
-const seen_status_entry* get_seen_status_table(void) {
+const gate_seen_state_entry_t* get_seen_status_table(void) {
     return &seen_status_entry_table[0][0];
 }
 

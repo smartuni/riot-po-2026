@@ -138,7 +138,7 @@ void fill_tables_test(void){
     test_merge = set_is_state_entry(&test);
     printf("Test merge: %d\n", test_merge);
 
-    seen_status_entry test_seen;
+    gate_seen_state_entry_t test_seen;
     test_seen.gateID = 1;
     test_seen.status = 1;
     test_seen.timestamp = 2000;
