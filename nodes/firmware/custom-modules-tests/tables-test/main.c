@@ -12,7 +12,7 @@ void test_basic_operations(void) {
     printf("init_tables(): %d (0=success)\n", result);
     
     // Test target_state entry
-    target_state_entry target = {
+    gate_target_state_entry_t target = {
         .gateID = 5,
         .state = 1,
         .timestamp = 1000
@@ -21,17 +21,17 @@ void test_basic_operations(void) {
     result = set_target_state_entry(&target);
     printf("set_target_state_entry(): %d\n", result);
     
-    target_state_entry retrieved_target;
+    gate_target_state_entry_t retrieved_target;
     result = get_target_state_entry(5, &retrieved_target);
     printf("get_target_state_entry(): %d\n", result);
     
     if (result == TABLE_SUCCESS) {
-        printf("Retrieved: gateID=%d, state=%d, timestamp=%d\n", 
+        printf("Retrieved: gateID=%d, state=%d, timestamp=%"PRIu32"\n",
                retrieved_target.gateID, retrieved_target.state, retrieved_target.timestamp);
     }
     
     // Test not found
-    target_state_entry not_found;
+    gate_target_state_entry_t not_found;
     result = get_target_state_entry(99, &not_found);
     printf("get_target_state_entry(99): %d (-3=not found)\n", result);
 }
@@ -40,24 +40,24 @@ void test_timestamp_updates(void) {
     printf("\n=== Timestamp Update Test ===\n");
     
     // Add entry with timestamp 1000
-    target_state_entry entry1 = {.gateID = 10, .state = 1, .timestamp = 1000};
+    gate_target_state_entry_t entry1 = {.gateID = 10, .state = 1, .timestamp = 1000};
     set_target_state_entry(&entry1);
     
     // Try to update with older timestamp (should be ignored)
-    target_state_entry entry2 = {.gateID = 10, .state = 2, .timestamp = 500};
+    gate_target_state_entry_t entry2 = {.gateID = 10, .state = 2, .timestamp = 500};
     set_target_state_entry(&entry2);
     
-    target_state_entry retrieved;
+    gate_target_state_entry_t retrieved;
     get_target_state_entry(10, &retrieved);
-    printf("After older update: state=%d, timestamp=%d (should still be 1, 1000)\n", 
+    printf("After older update: state=%d, timestamp=%"PRIu32" (should still be 1, 1000)\n",
            retrieved.state, retrieved.timestamp);
     
     // Update with newer timestamp (should work)
-    target_state_entry entry3 = {.gateID = 10, .state = 3, .timestamp = 2000};
+    gate_target_state_entry_t entry3 = {.gateID = 10, .state = 3, .timestamp = 2000};
     set_target_state_entry(&entry3);
     
     get_target_state_entry(10, &retrieved);
-    printf("After newer update: state=%d, timestamp=%d (should be 3, 2000)\n", 
+    printf("After newer update: state=%d, timestamp=%"PRIu32" (should be 3, 2000)\n",
            retrieved.state, retrieved.timestamp);
 }
 
@@ -65,16 +65,16 @@ void test_force_set(void) {
     printf("\n=== Force Set Test ===\n");
     
     // Add entry
-    target_state_entry entry1 = {.gateID = 15, .state = 1, .timestamp = 2000};
+    gate_target_state_entry_t entry1 = {.gateID = 15, .state = 1, .timestamp = 2000};
     set_target_state_entry(&entry1);
     
     // Force set with older timestamp
-    target_state_entry entry2 = {.gateID = 15, .state = 99, .timestamp = 100};
+    gate_target_state_entry_t entry2 = {.gateID = 15, .state = 99, .timestamp = 100};
     force_set_target_state_entry(&entry2);
     
-    target_state_entry retrieved;
+    gate_target_state_entry_t retrieved;
     get_target_state_entry(15, &retrieved);
-    printf("After force set: state=%d, timestamp=%d (should be 99, 100)\n", 
+    printf("After force set: state=%d, timestamp=%"PRIu32" (should be 99, 100)\n",
            retrieved.state, retrieved.timestamp);
 }
 
@@ -82,34 +82,34 @@ void test_all_table_types(void) {
     printf("\n=== All Table Types Test ===\n");
     init_tables();
     // is_state
-    is_state_entry is_entry = {.gateID = 20, .state = 1, .gateTime = 1000};
+    gate_sensor_state_entry_t is_entry = {.gateID = 20, .state = 1, .timestamp = 1000};
     int result = set_is_state_entry(&is_entry);
     printf("set_is_state_entry(): %d\n", result);
     
-    is_state_entry retrieved_is;
+    gate_sensor_state_entry_t retrieved_is;
     result = get_is_state_entry(20, &retrieved_is);
-    printf("get_is_state_entry(): %d, gateID=%d, state=%d, gateTime=%d\n", 
-           result, retrieved_is.gateID, retrieved_is.state, retrieved_is.gateTime);
+    printf("get_is_state_entry(): %d, gateID=%d, state=%d, timestamp=%"PRIu32"\n",
+           result, retrieved_is.gateID, retrieved_is.state, retrieved_is.timestamp);
     
     // seen_status
-    seen_status_entry seen_entry = {.gateID = 25, .gateTime = 2000, .status = 255, .senseMateID = 42};
+    gate_seen_state_entry_t seen_entry = {.gateID = 25, .timestamp = 2000, .state = 255, .senseMateID = 42};
     result = set_seen_status_entry(&seen_entry);
     printf("set_seen_status_entry(): %d\n", result);
     
-    seen_status_entry retrieved_seen;
+    gate_seen_state_entry_t retrieved_seen;
     result = get_seen_status_entry(25, 0, &retrieved_seen);
-    printf("get_seen_status_entry(): %d, gateID=%d, gateTime=%d, status=%d, senseMateID=%d\n", 
-           result, retrieved_seen.gateID, retrieved_seen.gateTime, 
-           retrieved_seen.status, retrieved_seen.senseMateID);
+    printf("get_seen_status_entry(): %d, gateID=%d, timestamp=%"PRIu32", status=%d, senseMateID=%d\n",
+           result, retrieved_seen.gateID, retrieved_seen.timestamp,
+           retrieved_seen.state, retrieved_seen.senseMateID);
     
     // jobs
-    jobs_entry job_entry = {.gateID = 30, .done = 1};
+    gate_job_entry_t job_entry = {.gateID = 30, .done = 1};
     result = set_jobs_entry(&job_entry);
     printf("set_jobs_entry(): %d\n", result);
     
-    jobs_entry retrieved_job;
+    gate_job_entry_t retrieved_job;
     result = get_jobs_entry(30, &retrieved_job);
-    printf("get_jobs_entry(): %d, gateID=%d, done=%d\n", 
+    printf("get_jobs_entry(): %d, gateID=%d, done=%d\n",
            result, retrieved_job.gateID, retrieved_job.done);
 }
 
@@ -119,29 +119,29 @@ void test_all_table_entries(void) {
     
     // Erstmal alle Tabellen mit Testdaten füllen
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        target_state_entry target_entry = {
+        gate_target_state_entry_t target_entry = {
             .gateID = i,
             .state = i % 2,
             .timestamp = 1000 + i * 100
         };
         set_target_state_entry(&target_entry);
         
-        is_state_entry is_state_entry = {
+        gate_sensor_state_entry_t sensor_state_entry = {
             .gateID = i,
             .state = i,
-            .gateTime = 2000 + i * 50
+            .timestamp = 2000 + i * 50
         };
-        set_is_state_entry(&is_state_entry);
+        set_is_state_entry(&sensor_state_entry);
         
-        seen_status_entry seen_entry = {
+        gate_seen_state_entry_t seen_state_entry = {
             .gateID = i,
-            .gateTime = 3000 + i,
-            .status = i % 2,
+            .timestamp = 3000 + i,
+            .state = i % 2,
             .senseMateID = 254 - i
         };
-        set_seen_status_entry(&seen_entry);
+        set_seen_status_entry(&seen_state_entry);
         
-        jobs_entry job_entry = {
+        gate_job_entry_t job_entry = {
             .gateID = i,
             .done = i % 2
         };
@@ -149,10 +149,10 @@ void test_all_table_entries(void) {
     }
     
     // Direkte Pointer auf die internen Tabellen holen (LOCKFREE!)
-    const target_state_entry* target_table = get_target_state_table();
-    const is_state_entry* is_table = get_is_state_table();
-    const seen_status_entry* seen_table = get_seen_status_table();
-    const jobs_entry* jobs_table = get_jobs_table();
+    const gate_target_state_entry_t* target_table = get_target_state_table();
+    const gate_sensor_state_entry_t* is_table = get_is_state_table();
+    const gate_seen_state_entry_t* seen_table = get_seen_status_table();
+    const gate_job_entry_t* jobs_table = get_jobs_table();
     
     // 1. Target State Tabelle
     printf("\n--- TARGET STATE TABLE ---\n");
@@ -167,7 +167,7 @@ void test_all_table_entries(void) {
     int entry_index = 0;
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
         if (target_table[i].gateID != MAX_GATE_COUNT) {
-            printf("  [%d] gateID=%d, state=%d, timestamp=%d\n",
+            printf("  [%d] gateID=%d, state=%d, timestamp=%"PRIu32"\n",
                    entry_index, target_table[i].gateID, target_table[i].state, target_table[i].timestamp);
             entry_index++;
         }
@@ -186,8 +186,8 @@ void test_all_table_entries(void) {
     entry_index = 0;
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
         if (is_table[i].gateID != MAX_GATE_COUNT) {
-            printf("  [%d] gateID=%d, state=%d, gateTime=%d\n",
-                   entry_index, is_table[i].gateID, is_table[i].state, is_table[i].gateTime);
+            printf("  [%d] gateID=%d, state=%d, timestamp=%"PRIu32"\n",
+                   entry_index, is_table[i].gateID, is_table[i].state, is_table[i].timestamp);
             entry_index++;
         }
     }
@@ -205,9 +205,9 @@ void test_all_table_entries(void) {
     entry_index = 0;
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
         if (seen_table[i].gateID != MAX_GATE_COUNT) {
-            printf("  [%d] gateID=%d, gateTime=%d, status=%d, senseMateID=%d\n",
-                   entry_index, seen_table[i].gateID, seen_table[i].gateTime,
-                   seen_table[i].status, seen_table[i].senseMateID);
+            printf("  [%d] gateID=%d, timestamp=%"PRIu32", status=%d, senseMateID=%d\n",
+                   entry_index, seen_table[i].gateID, seen_table[i].timestamp,
+                   seen_table[i].state, seen_table[i].senseMateID);
             entry_index++;
         }
     }
@@ -244,7 +244,7 @@ void test_error_cases(void) {
     printf("\n=== Error Cases Test ===\n");
     
     // Invalid gate ID
-    target_state_entry invalid_entry = {.gateID = 255, .state = 1, .timestamp = 1000};
+    gate_target_state_entry_t invalid_entry = {.gateID = 255, .state = 1, .timestamp = 1000};
     int result = set_target_state_entry(&invalid_entry);
     printf("set_target_state_entry(gateID=255): %d (-2=invalid gate ID)\n", result);
     
