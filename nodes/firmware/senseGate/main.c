@@ -34,7 +34,7 @@ int main(void){
 
     // write to table
     puts("write to table");
-    is_state_entry table_entry;
+    gate_sensor_state_entry_t table_entry;
     table_entry.gateID = RIOT_CONFIG_DEVICE_ID;
     table_entry.state = inital_door_state;
     table_entry.timestamp = get_device_timestamp();
@@ -101,7 +101,7 @@ int main(void){
         ztimer_sleep(ZTIMER_MSEC,1000);
     
         if (timeToUpdateTable == TIME_PERIOD_TABLE_UPDATE) {
-            is_state_entry table_update_entry;
+            gate_sensor_state_entry_t table_update_entry;
             table_update_entry.gateID = RIOT_CONFIG_DEVICE_ID;
             table_update_entry.state = get_status();
             table_update_entry.timestamp = get_device_timestamp();

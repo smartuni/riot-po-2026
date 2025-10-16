@@ -6,7 +6,7 @@ gpio_mode_t led0_mode = GPIO_OUT; // TODO REMOVE LATER #1
 
 
 // TABLE
-is_state_entry table_entry;
+gate_sensor_state_entry_t table_entry;
 
 uint8_t event_status = 0;
 

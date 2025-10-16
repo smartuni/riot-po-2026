@@ -135,19 +135,19 @@ int init_tables(void);
 // Setter functions (merge/update)
 /**
  * Merge target state entries from another table
- * @param other Pointer to array of target_state_entry
+ * @param other Pointer to array of gate_target_state_entry_t
  * @param size Number of entries in other array
  * @return TABLE_SUCCESS on success, error code on failure
  */
-int merge_target_state_entry_table(const target_state_entry* other, uint8_t size);
+int merge_target_state_entry_table(const gate_target_state_entry_t* other, uint8_t size);
 
 /**
  * Merge is state entries from another table
- * @param other Pointer to array of is_state_entry
+ * @param other Pointer to array of gate_sensor_state_entry_t
  * @param size Number of entries in other array
  * @return TABLE_SUCCESS on success, error code on failure
  */
-int merge_is_state_entry_table(const is_state_entry* other, uint8_t size);
+int merge_is_state_entry_table(const gate_sensor_state_entry_t* other, uint8_t size);
 
 /**
  * Merge seen status entries from another table
@@ -177,18 +177,18 @@ int merge_timestamp_entry_table(const timestamp_entry* other, uint8_t size);
 /**
  * Set/update a single target state entry
  * Updates only if new entry has newer timestamp
- * @param entry Pointer to target_state_entry to set
+ * @param entry Pointer to gate_target_state_entry_t to set
  * @return TABLE_SUCCESS on success, error code on failure
  */
-int set_target_state_entry(const target_state_entry* entry);
+int set_target_state_entry(const gate_target_state_entry_t* entry);
 
 /**
  * Set/update a single is state entry
  * Updates only if new entry has newer gateTime
- * @param entry Pointer to is_state_entry to set
+ * @param entry Pointer to gate_sensor_state_entry_t to set
  * @return TABLE_SUCCESS on success, error code on failure
  */
-int set_is_state_entry(const is_state_entry* entry);
+int set_is_state_entry(const gate_sensor_state_entry_t* entry);
 
 /**
  * Set/update a single seen status entry
@@ -216,27 +216,27 @@ int set_timestamp_entry(const timestamp_entry* entry);
 /**
  * Force set a target state entry (ignore timestamp)
  * Always overwrites existing entry regardless of timestamp
- * @param entry Pointer to target_state_entry to set
+ * @param entry Pointer to gate_target_state_entry_t to set
  * @return TABLE_SUCCESS on success, error code on failure
  */
-int force_set_target_state_entry(const target_state_entry* entry);
+int force_set_target_state_entry(const gate_target_state_entry_t* entry);
 
 // Getter functions
 /**
  * Get a single target state entry by gate ID
  * @param gate_id Gate ID to look up
- * @param entry Pointer to target_state_entry to store result
+ * @param entry Pointer to gate_target_state_entry_t to store result
  * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
  */
-int get_target_state_entry(uint8_t gate_id, target_state_entry* entry);
+int get_target_state_entry(uint8_t gate_id, gate_target_state_entry_t* entry);
 
 /**
  * Get a single is state entry by gate ID
  * @param gate_id Gate ID to look up
- * @param entry Pointer to is_state_entry to store result
+ * @param entry Pointer to gate_sensor_state_entry_t to store result
  * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
  */
-int get_is_state_entry(uint8_t gate_id, is_state_entry* entry);
+int get_is_state_entry(uint8_t gate_id, gate_sensor_state_entry_t* entry);
 
 /**
  * Get a single seen status entry by gate ID
@@ -266,13 +266,13 @@ int get_timestamp_entry(uint8_t gate_id, timestamp_entry* entry);
  * Get direct pointer to target state table 
  * @return Pointer to internal table array
  */
-const target_state_entry* get_target_state_table(void);
+const gate_target_state_entry_t* get_target_state_table(void);
 
 /**
  * Get direct pointer to is state table 
  * @return Pointer to internal table array
  */
-const is_state_entry* get_is_state_table(void);
+const gate_sensor_state_entry_t* get_is_state_table(void);
 
 /**
  * Get direct pointer to seen status table 
@@ -326,8 +326,8 @@ int tables_get_timestamp_entry_count(void);
     /**
      * only for testing purposes
     */
-    int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buffer);
-    int target_state_table_to_cbor_many_test(target_state_entry table[], int package_size, cbor_buffer* buffer);
+    int target_state_table_to_cbor_test(gate_target_state_entry_t table[], cbor_buffer* buffer);
+    int target_state_table_to_cbor_many_test(gate_target_state_entry_t table[], int package_size, cbor_buffer* buffer);
     int print_target_table_test(void);
     int tables_print_all(void);
 

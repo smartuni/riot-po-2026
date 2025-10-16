@@ -50,7 +50,7 @@
 /* Size of reception message queue */
 #define QUEUE_SIZE 8
 /* Max length of serialized data to send to backend server */
-#define MAX_SEND_BUFFER_SIZE (MAX_GATE_COUNT * (sizeof(is_state_entry)))
+#define MAX_SEND_BUFFER_SIZE (MAX_GATE_COUNT * (sizeof(gate_sensor_state_entry_t)))
 /* Size of single LoRaWAN message */
 #define SEND_BUFFER_SIZE 50
 #define MAX_RECEIVE_SIZE 222

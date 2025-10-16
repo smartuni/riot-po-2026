@@ -19,9 +19,9 @@
 #define TABLE_ERROR_NOT_FOUND   -3
 
 // Static tables
-static target_state_entry target_state_entry_table[MAX_GATE_COUNT];
+static gate_target_state_entry_t target_state_entry_table[MAX_GATE_COUNT];
 static int target_state_entry_count = 0;
-static is_state_entry is_state_entry_table[MAX_GATE_COUNT];
+static gate_sensor_state_entry_t is_state_entry_table[MAX_GATE_COUNT];
 static int is_state_entry_count = 0;
 static seen_status_entry seen_status_entry_table[MAX_GATE_COUNT][MAX_SENSE_COUNT];
 static int seen_status_entry_count = 0;
@@ -30,8 +30,8 @@ static int jobs_entry_count = 0;
 static timestamp_entry timestamp_table[MAX_GATE_COUNT];
 static int timestamp_entry_count = 0;
 
-static target_state_entry returnTargetTable[MAX_GATE_COUNT];
-static is_state_entry returnIsTable[MAX_GATE_COUNT];
+static gate_target_state_entry_t returnTargetTable[MAX_GATE_COUNT];
+static gate_sensor_state_entry_t returnIsTable[MAX_GATE_COUNT];
 static seen_status_entry returnSeenTable[MAX_GATE_COUNT];
 static jobs_entry returnJobsTable[MAX_GATE_COUNT];
 
@@ -164,7 +164,7 @@ static inline int is_valid_gate_id(uint8_t gate_id) {
     return gate_id < MAX_GATE_COUNT;
 }
 
-int target_state_table_to_cbor_test(target_state_entry table[], cbor_buffer* buffer) {
+int target_state_table_to_cbor_test(gate_target_state_entry_t table[], cbor_buffer* buffer) {
     CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
     cbor_encoder_init(&encoder, buffer->buffer, sizeof(uint8_t) * 100, 0);
     cbor_encoder_create_array(&encoder, &arrayEncoder, 3); // [
@@ -542,7 +542,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                     }
                     cbor_value_advance(&entryValue);
                 }
-                target_state_entry newTargetEntry = {id, s, serverTimestamp};
+                gate_target_state_entry_t newTargetEntry = {id, s, serverTimestamp};
                 returnTargetTable[i] = newTargetEntry;
                 break;
             case IS_STATE_KEY:
@@ -561,7 +561,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                     return -17;
                 }
                 cbor_value_advance(&entryValue);
-                is_state_entry newIsEntry = {id, s, gt};
+                gate_sensor_state_entry_t newIsEntry = {id, s, gt};
                 returnIsTable[i] = newIsEntry;
                 break;
             case SEEN_STATUS_KEY:
@@ -638,7 +638,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     return res;
 }
 
-int set_target_state_entry(const target_state_entry* entry) {
+int set_target_state_entry(const gate_target_state_entry_t* entry) {
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
@@ -666,7 +666,7 @@ int set_target_state_entry(const target_state_entry* entry) {
     return res;
 }
 
-int set_is_state_entry(const is_state_entry* entry) {
+int set_is_state_entry(const gate_sensor_state_entry_t* entry) {
     printf("Called: set_is_state_entry\n");
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
@@ -771,7 +771,7 @@ int set_timestamp_entry(const timestamp_entry* entry) {
     return res;
 }
 
-int force_set_target_state_entry(const target_state_entry* entry) {
+int force_set_target_state_entry(const gate_target_state_entry_t* entry) {
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
@@ -788,7 +788,7 @@ int force_set_target_state_entry(const target_state_entry* entry) {
     return TABLE_UPDATED;
 }
 
-int merge_target_state_entry_table(const target_state_entry* other, uint8_t size) {
+int merge_target_state_entry_table(const gate_target_state_entry_t* other, uint8_t size) {
     if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
@@ -802,7 +802,7 @@ int merge_target_state_entry_table(const target_state_entry* other, uint8_t size
     return merge_result;
 }
 
-int merge_is_state_entry_table(const is_state_entry* other, uint8_t size) {
+int merge_is_state_entry_table(const gate_sensor_state_entry_t* other, uint8_t size) {
     if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
@@ -858,7 +858,7 @@ int merge_jobs_entry_table(const jobs_entry* other, uint8_t size) {
     return merge_result;
 }
 
-int get_target_state_entry(uint8_t gate_id, target_state_entry* entry) {
+int get_target_state_entry(uint8_t gate_id, gate_target_state_entry_t* entry) {
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
@@ -876,7 +876,7 @@ int get_target_state_entry(uint8_t gate_id, target_state_entry* entry) {
     return TABLE_SUCCESS;
 }
 
-int get_is_state_entry(uint8_t gate_id, is_state_entry* entry) {
+int get_is_state_entry(uint8_t gate_id, gate_sensor_state_entry_t* entry) {
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
@@ -948,11 +948,11 @@ int get_timestamp_entry(uint8_t gate_id, timestamp_entry* entry) {
     return TABLE_SUCCESS;
 }
 
-const target_state_entry* get_target_state_table(void) {
+const gate_target_state_entry_t* get_target_state_table(void) {
     return target_state_entry_table;
 }
 
-const is_state_entry* get_is_state_table(void) {
+const gate_sensor_state_entry_t* get_is_state_table(void) {
     return is_state_entry_table;
 }
 
@@ -968,7 +968,7 @@ const timestamp_entry* get_timestamp_table(void) {
     return timestamp_table;
 }
 
-int target_state_table_to_cbor_many_test(target_state_entry table[], int package_size, cbor_buffer* buffer) {
+int target_state_table_to_cbor_many_test(gate_target_state_entry_t table[], int package_size, cbor_buffer* buffer) {
     printf("Entered function\n");
     // Assert: given package_size big enough
     if(BASE_CBOR_BYTE_SIZE + CBOR_TARGET_STATE_MAX_BYTE_SIZE > package_size) {
