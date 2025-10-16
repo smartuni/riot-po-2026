@@ -16,7 +16,7 @@ event_timeout_t reactivate;
 event_timeout_t decrement_rssi_timeout;
 event_queue_t events_creation_queue;
 static char thread_stack[THREAD_STACKSIZE_DEFAULT];
-static timestamp_entry timestamp_tbl_entry_buf;
+static gate_timestamp_entry_t timestamp_tbl_entry_buf;
 void event_handler_decrement_rssi_timeout(event_t *event);
 event_t event_rssi_timeout = { .handler = event_handler_decrement_rssi_timeout };
 
@@ -69,7 +69,7 @@ void event_handler_decrement_rssi_timeout(event_t *event)
                 timestamp_tbl_entry_buf.rssi -= DECREMENT_RSSI; //decrement rssi by 10
                 printf("Decremented rssi for gate %d to %d\n", timestamp_tbl_entry_buf.gateID, timestamp_tbl_entry_buf.rssi);
             }
-            set_timestamp_entry(&(timestamp_entry){
+            set_timestamp_entry(&(gate_timestamp_entry_t){
                 .gateID = timestamp_tbl_entry_buf.gateID,
                 .timestamp = timestamp_tbl_entry_buf.timestamp,
                 .rssi = timestamp_tbl_entry_buf.rssi

@@ -49,6 +49,6 @@ typedef struct {
     gate_id_t gateID;
     uint8_t done;
     uint8_t priority;
-} jobs_entry;
+} gate_job_entry_t;
 
 #endif

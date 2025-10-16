@@ -207,7 +207,7 @@ void fill_tables_test(void){
     test_target_merge = set_target_state_entry(&test_target);
     printf("Test merge: %d\n", test_target_merge);
 
-    jobs_entry test_job;
+    gate_job_entry_t test_job;
     test_job.gateID = 1;
     test_job.done = 1;
     test_job.priority = 1;
@@ -238,7 +238,7 @@ void fill_tables_test(void){
     test_job_merge = set_jobs_entry(&test_job);
     printf("Test merge: %d\n", test_job_merge);
 
-    timestamp_entry test_timestamp;
+    gate_timestamp_entry_t test_timestamp;
     test_timestamp.gateID = 1;
     test_timestamp.timestamp = 55000;
     test_timestamp.rssi = -50;
