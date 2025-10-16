@@ -43,7 +43,7 @@ typedef struct {
     mate_timestamp_t timestamp;
     gate_id_t gateID;
     int8_t rssi;
-} timestamp_entry;
+} gate_timestamp_entry_t;
 
 typedef struct {
     gate_id_t gateID;
