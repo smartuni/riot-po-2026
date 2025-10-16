@@ -1,4 +1,3 @@
-#include "include/displayDemo.h"
 #include "ztimer.h"
 #include <stdio.h>
 #include <list.h>
@@ -9,7 +8,6 @@
 #include "include/events_creation.h"
 #include "tables.h"
 #include "mate_lorawan.h"
-#include "include/new_menu.h"
 #include "include/soundModule.h"
 #include "include/vibrationModule.h"
 #include "include/sensemate_ui.h"

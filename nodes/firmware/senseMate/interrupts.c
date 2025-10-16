@@ -4,7 +4,6 @@
 #include "board.h"
 #include "ztimer.h"
 #include "periph/gpio.h"
-#include "include/displayDemo.h"
 #include "include/events_creation.h"
 #include "include/soundModule.h"
 
