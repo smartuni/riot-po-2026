@@ -22,6 +22,7 @@ static char _ui_thread_stack[THREAD_STACKSIZE_UI];
 #define REFR_TIME           200
 
 static ui_data_t _ui_state;
+static const ui_data_cbs_t *_data_cbs;
 
 extern lv_font_t helvetica_light_12;
 extern lv_font_t helvetica10;
@@ -208,19 +209,17 @@ static void _create_gate_list(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_center(list1);
     lv_obj_add_style(list1, &style_noborder, 0);
 
-    lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, "Gate 1");
-    lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+    ui_data_element_t gate_elem = { .iter_ctx.ptr = NULL };
+    while(_data_cbs->all_gates_iter(&gate_elem)) {
+        gate_state_entry_t *gs = &gate_elem.data.gate_state;
+        char buf[16];
+        lv_snprintf(buf, sizeof(buf), "Gate %d", gs->gateID);
+        lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, buf);
+        lv_group_add_obj(grp, btn);
+        lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+    }
 
-    btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, "Gate 2");
-    lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
-
-    btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, "Gate 3");
-    lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
-
-    btn = lv_list_add_btn(list1, LV_SYMBOL_NEW_LINE, "back");
+    lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_NEW_LINE, "back");
     lv_group_add_obj(grp, btn);
     lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, &main_menu_ctx);
 
@@ -512,14 +511,16 @@ static void *_ui_thread(void *arg)
     /* Create the task used to force refresh the UI */
     refr_task = lv_timer_create(wakeup_task, REFR_TIME, NULL);
 
+    sensemate_ui_update();
     lvgl_run();
 
     /* will never be reached, lvgl_run() is blocking */
     return NULL;
 }
 
-int sensemate_ui_init(void)
+int sensemate_ui_init(ui_data_cbs_t *data_cbs)
 {
+    _data_cbs = data_cbs;
     _ui_state.visible_gate_cnt = 0;
     _ui_state.pending_jobs_cnt = 0;
     _ui_state.visible_mate_cnt = 0;
@@ -591,4 +592,6 @@ void sensemate_ui_update(void)
     _update_connection_state_obj(&_lora_conn_state_ctx);
     _update_connection_state_obj(&_ble_conn_state_ctx);
     _update_connection_state_obj(&_usb_conn_state_ctx);
+
+    //TODO: add some method to invalidate the gate list in case it is currently shown
 }
