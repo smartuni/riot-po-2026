@@ -343,7 +343,7 @@ int timestamp_table_to_cbor(cbor_buffer* buffer) {
 
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
         if (target_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
-            printf("Gate: %d, State: %d, Time: %d\n", target_state_entry_table[i].gateID, target_state_entry_table[i].state, target_state_entry_table[i].timestamp);
+            printf("Gate: %d, State: %d, Time: %ld\n", target_state_entry_table[i].gateID, target_state_entry_table[i].state, target_state_entry_table[i].timestamp);
         }
     }
     return 1;
@@ -390,7 +390,7 @@ int tables_print_all(void){
     printf("\n--- TARGET STATE TABLE ---\n");
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
         if (target_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
-            printf("Gate: %d, State: %s, Time: %d\n",
+            printf("Gate: %d, State: %s, Time: %ld\n",
                    target_state_entry_table[i].gateID,
                    _gate_state_to_str(target_state_entry_table[i].state),
                    target_state_entry_table[i].timestamp);
@@ -400,7 +400,7 @@ int tables_print_all(void){
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
         for (int j = 0; j < MAX_SENSE_COUNT; j++) {
             if (seen_status_entry_table[i][j].gateID!= MAX_GATE_COUNT) { // Entry ist valid
-                printf("Gate: %d, State: %s, SenseMateID: %u, Time: %d\n",
+                printf("Gate: %d, State: %s, SenseMateID: %u, Time: %ld\n",
                        seen_status_entry_table[i][j].gateID,
                        _gate_state_to_str(seen_status_entry_table[i][j].status),
                        seen_status_entry_table[i][j].senseMateID,

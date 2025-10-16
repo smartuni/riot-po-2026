@@ -3,3 +3,4 @@ USEPKG += tinycbor
 USEMODULE += tinycbor_float
 USEMODULE += embunit
 USEMODULE += fmt
+USEMODULE += mate_types
