@@ -266,7 +266,7 @@ int seen_status_table_to_cbor(cbor_buffer* buffer) {
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].gateID);
                 cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].timestamp);
-                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].status);
+                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].state);
                 cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].senseMateID);
                 cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
             }
@@ -402,7 +402,7 @@ int tables_print_all(void){
             if (seen_status_entry_table[i][j].gateID!= MAX_GATE_COUNT) { // Entry ist valid
                 printf("Gate: %d, State: %s, SenseMateID: %u, Time: %ld\n",
                        seen_status_entry_table[i][j].gateID,
-                       _gate_state_to_str(seen_status_entry_table[i][j].status),
+                       _gate_state_to_str(seen_status_entry_table[i][j].state),
                        seen_status_entry_table[i][j].senseMateID,
                        seen_status_entry_table[i][j].timestamp);
             }
@@ -542,7 +542,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                     }
                     cbor_value_advance(&entryValue);
                 }
-                gate_target_state_entry_t newTargetEntry = {id, s, serverTimestamp};
+                gate_target_state_entry_t newTargetEntry = { .gateID = id, .state = s, .timestamp = serverTimestamp};
                 returnTargetTable[i] = newTargetEntry;
                 break;
             case IS_STATE_KEY:
@@ -561,7 +561,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                     return -17;
                 }
                 cbor_value_advance(&entryValue);
-                gate_sensor_state_entry_t newIsEntry = {id, s, gt};
+                gate_sensor_state_entry_t newIsEntry = { .gateID = id, .state = s, .timestamp = gt};
                 returnIsTable[i] = newIsEntry;
                 break;
             case SEEN_STATUS_KEY:
@@ -585,7 +585,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                     return -21;
                 }
                 cbor_value_advance(&entryValue);
-                gate_seen_state_entry_t newSeenEntry = {id, gt, s, sID};
+                gate_seen_state_entry_t newSeenEntry = { .gateID = id, .timestamp = gt, .state = s, .senseMateID = sID};
                 returnSeenTable[i] = newSeenEntry;
                 break;
             case JOBS_KEY:
@@ -599,7 +599,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
                     return -23;
                 }
                 cbor_value_advance(&entryValue);
-                gate_job_entry_t newJobsEntry = {id, JOB_IN_PROGRESS, p};
+                gate_job_entry_t newJobsEntry = { .gateID = id, .done = JOB_IN_PROGRESS, .priority = p};
                 returnJobsTable[i] = newJobsEntry;
                 break;
         }
@@ -611,7 +611,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
 
     // Integrate local data into global table
     if(typeOfSender == GATE_NODE) {
-        gate_timestamp_entry_t change_entry = {deviceID, timeStamp, rssi};
+        gate_timestamp_entry_t change_entry = { .gateID = deviceID, .timestamp = timeStamp, .rssi = rssi};
         set_timestamp_entry(&change_entry);
     }
 
@@ -1210,7 +1210,7 @@ int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
                     cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 4); // []
                     cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].gateID);
                     cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].timestamp);
-                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].status);
+                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].state);
                     cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].senseMateID);
                     cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder);   // ]
                     seen_status_entry_processed++;
@@ -1281,7 +1281,7 @@ int seen_status_table_to_cbor_many_to_server(int package_size, cbor_buffer* buff
                     cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 4); // []
                     cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].gateID);
                     cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].timestamp);
-                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].status);
+                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].state);
                     cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].senseMateID);
                     cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder);   // ]
                     seen_status_entry_processed++;

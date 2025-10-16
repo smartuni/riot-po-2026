@@ -35,7 +35,7 @@ typedef gate_state_entry_t gate_sensor_state_entry_t;
 typedef struct {
     mate_timestamp_t timestamp;
     gate_id_t gateID;
-    gate_state_t status;
+    gate_state_t state;
     mate_id_t senseMateID;
 } gate_seen_state_entry_t;
 
