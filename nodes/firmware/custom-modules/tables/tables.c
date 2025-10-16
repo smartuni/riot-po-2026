@@ -27,7 +27,7 @@ static gate_seen_state_entry_t seen_status_entry_table[MAX_GATE_COUNT][MAX_SENSE
 static int seen_status_entry_count = 0;
 static jobs_entry jobs_entry_table[MAX_GATE_COUNT];
 static int jobs_entry_count = 0;
-static timestamp_entry timestamp_table[MAX_GATE_COUNT];
+static gate_timestamp_entry_t timestamp_table[MAX_GATE_COUNT];
 static int timestamp_entry_count = 0;
 
 static gate_target_state_entry_t returnTargetTable[MAX_GATE_COUNT];
@@ -611,7 +611,7 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
 
     // Integrate local data into global table
     if(typeOfSender == GATE_NODE) {
-        timestamp_entry change_entry = {deviceID, timeStamp, rssi};
+        gate_timestamp_entry_t change_entry = {deviceID, timeStamp, rssi};
         set_timestamp_entry(&change_entry);
     }
 
@@ -746,7 +746,7 @@ int set_jobs_entry(const jobs_entry* entry) {
     return res;
 }
 
-int set_timestamp_entry(const timestamp_entry* entry) {
+int set_timestamp_entry(const gate_timestamp_entry_t* entry) {
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
@@ -830,7 +830,7 @@ int merge_seen_status_entry_table(const gate_seen_state_entry_t* other, uint8_t 
     return merge_result;
 }
 
-int merge_timestamp_entry_table(const timestamp_entry* other, uint8_t size) {
+int merge_timestamp_entry_table(const gate_timestamp_entry_t* other, uint8_t size) {
     if (size >= MAX_GATE_COUNT) {
         return TABLE_ERROR_SIZE_TOO_BIG;
     }
@@ -930,7 +930,7 @@ int get_jobs_entry(uint8_t gate_id, jobs_entry* entry) {
     return TABLE_SUCCESS;
 }
 
-int get_timestamp_entry(uint8_t gate_id, timestamp_entry* entry) {
+int get_timestamp_entry(uint8_t gate_id, gate_timestamp_entry_t* entry) {
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
@@ -964,7 +964,7 @@ const jobs_entry* get_jobs_table(void) {
     return jobs_entry_table;
 }
 
-const timestamp_entry* get_timestamp_table(void) {
+const gate_timestamp_entry_t* get_timestamp_table(void) {
     return timestamp_table;
 }
 

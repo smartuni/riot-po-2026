@@ -172,7 +172,7 @@ int merge_jobs_entry_table(const jobs_entry* other, uint8_t size);
  * @param size Number of timestamp in other array
  * @return TABLE_SUCCESS on success, error code on failure
  */
-int merge_timestamp_entry_table(const timestamp_entry* other, uint8_t size);
+int merge_timestamp_entry_table(const gate_timestamp_entry_t* other, uint8_t size);
 
 /**
  * Set/update a single target state entry
@@ -208,10 +208,10 @@ int set_jobs_entry(const jobs_entry* entry);
 
 /**
  * Set/update a single timestamp entry
- * @param entry Pointer to timestamp_entry to set
+ * @param entry Pointer to gate_timestamp_entry_t to set
  * @return TABLE_SUCCESS on success, error code on failure
  */
-int set_timestamp_entry(const timestamp_entry* entry);
+int set_timestamp_entry(const gate_timestamp_entry_t* entry);
 
 /**
  * Force set a target state entry (ignore timestamp)
@@ -257,10 +257,10 @@ int get_jobs_entry(uint8_t gate_id, jobs_entry* entry);
 /**
  * Get a single timestamp entry by gate ID
  * @param gate_id Gate ID to look up
- * @param entry Pointer to timestamp_entry to store result
+ * @param entry Pointer to gate_timestamp_entry_t to store result
  * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
  */
-int get_timestamp_entry(uint8_t gate_id, timestamp_entry* entry);
+int get_timestamp_entry(uint8_t gate_id, gate_timestamp_entry_t* entry);
 
 /**
  * Get direct pointer to target state table 
@@ -290,7 +290,7 @@ const jobs_entry* get_jobs_table(void);
  * Get direct pointer to jobs table 
  * @return Pointer to internal table array
  */
-const timestamp_entry* get_timestamp_table(void);
+const gate_timestamp_entry_t* get_timestamp_table(void);
 
 /**
  * Get count of entries in the target state table.
