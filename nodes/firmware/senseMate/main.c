@@ -24,10 +24,36 @@ int lorawan_started = -1;
 static bool _all_gates_iter(ui_data_element_t *prev)
 {
     gate_id_t next_id = prev->iter_ctx.idx;
+    gate_local_info_entry_t *li = &prev->data.local_gate_info;
 
     for (gate_id_t i = next_id; i < MAX_GATE_COUNT; i++) {
-        if (get_is_state_entry(i, &prev->data.gate_state) == TABLE_SUCCESS) {
+        if (tables_get_local_info_entry(i, li) == TABLE_SUCCESS) {
+            /* remember where to continue on the next call */
             prev->iter_ctx.idx = i + 1;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool _set_gate_seen_state_cb(ui_data_element_t *elem)
+{
+    gate_seen_state_entry_t *seen_state = &elem->data.seen_state;
+
+    printf("_set_gate_seen_state_cb: %d %d\n", seen_state->gateID, seen_state->state);
+    /* populate remaining data which is not provided from the UI */
+    seen_state->senseMateID = RIOT_CONFIG_DEVICE_ID;
+    seen_state->timestamp = RIOT_CONFIG_DEVICE_ID;
+
+    gate_timestamp_entry_t te;
+    /* FIXME: if the gate was not seen before (and therefore there is no entry in the timestamp table)
+     *        no seen state entry will be generated.
+     *        In the future at least a local time reference should be added. */
+    int res = get_timestamp_entry(seen_state->gateID, &te);
+    if (res == TABLE_SUCCESS) {
+        seen_state->timestamp = te.timestamp;
+        int sres = set_seen_status_entry(seen_state);
+        if (sres == TABLE_NEW_RECORD || sres == TABLE_UPDATED) {
             return true;
         }
     }
@@ -36,7 +62,7 @@ static bool _all_gates_iter(ui_data_element_t *prev)
 
 static ui_data_cbs_t _ui_data_cbs = {
     .all_gates_iter = _all_gates_iter,
-    .closeby_gates_iter = NULL,
+    .set_seen_state = _set_gate_seen_state_cb,
     .jobs_iter = NULL,
 };
 
