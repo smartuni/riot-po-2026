@@ -5,6 +5,8 @@
  */
 #ifndef MATE_TYPES_H
 #define MATE_TYPES_H
+#include <stdint.h>
+#include <stdbool.h>
 
 typedef uint8_t gate_id_t;
 typedef uint8_t mate_id_t;
@@ -14,6 +16,11 @@ typedef enum {
     GATE_CLOSED = 0,
     GATE_OPEN = 1,
 } gate_state_t;
+
+typedef enum {
+    JOB_IN_PROGRESS = 0,
+    JOB_DONE = 1,
+} job_state_t;
 
 typedef struct {
     mate_timestamp_t timestamp;
@@ -47,8 +54,22 @@ typedef struct {
 
 typedef struct {
     gate_id_t gateID;
-    uint8_t done;
+    job_state_t done;
     uint8_t priority;
 } gate_job_entry_t;
+
+/* A struct which combines the local knowledge about a gate */
+typedef struct {
+    mate_timestamp_t sensor_timestamp;
+    mate_timestamp_t target_timestamp;
+    mate_timestamp_t beacon_timestamp;
+    gate_state_t sensor_state;
+    gate_state_t target_state;
+    gate_id_t gateID;
+    int8_t beacon_rssi;
+    bool sensor_data_present : 1;
+    bool target_data_present : 1;
+    bool beacon_data_present : 1;
+} gate_local_info_entry_t;
 
 #endif
