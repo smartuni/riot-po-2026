@@ -377,6 +377,18 @@ const char* _gate_state_to_str(gate_state_t gate_state)
     }
 }
 
+const char* _job_state_to_str(job_state_t job_state)
+{
+    switch (job_state) {
+        case JOB_DONE:
+            return "JOB_DONE";
+        case JOB_IN_PROGRESS:
+            return "JOB_IN_PROGRESS";
+        default:
+            return "JOB_STATE_INVALID";
+    }
+}
+
 int tables_print_all(void){
     printf("\n--- IS STATE TABLE ---\n");
     for (int i = 0; i < MAX_GATE_COUNT; i++) {
@@ -408,6 +420,25 @@ int tables_print_all(void){
             }
         }
     }
+    printf("\n--- JOBS TABLE ---\n");
+    for (int i = 0; i < MAX_GATE_COUNT; i++) {
+        if (jobs_entry_table[i].gateID != MAX_GATE_COUNT) { // Entry ist valid
+            printf("Gate: %d, Done: %s, Priority: %d\n",
+                   jobs_entry_table[i].gateID,
+                   _job_state_to_str(jobs_entry_table[i].done),
+                   jobs_entry_table[i].priority);
+        }
+    }
+    printf("\n--- TIMESTAMP TABLE ---\n");
+    for (int i = 0; i < MAX_GATE_COUNT; i++) {
+        if (timestamp_table[i].gateID != MAX_GATE_COUNT) { // Entry ist valid
+            printf("Gate: %d, Time: %"PRIu32", RSSI: %d\n",
+                   timestamp_table[i].gateID,
+                   timestamp_table[i].timestamp,
+                   timestamp_table[i].rssi);
+        }
+    }
+
     return 1;
 }
 
@@ -1427,4 +1458,47 @@ int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
     }
     buffer->cbor_size = no_cbor_packages;
     return no_cbor_packages;
+}
+
+int tables_get_local_info_entry(gate_id_t gate_id, gate_local_info_entry_t *li)
+{
+    if (li == NULL || !is_valid_gate_id(gate_id)) {
+        return TABLE_ERROR_INVALID_GATE_ID;
+    }
+
+    gate_target_state_entry_t target;
+    gate_sensor_state_entry_t sensor;
+    gate_timestamp_entry_t timestamp;
+
+    if (get_target_state_entry(gate_id, &target) == TABLE_SUCCESS) {
+        li->target_timestamp = target.timestamp;
+        li->target_state = target.state;
+        li->target_data_present = true;
+    } else {
+        li->target_data_present = false;
+    }
+
+    if (get_is_state_entry(gate_id, &sensor) == TABLE_SUCCESS) {
+        li->sensor_timestamp = sensor.timestamp;
+        li->sensor_state = sensor.state;
+        li->sensor_data_present = true;
+    } else {
+        li->sensor_data_present = false;
+    }
+
+    if (get_timestamp_entry(gate_id, &timestamp) == TABLE_SUCCESS) {
+        li->beacon_timestamp = timestamp.timestamp;
+        li->beacon_rssi = timestamp.rssi;
+        li->beacon_data_present = true;
+    } else {
+        li->beacon_data_present = false;
+    }
+
+    if ( li->target_data_present ||
+         li->sensor_data_present ||
+         li->beacon_data_present) {
+        li->gateID = gate_id;
+        return TABLE_SUCCESS;
+    }
+    return TABLE_ERROR_NOT_FOUND;
 }
