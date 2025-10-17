@@ -20,9 +20,6 @@
 #define JOBS_KEY 0x03
 #define TIMESTAMP_KEY 0x04
 
-#define JOB_DONE 0x01
-#define JOB_IN_PROGRESS 0x00
-
 //General table defines
 #define TABLE_SUCCESS                               0x00
 #define TABLE_NO_UPDATES                            0x00
@@ -322,6 +319,8 @@ int tables_get_jobs_entry_count(void);
  * @return the count of entries
  */
 int tables_get_timestamp_entry_count(void);
+
+int tables_get_local_info_entry(gate_id_t gate_id, gate_local_info_entry_t *li);
 
     /**
      * only for testing purposes
