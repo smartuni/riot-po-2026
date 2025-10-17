@@ -1,0 +1,10 @@
+MODULE := embeddb
+
+
+SRC += embedDB.c
+
+CFLAGS += -Wno-error=unused-parameter -Wno-unused-parameter
+CFLAGS += -Wno-error=old-style-definition
+CFLAGS += -Wno-error=sign-compare
+CFLAGS += -Wno-error=format=
+include $(RIOTBASE)/Makefile.base
