@@ -1,0 +1,6 @@
+MODULE := unity
+
+
+SRC += unity.c
+
+include $(RIOTBASE)/Makefile.base
