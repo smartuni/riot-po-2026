@@ -36,6 +36,7 @@ extern const lv_img_dsc_t arrow_up_down_icon_5x9;
 
 static lv_timer_t *refr_task;
 static lv_style_t style_noborder;
+static lv_style_t style_focused_button;
 static lv_indev_drv_t indev_drv;
 static lv_group_t *nav_group;
 static lv_indev_t *indev;
@@ -63,8 +64,19 @@ typedef struct ui_dyn_menu_ctx_t {
     ui_dyn_menu_leave_cb_t leave;
 } ui_dyn_menu_ctx_t;
 
+typedef struct {
+    gate_id_t gate_id;
+    lv_obj_t *delete_on_exit;
+    lv_group_t *prev_nav_group;
+} ui_gate_edit_ctx_t;
+
+/* In the UI the selected gate should only ever by a single one,
+ * so a global stzate is sufficient. */
+ui_gate_edit_ctx_t _gate_edit_ctx;
+
 ui_dyn_menu_ctx_t main_menu_ctx;
-ui_dyn_menu_ctx_t gate_menu_ctx;
+ui_dyn_menu_ctx_t gate_menu_all_ctx;
+ui_dyn_menu_ctx_t gate_menu_closeby_ctx;
 ui_dyn_menu_ctx_t settings_menu_ctx;
 ui_dyn_menu_ctx_t *current_menu_ctx = NULL;
 
@@ -148,13 +160,13 @@ static void _encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data){
   last_key = data->key;
 }
 
-static void _btn_event_handler(lv_event_t * e)
+static void _menu_btn_handler(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t * obj = lv_event_get_target(e);
     (void)obj;
     if(code == LV_EVENT_CLICKED) {
-        printf("CLICKED %d@%p\n", code, obj);
+        //printf("CLICKED %d@%p\n", code, obj);
         void *usr_data = lv_event_get_user_data(e);
         if (usr_data) {
             if (current_menu_ctx && current_menu_ctx->leave) {
@@ -166,8 +178,105 @@ static void _btn_event_handler(lv_event_t * e)
                 ctx->enter(ctx);
             }
         }
-    } else if(code == LV_EVENT_FOCUSED) {
-        printf("FOCUSED: %s\n", lv_label_get_text(lv_obj_get_child(obj, 0)));
+    }
+}
+
+const char * _observed_gate_state_opts[] = {"Open", "Closed", "Cancel", NULL};
+
+static void _gate_state_prompt_btn_handler(lv_event_t * e)
+{
+    void *usr_data = lv_event_get_user_data(e);
+    int btn_idx = (int)usr_data;
+    if (btn_idx != 2) { /* cancel*/
+        gate_state_t observed_state = (btn_idx == 0) ? GATE_OPEN : GATE_CLOSED;
+        ui_data_element_t data_elem = {
+            .data.seen_state = {
+                            .gateID = _gate_edit_ctx.gate_id,
+                            .state = observed_state,
+            },
+        };
+        _data_cbs->set_seen_state(&data_elem);
+    }
+
+    lv_indev_set_group(indev, _gate_edit_ctx.prev_nav_group);
+    /* close the dialog this button belongs to */
+    lv_obj_del(_gate_edit_ctx.delete_on_exit);
+}
+
+static lv_obj_t* _create_dialog(lv_obj_t *parent, const char *txt, const char *options[])
+{
+    lv_obj_t *dialog_cont = lv_obj_create(parent);
+    lv_obj_set_size(dialog_cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_add_style(dialog_cont, &style_noborder, 0);
+    lv_obj_center(dialog_cont);
+    lv_obj_add_flag(dialog_cont, LV_OBJ_FLAG_FLOATING);
+
+    lv_obj_t *label = lv_label_create(dialog_cont);
+    lv_label_set_text(label, txt);
+    lv_obj_align_to(label, dialog_cont, LV_ALIGN_TOP_MID, 0, 0);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_set_flex_grow(label, 1);
+
+    int elem_cnt = 0;
+    while (options[elem_cnt++] != 0) {};
+    elem_cnt--;
+
+    lv_obj_t *cont_row = lv_obj_create(dialog_cont);
+    lv_obj_set_size(cont_row, LV_PCT(50 * elem_cnt), LV_PCT(50));
+    lv_obj_align(cont_row, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_obj_add_style(cont_row, &style_noborder, 0);
+    lv_obj_set_flex_flow(cont_row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(cont_row, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_SPACE_BETWEEN);
+
+    lv_obj_set_scroll_snap_x(cont_row, LV_SCROLL_SNAP_CENTER);
+    lv_obj_set_scrollbar_mode(cont_row, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scrollbar_mode(dialog_cont, LV_SCROLLBAR_MODE_OFF);
+
+    lv_group_t *nav_group = lv_group_create();
+    lv_group_set_wrap(nav_group, true);
+    lv_indev_set_group(indev, nav_group);
+
+    lv_obj_t *first_btn = NULL;
+    for (int i = 0; options[i] != NULL; i++) {
+        lv_obj_t *btn = lv_btn_create(cont_row);
+        lv_obj_t *label = lv_label_create(btn);
+        lv_label_set_text(label, options[i]);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        //lv_obj_set_flex_grow(label, 1);
+        lv_obj_add_event_cb(btn, _gate_state_prompt_btn_handler, LV_EVENT_CLICKED, (void*)i);
+
+        lv_obj_add_style(btn, &style_focused_button, LV_STATE_FOCUSED);
+        lv_group_add_obj(nav_group, btn);
+        if (i == 0) {
+            first_btn = btn;
+        }
+    }
+
+    /* focus must be set after all the buttons were added to render correctly */
+    if (first_btn) {
+        lv_group_focus_obj(first_btn);
+    }
+    return dialog_cont;
+}
+
+static void _gate_edit_btn_handler(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t * obj = lv_event_get_target(e);
+    (void)obj;
+    if(code == LV_EVENT_CLICKED) {
+        void *usr_data = lv_event_get_user_data(e);
+        if (usr_data) {
+            gate_id_t gate_id = (gate_id_t)(uint32_t)usr_data;
+            /* TODO: is there a safer /more generic  way for this? */
+            lv_obj_t *tile = lv_obj_get_parent(lv_obj_get_parent(obj));
+            char prompt[32];
+            lv_snprintf(prompt, sizeof(prompt), "Report Gate-%d as:", gate_id);
+            lv_obj_t *dialog = _create_dialog(tile, prompt, _observed_gate_state_opts);
+            _gate_edit_ctx.gate_id = gate_id;
+            _gate_edit_ctx.prev_nav_group = lv_obj_get_group(obj);
+            _gate_edit_ctx.delete_on_exit = dialog;
+        }
     }
 }
 
@@ -180,48 +289,52 @@ static void _create_list_menu(lv_obj_t *parent, lv_group_t *grp)
 
     lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_GPS, "Closeby Gates");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, &gate_menu_ctx);
+    lv_obj_add_event_cb(btn, _menu_btn_handler, LV_EVENT_CLICKED, &gate_menu_closeby_ctx);
 
     btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, "All Gates");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, &gate_menu_ctx);
+    lv_obj_add_event_cb(btn, _menu_btn_handler, LV_EVENT_CLICKED, &gate_menu_all_ctx);
 
     btn = lv_list_add_btn(list1, LV_SYMBOL_OK, "Jobs");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn, _menu_btn_handler, LV_EVENT_CLICKED, NULL);
     
     btn = lv_list_add_btn(list1, LV_SYMBOL_WARNING, "Messages");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn, _menu_btn_handler, LV_EVENT_CLICKED, NULL);
 
     btn = lv_list_add_btn(list1, LV_SYMBOL_SETTINGS, "Settings");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, &settings_menu_ctx);
+    lv_obj_add_event_cb(btn, _menu_btn_handler, LV_EVENT_CLICKED, &settings_menu_ctx);
 
     lv_obj_add_flag(list1, LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(list1, LV_SCROLLBAR_MODE_OFF);
 }
 
-static void _create_gate_list(lv_obj_t *parent, lv_group_t *grp)
+static void _create_gate_list(lv_obj_t *parent, lv_group_t *grp, bool only_closeby)
 {
     lv_obj_t *list1 = lv_list_create(parent);
     lv_obj_set_size(list1, LV_PCT(100), LV_PCT(100));
     lv_obj_center(list1);
     lv_obj_add_style(list1, &style_noborder, 0);
+    ui_data_element_iter_cb_t iter_cb = _data_cbs->all_gates_iter;
 
     ui_data_element_t gate_elem = { .iter_ctx.ptr = NULL };
-    while(_data_cbs->all_gates_iter(&gate_elem)) {
-        gate_state_entry_t *gs = &gate_elem.data.gate_state;
+    while(iter_cb(&gate_elem)) {
+        gate_local_info_entry_t *li = &gate_elem.data.local_gate_info;
+        if (only_closeby && li->beacon_rssi < -70) {
+            continue;
+        }
         char buf[16];
-        lv_snprintf(buf, sizeof(buf), "Gate %d", gs->gateID);
+        lv_snprintf(buf, sizeof(buf), "Gate %d", li->gateID);
         lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, buf);
         lv_group_add_obj(grp, btn);
-        lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(btn, _gate_edit_btn_handler, LV_EVENT_CLICKED, (void*)(uint32_t)li->gateID);
     }
 
     lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_NEW_LINE, "back");
     lv_group_add_obj(grp, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, &main_menu_ctx);
+    lv_obj_add_event_cb(btn, _menu_btn_handler, LV_EVENT_CLICKED, &main_menu_ctx);
 
     lv_obj_add_flag(list1, LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(list1, LV_SCROLLBAR_MODE_OFF);
@@ -359,13 +472,23 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32x32, "0");
 }
 
-static void _gate_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
+static void _gate_menu_dyn_enter_mode(ui_dyn_menu_ctx_t *c, bool only_closeby)
 {
     c->nav_group = lv_group_create();
     lv_group_set_wrap(c->nav_group, true);
-    _create_gate_list(c->tile, c->nav_group);
+    _create_gate_list(c->tile, c->nav_group, only_closeby);
     lv_obj_set_tile(c->tileview, c->tile, LV_ANIM_ON);
     lv_indev_set_group(indev, c->nav_group);
+}
+
+static void _gate_menu_dyn_enter_all(ui_dyn_menu_ctx_t *c)
+{
+    _gate_menu_dyn_enter_mode(c, false);
+}
+
+static void _gate_menu_dyn_enter_closeby(ui_dyn_menu_ctx_t *c)
+{
+    _gate_menu_dyn_enter_mode(c, true);
 }
 
 static void _clear_tile_dyn_leave(ui_dyn_menu_ctx_t *c)
@@ -410,7 +533,7 @@ static void _settings_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
     //TODO: move to create function so this can be used with dynamic and static loading
     lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, "Bluetooth");
     lv_group_add_obj(c->nav_group, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
+    //lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
 
     /*Create a slider in the center of the display*/
     lv_obj_t * slider = lv_slider_create(list1);
@@ -426,7 +549,7 @@ static void _settings_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
 
     btn = lv_list_add_btn(list1, LV_SYMBOL_NEW_LINE, "back");
     lv_group_add_obj(c->nav_group, btn);
-    lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, &main_menu_ctx);
+    lv_obj_add_event_cb(btn, _menu_btn_handler, LV_EVENT_CLICKED, &main_menu_ctx);
 
     lv_obj_add_flag(list1, LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_scrollbar_mode(list1, LV_SCROLLBAR_MODE_OFF);
@@ -473,7 +596,11 @@ static void *_ui_thread(void *arg)
     lv_style_set_border_side(&style_noborder, LV_BORDER_SIDE_NONE);
     lv_style_set_border_width(&style_noborder, 0);
     lv_style_set_outline_width(&style_noborder, 0);
-   
+
+    lv_style_init(&style_focused_button);
+    lv_style_set_bg_color(&style_focused_button, lv_color_white());
+    lv_style_set_text_color(&style_focused_button, lv_color_black());
+
     tileview = lv_tileview_create(lv_scr_act());
     lv_obj_set_scrollbar_mode(tileview, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_scroll_dir(tileview, LV_DIR_ALL); 
@@ -498,11 +625,16 @@ static void *_ui_thread(void *arg)
     submenu_tile = lv_tileview_add_tile(tileview, 1, 1, LV_DIR_HOR);
     lv_obj_set_size(tile, LV_PCT(100), LV_PCT(100));
 
-    gate_menu_ctx.tileview = tileview;
-    gate_menu_ctx.tile = submenu_tile;
-    gate_menu_ctx.enter = _gate_menu_dyn_enter;
-    gate_menu_ctx.leave = _clear_tile_dyn_leave;
-    
+    gate_menu_all_ctx.tileview = tileview;
+    gate_menu_all_ctx.tile = submenu_tile;
+    gate_menu_all_ctx.enter = _gate_menu_dyn_enter_all;
+    gate_menu_all_ctx.leave = _clear_tile_dyn_leave;
+
+    gate_menu_closeby_ctx.tileview = tileview;
+    gate_menu_closeby_ctx.tile = submenu_tile;
+    gate_menu_closeby_ctx.enter = _gate_menu_dyn_enter_closeby;
+    gate_menu_closeby_ctx.leave = _clear_tile_dyn_leave;
+
     settings_menu_ctx.tileview = tileview;
     settings_menu_ctx.tile = submenu_tile;
     settings_menu_ctx.enter = _settings_menu_dyn_enter;

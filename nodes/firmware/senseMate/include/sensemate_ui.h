@@ -13,7 +13,10 @@ typedef enum {
 /* type used to pass a gate state to the UI */
 typedef struct {
     union {
-        gate_state_entry_t gate_state;
+        gate_state_entry_t     gate_state;
+        gate_timestamp_entry_t timestamp_entry;
+        gate_local_info_entry_t local_gate_info;
+        gate_seen_state_entry_t seen_state;
     } data;
     union {
         void *ptr;
@@ -30,10 +33,12 @@ typedef struct {
  */
 typedef bool (*ui_data_element_iter_cb_t)(ui_data_element_t *prev);
 
+typedef bool (*ui_create_data_element_cb_t)(ui_data_element_t *element);
+
 typedef struct {
     ui_data_element_iter_cb_t all_gates_iter;
-    ui_data_element_iter_cb_t closeby_gates_iter;
     ui_data_element_iter_cb_t jobs_iter;
+    ui_create_data_element_cb_t set_seen_state;
 } ui_data_cbs_t;
 
 typedef struct {
