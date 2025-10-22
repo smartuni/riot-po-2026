@@ -1,5 +1,7 @@
 package com.riot.matesense.service;
 
+import com.riot.matesense.config.JWTSecretProperties;
+import com.riot.matesense.config.TestAccountProperties;
 import com.riot.matesense.entity.UserEntity;
 import com.riot.matesense.model.AuthRequest;
 import com.riot.matesense.model.RegisterRequest;
@@ -23,14 +25,25 @@ import java.util.HashMap;
 @Service
 public class AuthService {
 
-    @Autowired
     private UserRepository userRepository;
-
     private HashMap<String, Long> tokenStore = new HashMap<>();
+    private final Key secretKey; // shared secret with JwtService
 
-    // same secret key as the JwtService file that validates the key
-    private final String secret = "12345678901234567890123456789012";
-    private Key secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+    @Autowired
+    public AuthService(TestAccountProperties testAccountProperties, UserRepository userRepository,
+                       JWTSecretProperties jwtSecretProperties) {
+        this.userRepository = userRepository;
+        this.secretKey = jwtSecretProperties.getKey();
+        for (TestAccountProperties.Account a : testAccountProperties.getAccounts()) {
+            System.out.println("WARNING! enabling test user account " + a.getEmail() + " -> disable this before deployment!");
+            RegisterRequest rr = new RegisterRequest();
+            rr.setEmail(a.getEmail());
+            rr.setName(a.getUsername());
+            rr.setPassword(a.getPassword());
+            rr.setRole(a.getRole());
+            this.handleRegister(rr);
+        }
+    }
 
     public AuthResponse handleLogin(AuthRequest request) {
         UserEntity user = userRepository.findByEmail(request.getEmail());
