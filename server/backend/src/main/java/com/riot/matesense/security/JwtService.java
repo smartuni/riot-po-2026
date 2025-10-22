@@ -1,7 +1,9 @@
 package com.riot.matesense.security;
 
+import com.riot.matesense.config.JWTSecretProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
@@ -9,10 +11,12 @@ import java.util.Date;
 
 @Service
 public class JwtService {
-    private final String secretKey = "12345678901234567890123456789012"; // 32+ chars
+
+    @Autowired
+    JWTSecretProperties jwtSecretProperties;
 
     private Key getSignKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes());
+        return jwtSecretProperties.getKey();
     }
 
     public String generateToken(Long userId) {
