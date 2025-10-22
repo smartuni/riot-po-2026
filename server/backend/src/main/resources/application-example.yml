@@ -1,0 +1,23 @@
+mqtt:
+  broker: ssl://eu1.cloud.thethings.network:8883
+  clientId: does-not-matter-123
+  username: username@ttn
+  applicationId: app-id-from-ttn-console
+  password: XXXXX.YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY.ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+  subscribeTopic: v3/app-id-from-ttn-console@ttn/devices/+/up
+
+test-credentials:
+  accounts:
+    -
+      username: username1
+      password: password1
+      email: username1@example.com
+      role: controller
+    -
+      username: username2
+      password: password2
+      email: username2@example.com
+      role: viewer
+
+jwt-secrets:
+  sharedSecret: "some_fancy_string_used_as_secret"
