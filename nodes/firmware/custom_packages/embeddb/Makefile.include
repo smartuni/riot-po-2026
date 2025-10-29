@@ -1,9 +1,0 @@
-EMBEDDB_PKG_DIR := $(LAST_MAKEFILEDIR)
-
-# compile the vfs interface module
-DIRS += $(EMBEDDB_PKG_DIR)/contrib/vfs_interface
-# include the vfs interface headers
-INCLUDES += -I$(EMBEDDB_PKG_DIR)/contrib/vfs_interface
-
-# include the embeddb headers
-INCLUDES += -I$(PKGDIRBASE)/embeddb/lib/Distribution
