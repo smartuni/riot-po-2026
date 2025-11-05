@@ -37,7 +37,7 @@ USEMODULE += event_thread_highest
 USEMODULE += event_thread
 USEMODULE += event_timeout
 
-USEMODULE += tables
+USEMODULE += tables_old
 
 USEMODULE += mate_lorawan
 USEMODULE += mate_ble

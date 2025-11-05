@@ -12,7 +12,7 @@ USEMODULE += nimble_addr
 # enable utility features for crafting advertisements
 USEMODULE += bluetil_ad
 
-USEMODULE += tables
+USEMODULE += tables_old
 
 # Add the tinycbor package
 USEPKG += tinycbor
