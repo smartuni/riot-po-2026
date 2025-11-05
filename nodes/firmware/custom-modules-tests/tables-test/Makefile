@@ -16,11 +16,9 @@ DEVELHELP ?= 1
 # some computers.
 -include ../../lab_workarounds.mk
 
-USEMODULE += tables
-EXTERNAL_MODULE_DIRS += ../../tables
+USEMODULE += tables_old
 
 USEMODULE += ztimer_msec # millisecond precision
-USEMODULE += tables
 
 # Include other packages here e.g.
 # include ../../other_package/other_package.inc.mk
