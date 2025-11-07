@@ -454,6 +454,7 @@
       "single_global_label": "ignore",
       "unannotated": "error",
       "unconnected_wire_endpoint": "warning",
+      "undefined_netclass": "error",
       "unit_value_mismatch": "error",
       "unresolved_variable": "error",
       "wire_dangling": "error"
@@ -497,15 +498,15 @@
   },
   "pcbnew": {
     "last_paths": {
-      "gencad": "",
-      "idf": "",
+      "gencad": "../../../../../../../../../tmp/SenseMatePCB.cad",
+      "idf": "../../../../../../../../../tmp/SenseMatePCB.emn",
       "netlist": "",
       "plot": "gerber_v1_1/",
       "pos_files": "",
       "specctra_dsn": "",
-      "step": "",
+      "step": "../../../../../../../../../tmp/SenseMatePCB_with_LoRa.glb",
       "svg": "",
-      "vrml": ""
+      "vrml": "../../../../../../../../../tmp/SenseMatePCB1.wrl"
     },
     "page_layout_descr_file": ""
   },
