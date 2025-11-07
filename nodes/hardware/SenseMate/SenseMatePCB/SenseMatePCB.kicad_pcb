@@ -626,6 +626,17 @@
 			(uuid "fa5fad71-e096-46e2-b2a6-9e2329db0fd1")
 		)
 		(embedded_fonts no)
+		(model "${KIPRJMOD}/3dshapes/OS102011MA1QN1.STEP"
+			(offset
+				(xyz 2 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz -90 -0 -0)
+			)
+		)
 	)
 	(footprint "SenseMateLibrary:Adafruit_Feather_Sense"
 		(layer "F.Cu")
@@ -1342,7 +1353,29 @@
 			(uuid "50da7519-a83f-4539-befd-8b26099b04c5")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Module.3dshapes/Adafruit_Feather.step"
+		(model "${KIPRJMOD}/3dshapes/4516 Feather nRF52840 Sense_FC_exp.step"
+			(offset
+				(xyz -1.275 6.35 8.6)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz -0 -0 90)
+			)
+		)
+		(model "${KICAD9_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x12_P2.54mm_Vertical.step"
+			(offset
+				(xyz 20.33 -10.16 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz -0 -0 -0)
+			)
+		)
+		(model "${KICAD9_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x16_P2.54mm_Vertical.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -1351,6 +1384,61 @@
 			)
 			(rotate
 				(xyz 0 0 0)
+			)
+		)
+		(model "${KICAD9_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x16_P2.54mm_Vertical.step"
+			(offset
+				(xyz 0 0 8.5)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz -0 -180 -0)
+			)
+		)
+		(model "${KICAD9_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x12_P2.54mm_Vertical.step"
+			(offset
+				(xyz 20.33 -10.16 8.5)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz -0 -180 -0)
+			)
+		)
+		(model "${KIPRJMOD}/3dshapes/3229 Radio FeatherWing.step"
+			(offset
+				(xyz -1.275 6.35 16)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz -0 -0 90)
+			)
+		)
+		(model "${KIPRJMOD}/3dshapes/12-Pin Header - Female - 2.54mm.step"
+			(offset
+				(xyz 20.32 -10.16 16)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 90 -0 90)
+			)
+		)
+		(model "${KIPRJMOD}/3dshapes/16-Pin Header - Female - 2.54mm.step"
+			(offset
+				(xyz 0 0 16)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 90 -0 90)
 			)
 		)
 	)
@@ -3635,15 +3723,15 @@
 			(uuid "151853da-8fbf-4c2f-a1cd-213927761193")
 		)
 		(embedded_fonts no)
-		(model "COM-08184.stp"
+		(model "${KIPRJMOD}/3dshapes/NAV_SWITCH_FC_edit-Part.step"
 			(offset
-				(xyz 0 0 0)
+				(xyz -5.9 -4.3 0)
 			)
 			(scale
 				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz 0 0 0)
+				(xyz -0 -0 -0)
 			)
 		)
 	)
@@ -4715,6 +4803,17 @@
 			(uuid "0bd8e0ca-1073-4dfc-9a3e-831a688a8b0a")
 		)
 		(embedded_fonts no)
+		(model "${KIPRJMOD}/3dshapes/PS1240P02BT005_trimmed_legs.step"
+			(offset
+				(xyz 2.5 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz -90 -0 -90)
+			)
+		)
 	)
 	(footprint "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
 		(layer "B.Cu")
@@ -5034,15 +5133,15 @@
 			(uuid "2dfc7763-7968-484b-b803-bdef92fb1e38")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x04_P2.54mm_Vertical.step"
+		(model "${KIPRJMOD}/3dshapes/SSD1306_OLED_Display(128x64)_trimmed_legs.step"
 			(offset
-				(xyz 0 0 0)
+				(xyz -11.83 -3.8 2.5)
 			)
 			(scale
 				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz 0 0 0)
+				(xyz -0 -0 90)
 			)
 		)
 	)
