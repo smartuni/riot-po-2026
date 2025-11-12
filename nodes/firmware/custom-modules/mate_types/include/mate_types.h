@@ -53,6 +53,12 @@ typedef struct {
 } gate_timestamp_entry_t;
 
 typedef struct {
+    mate_timestamp_t timestamp;
+    gate_id_t mateID;
+    int8_t rssi;
+} mate_seen_state_entry_t;
+
+typedef struct {
     gate_id_t gateID;
     job_state_t done;
     uint8_t priority;
