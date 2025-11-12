@@ -87,8 +87,7 @@ public class MqttMessageHandler {
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
                             //add new Gate
-
-                            // GateEntity newGate = new GateEntity(); //Need to be changed
+                            //GateEntity newGate = new GateEntity(gateId,status, localTimeStamp, 53.5633146 + (1.0* gateId / 20000.0),9.9873ct261 +  (1.0 * gateId / 20000.0), "Hamburg", "REQUESTED_NONE", 0, "PENDING_NONE", 3  ); //Need to be changed
                             GateEntity newGate = new GateEntity(gateId,status, localTimeStamp, 53.557120, 10.022826, "HAW", "REQUESTED_NONE", 0, "PENDING_NONE", 3  ); //Need to be changed
                             gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
