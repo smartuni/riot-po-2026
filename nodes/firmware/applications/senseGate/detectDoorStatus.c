@@ -1,7 +1,7 @@
 #include "include/detectDoorStatus.h"
 
-#define TRIGGER GPIO_PIN(0, 3) // PIN A5
 //#define TRIGGER GPIO_PIN(1, 2) // Test Button
+#define TRIGGER GPIO_PIN(0, 5) // PIN label A1 (Reed.IO.1)
 
 gpio_t led1 = GPIO_PIN(1, 9);
 gpio_mode_t led1_mode = GPIO_OUT;
