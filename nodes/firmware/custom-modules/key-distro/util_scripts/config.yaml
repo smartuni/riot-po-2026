@@ -2,9 +2,9 @@ tti_instance: "eu1.cloud.thethings.network"
 application_id: "polder-test-1"
 
 sensemates:
-  count: 3
+  count: 4
   id_prefix: "sensemate"
 
 sensegates:
-  count: 2
+  count: 4
   id_prefix: "sensegate"
