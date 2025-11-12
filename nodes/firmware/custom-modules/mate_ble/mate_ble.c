@@ -18,6 +18,8 @@
 #include "ztimer.h"
 #include "cbor.h"
 #include "cose-service.h"
+#define LOG_LEVEL   LOG_NONE
+#include "log.h"
 /* include sound module only on SenseMate (gate has no audio) */
 #if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
 #include "include/soundModule.h"
@@ -85,7 +87,7 @@ static int ble_gap_event_cb(struct ble_gap_event *event, void *arg);
 static void ad_append(bluetil_ad_t *ad, const uint8_t *data, unsigned len);
 static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payload, unsigned len);
 static void start_adv(uint8_t *payload, unsigned payload_len);
-static void print_hex_arr(const uint8_t *data, unsigned len);
+void print_hex_arr(const uint8_t *data, unsigned len);
 static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr, const nimble_scanner_info_t *info, const uint8_t *ad, size_t len);
 
 static void ad_append(bluetil_ad_t *ad, const uint8_t *data, unsigned len)
@@ -187,16 +189,16 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     rc = ble_gap_ext_adv_set_data(MATE_BLE_NIMBLE_INSTANCE, data);
     assert (rc == 0);
 
-    printf("[mate_ble]: triggering advertisement...\n");
+    LOG_DEBUG("[mate_ble]: triggering advertisement...\n");
     //print_hex_arr(payload, payload_len);
-    tables_print_all();
+    //tables_print_all();
 
     // Start advertising
     rc = ble_gap_ext_adv_start(MATE_BLE_NIMBLE_INSTANCE, 0, 1);
     assert (rc == 0);
 }
 
-static void print_hex_arr(const uint8_t *data, unsigned len)
+void print_hex_arr(const uint8_t *data, unsigned len)
 {
     printf("{");
     for (unsigned i = 0; i < len; i++) {
@@ -231,10 +233,12 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
                                 name, sizeof(name));
     // Output name, address, and data of the advertisement
     if (table_result == BLUETIL_AD_OK) {
-        printf("\n[mate_ble]: \"%s\" @", name);
+        LOG_DEBUG("\n[mate_ble]: \"%s\" @", name);
     }
-    nimble_addr_print(addr);
-    printf("sent %d bytes\n", len);
+    if (LOG_LEVEL >= LOG_DEBUG) {
+        nimble_addr_print(addr);
+    }
+    LOG_DEBUG("sent %d bytes\n", len);
     //print_hex_arr(ad, len);
 
     // output our payload marke# BUILD_IN_DOCKER ?= 1d by our custom byte pattern
@@ -263,11 +267,11 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
 
             if(verify_result == 0) {
                 insert_message(verify_outbuf, verify_payload_len, metadata);
-                printf("[mate_ble]: %d bytes of playload verified.\n", verify_payload_len);
-                print_hex_arr(verify_outbuf,verify_payload_len);
-                tables_print_all();
+                LOG_DEBUG("[mate_ble]: %d bytes of playload verified.\n", verify_payload_len);
+                //print_hex_arr(verify_outbuf,verify_payload_len);
+                //tables_print_all();
             } else {
-                printf("[mate_ble]: Failed to verify!\n");
+                LOG_DEBUG("[mate_ble]: Failed to verify!\n");
             }
         }
     }
@@ -344,7 +348,7 @@ int ble_send(cbor_buffer* cbor_packet)
 static void wait_for_ble_init(void)
 {
     if (!ble_initialized) {
-        printf("ble_send_loop: BLE not initialized\n");
+        LOG_DEBUG("ble_send_loop: BLE not initialized\n");
         while (!ble_initialized) {
             ztimer_sleep(ZTIMER_MSEC, 100);
         }
@@ -417,16 +421,13 @@ void* ble_receive_loop(void* args)
         //);
 
         int table_result = cbor_to_table_test(&buffer, metadata.rssi);
-        printf("cbor_to_table_test result: %d\n", table_result);
         if (metadata.rssi < MATE_BLE_THRESHOLD){
             continue;
         }
-        
+
         if (thr_args != NULL) {
             if ((thr_args->receive_queue != NULL) && (table_result & TABLE_NEW_RECORD_AND_UPDATE)) {
-                printf("Posting event to receive queue\n");
                 event_post(thr_args->receive_queue, thr_args->receive_news_event);
-                printf("Event posted that table was updated\n");
             }
 #if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
             else{
