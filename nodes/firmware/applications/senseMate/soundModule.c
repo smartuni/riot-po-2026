@@ -66,8 +66,8 @@ void internal_uplink_send(void) {
 
 void internal_ble_received(void) {
     // Play sound for BLE received
-    play_sound(932, 50); // b'' 
-    play_sound(831, 50); // as''                           
+    play_sound(932, 30); // b''
+    play_sound(831, 30); // as''
     
     gpio_clear(sound);
 }
@@ -81,9 +81,9 @@ void internal_ble_send(void) {
 
 void internal_tables_news(void) {
     //Play sound for tables news
-    play_sound(784, 300);  // g''
-    play_sound(932, 300); // b'' 
-    play_sound(587, 300); // d''
+    play_sound(784, 100);  // g''
+    play_sound(587, 100); // d''
+    play_sound(932, 100); // b''
 }
 
 void internal_close_by_todo(void) {
