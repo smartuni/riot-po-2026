@@ -7,6 +7,8 @@
 #include "include/vibrationModule.h"
 #include "tables.h"
 #include "include/sensemate_ui.h"
+#define LOG_LEVEL   LOG_NONE
+#include "log.h"
 #define MIN_SIGNAL_STRENGTH -100 // Minimum signal strength for events
 #define DECREMENT_RSSI 10 // decrement rssi by 10
 #define RSSI_DECREMENT_TIMEOUT 5000 // in milliseconds
@@ -67,7 +69,7 @@ void event_handler_decrement_rssi_timeout(event_t *event)
         if(get_timestamp_entry(i, &timestamp_tbl_entry_buf)==TABLE_SUCCESS){
             if(timestamp_tbl_entry_buf.rssi > MIN_SIGNAL_STRENGTH){
                 timestamp_tbl_entry_buf.rssi -= DECREMENT_RSSI; //decrement rssi by 10
-                printf("Decremented rssi for gate %d to %d\n", timestamp_tbl_entry_buf.gateID, timestamp_tbl_entry_buf.rssi);
+                LOG_DEBUG("[events_creation]: Decremented rssi for gate %d to %d\n", timestamp_tbl_entry_buf.gateID, timestamp_tbl_entry_buf.rssi);
             }
             set_timestamp_entry(&(gate_timestamp_entry_t){
                 .gateID = timestamp_tbl_entry_buf.gateID,
@@ -91,7 +93,7 @@ void event_handlerNews(event_t *event)
 {
     (void) event;   /* Not used */
     
-    puts("got news");
+    LOG_DEBUG("[events_creation]: got news\n");
     start_vibration();
     ui_data_t *ui_state = sensemate_ui_get_state();
     ui_state->lora_state = RECEIVED;
@@ -106,7 +108,7 @@ void event_handlerBleNews(event_t *event)
 {
     (void) event;   /* Not used */
     
-    puts("got ble news");
+    LOG_DEBUG("[events_creation]: got ble news\n");
     start_vibration();
     ui_data_t *ui_state = sensemate_ui_get_state();
     ui_state->ble_state = RECEIVED;
