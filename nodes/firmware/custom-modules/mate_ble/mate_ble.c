@@ -42,7 +42,7 @@
 #define MATE_BLE_ADV_START_MS 20
 #define MATE_BLE_ADV_STOP_MS 200
 
-#define MATE_BLE_THRESHOLD  (-70)
+#define MATE_BLE_THRESHOLD  (-85)
 
 
 static uint8_t id_addr_type;
