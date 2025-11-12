@@ -44,6 +44,8 @@
 #if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
 #include "include/events_creation.h"
 #endif
+#define LOG_LEVEL   LOG_NONE
+#include "log.h"
 
 /* Interval between data transmissions, in seconds */
 #define SEND_INTERVAL_SEC 1
@@ -303,25 +305,24 @@ static void send_handler_timeout(event_t *event){
 }
 
 static void send_handler_is_state_table(event_t *event){
-    printf("Handler called\n");
+    LOG_DEBUG("[LoRaWAN]: Handler called\n");
     (void) event;
     int pkg_count = is_state_table_to_cbor_many_to_server(SEND_BUFFER_SIZE, &cbor_send_buffer);
-    printf("Table to cbor successful\n");
+    LOG_DEBUG("[LoRaWAN]: Table to cbor successful\n");
     
     if (pkg_count == 0){
-        printf("[LoRaWAN]: Nothing to send.\n");
+        LOG_DEBUG("[LoRaWAN]: Nothing to send.\n");
         return;
     }
     int read = 0;
-    printf("[LoRaWAN]: Sending %d packages ...\n", pkg_count);
-    puts("");
+    LOG_DEBUG("[LoRaWAN]: Sending %d packages ...\n", pkg_count);
     int result = 0;
     for (int msg_no = 0; msg_no < pkg_count; msg_no++){
         result = _send_lorawan_packet(netif, msg_no, read);
         if (result != 0) {
-            puts("[LoRaWAN]: Failed to send packet.");
+            LOG_DEBUG("[LoRaWAN]: Failed to send packet.\n");
         } else {
-            printf("[LoRaWAN]: Sent packet successfully.\n");
+            LOG_DEBUG("[LoRaWAN]: Sent packet successfully.\n");
         }
         read += cbor_send_buffer.package_size[msg_no];
     }
@@ -331,19 +332,18 @@ static void send_handler_seen_status_table(event_t *event){
     (void) event;
     int pkg_count = seen_status_table_to_cbor_many_to_server(SEND_BUFFER_SIZE, &cbor_send_buffer);
     if (pkg_count == 0){
-        printf("[LoRaWAN]: Nothing to send.\n");
+        LOG_DEBUG("[LoRaWAN]: Nothing to send.\n");
         return;
     }
     int read = 0;
-    printf("[LoRaWAN]: Sending %d packages ...\n", pkg_count);
-    puts("");
+    LOG_DEBUG("[LoRaWAN]: Sending %d packages ...\n", pkg_count);
     int result = 0;
     for (int msg_no = 0; msg_no < pkg_count; msg_no++){
         result = _send_lorawan_packet(netif, msg_no, read);
         if (result != 0) {
-            puts("[LoRaWAN]: Failed to send packet.");
+            LOG_DEBUG("[LoRaWAN]: Failed to send packet.\n");
         } else {
-            printf("[LoRaWAN]: Sent packet successfully.\n");
+            LOG_DEBUG("[LoRaWAN]: Sent packet successfully.\n");
         }
         read += cbor_send_buffer.package_size[msg_no];
     }
