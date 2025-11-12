@@ -534,22 +534,6 @@ function StatusTables() {
                             <th>Pending Jobs</th>
                             <th>Priority</th>
                             <th>Last Update</th>
-                            <th>
-                                Confidence
-                                <Tooltip
-                                    title="If it says a 100% we are a 100% sure that the current Status is correct. Also the confidence will add up for every uplink with the current status we get.">
-                                    <HelpOutlineIcon
-                                        fontSize="small"
-                                        className="help-icon"
-                                        style={{
-                                            marginLeft: 4,
-                                            cursor: "help",
-                                            verticalAlign: "middle",
-                                            color: "#888"
-                                        }}
-                                    />
-                                </Tooltip>
-                            </th>
                             <th>Actions</th>
                             <th>Activities</th>
                             <th>Delete</th>
@@ -562,7 +546,7 @@ function StatusTables() {
                                     <td data-label="Gate ID">{gate.id}</td>
                                     <td data-label="Location">
                                         {gate.location}<br/>
-                                        <span className="coords">{gate.latitude}, {gate.longitude}</span>
+                                        <span className="coords">{gate.latitude.toFixed(5)}, {gate.longitude.toFixed(5)}</span>
                                     </td>
                                     <td data-label="Status">
                                             <Badge
@@ -614,9 +598,6 @@ function StatusTables() {
                                     <td data-label="Last Update">
                                         <div>{getTimeAgo(gate.lastTimeStamp)}</div>
                                         <div className="date">{new Date(gate.lastTimeStamp).toLocaleString()}</div>
-                                    </td>
-                                    <td data-label="Confidence">
-                                        {gate.confidence}%
                                     </td>
                                     <td data-label="Actions">
                                         <IconButton
