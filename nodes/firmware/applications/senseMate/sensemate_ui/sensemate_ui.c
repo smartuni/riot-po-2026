@@ -11,10 +11,13 @@
 #include "periph/gpio.h"
 #include "include/sensemate_ui.h"
 
+#define XSTR(s) #s
+#define STR(s) XSTR(s)
+
 #define THUMBWHEEL_PIN_DOWN   GPIO_PIN(0, 4)
 #define THUMBWHEEL_PIN_SELECT GPIO_PIN(0, 5)
 #define THUMBWHEEL_PIN_UP     GPIO_PIN(0, 28)
-
+#define INVALID_GATE_MARKER (0xFFFFFFFF)
 /* Stack for the ui thread */
 static char _ui_thread_stack[THREAD_STACKSIZE_UI];
 
@@ -26,6 +29,12 @@ static const ui_data_cbs_t *_data_cbs;
 
 extern lv_font_t helvetica_light_12;
 extern lv_font_t helvetica10;
+extern lv_font_t font_goldfish;
+extern const lv_font_t lv_font_unscii_8;
+extern const lv_img_dsc_t lock_open_icon_16x16;
+extern const lv_img_dsc_t lock_closed_icon_16x16;
+extern const lv_img_dsc_t gate_icon_open_8x9;
+extern const lv_img_dsc_t gate_icon_closed_8x9;
 extern const lv_img_dsc_t gate_icon_32x32;
 extern const lv_img_dsc_t tasks_icon_25x32;
 extern const lv_img_dsc_t person_icon_32x32;
@@ -55,6 +64,7 @@ static lv_obj_t *bat_lbl;
 
 typedef void (*ui_dyn_menu_enter_cb_t)(struct ui_dyn_menu_ctx_t *ctx);
 typedef void (*ui_dyn_menu_leave_cb_t)(struct ui_dyn_menu_ctx_t *ctx);
+typedef void (*ui_update_cb_t)(struct ui_dyn_menu_ctx_t *ctx);
 
 typedef struct ui_dyn_menu_ctx_t {
     lv_obj_t *tileview;
@@ -62,6 +72,7 @@ typedef struct ui_dyn_menu_ctx_t {
     lv_group_t *nav_group;
     ui_dyn_menu_enter_cb_t enter;
     ui_dyn_menu_leave_cb_t leave;
+    ui_update_cb_t update;
 } ui_dyn_menu_ctx_t;
 
 typedef struct {
@@ -328,11 +339,21 @@ static void _create_gate_list(lv_obj_t *parent, lv_group_t *grp, bool only_close
         char buf[16];
         lv_snprintf(buf, sizeof(buf), "Gate %d", li->gateID);
         lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, buf);
+        lv_obj_set_user_data(btn, (void*)(uint32_t)li->gateID);
+        if (li->sensor_data_present) {
+            lv_obj_t *icon = lv_img_create(btn);
+            if (li->sensor_state == GATE_OPEN) {
+                lv_img_set_src(icon, &lock_open_icon_16x16);
+            } else {
+                lv_img_set_src(icon, &lock_closed_icon_16x16);
+            }
+        }
         lv_group_add_obj(grp, btn);
         lv_obj_add_event_cb(btn, _gate_edit_btn_handler, LV_EVENT_CLICKED, (void*)(uint32_t)li->gateID);
     }
 
     lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_NEW_LINE, "back");
+    lv_obj_set_user_data(btn, (void*)INVALID_GATE_MARKER);
     lv_group_add_obj(grp, btn);
     lv_obj_add_event_cb(btn, _menu_btn_handler, LV_EVENT_CLICKED, &main_menu_ctx);
 
@@ -438,6 +459,7 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     _ble_conn_state_ctx.rx_tx_icon_obj = _add_rx_tx_icon_obj(header_cont);
 
     _lora_conn_state_ctx.obj = _add_header_label(header_cont, "LoRa");
+    lv_obj_set_style_text_font(_lora_conn_state_ctx.obj, &font_goldfish, 0);
     _lora_conn_state_ctx.rx_tx_icon_obj = _add_rx_tx_icon_obj(header_cont);
     
     _usb_conn_state_ctx.obj = _add_header_label(header_cont, LV_SYMBOL_USB);
@@ -452,7 +474,11 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_set_style_pad_all(header_pad, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     
     /* right part of the header symbols */
-    alert_lbl = _add_header_label(header_cont, LV_SYMBOL_BELL);
+    lv_obj_t *dev_id_lbl = _add_header_label(header_cont, "Mate-" STR(RIOT_CONFIG_DEVICE_ID));
+    lv_obj_set_style_text_font(dev_id_lbl, &font_goldfish, 0);
+
+    //alert_lbl = _add_header_label(header_cont, LV_SYMBOL_BELL);
+    (void)alert_lbl;
     bat_lbl = _add_header_label(header_cont, LV_SYMBOL_BATTERY_FULL);
 
     lv_obj_t *dash_cont = lv_obj_create(root_cont);
@@ -472,12 +498,83 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32x32, "0");
 }
 
+lv_obj_t * _get_gate_state_ui_handle_from_list(lv_obj_t *list, gate_id_t gateid)
+{
+    uint32_t child_cnt = lv_obj_get_child_cnt(list);
+    for (uint32_t i = 0; i < child_cnt; i++) {
+        lv_obj_t *child = lv_obj_get_child(list, i);
+        if(lv_obj_check_type(child, &lv_list_btn_class)) {
+            //const char *btn_str = lv_list_get_btn_text(l, child);
+            uint32_t user_data = (uint32_t)lv_obj_get_user_data(child);
+            if (user_data != INVALID_GATE_MARKER) {
+                gate_id_t gi = (gate_id_t)(uint32_t)lv_obj_get_user_data(child);
+                //printf("%s -> gate id = %u\n", btn_str, gi);
+                if (gi == gateid) {
+                    return child;
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
+lv_obj_t * _get_state_img_obj_from_gate_ui_handle(lv_obj_t *guih)
+{
+    uint32_t child_cnt = lv_obj_get_child_cnt(guih);
+    for (uint32_t i = 0; i < child_cnt; i++) {
+        lv_obj_t *child = lv_obj_get_child(guih, i);
+        if(lv_obj_check_type(child, &lv_img_class)) {
+            const void *img_src = lv_img_get_src(child);
+            if (img_src == &lock_open_icon_16x16 ||
+                img_src == &lock_closed_icon_16x16) {
+                return child;
+            }
+        }
+    }
+    return NULL;
+}
+
+// This method is hardcoded for the gate list object tree!
+// this must be adjusted if the gate list is modified
+void _ui_update_gate_list(struct ui_dyn_menu_ctx_t *ctx)
+{
+    lv_obj_t *t = ctx->tile;
+    lv_obj_t *l = lv_obj_get_child(t, 0);
+
+    /* we expect a list that holds buttons */
+    if(!lv_obj_check_type(l, &lv_list_class)) {
+        return;
+    }
+
+    ui_data_element_iter_cb_t iter_cb = _data_cbs->all_gates_iter;
+    ui_data_element_t gate_elem = { .iter_ctx.ptr = NULL };
+
+    while(iter_cb(&gate_elem)) {
+        gate_local_info_entry_t *li = &gate_elem.data.local_gate_info;
+        if (li->sensor_data_present) {
+            lv_obj_t * btn = _get_gate_state_ui_handle_from_list(l, li->gateID);
+            if (btn) {
+                lv_obj_t *img = _get_state_img_obj_from_gate_ui_handle(btn);
+                if (img) {
+                    if (li->sensor_state == GATE_OPEN) {
+                        lv_img_set_src(img, &lock_open_icon_16x16);
+                    } else {
+                        lv_img_set_src(img, &lock_closed_icon_16x16);
+                    }
+                }
+            }
+        }
+    }
+}
+
 static void _gate_menu_dyn_enter_mode(ui_dyn_menu_ctx_t *c, bool only_closeby)
 {
     c->nav_group = lv_group_create();
     lv_group_set_wrap(c->nav_group, true);
     _create_gate_list(c->tile, c->nav_group, only_closeby);
     lv_obj_set_tile(c->tileview, c->tile, LV_ANIM_ON);
+
+    c->update = _ui_update_gate_list;
     lv_indev_set_group(indev, c->nav_group);
 }
 
@@ -493,6 +590,8 @@ static void _gate_menu_dyn_enter_closeby(ui_dyn_menu_ctx_t *c)
 
 static void _clear_tile_dyn_leave(ui_dyn_menu_ctx_t *c)
 {
+    c->update = NULL;
+
     /* remove group from input device */
     lv_indev_set_group(indev, NULL);
 
@@ -535,15 +634,17 @@ static void _settings_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
     lv_group_add_obj(c->nav_group, btn);
     //lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
 
-    /*Create a slider in the center of the display*/
     lv_obj_t * slider = lv_slider_create(list1);
-    lv_obj_center(slider);
     lv_obj_set_size(slider, LV_PCT(80), LV_SIZE_CONTENT);
+    //TODO: this does not center the element in the list as intended
+    lv_obj_center(slider);
+    lv_obj_align(slider, LV_ALIGN_CENTER, 0, 0);
     lv_group_add_obj(c->nav_group, slider);
 
     /*Create a label below the slider*/
     lv_obj_t *slider_label = lv_label_create(list1);
     lv_label_set_text(slider_label, "0%");
+    lv_obj_align(slider_label, LV_ALIGN_CENTER, 0, 0);
     lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
     lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, slider_label);
 
@@ -726,4 +827,9 @@ void sensemate_ui_update(void)
     _update_connection_state_obj(&_usb_conn_state_ctx);
 
     //TODO: add some method to invalidate the gate list in case it is currently shown
+    if(current_menu_ctx) {
+        if (current_menu_ctx->update) {
+            current_menu_ctx->update(current_menu_ctx);
+        }
+    }
 }
