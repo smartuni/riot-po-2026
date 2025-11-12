@@ -27,7 +27,7 @@ static void _update_ui(void){
 
     ui_state->visible_gate_cnt = tables_get_is_state_entry_count();
     ui_state->pending_jobs_cnt = tables_get_jobs_entry_count();
-    ui_state->visible_mate_cnt = tables_get_seen_state_entry_count();
+    ui_state->visible_mate_cnt = tables_get_closeby_mate_seen_state_entry_count(-80);
 
     sensemate_ui_update();
 }
@@ -77,6 +77,16 @@ void event_handler_decrement_rssi_timeout(event_t *event)
                 .rssi = timestamp_tbl_entry_buf.rssi
             });
         };
+    }
+    for(int i = 0; i< MAX_SENSE_COUNT; i++){
+        mate_seen_state_entry_t se;
+        if (get_mate_seen_status_entry(i, &se) == TABLE_SUCCESS) {
+            int8_t rssi = se.rssi;
+            if (rssi > MIN_SIGNAL_STRENGTH) {
+                se.rssi = rssi - 1;
+                set_mate_seen_status_entry(&se);
+            }
+        }
     }
     _update_ui();
     event_timeout_set(&decrement_rssi_timeout, RSSI_DECREMENT_TIMEOUT); // Set a timeout for the next decrement
