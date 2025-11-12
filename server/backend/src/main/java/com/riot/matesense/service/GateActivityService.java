@@ -145,7 +145,7 @@ public class GateActivityService {
                     e -> e.getGateId().equals(gateId) &&
                                          (e.getWorkerId() != null) &&
                                          (e.getWorkerId().equals(w.getWorkerId())) &&
-                                         (!e.getActivityType().equals(ActivityType.SENSEMATE_WORKER_REPORT)))
+                                         (e.getActivityType().equals(ActivityType.SENSEMATE_WORKER_REPORT)))
                     //TODO: the activities should be separated between sensemate reports and state change requests (or at least distinguishable)
                     .sorted(Comparator.reverseOrder()).limit(1).toList();
             System.out.println(gateActivities);
