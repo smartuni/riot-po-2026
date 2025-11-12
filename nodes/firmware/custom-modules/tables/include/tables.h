@@ -29,6 +29,7 @@
 #define TABLE_ERROR_SIZE_TOO_BIG                    -1
 #define TABLE_ERROR_INVALID_GATE_ID                 -2
 #define TABLE_ERROR_NOT_FOUND                       -3
+#define TABLE_ERROR_INVALID_MATE_ID                 -4
 
 
 //target state table defines
@@ -195,6 +196,11 @@ int set_is_state_entry(const gate_sensor_state_entry_t* entry);
  */
 int set_seen_status_entry(const gate_seen_state_entry_t* entry);
 
+/* no doc as this file will be relapced completley */
+int set_mate_seen_status_entry(const mate_seen_state_entry_t* entry);
+int get_mate_seen_status_entry(uint8_t mate_id, mate_seen_state_entry_t* entry);
+int tables_get_closeby_mate_seen_state_entry_count(int8_t minrssi);
+
 /**
  * Set/update a single jobs entry
  * Note: Jobs are always overwritten (no timestamp comparison)
@@ -307,6 +313,12 @@ int tables_get_is_state_entry_count(void);
  * @return the count of entries
  */
 int tables_get_seen_state_entry_count(void);
+
+/**
+ * Get count of entries in the mate seen state table.
+ * @return the count of entries
+ */
+int tables_get_mate_seen_state_entry_count(void);
 
 /**
  * Get count of entries in the jobs table.
