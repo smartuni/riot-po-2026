@@ -54,6 +54,7 @@ static bool _set_gate_seen_state_cb(ui_data_element_t *elem)
         seen_state->timestamp = te.timestamp;
         int sres = set_seen_status_entry(seen_state);
         if (sres == TABLE_NEW_RECORD || sres == TABLE_UPDATED) {
+            event_post(EVENT_PRIO_MEDIUM, &send_seen_status_table);
             return true;
         }
     }
