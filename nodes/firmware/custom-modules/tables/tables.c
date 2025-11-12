@@ -11,6 +11,8 @@
 #include "cbor.h"
 #include "container.h"
 #include "atomic_utils.h"
+#define LOG_LEVEL   LOG_NONE
+#include "log.h"
 
 
 // Return Codes
@@ -25,6 +27,10 @@ static gate_sensor_state_entry_t is_state_entry_table[MAX_GATE_COUNT];
 static int is_state_entry_count = 0;
 static gate_seen_state_entry_t seen_status_entry_table[MAX_GATE_COUNT][MAX_SENSE_COUNT];
 static int seen_status_entry_count = 0;
+
+static mate_seen_state_entry_t mate_seen_status_entry_table[MAX_SENSE_COUNT];
+static int mate_seen_status_entry_count = 0;
+
 static gate_job_entry_t jobs_entry_table[MAX_GATE_COUNT];
 static int jobs_entry_count = 0;
 static gate_timestamp_entry_t timestamp_table[MAX_GATE_COUNT];
@@ -39,6 +45,7 @@ static gate_job_entry_t returnJobsTable[MAX_GATE_COUNT];
 static mutex_t target_state_mutex = MUTEX_INIT;
 static mutex_t is_state_mutex = MUTEX_INIT;
 static mutex_t seen_status_mutex = MUTEX_INIT;
+static mutex_t mate_seen_status_mutex = MUTEX_INIT;
 static mutex_t jobs_mutex = MUTEX_INIT;
 static mutex_t timestamp_mutex = MUTEX_INIT;
 static mutex_t decode_mutex = MUTEX_INIT;
@@ -58,6 +65,24 @@ int tables_get_is_state_entry_count(void)
 int tables_get_seen_state_entry_count(void)
 {
     return seen_status_entry_count;
+}
+
+int tables_get_mate_seen_state_entry_count(void)
+{
+    return mate_seen_status_entry_count;
+}
+
+int tables_get_closeby_mate_seen_state_entry_count(int8_t minrssi)
+{
+    int cnt = 0;
+    for (int i = 0; i < MAX_SENSE_COUNT; i++) {
+        if (mate_seen_status_entry_table[i].mateID != MAX_SENSE_COUNT) {
+            if (mate_seen_status_entry_table[i].rssi >= minrssi) {
+                cnt++;
+            }
+        }
+    }
+    return cnt;
 }
 
 int tables_get_jobs_entry_count(void)
@@ -106,6 +131,12 @@ int init_tables(void) {
         }
     }
 
+    for (int i = 0; i < MAX_SENSE_COUNT; i++) {
+        mate_seen_status_entry_table[i].mateID = MAX_SENSE_COUNT;
+        mate_seen_status_entry_table[i].timestamp = 0;
+        mate_seen_status_entry_table[i].rssi = 0;
+    }
+
     mutex_unlock(&timestamp_mutex);
     mutex_unlock(&jobs_mutex);
     mutex_unlock(&seen_status_mutex);
@@ -140,6 +171,14 @@ static int is_seen_status_entry_present_internal(uint8_t gate_id, uint8_t sense_
             && entry.gateID == gate_id
             && entry.senseMateID != MAX_SENSE_COUNT
             && entry.senseMateID == sense_id;
+}
+
+static int is_mate_seen_status_entry_present_internal(uint8_t sense_id) {
+    if (sense_id >= MAX_SENSE_COUNT) {
+        return 0;
+    }
+    mate_seen_state_entry_t entry = mate_seen_status_entry_table[sense_id];
+    return  entry.mateID != MAX_SENSE_COUNT;
 }
 
 static int is_jobs_entry_present_internal(uint8_t gate_id) {
@@ -472,8 +511,8 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     } // get type of table
 
     // get header information depending on table type
-    printf("[tables]: CBOR tableType: %d == %s\n",
-            tableType, _table_type_to_str(tableType));
+    LOG_DEBUG("[tables]: CBOR tableType: %d == %s\n",
+              tableType, _table_type_to_str(tableType));
 
     switch (tableType)
     {
@@ -644,6 +683,19 @@ int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
     if(typeOfSender == GATE_NODE) {
         gate_timestamp_entry_t change_entry = { .gateID = deviceID, .timestamp = timeStamp, .rssi = rssi};
         set_timestamp_entry(&change_entry);
+    } else if (typeOfSender == SENSEMATE_NODE) {
+        mate_seen_state_entry_t sme;
+        //printf("RSSI of mate %d: %d\n", deviceID, rssi);
+        if (get_mate_seen_status_entry(deviceID, &sme) == TABLE_SUCCESS) {
+            //sme.rssi = (sme.rssi * 3 + rssi) / 4;
+            sme.rssi = (sme.rssi * 2 + rssi) / 3;
+        } else {
+            sme.mateID = deviceID;
+            sme.rssi = rssi;
+
+        }
+        sme.timestamp = timeStamp;
+        set_mate_seen_status_entry(&sme);
     }
 
     int res = 0;
@@ -698,7 +750,7 @@ int set_target_state_entry(const gate_target_state_entry_t* entry) {
 }
 
 int set_is_state_entry(const gate_sensor_state_entry_t* entry) {
-    printf("Called: set_is_state_entry\n");
+    LOG_DEBUG("Called: set_is_state_entry\n");
     if (entry == NULL) {
         return TABLE_ERROR_INVALID_GATE_ID;
     }
@@ -754,6 +806,36 @@ int set_seen_status_entry(const gate_seen_state_entry_t* entry) {
     mutex_unlock(&seen_status_mutex);
     return res;
 }
+
+int set_mate_seen_status_entry(const mate_seen_state_entry_t* entry) {
+    if (entry == NULL) {
+        return TABLE_ERROR_INVALID_MATE_ID;
+    }
+
+    uint8_t mate_id = entry->mateID;
+    if (mate_id >= MAX_SENSE_COUNT) {
+        return TABLE_ERROR_INVALID_MATE_ID;
+    }
+
+    mutex_lock(&mate_seen_status_mutex);
+    int res = TABLE_NO_UPDATES;
+    if (!is_mate_seen_status_entry_present_internal(mate_id)) {
+        // Entry doesn't exist yet, add it
+        mate_seen_status_entry_count++;
+        mate_seen_status_entry_table[mate_id] = *entry;
+        res |= TABLE_NEW_RECORD;
+    }
+    else if (mate_seen_status_entry_table[mate_id].timestamp < entry->timestamp) {
+        // New entry is newer, update ours
+        mate_seen_status_entry_table[mate_id] = *entry;
+        res |= TABLE_UPDATED;
+    }
+
+    mutex_unlock(&mate_seen_status_mutex);
+    return res;
+
+}
+
 
 int set_jobs_entry(const gate_job_entry_t* entry) {
     if (entry == NULL) {
@@ -943,6 +1025,25 @@ int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, gate_seen_state_ent
     return TABLE_SUCCESS;
 }
 
+int get_mate_seen_status_entry(uint8_t mate_id, mate_seen_state_entry_t* entry) {
+    if (entry == NULL || (mate_id >= MAX_SENSE_COUNT)) {
+        return TABLE_ERROR_INVALID_GATE_ID;
+    }
+
+    mutex_lock(&mate_seen_status_mutex);
+
+    if (!is_mate_seen_status_entry_present_internal(mate_id)) {
+        mutex_unlock(&mate_seen_status_mutex);
+        return TABLE_ERROR_NOT_FOUND;
+    }
+
+    *entry = mate_seen_status_entry_table[mate_id];
+    mutex_unlock(&mate_seen_status_mutex);
+
+    return TABLE_SUCCESS;
+
+}
+
 int get_jobs_entry(uint8_t gate_id, gate_job_entry_t* entry) {
     if (entry == NULL || !is_valid_gate_id(gate_id)) {
         return TABLE_ERROR_INVALID_GATE_ID;
@@ -1071,7 +1172,7 @@ int target_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
         cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, target_state_entry_count); // Entry 5
         while((size_of_current_cbor + CBOR_TARGET_STATE_MAX_BYTE_SIZE < package_size) && (table_index < MAX_GATE_COUNT)) {
             if (target_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
-                printf("Valid entry: %d\n", target_state_entry_table[table_index].gateID);
+                LOG_DEBUG("Valid entry: %d\n", target_state_entry_table[table_index].gateID);
                 cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
                 cbor_encode_int(&singleEntryEncoder, target_state_entry_table[table_index].gateID);
                 cbor_encode_int(&singleEntryEncoder, target_state_entry_table[table_index].state);
