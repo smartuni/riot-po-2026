@@ -40,11 +40,11 @@ int inductive_sensor_init(inductive_sensor_t *dev, gpio_t pwr_pin, bool pwr_pin_
         return ANALOG_GATE_SENSOR_GPIO_INIT_ERROR;
     }
 
-    gpio_write(pwr_pin_ah, !pwr_pin_ah);
     dev->pwr_pin = pwr_pin;
     dev->pwr_pin_ah = pwr_pin_ah;
     dev->adc_vref_mv = adc_vref_mv;
     dev->sensor_vref_mv = sensor_vref_mv;
+    inductive_sensor_power(dev, false);
 
     for (unsigned i = 0; i < ARRAY_SIZE(res_confs); i++) {
         if (adc_sample(dev->adc_line, res_confs[i].res) >= 0) {
