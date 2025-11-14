@@ -1,1605 +1,561 @@
-#include "include/tables.h"
-#include <stdatomic.h>
-#include <stdio.h>
+#include <assert.h>
 #include <string.h>
-#include <stdint.h>
+
+#include "hybrid_logical_clock.h"
+#include "crypto_service.h"
+#include "store_service.h"
+
+#include "include/tables/keys.h"
+#include "include/tables/records.h"
+#include "include/tables/types.h"
 #include "mutex.h"
-#include <stddef.h>
-#include "embUnit.h"
-#include "embUnit/embUnit.h"
-#include "fmt.h"
-#include "cbor.h"
-#include "container.h"
-#include "atomic_utils.h"
-#define LOG_LEVEL   LOG_NONE
-#include "log.h"
+#include "tables/records.h"
+#include "tables/keys.h"
+#include "tables.h"
 
+#include "tables/records.h"
 
-// Return Codes
-#define TABLE_ERROR_SIZE_TOO_BIG -1
-#define TABLE_ERROR_INVALID_GATE_ID -2
-#define TABLE_ERROR_NOT_FOUND   -3
+#define ENABLE_DEBUG (1)
+#include "debug.h"
 
-// Static tables
-static gate_target_state_entry_t target_state_entry_table[MAX_GATE_COUNT];
-static int target_state_entry_count = 0;
-static gate_sensor_state_entry_t is_state_entry_table[MAX_GATE_COUNT];
-static int is_state_entry_count = 0;
-static gate_seen_state_entry_t seen_status_entry_table[MAX_GATE_COUNT][MAX_SENSE_COUNT];
-static int seen_status_entry_count = 0;
+/**
+ * @brief Structure passed to the memo list iteration
+ */
+typedef struct {
+    tables_context_t *ctx;          /**< Pointer to the table context */
+    const table_record_t *record;   /**< Pointer to the record to evaluate */
+} _table_memo_arg_t;
 
-static mate_seen_state_entry_t mate_seen_status_entry_table[MAX_SENSE_COUNT];
-static int mate_seen_status_entry_count = 0;
-
-static gate_job_entry_t jobs_entry_table[MAX_GATE_COUNT];
-static int jobs_entry_count = 0;
-static gate_timestamp_entry_t timestamp_table[MAX_GATE_COUNT];
-static int timestamp_entry_count = 0;
-
-static gate_target_state_entry_t returnTargetTable[MAX_GATE_COUNT];
-static gate_sensor_state_entry_t returnIsTable[MAX_GATE_COUNT];
-static gate_seen_state_entry_t returnSeenTable[MAX_GATE_COUNT];
-static gate_job_entry_t returnJobsTable[MAX_GATE_COUNT];
-
-// Mutexes for thread safety
-static mutex_t target_state_mutex = MUTEX_INIT;
-static mutex_t is_state_mutex = MUTEX_INIT;
-static mutex_t seen_status_mutex = MUTEX_INIT;
-static mutex_t mate_seen_status_mutex = MUTEX_INIT;
-static mutex_t jobs_mutex = MUTEX_INIT;
-static mutex_t timestamp_mutex = MUTEX_INIT;
-static mutex_t decode_mutex = MUTEX_INIT;
-
-static volatile uint32_t device_timestamp = 0;
-
-int tables_get_target_state_entry_count(void)
+/**
+ * @brief Check a single node in the linked list of memos, to be passed to clist_foreach
+ *        If a memo matches the query, the callback is called.
+ *
+ * @param node  The Clist node, part of a table_memo_t structure
+ * @param arg   The memo list iteration argument, _table_memo_arg_t structure
+ *
+ * @retval 0 always
+ */
+static int _check_and_call_memo(clist_node_t *node, void *arg)
 {
-    return target_state_entry_count;
-}
+    _table_memo_arg_t *memo_arg = (_table_memo_arg_t *)arg;
+    table_memo_t *memo = container_of(node, table_memo_t, list);
 
-int tables_get_is_state_entry_count(void)
-{
-    return is_state_entry_count;
-}
-
-int tables_get_seen_state_entry_count(void)
-{
-    return seen_status_entry_count;
-}
-
-int tables_get_mate_seen_state_entry_count(void)
-{
-    return mate_seen_status_entry_count;
-}
-
-int tables_get_closeby_mate_seen_state_entry_count(int8_t minrssi)
-{
-    int cnt = 0;
-    for (int i = 0; i < MAX_SENSE_COUNT; i++) {
-        if (mate_seen_status_entry_table[i].mateID != MAX_SENSE_COUNT) {
-            if (mate_seen_status_entry_table[i].rssi >= minrssi) {
-                cnt++;
-            }
-        }
+    if (record_matches_query(memo_arg->record, memo->query) && memo->cb != NULL) {
+        memo->cb(memo_arg->ctx, memo_arg->record, memo->query, memo->arg);
     }
-    return cnt;
-}
 
-int tables_get_jobs_entry_count(void)
-{
-    return jobs_entry_count;
-}
-
-int tables_get_timestamp_entry_count(void)
-{
-    return timestamp_entry_count;
-}
-
-void increment_device_timestamp(void) {
-    atomic_fetch_add_u32(&device_timestamp, 1);
-}
-
-uint32_t increment_and_get_device_timestamp(void) {
-    return atomic_fetch_add_u32(&device_timestamp, 1);
-}
-
-uint32_t get_device_timestamp(void) {
-    return atomic_load_u32(&device_timestamp);
+    return 0;
 }
 
 /**
- * Initialize all tables with default values
+ * @brief Check across the linked list of memos, whether any of them matches a record
+ *
+ * @param ctx       Pointer to the table context
+ * @param record    Pointer to the record to check
  */
-int init_tables(void) {
-    mutex_lock(&target_state_mutex);
-    mutex_lock(&is_state_mutex);
-    mutex_lock(&seen_status_mutex);
-    mutex_lock(&jobs_mutex);
-    mutex_lock(&timestamp_mutex);
-
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        target_state_entry_table[i].gateID = MAX_GATE_COUNT;  // Mark as empty
-        is_state_entry_table[i].gateID = MAX_GATE_COUNT;
-        jobs_entry_table[i].gateID = MAX_GATE_COUNT;
-        timestamp_table[i].gateID = MAX_GATE_COUNT;
-    }
-
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        for (int j = 0; j < MAX_SENSE_COUNT; j++) {
-            seen_status_entry_table[i][j].gateID = MAX_GATE_COUNT;
-            seen_status_entry_table[i][j].senseMateID = MAX_SENSE_COUNT;
-        }
-    }
-
-    for (int i = 0; i < MAX_SENSE_COUNT; i++) {
-        mate_seen_status_entry_table[i].mateID = MAX_SENSE_COUNT;
-        mate_seen_status_entry_table[i].timestamp = 0;
-        mate_seen_status_entry_table[i].rssi = 0;
-    }
-
-    mutex_unlock(&timestamp_mutex);
-    mutex_unlock(&jobs_mutex);
-    mutex_unlock(&seen_status_mutex);
-    mutex_unlock(&is_state_mutex);
-    mutex_unlock(&target_state_mutex);
-
-    return TABLE_SUCCESS;
-}
-
-static int is_target_state_entry_present_internal(uint8_t gate_id) {
-    if (gate_id >= MAX_GATE_COUNT) {
-        return 0;  // Invalid gate_id = not present
-    }
-    uint8_t entry_gate_id = target_state_entry_table[gate_id].gateID;
-    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
-}
-
-static int is_is_state_entry_present_internal(uint8_t gate_id) {
-    if (gate_id >= MAX_GATE_COUNT) {
-        return 0;
-    }
-    uint8_t entry_gate_id = is_state_entry_table[gate_id].gateID;
-    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
-}
-
-static int is_seen_status_entry_present_internal(uint8_t gate_id, uint8_t sense_id) {
-    if (gate_id >= MAX_GATE_COUNT || sense_id >= MAX_SENSE_COUNT) {
-        return 0;
-    }
-    gate_seen_state_entry_t entry = seen_status_entry_table[gate_id][sense_id];
-    return entry.gateID != MAX_GATE_COUNT
-            && entry.gateID == gate_id
-            && entry.senseMateID != MAX_SENSE_COUNT
-            && entry.senseMateID == sense_id;
-}
-
-static int is_mate_seen_status_entry_present_internal(uint8_t sense_id) {
-    if (sense_id >= MAX_SENSE_COUNT) {
-        return 0;
-    }
-    mate_seen_state_entry_t entry = mate_seen_status_entry_table[sense_id];
-    return  entry.mateID != MAX_SENSE_COUNT;
-}
-
-static int is_jobs_entry_present_internal(uint8_t gate_id) {
-    if (gate_id >= MAX_GATE_COUNT) {
-        return 0;
-    }
-    uint8_t entry_gate_id = jobs_entry_table[gate_id].gateID;
-    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
-}
-
-static int is_timestamp_entry_present_internal(uint8_t gate_id) {
-    if (gate_id >= MAX_GATE_COUNT) {
-        return 0;
-    }
-    uint8_t entry_gate_id = timestamp_table[gate_id].gateID;
-    return entry_gate_id != MAX_GATE_COUNT && entry_gate_id == gate_id;
-}
-
-
-
-static inline int is_valid_gate_id(uint8_t gate_id) {
-    return gate_id < MAX_GATE_COUNT;
-}
-
-int target_state_table_to_cbor_test(gate_target_state_entry_t table[], cbor_buffer* buffer) {
-    CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-    cbor_encoder_init(&encoder, buffer->buffer, sizeof(uint8_t) * 100, 0);
-    cbor_encoder_create_array(&encoder, &arrayEncoder, 3); // [
-    cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
-    cbor_encode_int(&arrayEncoder, 2008); // Entry 2
-    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, 4); // Entry 3
-
-    // [Table Entry]
-    for(int i = 0; i < 4; i++) {
-        if (table[i].gateID != MAX_GATE_COUNT) {
-            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-            cbor_encode_int(&singleEntryEncoder, table[i].gateID);
-            cbor_encode_int(&singleEntryEncoder, table[i].state);
-            cbor_encode_int(&singleEntryEncoder, table[i].timestamp);
-            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-        }
-    }
-
-    cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-    cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
-
-    buffer->cbor_size = (uint8_t) cbor_encoder_get_buffer_size (&encoder, buffer->buffer);
-
-    return 0;
-}
-
-int target_state_table_to_cbor(cbor_buffer* buffer) {
-    if (target_state_entry_count == 0){
-        return -1; // No entries in table
-    }
-    CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-    cbor_encoder_init(&encoder, buffer->buffer, sizeof(uint8_t) * 100, 0);
-    cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
-    cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
-    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, target_state_entry_count); // Entry 2
-
-    // [Table Entry]
-    for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (is_target_state_entry_present_internal(i)) {
-            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-            cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].gateID);
-            cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].state);
-            cbor_encode_int(&singleEntryEncoder, target_state_entry_table[i].timestamp);
-            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-        }
-    }
-
-    cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-    cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
-
-    buffer->cbor_size =  (uint8_t) cbor_encoder_get_buffer_size (&encoder, buffer->buffer);
-
-    return 0;
-}
-
-int is_state_table_to_cbor(cbor_buffer* buffer) {
-    if (is_state_entry_count == 0){
-        return -1; // No entries in table
-    }
-    CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-    cbor_encoder_init(&encoder, buffer->buffer, sizeof(uint8_t) * 100, 0);
-    cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
-    cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
-    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count); // Entry 2
-
-    // [Table Entry]
-    for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        if(is_is_state_entry_present_internal(i)) {
-            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-            cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].gateID);
-            cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].state);
-            cbor_encode_int(&singleEntryEncoder, is_state_entry_table[i].timestamp);
-            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-        }
-    }
-
-    cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-    cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
-
-    buffer->cbor_size =  (uint8_t) cbor_encoder_get_buffer_size (&encoder, buffer->buffer);
-
-    return 0;
-}
-
-int seen_status_table_to_cbor(cbor_buffer* buffer) {
-    if (seen_status_entry_count == 0){
-        return -1; // No entries in table
-    }
-    CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-    cbor_encoder_init(&encoder, buffer->buffer, sizeof(uint8_t) * 100, 0);
-    cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
-    cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
-    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, seen_status_entry_count); // Entry 2
-
-    // [Table Entry]
-    for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        for (int j = 0; j < MAX_SENSE_COUNT; j++) {
-            if(is_seen_status_entry_present_internal(i, j)) {
-                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].gateID);
-                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].timestamp);
-                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].state);
-                cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[i][j].senseMateID);
-                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-            }
-        }
-    }
-
-    cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-    cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
-
-    buffer->cbor_size =  (uint8_t) cbor_encoder_get_buffer_size (&encoder, buffer->buffer);
-
-    return 0;
-}
-
-int jobs_table_to_cbor(cbor_buffer* buffer) {
-    if (jobs_entry_count == 0){
-        return -1; // No jobs in table
-    }
-    CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-    cbor_encoder_init(&encoder, buffer->buffer, sizeof(uint8_t) * 100, 0);
-    cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
-    cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
-    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, jobs_entry_count); // Entry 2
-
-    // [Table Entry]
-    for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (is_jobs_entry_present_internal(i)) {
-            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-            cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].gateID);
-            cbor_encode_int(&singleEntryEncoder, jobs_entry_table[i].done);
-            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-        }
-    }
-
-    cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-    cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
-
-    buffer->cbor_size =  (uint8_t) cbor_encoder_get_buffer_size (&encoder, buffer->buffer);
-
-    return 0;
-}
-
-int timestamp_table_to_cbor(cbor_buffer* buffer) {
-    if (timestamp_entry_count == 0){
-        return -1; // No jobs in table
-    }
-    CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-    cbor_encoder_init(&encoder, buffer->buffer, sizeof(uint8_t) * 100, 0);
-    cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
-    cbor_encode_int(&arrayEncoder, TIMESTAMP_KEY); // Entry 1
-    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, timestamp_entry_count); // Entry 2
-
-    // [Table Entry]
-    for(int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (is_jobs_entry_present_internal(i)) {
-            cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-            cbor_encode_int(&singleEntryEncoder, timestamp_table[i].gateID);
-            cbor_encode_int(&singleEntryEncoder, timestamp_table[i].timestamp);
-            cbor_encode_int(&singleEntryEncoder, timestamp_table[i].rssi);
-            cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-        }
-    }
-
-    cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-    cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
-
-    buffer->cbor_size =  (uint8_t) cbor_encoder_get_buffer_size (&encoder, buffer->buffer);
-
-    return 0;
-}
-
- int print_target_table_test(void){
-    printf("\n--- TARGET STATE TABLE ---\n");
-
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (target_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
-            printf("Gate: %d, State: %d, Time: %"PRIu32"\n", target_state_entry_table[i].gateID, target_state_entry_table[i].state, target_state_entry_table[i].timestamp);
-        }
-    }
-    return 1;
-}
-
-const char* _table_type_to_str(int table_type)
+static void _check_and_call_memos(tables_context_t *ctx, const table_record_t *record)
 {
-    switch (table_type) {
-        case TARGET_STATE_KEY:
-            return "TARGET_STATE";
-        case IS_STATE_KEY:
-            return "IS_STATE";
-        case SEEN_STATUS_KEY:
-            return "SEEN_STATE";
-        case JOBS_KEY:
-            return "JOBS";
-        default:
-            return "TABLE_TYPE_INVALID";
-    }
+    assert(ctx != NULL);
+    assert(record != NULL);
+
+    _table_memo_arg_t arg = {
+        .ctx = ctx,
+        .record = record
+    };
+
+    clist_foreach(&ctx->memo_list, _check_and_call_memo, &arg);
 }
 
-const char* _gate_state_to_str(gate_state_t gate_state)
+/**
+ * @brief Get the next sequence number for a new record.
+ * @param ctx      Pointer to the tables context
+ * @param sequence Pointer to store the next sequence number
+ */
+static void _get_next_sequence(tables_context_t *ctx, record_sequence_t *sequence)
 {
-    switch (gate_state) {
-        case GATE_CLOSED:
-            return "GATE_CLOSED";
-        case GATE_OPEN:
-            return "GATE_OPEN";
-        default:
-            return "GATE_STATE_INVALID";
-    }
+    mutex_lock(&ctx->lock);
+    ctx->self_sequence++;
+    *sequence = ctx->self_sequence;
+    mutex_unlock(&ctx->lock);
 }
 
-const char* _job_state_to_str(job_state_t job_state)
+/**
+ * @brief Create a new table record with proper header fields set.
+ * @param ctx    Pointer to the tables context
+ * @param record Pointer to the record to create
+ * @param key    Pointer to the key under which to store the record
+ */
+static int _create_new_record(tables_context_t *ctx, table_record_t *record)
 {
-    switch (job_state) {
-        case JOB_DONE:
-            return "JOB_DONE";
-        case JOB_IN_PROGRESS:
-            return "JOB_IN_PROGRESS";
-        default:
-            return "JOB_STATE_INVALID";
+    assert(ctx != NULL);
+    assert(record != NULL);
+
+    memset(record, 0, sizeof(table_record_t));
+
+    set_record_writer_id(record, ctx->self_id);
+
+    record_sequence_t sequence;
+    _get_next_sequence(ctx, &sequence);
+    set_record_sequence(record, sequence);
+
+    hlc_timestamp_t timestamp;
+    if (hlc_get_current_timestamp(ctx->hlc_ctx, &timestamp) != 0) {
+        return -1;
     }
+    set_record_timestamp(record, timestamp);
+
+    return 0;
 }
 
-int tables_print_all(void){
-    printf("\n--- IS STATE TABLE ---\n");
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (is_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
-            printf("Gate: %" PRId8 ", State: %s, Time: %" PRId32 "\n",
-                   is_state_entry_table[i].gateID,
-                   _gate_state_to_str(is_state_entry_table[i].state),
-                   is_state_entry_table[i].timestamp);
+int tables_init(tables_context_t *ctx, const node_id_t *self,
+                store_service_t *store_service, crypto_service_t *crypto_service,
+                hlc_ctx_t *hlc_ctx)
+{
+    assert(ctx != NULL);
+    assert(self != NULL);
+    assert(store_service != NULL);
+    assert(crypto_service != NULL);
+    assert(hlc_ctx != NULL);
+
+    mutex_init(&ctx->lock);
+
+    ctx->self_id = self;
+    ctx->self_sequence = 0; // TODO: Load from persistent storage
+    ctx->store_service = *store_service;
+    ctx->crypto_service = *crypto_service;
+    ctx->hlc_ctx = hlc_ctx;
+    ctx->memo_list.next = NULL;
+
+    return 0;
+}
+
+int tables_put_gate_report(tables_context_t *ctx, gate_state_t state)
+{
+    table_record_t record;
+    table_gate_report_t gate_report;
+    table_key_t key;
+    int result = 0;
+
+    get_gate_report_key(ctx->self_id, &key);
+    result = _create_new_record(ctx, &record);
+    if (result != 0) {
+        return result;
+    }
+
+    set_gate_report_state(&gate_report, state);
+    set_gate_report_data(&record, &gate_report);
+
+    size_t signature_size;
+    /* get signature size */
+    result = sign_record(ctx, &record, NULL, &signature_size);
+    if (result != 0) {
+        return result;
+    }
+
+    uint8_t signature_buffer[signature_size];
+    /* get signature */
+    result = sign_record(ctx, &record, signature_buffer, &signature_size);
+    if (result != 0) {
+        return result;
+    }
+
+    result = put_record_in_store(ctx, &record, &key);
+    if (result < 0) {
+        return result;
+    }
+
+    _check_and_call_memos(ctx, &record);
+
+    return 0;
+}
+
+int tables_put_gate_observation(tables_context_t *ctx, const node_id_t *gate_id, gate_state_t state)
+{
+    table_record_t record;
+    table_gate_observation_t gate_observation;
+    int result = 0;
+    table_key_t key;
+
+    get_gate_observation_key(ctx->self_id, gate_id, &key);
+    result = _create_new_record(ctx, &record);
+    if (result != 0) {
+        return result;
+    }
+
+    set_gate_observation_id(&gate_observation, gate_id);
+    set_gate_observation_state(&gate_observation, state);
+    set_gate_observation_data(&record, &gate_observation);
+
+    size_t signature_size;
+    /* get signature size */
+    result = sign_record(ctx, &record, NULL, &signature_size);
+    if (result != 0) {
+        return result;
+    }
+
+    uint8_t signature_buffer[signature_size];
+    /* get signature */
+    result = sign_record(ctx, &record, signature_buffer, &signature_size);
+    if (result != 0) {
+        return result;
+    }
+
+    result = put_record_in_store(ctx, &record, &key);
+    if (result < 0) {
+        return result;
+    }
+
+    _check_and_call_memos(ctx, &record);
+
+    return 0;
+}
+
+int tables_put_gate_encounter(tables_context_t *ctx, const node_id_t *gate_id, gate_state_t state,
+                              rssi_t rssi)
+{
+    table_record_t record;
+    table_gate_encounter_t gate_encounter;
+    int result = 0;
+    table_key_t key;
+
+    get_gate_encounter_key(ctx->self_id, gate_id, &key);
+    result = _create_new_record(ctx, &record);
+    if (result != 0) {
+        return result;
+    }
+
+    set_gate_encounter_id(&gate_encounter, gate_id);
+    set_gate_encounter_state(&gate_encounter, state);
+    set_gate_encounter_rssi(&gate_encounter, rssi);
+    set_gate_encounter_data(&record, &gate_encounter);
+
+    size_t signature_size;
+    /* get signature size */
+    result = sign_record(ctx, &record, NULL, &signature_size);
+    if (result != 0) {
+        return result;
+    }
+
+    uint8_t signature_buffer[signature_size];
+    /* get signature */
+    result = sign_record(ctx, &record, signature_buffer, &signature_size);
+    if (result != 0) {
+        return result;
+    }
+
+    result = put_record_in_store(ctx, &record, &key);
+    if (result < 0) {
+        return result;
+    }
+
+    _check_and_call_memos(ctx, &record);
+
+    return 0;
+}
+
+int tables_put_mate_encounter(tables_context_t *ctx, const node_id_t *mate_id, rssi_t rssi)
+{
+    table_record_t record;
+    table_mate_encounter_t mate_encounter;
+    int result = 0;
+    table_key_t key;
+
+    get_mate_encounter_key(ctx->self_id, mate_id, &key);
+    result = _create_new_record(ctx, &record);
+    if (result != 0) {
+        return result;
+    }
+
+    set_mate_encounter_id(&mate_encounter, mate_id);
+    set_mate_encounter_rssi(&mate_encounter, rssi);
+    set_mate_encounter_data(&record, &mate_encounter);
+
+    size_t signature_size;
+    /* get signature size */
+    result = sign_record(ctx, &record, NULL, &signature_size);
+    if (result != 0) {
+        return result;
+    }
+
+    uint8_t signature_buffer[signature_size];
+    /* get signature */
+    result = sign_record(ctx, &record, signature_buffer, &signature_size);
+    if (result != 0) {
+        return result;
+    }
+
+    result = put_record_in_store(ctx, &record, &key);
+    if (result < 0) {
+        return result;
+    }
+
+    _check_and_call_memos(ctx, &record);
+
+    return 0;
+}
+
+int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
+                        table_merge_result_t *result)
+{
+    assert(ctx != NULL);
+    assert(record != NULL);
+    assert(result != NULL);
+
+    int res;
+    table_key_t key;
+    table_record_type_t type;
+
+    DEBUG("tables_merge_record: merging\n");
+
+    memset(result, 0, sizeof(table_merge_result_t));
+
+    get_record_type(record, &type);
+    if (type == RECORD_GATE_ENCOUNTER || type == RECORD_MATE_ENCOUNTER) {
+        // these types should not be propagated
+        DEBUG("tables_merge_record: invalid type to merge (%d)\n", type);
+        return -1;
+    }
+
+    // verify the signature on the record
+    res = verify_record(ctx, record);
+    if (res != 0) {
+        result->rejected_sig = true;
+        DEBUG("tables_merge_record: rejected signature\n");
+        return -1;
+    }
+
+    get_record_key(record, &key);
+    table_record_t record_in_store;
+
+    // TODO: Should we only be able to retrieve complete records instead of header?
+    res = get_record_header_from_store(ctx, &key, &record_in_store.header);
+    if (res != 0) {
+        result->new = true;
+        DEBUG("tables_merge_record: new record, adding it\n");
+        return put_record_in_store(ctx, record, &key);
+    }
+
+    // the record exists, we need to device whether to replace it
+
+    record_sequence_t seq_in_store, seq_incoming;
+    get_record_sequence(record, &seq_incoming);
+    get_record_sequence(&record_in_store, &seq_in_store);
+
+    hlc_timestamp_t hlc_in_store, hlc_incoming;
+    get_record_timestamp(record, &hlc_incoming);
+    get_record_timestamp(&record_in_store, &hlc_in_store);
+
+    bool merge = false;
+    if (seq_incoming > seq_in_store) {
+        merge = true;
+    }
+    else if (seq_incoming == seq_in_store) {
+        int hlcs = hlc_compare(&hlc_incoming, &hlc_in_store);
+        if (hlcs > 0) {
+            // incoming is newer
+            merge = true;
         }
-    }
-    printf("\n--- TARGET STATE TABLE ---\n");
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (target_state_entry_table[i].gateID!= MAX_GATE_COUNT) { // Entry ist valid
-            printf("Gate: %d, State: %s, Time: %"PRIu32"\n",
-                   target_state_entry_table[i].gateID,
-                   _gate_state_to_str(target_state_entry_table[i].state),
-                   target_state_entry_table[i].timestamp);
+        else {
+            // same time or incoming is older
+            merge = false;
         }
-    }
-    printf("\n--- SEEN STATE TABLE ---\n");
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        for (int j = 0; j < MAX_SENSE_COUNT; j++) {
-            if (seen_status_entry_table[i][j].gateID!= MAX_GATE_COUNT) { // Entry ist valid
-                printf("Gate: %d, State: %s, SenseMateID: %u, Time: %"PRIu32"\n",
-                       seen_status_entry_table[i][j].gateID,
-                       _gate_state_to_str(seen_status_entry_table[i][j].state),
-                       seen_status_entry_table[i][j].senseMateID,
-                       seen_status_entry_table[i][j].timestamp);
-            }
-        }
-    }
-    printf("\n--- JOBS TABLE ---\n");
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (jobs_entry_table[i].gateID != MAX_GATE_COUNT) { // Entry ist valid
-            printf("Gate: %d, Done: %s, Priority: %d\n",
-                   jobs_entry_table[i].gateID,
-                   _job_state_to_str(jobs_entry_table[i].done),
-                   jobs_entry_table[i].priority);
-        }
-    }
-    printf("\n--- TIMESTAMP TABLE ---\n");
-    for (int i = 0; i < MAX_GATE_COUNT; i++) {
-        if (timestamp_table[i].gateID != MAX_GATE_COUNT) { // Entry ist valid
-            printf("Gate: %d, Time: %"PRIu32", RSSI: %d\n",
-                   timestamp_table[i].gateID,
-                   timestamp_table[i].timestamp,
-                   timestamp_table[i].rssi);
-        }
-    }
-
-    return 1;
-}
-
-int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi) {
-    int tableType = 0;
-    int timeStamp = 0;
-    int typeOfSender = 0;
-    int deviceID = 0;
-
-    CborParser parser;
-    CborValue value;
-    CborValue wrapperValue;
-    CborValue fieldsValue;
-    CborValue entryValue;
-    mutex_lock(&decode_mutex);
-    memset(returnTargetTable, MAX_GATE_COUNT, sizeof(returnTargetTable));
-    memset(returnIsTable, MAX_GATE_COUNT, sizeof(returnIsTable));
-    memset(returnSeenTable, MAX_GATE_COUNT, sizeof(returnSeenTable));
-    memset(returnJobsTable, MAX_GATE_COUNT, sizeof(returnJobsTable));
-
-    cbor_parser_init(buffer->buffer, buffer->package_size[0], 0, &parser, &value);
-
-    if(cbor_value_enter_container(&value, &wrapperValue) != CborNoError) {
-        mutex_unlock(&decode_mutex);
-        return -30;
-    }
-
-    if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &tableType) != CborNoError) {
-        mutex_unlock(&decode_mutex);
-        return -2;
-    } // get type of table
-
-    // get header information depending on table type
-    LOG_DEBUG("[tables]: CBOR tableType: %d == %s\n",
-              tableType, _table_type_to_str(tableType));
-
-    switch (tableType)
-    {
-    case TARGET_STATE_KEY:
-        cbor_value_advance(&wrapperValue);
-        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
-            mutex_unlock(&decode_mutex);
-            return -3;
-        } // get timestamp
-        cbor_value_advance(&wrapperValue);
-        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
-            mutex_unlock(&decode_mutex);
-            return -4;
-        } // get whether Sensemate, gate or Server sent msg
-        cbor_value_advance(&wrapperValue);
-        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
-            mutex_unlock(&decode_mutex);
-            return -5;
-        } // get deviceID
-        break;
-    case IS_STATE_KEY:
-        cbor_value_advance(&wrapperValue);
-        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
-            mutex_unlock(&decode_mutex);
-            return -6;
-        } // get timestamp
-        cbor_value_advance(&wrapperValue);
-        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
-            mutex_unlock(&decode_mutex);
-            return -7;
-        } // get whether Sensemate, gate or Server sent msg
-        cbor_value_advance(&wrapperValue);
-        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
-            mutex_unlock(&decode_mutex);
-            return -8;
-        } // get deviceID
-        break;
-    case SEEN_STATUS_KEY:
-    cbor_value_advance(&wrapperValue);
-        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &timeStamp) != CborNoError) {
-            mutex_unlock(&decode_mutex);
-            return -9;
-        } // get timestamp
-        cbor_value_advance(&wrapperValue);
-        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &typeOfSender) != CborNoError) {
-            mutex_unlock(&decode_mutex);
-            return -10;
-        } // get whether Sensemate, gate or Server sent msg
-        cbor_value_advance(&wrapperValue);
-        if(!cbor_value_is_integer(&wrapperValue) || cbor_value_get_int(&wrapperValue, &deviceID) != CborNoError) {
-            mutex_unlock(&decode_mutex);
-            return -11;
-        } // get deviceID
-        break;
-    case JOBS_KEY:
-        // no further header information for JOBS table
-        break;
-    default:
-        break;
-    }
-
-    // [ enter second container
-    cbor_value_advance(&wrapperValue);
-    if(cbor_value_enter_container(&wrapperValue, &fieldsValue) != CborNoError) {
-        mutex_unlock(&decode_mutex);
-        return -12;
-    }
-
-    int id, s, sID, p, gt;
-    size_t length = 0;
-    cbor_value_get_array_length(&wrapperValue, &length);
-    for(size_t i = 0; i < length; i++) {
-        cbor_value_enter_container(&fieldsValue, &entryValue); // [
-        switch(tableType) {
-            case TARGET_STATE_KEY:
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
-                    mutex_unlock(&decode_mutex);
-                    return -13;
-                }
-                cbor_value_advance(&entryValue);
-
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
-                    mutex_unlock(&decode_mutex);
-                    return -14;
-                }
-                cbor_value_advance(&entryValue);
-
-                /* If msg comes from the server, the timestamp is only in the header.
-                 * If msg comes from a sensemate or gate, each table entry has its
-                 * own timestamp. */
-                int serverTimestamp = timeStamp;
-                if ((typeOfSender == SENSEMATE_NODE) ||
-                    (typeOfSender == GATE_NODE)) {
-                    if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &serverTimestamp) != CborNoError) {
-                        mutex_unlock(&decode_mutex);
-                        return -25;
-                    }
-                    cbor_value_advance(&entryValue);
-                }
-                gate_target_state_entry_t newTargetEntry = { .gateID = id, .state = s, .timestamp = serverTimestamp};
-                returnTargetTable[i] = newTargetEntry;
-                break;
-            case IS_STATE_KEY:
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
-                    mutex_unlock(&decode_mutex);
-                    return -15;
-                }
-                cbor_value_advance(&entryValue);
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
-                    mutex_unlock(&decode_mutex);
-                    return -16;
-                }
-                cbor_value_advance(&entryValue);
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
-                    mutex_unlock(&decode_mutex);
-                    return -17;
-                }
-                cbor_value_advance(&entryValue);
-                gate_sensor_state_entry_t newIsEntry = { .gateID = id, .state = s, .timestamp = gt};
-                returnIsTable[i] = newIsEntry;
-                break;
-            case SEEN_STATUS_KEY:
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
-                    mutex_unlock(&decode_mutex);
-                    return -18;
-                }
-                cbor_value_advance(&entryValue);
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &gt) != CborNoError) {
-                    mutex_unlock(&decode_mutex);
-                    return -19;
-                }
-                cbor_value_advance(&entryValue);
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &s) != CborNoError) {
-                    mutex_unlock(&decode_mutex);
-                    return -20;
-                }
-                cbor_value_advance(&entryValue);
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &sID) != CborNoError) {
-                    mutex_unlock(&decode_mutex);
-                    return -21;
-                }
-                cbor_value_advance(&entryValue);
-                gate_seen_state_entry_t newSeenEntry = { .gateID = id, .timestamp = gt, .state = s, .senseMateID = sID};
-                returnSeenTable[i] = newSeenEntry;
-                break;
-            case JOBS_KEY:
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &id) != CborNoError) {
-                    mutex_unlock(&decode_mutex);
-                    return -22;
-                }
-                cbor_value_advance(&entryValue);
-                if(!cbor_value_is_integer(&entryValue) || cbor_value_get_int(&entryValue, &p) != CborNoError) {
-                    mutex_unlock(&decode_mutex);
-                    return -23;
-                }
-                cbor_value_advance(&entryValue);
-                gate_job_entry_t newJobsEntry = { .gateID = id, .done = JOB_IN_PROGRESS, .priority = p};
-                returnJobsTable[i] = newJobsEntry;
-                break;
-        }
-        cbor_value_leave_container(&fieldsValue,&entryValue); // ]
-    }
-
-    cbor_value_leave_container(&wrapperValue, &fieldsValue); // ]
-    cbor_value_leave_container(&value, &wrapperValue); // ]
-
-    // Integrate local data into global table
-    if(typeOfSender == GATE_NODE) {
-        gate_timestamp_entry_t change_entry = { .gateID = deviceID, .timestamp = timeStamp, .rssi = rssi};
-        set_timestamp_entry(&change_entry);
-    } else if (typeOfSender == SENSEMATE_NODE) {
-        mate_seen_state_entry_t sme;
-        //printf("RSSI of mate %d: %d\n", deviceID, rssi);
-        if (get_mate_seen_status_entry(deviceID, &sme) == TABLE_SUCCESS) {
-            //sme.rssi = (sme.rssi * 3 + rssi) / 4;
-            sme.rssi = (sme.rssi * 2 + rssi) / 3;
-        } else {
-            sme.mateID = deviceID;
-            sme.rssi = rssi;
-
-        }
-        sme.timestamp = timeStamp;
-        set_mate_seen_status_entry(&sme);
-    }
-
-    int res = 0;
-    switch(tableType) {
-            case TARGET_STATE_KEY:
-                res |= merge_target_state_entry_table(returnTargetTable, (length));
-                break;
-            case IS_STATE_KEY:
-                res |= merge_is_state_entry_table(returnIsTable, (length));
-                break;
-            case SEEN_STATUS_KEY:
-                res |= merge_seen_status_entry_table(returnSeenTable, (length));
-                break;
-            case JOBS_KEY:
-                res |= merge_jobs_entry_table(returnJobsTable, (length));
-                break;
-            default:
-                mutex_unlock(&decode_mutex);
-                return -24;
-    }
-
-    mutex_unlock(&decode_mutex);
-    return res;
-}
-
-int set_target_state_entry(const gate_target_state_entry_t* entry) {
-    if (entry == NULL) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    uint8_t gate_id = entry->gateID;
-    if (!is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&target_state_mutex);
-    int res = TABLE_NO_UPDATES;
-    if (!is_target_state_entry_present_internal(gate_id)) {
-        // Entry doesn't exist yet, add it
-        target_state_entry_count++;
-        target_state_entry_table[gate_id] = *entry;
-        res |= TABLE_NEW_RECORD;
-    }
-    else if (target_state_entry_table[gate_id].timestamp < entry->timestamp) {
-        // New entry is newer, update ours
-        target_state_entry_table[gate_id] = *entry;
-        res |= TABLE_UPDATED;
-    }
-
-    mutex_unlock(&target_state_mutex);
-    return res;
-}
-
-int set_is_state_entry(const gate_sensor_state_entry_t* entry) {
-    LOG_DEBUG("Called: set_is_state_entry\n");
-    if (entry == NULL) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    uint8_t gate_id = entry->gateID;
-    if (!is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&is_state_mutex);
-    int res = TABLE_NO_UPDATES;
-    if (!is_is_state_entry_present_internal(gate_id)) {
-        // Entry doesn't exist yet, add it
-        is_state_entry_count++;
-        is_state_entry_table[gate_id] = *entry;
-        res |= TABLE_NEW_RECORD;
-    }
-    else if (is_state_entry_table[gate_id].timestamp < entry->timestamp) {
-        // New entry is newer, update ours
-        is_state_entry_table[gate_id] = *entry;
-        res |= TABLE_UPDATED;
-    }
-
-    mutex_unlock(&is_state_mutex);
-    return res;
-}
-
-int set_seen_status_entry(const gate_seen_state_entry_t* entry) {
-    if (entry == NULL) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    uint8_t gate_id = entry->gateID;
-    uint8_t sense_id = entry->senseMateID;
-    if (!is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&seen_status_mutex);
-    int res = TABLE_NO_UPDATES;
-    if (!is_seen_status_entry_present_internal(gate_id, sense_id)) {
-        // Entry doesn't exist yet, add it
-        seen_status_entry_count++;
-        seen_status_entry_table[gate_id][sense_id] = *entry;
-        res |= TABLE_NEW_RECORD;
-    }
-    else if (seen_status_entry_table[gate_id][sense_id].timestamp < entry->timestamp) {
-        // New entry is newer, update ours
-        seen_status_entry_table[gate_id][sense_id] = *entry;
-        res |= TABLE_UPDATED;
-    }
-
-    mutex_unlock(&seen_status_mutex);
-    return res;
-}
-
-int set_mate_seen_status_entry(const mate_seen_state_entry_t* entry) {
-    if (entry == NULL) {
-        return TABLE_ERROR_INVALID_MATE_ID;
-    }
-
-    uint8_t mate_id = entry->mateID;
-    if (mate_id >= MAX_SENSE_COUNT) {
-        return TABLE_ERROR_INVALID_MATE_ID;
-    }
-
-    mutex_lock(&mate_seen_status_mutex);
-    int res = TABLE_NO_UPDATES;
-    if (!is_mate_seen_status_entry_present_internal(mate_id)) {
-        // Entry doesn't exist yet, add it
-        mate_seen_status_entry_count++;
-        mate_seen_status_entry_table[mate_id] = *entry;
-        res |= TABLE_NEW_RECORD;
-    }
-    else if (mate_seen_status_entry_table[mate_id].timestamp < entry->timestamp) {
-        // New entry is newer, update ours
-        mate_seen_status_entry_table[mate_id] = *entry;
-        res |= TABLE_UPDATED;
-    }
-
-    mutex_unlock(&mate_seen_status_mutex);
-    return res;
-
-}
-
-
-int set_jobs_entry(const gate_job_entry_t* entry) {
-    if (entry == NULL) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    uint8_t gate_id = entry->gateID;
-    if (!is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&jobs_mutex);
-    int res = TABLE_UPDATED;
-    if (!is_jobs_entry_present_internal(gate_id)) {
-        jobs_entry_count++;
-        res |= TABLE_NEW_RECORD;
-    }
-    jobs_entry_table[gate_id] = *entry;
-    mutex_unlock(&jobs_mutex);
-
-    return res;
-}
-
-int set_timestamp_entry(const gate_timestamp_entry_t* entry) {
-    if (entry == NULL) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    uint8_t gate_id = entry->gateID;
-    if (!is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&timestamp_mutex);
-    int res = TABLE_NO_UPDATES;
-    if (!is_timestamp_entry_present_internal(gate_id)) {
-        timestamp_entry_count++;
-        res |= TABLE_NEW_RECORD;
     }
     else {
-        res |= TABLE_UPDATED;
+        // incoming is older
+        merge = false;
     }
-    timestamp_table[gate_id] = *entry;
-    mutex_unlock(&timestamp_mutex);
 
-    return res;
+    if (merge) {
+        result->updated = true;
+        DEBUG("tables_merge_record: existing record, updating it\n");
+        res = put_record_in_store(ctx, record, &key);
+
+        _check_and_call_memos(ctx, record);
+
+        return res;
+    }
+
+    DEBUG("tables_merge_record: record is older, skipping it\n");
+    return -1;
 }
 
-int force_set_target_state_entry(const gate_target_state_entry_t* entry) {
-    if (entry == NULL) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    uint8_t gate_id = entry->gateID;
-    if (!is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&target_state_mutex);
-    target_state_entry_table[gate_id] = *entry;
-    mutex_unlock(&target_state_mutex);
-
-    return TABLE_UPDATED;
-}
-
-int merge_target_state_entry_table(const gate_target_state_entry_t* other, uint8_t size) {
-    if (size >= MAX_GATE_COUNT) {
-        return TABLE_ERROR_SIZE_TOO_BIG;
-    }
-    int merge_result = TARGET_STATE_TABLE_NO_UPDATES;
-    for (int i = 0; i < size; i++) {
-        int result = set_target_state_entry(&other[i]);
-        if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
-            merge_result |= result;
-        }
-    }
-    return merge_result;
-}
-
-int merge_is_state_entry_table(const gate_sensor_state_entry_t* other, uint8_t size) {
-    if (size >= MAX_GATE_COUNT) {
-        return TABLE_ERROR_SIZE_TOO_BIG;
-    }
-    int merge_result = IS_STATE_TABLE_NO_UPDATES;
-    for (int i = 0; i < size; i++) {
-        int result = set_is_state_entry(&other[i]);
-        if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
-            merge_result |= result;
-        }
-    }
-    return merge_result;
-}
-
-int merge_seen_status_entry_table(const gate_seen_state_entry_t* other, uint8_t size) {
-    if (size >= MAX_GATE_COUNT) {
-        return TABLE_ERROR_SIZE_TOO_BIG;
-    }
-    int merge_result = SEEN_STATUS_TABLE_NO_UPDATES;
-    for (int i = 0; i < size; i++) {
-        int result = set_seen_status_entry(&other[i]);
-        if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
-            merge_result |= result;
-        }
-    }
-    return merge_result;
-}
-
-int merge_timestamp_entry_table(const gate_timestamp_entry_t* other, uint8_t size) {
-    if (size >= MAX_GATE_COUNT) {
-        return TABLE_ERROR_SIZE_TOO_BIG;
-    }
-    int merge_result = TIMESTAMP_TABLE_NO_UPDATES;
-    for (int i = 0; i < size; i++) {
-        int result = set_timestamp_entry(&other[i]);
-        if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
-            merge_result |= result;
-        }
-    }
-    return merge_result;
-}
-
-int merge_jobs_entry_table(const gate_job_entry_t* other, uint8_t size) {
-    if (size >= MAX_GATE_COUNT) {
-        return TABLE_ERROR_SIZE_TOO_BIG;
-    }
-    int merge_result = JOBS_STATE_TABLE_NO_UPDATES;
-    for (int i = 0; i < size; i++) {
-        int result = set_jobs_entry(&other[i]);
-        if (TABLE_UPDATED == result || TABLE_NEW_RECORD == result) {
-            merge_result |= result;
-        }
-    }
-    return merge_result;
-}
-
-int get_target_state_entry(uint8_t gate_id, gate_target_state_entry_t* entry) {
-    if (entry == NULL || !is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&target_state_mutex);
-
-    if (!is_target_state_entry_present_internal(gate_id)) {
-        mutex_unlock(&target_state_mutex);
-        return TABLE_ERROR_NOT_FOUND;
-    }
-
-    *entry = target_state_entry_table[gate_id];
-    mutex_unlock(&target_state_mutex);
-
-    return TABLE_SUCCESS;
-}
-
-int get_is_state_entry(uint8_t gate_id, gate_sensor_state_entry_t* entry) {
-    if (entry == NULL || !is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&is_state_mutex);
-
-    if (!is_is_state_entry_present_internal(gate_id)) {
-        mutex_unlock(&is_state_mutex);
-        return TABLE_ERROR_NOT_FOUND;
-    }
-
-    *entry = is_state_entry_table[gate_id];
-    mutex_unlock(&is_state_mutex);
-
-    return TABLE_SUCCESS;
-}
-
-int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, gate_seen_state_entry_t* entry) {
-    if (entry == NULL || !is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&seen_status_mutex);
-
-    if (!is_seen_status_entry_present_internal(gate_id, sense_id)) {
-        mutex_unlock(&seen_status_mutex);
-        return TABLE_ERROR_NOT_FOUND;
-    }
-
-    *entry = seen_status_entry_table[gate_id][sense_id];
-    mutex_unlock(&seen_status_mutex);
-
-    return TABLE_SUCCESS;
-}
-
-int get_mate_seen_status_entry(uint8_t mate_id, mate_seen_state_entry_t* entry) {
-    if (entry == NULL || (mate_id >= MAX_SENSE_COUNT)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&mate_seen_status_mutex);
-
-    if (!is_mate_seen_status_entry_present_internal(mate_id)) {
-        mutex_unlock(&mate_seen_status_mutex);
-        return TABLE_ERROR_NOT_FOUND;
-    }
-
-    *entry = mate_seen_status_entry_table[mate_id];
-    mutex_unlock(&mate_seen_status_mutex);
-
-    return TABLE_SUCCESS;
-
-}
-
-int get_jobs_entry(uint8_t gate_id, gate_job_entry_t* entry) {
-    if (entry == NULL || !is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&jobs_mutex);
-
-    if (!is_jobs_entry_present_internal(gate_id)) {
-        mutex_unlock(&jobs_mutex);
-        return TABLE_ERROR_NOT_FOUND;
-    }
-
-    *entry = jobs_entry_table[gate_id];
-    mutex_unlock(&jobs_mutex);
-
-    return TABLE_SUCCESS;
-}
-
-int get_timestamp_entry(uint8_t gate_id, gate_timestamp_entry_t* entry) {
-    if (entry == NULL || !is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
-    }
-
-    mutex_lock(&timestamp_mutex);
-
-    if (!is_timestamp_entry_present_internal(gate_id)) {
-        mutex_unlock(&timestamp_mutex);
-        return TABLE_ERROR_NOT_FOUND;
-    }
-
-    *entry = timestamp_table[gate_id];
-    mutex_unlock(&timestamp_mutex);
-
-    return TABLE_SUCCESS;
-}
-
-const gate_target_state_entry_t* get_target_state_table(void) {
-    return target_state_entry_table;
-}
-
-const gate_sensor_state_entry_t* get_is_state_table(void) {
-    return is_state_entry_table;
-}
-
-const gate_seen_state_entry_t* get_seen_status_table(void) {
-    return &seen_status_entry_table[0][0];
-}
-
-const gate_job_entry_t* get_jobs_table(void) {
-    return jobs_entry_table;
-}
-
-const gate_timestamp_entry_t* get_timestamp_table(void) {
-    return timestamp_table;
-}
-
-int target_state_table_to_cbor_many_test(gate_target_state_entry_t table[], int package_size, cbor_buffer* buffer) {
-    printf("Entered function\n");
-    // Assert: given package_size big enough
-    if(BASE_CBOR_BYTE_SIZE + CBOR_TARGET_STATE_MAX_BYTE_SIZE > package_size) {
-        printf("ASSERT failed. Size passed too small for cbor!\n");
-        printf("%d + %d < %d\n", BASE_CBOR_BYTE_SIZE, CBOR_TARGET_STATE_MAX_BYTE_SIZE, package_size);
-        return -1;
-    }
-
-    int no_cbor_packages = 0;
-    int cbor_stream_index = 0;
-    int size_of_current_cbor = 0;
-    int table_index = 0;
-    printf("This is the buffer: %p\n", buffer->buffer);
-    while(table_index < 4) {
-        printf("enterd while, i = %d, size = %d\n", table_index, size_of_current_cbor);
-        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
-        printf("Space = %p\n", space);
-        printf("CBOR Index = %d\n", cbor_stream_index);
-        cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
-        cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
-        cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
-        cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, 6); // Entry 2
-        printf("while %d + %d < %d\n", size_of_current_cbor, CBOR_TARGET_STATE_MAX_BYTE_SIZE, package_size);
-        while(size_of_current_cbor + CBOR_TARGET_STATE_MAX_BYTE_SIZE < package_size) {
-            //validate table entry
-            if(table[table_index].gateID != MAX_GATE_COUNT) {
-                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-                cbor_encode_int(&singleEntryEncoder, table[table_index].gateID);
-                cbor_encode_int(&singleEntryEncoder, table[table_index].state);
-                cbor_encode_int(&singleEntryEncoder, table[table_index].timestamp);
-                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-            }
-            table_index++;
-            size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
-            printf("Entered one entry, size = %d\n", size_of_current_cbor);
-        }
-        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-        cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
-        cbor_stream_index += size_of_current_cbor;
-        buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
-        no_cbor_packages++;
-        size_of_current_cbor = 0;
-    }
-    buffer->cbor_size = no_cbor_packages;
-    return no_cbor_packages;
-}
-
-int target_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
-    // Assert: given package_size big enough
-    if(BASE_CBOR_BYTE_SIZE + CBOR_TARGET_STATE_MAX_BYTE_SIZE > package_size) {
-        printf("ASSERT failed. Size passed too small for cbor!\n");
-        return -1;
-    }
-
-    int no_cbor_packages = 0;
-    int cbor_stream_index = 0;
-    int size_of_current_cbor = 0;
-    int table_index = 0;
-    while((target_state_entry_count > 0) && (table_index < MAX_GATE_COUNT)) {
-        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
-        cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
-        cbor_encoder_create_array(&encoder, &arrayEncoder, 5); // [
-        cbor_encode_int(&arrayEncoder, TARGET_STATE_KEY); // Entry 1
-        cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
-        cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_TYPE); // Entry 3
-        cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_ID); // Entry 4
-        cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, target_state_entry_count); // Entry 5
-        while((size_of_current_cbor + CBOR_TARGET_STATE_MAX_BYTE_SIZE < package_size) && (table_index < MAX_GATE_COUNT)) {
-            if (target_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
-                LOG_DEBUG("Valid entry: %d\n", target_state_entry_table[table_index].gateID);
-                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-                cbor_encode_int(&singleEntryEncoder, target_state_entry_table[table_index].gateID);
-                cbor_encode_int(&singleEntryEncoder, target_state_entry_table[table_index].state);
-                cbor_encode_int(&singleEntryEncoder, target_state_entry_table[table_index].timestamp);
-                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-            }
-            table_index++;
-            size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
-        }
-        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-        cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
-        cbor_stream_index += size_of_current_cbor;
-        buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
-        no_cbor_packages++;
-        size_of_current_cbor = 0;
-    }
-    buffer->cbor_size = no_cbor_packages;
-    return no_cbor_packages;
-}
-
-int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
-    // Assert: given package_size big enough
-    if(BASE_CBOR_BYTE_SIZE + CBOR_IS_STATE_MAX_BYTE_SIZE > package_size) {
-        printf("ASSERT failed. Size passed too small for cbor!\n");
-        return -1;
-    }
-
-    int no_cbor_packages = 0;
-    int cbor_stream_index = 0;
-    int size_of_current_cbor = 0;
-    int table_index = 0;
-    int is_states_entry_processed = 0;
-    int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_IS_STATE_MAX_BYTE_SIZE;
-
-    while((is_state_entry_count > 0) && (table_index < MAX_GATE_COUNT) && (is_state_entry_count - is_states_entry_processed) > 0) {
-        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
-        int i = 0;
-        while( (i < calculated_array_entries) && (table_index < MAX_GATE_COUNT) && (is_state_entry_count - is_states_entry_processed) > 0) {
-            // Create new package if needed
-            if(size_of_current_cbor == 0 ){
-                cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
-                cbor_encoder_create_array(&encoder, &arrayEncoder, 5); // [
-                cbor_encode_int(&arrayEncoder, IS_STATE_KEY); //Entry 1
-                cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
-                cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_TYPE); // Entry 3
-                cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_ID); // Entry 4
-                if(is_state_entry_count - is_states_entry_processed < calculated_array_entries){
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);
-                }else{
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
-                }
-            } // Entry 1
-            if (is_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
-                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-                cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].gateID);
-                cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].state);
-                cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].timestamp);
-                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-                is_states_entry_processed++;
-                i++;
-            }
-            table_index++;
-            size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
-        }
-        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-        cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
-        cbor_stream_index += size_of_current_cbor;
-        buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
-        no_cbor_packages++;
-        size_of_current_cbor = 0;
-    }
-    buffer->cbor_size = no_cbor_packages;
-    return no_cbor_packages;
-}
-
-int is_state_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer) {
-    // Assert: given package_size big enough
-    if(BASE_CBOR_BYTE_SIZE + CBOR_IS_STATE_MAX_BYTE_SIZE > package_size) {
-        printf("ASSERT failed. Size passed too small for cbor!\n");
-        return -1;
-    }
-
-    int no_cbor_packages = 0;
-    int cbor_stream_index = 0;
-    int size_of_current_cbor = 0;
-    int table_index = 0;
-    int is_states_entry_processed = 0;
-    int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_IS_STATE_MAX_BYTE_SIZE;
-
-    while((is_state_entry_count > 0) && (table_index < MAX_GATE_COUNT) && (is_state_entry_count - is_states_entry_processed) > 0) {
-        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
-        int i = 0;
-        while( (i < calculated_array_entries) && (table_index < MAX_GATE_COUNT) && (is_state_entry_count - is_states_entry_processed) > 0) {
-            // Create new package if needed
-            if(size_of_current_cbor == 0 ){
-                cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
-                cbor_encoder_create_array(&encoder, &arrayEncoder, 2); // [
-                cbor_encode_int(&arrayEncoder, IS_STATE_KEY);
-                if(is_state_entry_count - is_states_entry_processed < calculated_array_entries){
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, is_state_entry_count - is_states_entry_processed);
-                }else{
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
-                }
-            } // Entry 1
-            if (is_state_entry_table[table_index].gateID != MAX_GATE_COUNT) {
-                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-                cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].gateID);
-                cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].state);
-                cbor_encode_int(&singleEntryEncoder, is_state_entry_table[table_index].timestamp);
-                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-                is_states_entry_processed++;
-                i++;
-            }
-            table_index++;
-            size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
-        }
-        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-        cbor_encoder_close_container(&encoder, &arrayEncoder); // ]
-        cbor_stream_index += size_of_current_cbor;
-        buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
-        no_cbor_packages++;
-        size_of_current_cbor = 0;
-    }
-    buffer->cbor_size = no_cbor_packages;
-    return no_cbor_packages;
-}
-
-int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
-    /* Assert: given package_size big enough */
-    if(BASE_CBOR_BYTE_SIZE + CBOR_SEEN_STATUS_MAX_BYTE_SIZE > package_size) {
-        printf("ASSERT failed. Size passed too small for cbor!\n");
-        return -1;
-    }
-
-    int no_cbor_packages = 0;
-    int cbor_stream_index = 0;
-    int size_of_current_cbor = 0;
-    int table_index = 0; // GateMate index
-    int sense_index = 0; // SenseMate index
-    int seen_status_entry_processed = 0;
-    int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_SEEN_STATUS_MAX_BYTE_SIZE;
-
-    while((seen_status_entry_count > 0) && (table_index < MAX_GATE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
-        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
-        int entry_index = 0;
-        while((entry_index < calculated_array_entries) && (table_index < MAX_GATE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
-            // Create new package if needed
-            if(size_of_current_cbor == 0) {
-                cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
-                cbor_encoder_create_array(&encoder, &arrayEncoder, 5);        // [
-                cbor_encode_int(&arrayEncoder, SEEN_STATUS_KEY);              // Entry 1
-                cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
-                cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_TYPE); // Entry 3
-                cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_ID); // Entry 4
-                if(seen_status_entry_count - seen_status_entry_processed < calculated_array_entries) {
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, seen_status_entry_count - seen_status_entry_processed);
-                }else {
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
-                }
-            }
-            // Check all SenseMates of the current GateMate
-            while((entry_index < calculated_array_entries) && (sense_index < MAX_SENSE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
-                if(seen_status_entry_table[table_index][sense_index].gateID != MAX_GATE_COUNT) {
-                    cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 4); // []
-                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].gateID);
-                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].timestamp);
-                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].state);
-                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].senseMateID);
-                    cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder);   // ]
-                    seen_status_entry_processed++;
-                    entry_index++;
-                }
-                sense_index++;
-
-                // Get current size of CBOR package, if the package is full, break out of SenseMate loop
-                size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
-                if(size_of_current_cbor + CBOR_SEEN_STATUS_MAX_BYTE_SIZE >= package_size) {
-                    break; // Paket full, break out of SenseMate loop
-                }
-            } /* while sense_index */
-
-            if(sense_index == MAX_SENSE_COUNT) {
-                table_index++; // Next GateMate
-                sense_index = 0; // Reset SenseMate index
-            }
-        } /* while entry_index */
-
-        // Close CBOR containers, write size to buffer and prepare for next package
-        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-        cbor_encoder_close_container(&encoder, &arrayEncoder);        // ]
-        cbor_stream_index += size_of_current_cbor;
-        buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
-        no_cbor_packages++;
-        size_of_current_cbor = 0;
-    } /* while table_index */
-
-    buffer->cbor_size = no_cbor_packages;
-    return no_cbor_packages;
-}
-
-int seen_status_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer) {
-    /* Assert: given package_size big enough */
-    if(BASE_CBOR_BYTE_SIZE + CBOR_SEEN_STATUS_MAX_BYTE_SIZE > package_size) {
-        printf("ASSERT failed. Size passed too small for cbor!\n");
-        return -1;
-    }
-
-    int no_cbor_packages = 0;
-    int cbor_stream_index = 0;
-    int size_of_current_cbor = 0;
-    int table_index = 0; // GateMate index
-    int sense_index = 0; // SenseMate index
-    int seen_status_entry_processed = 0;
-    int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_SEEN_STATUS_MAX_BYTE_SIZE;
-
-    while((seen_status_entry_count > 0) && (table_index < MAX_GATE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
-        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
-        int entry_index = 0;
-        while((entry_index < calculated_array_entries) && (table_index < MAX_GATE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
-            // Create new package if needed
-            if(size_of_current_cbor == 0) {
-                cbor_encoder_init(&encoder, space, sizeof(uint8_t) * package_size, 0);
-                cbor_encoder_create_array(&encoder, &arrayEncoder, 2);        // [
-                cbor_encode_int(&arrayEncoder, SEEN_STATUS_KEY);              // Entry 1
-                if(seen_status_entry_count - seen_status_entry_processed < calculated_array_entries) {
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, seen_status_entry_count - seen_status_entry_processed);
-                }else {
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
-                }
-            }
-            // Check all SenseMates of the current GateMate
-            while((entry_index < calculated_array_entries) && (sense_index < MAX_SENSE_COUNT) && (seen_status_entry_count - seen_status_entry_processed) > 0) {
-                if(seen_status_entry_table[table_index][sense_index].gateID != MAX_GATE_COUNT) {
-                    cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 4); // []
-                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].gateID);
-                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].timestamp);
-                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].state);
-                    cbor_encode_int(&singleEntryEncoder, seen_status_entry_table[table_index][sense_index].senseMateID);
-                    cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder);   // ]
-                    seen_status_entry_processed++;
-                    entry_index++;
-                }
-                sense_index++;
-
-                // Get current size of CBOR package, if the package is full, break out of SenseMate loop
-                size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size (&entriesEncoder, space);
-                if(size_of_current_cbor + CBOR_SEEN_STATUS_MAX_BYTE_SIZE >= package_size) {
-                    break; // Paket full, break out of SenseMate loop
-                }
-            } /* while sense_index */
-
-            if(sense_index == MAX_SENSE_COUNT) {
-                table_index++; // Next GateMate
-                sense_index = 0; // Reset SenseMate index
-            }
-        } /* while entry_index */
-
-        // Close CBOR containers, write size to buffer and prepare for next package
-        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-        cbor_encoder_close_container(&encoder, &arrayEncoder);        // ]
-        cbor_stream_index += size_of_current_cbor;
-        buffer->package_size[no_cbor_packages] = (uint8_t) size_of_current_cbor;
-        no_cbor_packages++;
-        size_of_current_cbor = 0;
-    } /* while table_index */
-
-    buffer->cbor_size = no_cbor_packages;
-    return no_cbor_packages;
-}
-
-
-int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
-    /* Assert: package_size big enough for at least one element */
-    if (BASE_CBOR_BYTE_SIZE + CBOR_JOBS_MAX_BYTE_SIZE > package_size) {
-        printf("ASSERT failed. Size passed too small for cbor!\n");
-        return -1;
-    }
-
-    int no_cbor_packages = 0;
-    int cbor_stream_index = 0;
-    int size_of_current_cbor = 0;
-    int table_index = 0;
-    int jobs_entry_processed = 0;
-    const int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_JOBS_MAX_BYTE_SIZE;
-
-    while ((jobs_entry_count > 0) && (table_index < MAX_GATE_COUNT) && (jobs_entry_count - jobs_entry_processed) > 0) {
-        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-        uint8_t* space = buffer->buffer + cbor_stream_index;
-        int entry_index = 0;
-        while ((entry_index < calculated_array_entries) && (table_index < MAX_GATE_COUNT) && (jobs_entry_count - jobs_entry_processed) > 0) {
-            // Create new package if needed
-            if (size_of_current_cbor == 0) {
-                cbor_encoder_init(&encoder, space, package_size, 0);
-                cbor_encoder_create_array(&encoder, &arrayEncoder, 2);          // [
-                cbor_encode_int(&arrayEncoder, JOBS_KEY);                       // Entry 1
-                cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
-                cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_TYPE); // Entry 3
-                cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_ID); // Entry 4
-                if(jobs_entry_count - jobs_entry_processed < calculated_array_entries){
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, jobs_entry_count - jobs_entry_processed);
-                }else{
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
-                }
-            }
-            if (jobs_entry_table[table_index].gateID != MAX_GATE_COUNT) {
-                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 2); // []
-                cbor_encode_int(&singleEntryEncoder, jobs_entry_table[table_index].gateID);
-                cbor_encode_int(&singleEntryEncoder, jobs_entry_table[table_index].done);
-                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-                jobs_entry_processed++;
-                entry_index++;
-            }
-            table_index++;
-            size_of_current_cbor = (uint8_t)cbor_encoder_get_buffer_size(&entriesEncoder, space);
-        } /* while entry_index */
-
-        // Close package
-        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-        cbor_encoder_close_container(&encoder,      &arrayEncoder);   // ]
-        cbor_stream_index += size_of_current_cbor;
-        buffer->package_size[no_cbor_packages++] = (uint8_t)size_of_current_cbor;
-        size_of_current_cbor = 0;
-    }
-    buffer->cbor_size = no_cbor_packages;
-    return no_cbor_packages;
-}
-
-int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer) {
-    /* Assert: package_size big enough for at least one element */
-    if (BASE_CBOR_BYTE_SIZE + CBOR_TIMESTAMP_MAX_BYTE_SIZE > package_size) {
-        printf("ASSERT failed. Size passed too small for cbor!\n");
-        return -1;
-    }
-
-    int no_cbor_packages = 0;
-    int cbor_stream_index = 0;
-    int size_of_current_cbor = 0;
-    int table_index = 0;
-    int timestamp_entry_processed = 0;
-    const int calculated_array_entries = (package_size - BASE_CBOR_BYTE_SIZE) / CBOR_TIMESTAMP_MAX_BYTE_SIZE;
-
-    while ((timestamp_entry_count > 0) && (table_index  < MAX_GATE_COUNT) && (timestamp_entry_count - timestamp_entry_processed) > 0) {
-        CborEncoder encoder, arrayEncoder, entriesEncoder, singleEntryEncoder;
-        uint8_t* space = (buffer->buffer) + (cbor_stream_index * sizeof(uint8_t));
-        int entry_index = 0;
-        while ((entry_index < calculated_array_entries) && (table_index  < MAX_GATE_COUNT) && (timestamp_entry_count - timestamp_entry_processed) > 0) {
-            // Create new package if needed
-            if (size_of_current_cbor == 0) {
-                cbor_encoder_init(&encoder, space, package_size, 0);
-                cbor_encoder_create_array(&encoder, &arrayEncoder, 2);           // [
-                cbor_encode_int(&arrayEncoder, TIMESTAMP_KEY);                  // Entry 1
-                cbor_encode_int(&arrayEncoder, device_timestamp); // Entry 2
-                cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_TYPE); // Entry 3
-                cbor_encode_int(&arrayEncoder, RIOT_CONFIG_DEVICE_ID); // Entry 4
-                if(timestamp_entry_count - timestamp_entry_processed < calculated_array_entries){
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, timestamp_entry_count - timestamp_entry_processed);
-                }else{
-                    cbor_encoder_create_array(&arrayEncoder, &entriesEncoder, calculated_array_entries);
-                }
-            }
-            if (timestamp_table[table_index].gateID != MAX_GATE_COUNT) {
-                cbor_encoder_create_array(&entriesEncoder, &singleEntryEncoder, 3); // []
-                cbor_encode_int(&singleEntryEncoder, timestamp_table[table_index].gateID);
-                cbor_encode_int(&singleEntryEncoder, timestamp_table[table_index].timestamp);
-                cbor_encode_int(&singleEntryEncoder, timestamp_table[table_index].rssi);
-                cbor_encoder_close_container(&entriesEncoder, &singleEntryEncoder); // ]
-                timestamp_entry_processed++;
-                entry_index++;
-            }
-            table_index++;
-            size_of_current_cbor = (uint8_t) cbor_encoder_get_buffer_size(&entriesEncoder, space);
-        } /* while entry_index */
-
-       // Close package
-        cbor_encoder_close_container(&arrayEncoder, &entriesEncoder); // ]
-        cbor_encoder_close_container(&encoder,      &arrayEncoder);   // ]
-        cbor_stream_index += size_of_current_cbor;
-        buffer->package_size[no_cbor_packages++] = (uint8_t) size_of_current_cbor;
-        size_of_current_cbor = 0;
-    }
-    buffer->cbor_size = no_cbor_packages;
-    return no_cbor_packages;
-}
-
-int tables_get_local_info_entry(gate_id_t gate_id, gate_local_info_entry_t *li)
+int tables_iterator_init(tables_context_t *ctx, table_iterator_t *iterator,
+                         table_query_t *query)
 {
-    if (li == NULL || !is_valid_gate_id(gate_id)) {
-        return TABLE_ERROR_INVALID_GATE_ID;
+    assert(ctx != NULL);
+    assert(iterator != NULL);
+    assert(query != NULL);
+    assert(iterator->store_iter != NULL);
+
+    iterator->state = ITER_INIT;
+    iterator->query = query;
+
+    memset(&iterator->store_query, 0, sizeof(store_service_query_t));
+    memset(&iterator->search_key, 0, sizeof(table_key_t));
+    memset(&iterator->search_key_mask, 0, sizeof(table_key_t));
+    memset(&iterator->record, 0, sizeof(table_record_t));
+    memset(&iterator->record_data, 0, sizeof(iterator->record_data));
+
+    return 0;
+}
+
+static int _init_store_iterator(tables_context_t *ctx, table_iterator_t *iterator)
+{
+    assert(ctx != NULL);
+    assert(iterator != NULL);
+    assert(iterator->query != NULL);
+
+    // TODO: this should probably be in keys.c...
+    memset(iterator->search_key, 0, TABLES_KEY_SIZE);
+    memset(iterator->search_key_mask, 0, TABLES_KEY_SIZE);
+
+    iterator->store_query.key = (const uint8_t *)&iterator->search_key;
+    iterator->store_query.key_mask = (const uint8_t *)&iterator->search_key_mask;
+    iterator->store_query.key_len = TABLES_KEY_SIZE;
+
+    if (iterator->query->type != RECORD_UNDEFINED) {
+        iterator->search_key[0] = iterator->query->type;
+        iterator->search_key_mask[0] = 0xFF;
     }
 
-    gate_target_state_entry_t target;
-    gate_sensor_state_entry_t sensor;
-    gate_timestamp_entry_t timestamp;
+    make_header_key(&iterator->search_key);
+    iterator->search_key_mask[1] = 0xFF;
 
-    if (get_target_state_entry(gate_id, &target) == TABLE_SUCCESS) {
-        li->target_timestamp = target.timestamp;
-        li->target_state = target.state;
-        li->target_data_present = true;
-    } else {
-        li->target_data_present = false;
+    if (iterator->query->writer_id != NULL) {
+        memcpy(&iterator->search_key[2], iterator->query->writer_id, NODE_ID_SIZE);
+        memset(&iterator->search_key_mask[2], 0xFF, NODE_ID_SIZE);
     }
 
-    if (get_is_state_entry(gate_id, &sensor) == TABLE_SUCCESS) {
-        li->sensor_timestamp = sensor.timestamp;
-        li->sensor_state = sensor.state;
-        li->sensor_data_present = true;
-    } else {
-        li->sensor_data_present = false;
+    if (iterator->query->involved_id != NULL) {
+        memcpy(&iterator->search_key[2 + NODE_ID_SIZE], iterator->query->involved_id, NODE_ID_SIZE);
+        memset(&iterator->search_key_mask[2 + NODE_ID_SIZE], 0xFF, NODE_ID_SIZE);
     }
 
-    if (get_timestamp_entry(gate_id, &timestamp) == TABLE_SUCCESS) {
-        li->beacon_timestamp = timestamp.timestamp;
-        li->beacon_rssi = timestamp.rssi;
-        li->beacon_data_present = true;
-    } else {
-        li->beacon_data_present = false;
+    int result = store_service_iterator_init(&ctx->store_service, iterator->store_iter,
+                                             &iterator->store_query);
+    if (result != 0) {
+        return -1;
     }
 
-    if ( li->target_data_present ||
-         li->sensor_data_present ||
-         li->beacon_data_present) {
-        li->gateID = gate_id;
-        return TABLE_SUCCESS;
+    return 0;
+}
+
+int tables_iterator_next(tables_context_t *ctx, table_iterator_t *iterator,
+                         table_record_t **record,
+                         uint8_t *signature, size_t *signature_len)
+{
+    assert(ctx != NULL);
+    assert(iterator != NULL);
+    assert(record != NULL);
+
+    int result;
+
+    DEBUG("tables_iterator_next: getting next record\n");
+
+    while (1) {
+        DEBUG("tables_iterator_next: state %d\n", iterator->state);
+        switch (iterator->state) {
+        case ITER_INIT:
+            result = _init_store_iterator(ctx, iterator);
+            if (result != 0) {
+                iterator->state = ITER_ERROR;
+                DEBUG("tables_iterator_next: error initializing store iterator\n");
+            }
+
+            iterator->state = ITER_RUN;
+            break;
+
+        case ITER_RUN: {
+            table_key_t key;
+            size_t key_len = sizeof(key);
+            size_t header_length = sizeof(iterator->record.header);
+            result = store_service_iterator_next(&ctx->store_service, iterator->store_iter,
+                                                 key, &key_len,
+                                                 (uint8_t *)&(iterator->record.header),
+                                                 &header_length);
+            if (result != 0) {
+                iterator->state = ITER_DONE;
+                DEBUG("tables_iterator_next: no more records\n");
+                break;
+            }
+
+            size_t _signature_len;
+            if (signature_len == NULL) {
+                _signature_len = 0;
+            }
+            else {
+                _signature_len = *signature_len;
+            }
+
+            result = get_record_from_store(ctx, &key, &iterator->record,
+                                           (uint8_t *)&iterator->record_data,
+                                           sizeof(iterator->record_data), signature,
+                                           _signature_len);
+            if (result != 0) {
+                iterator->state = ITER_ERROR;
+                DEBUG("tables_iterator_next: error retrieving record from store\n");
+                break;
+            }
+
+            *record = &iterator->record;
+
+            if (signature_len != NULL) {
+                *signature_len = iterator->record.signature_len;
+            }
+
+            if (signature != NULL) {
+                iterator->record.signature = signature;
+            }
+
+            return 0;
+        }
+
+        case ITER_ERROR:
+        case ITER_DONE:
+        case ITER_UNKNOWN:
+            return -1;
+
+        }
     }
-    return TABLE_ERROR_NOT_FOUND;
+}
+
+
+void tables_init_query(table_query_t *query, table_record_type_t type,
+                       const node_id_t *writer_id, const node_id_t *involved_id)
+{
+    assert(query != NULL);
+
+    query->type = type;
+    query->writer_id = writer_id;
+    query->involved_id = involved_id;
+}
+
+void tables_add_memo(tables_context_t *ctx, table_memo_t *memo,
+                     const table_query_t *query, table_event_cb_t callback,
+                     void *callback_arg)
+{
+    assert(ctx != NULL);
+    assert(memo != NULL);
+    assert(query != NULL);
+    assert(callback != NULL);
+
+    memo->query = query;
+    memo->cb = callback;
+    memo->arg = callback_arg;
+
+    clist_rpush(&ctx->memo_list, &memo->list);
+}
+
+int tables_remove_memo(tables_context_t *ctx, table_memo_t *memo)
+{
+    assert(ctx != NULL);
+    assert(memo != NULL);
+
+    clist_node_t *removed = clist_remove(&ctx->memo_list, &memo->list);
+
+    if (removed == NULL) {
+        return -1;
+    }
+
+    return 0;
 }
