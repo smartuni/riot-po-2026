@@ -6,65 +6,146 @@
 #include "tables.h"
 #include "mate_lorawan.h"
 #include "mate_ble.h"
-
-#include <stdio.h>
-
-#include "include/detectDoorStatus.h"
-#include "include/event_creation.h"
+#include "event/thread.h"
+#include "inductive_sensor.h"
+#include "include/gate_observer.h"
 
 #define TIME_PERIOD_TABLE_UPDATE 30 // const defines time to update table periodically
 
+/* PIN label on feather sense: "A1" */
+#define REED_0_PIN_0 GPIO_PIN(0, 5)
+
+#define INDUCTIVE_SENSOR_DCDC_PWR_PIN GPIO_PIN(0,4)
+#define INDUCTIVE_SENSOR_DCDC_PWR_PIN_AH (false)
+#define INDUCTIVE_SENSOR_ADC_LINE (4)
+#define INDUCTIVE_SENSOR_ADC_VREF_MV (3300)
+#define INDUCTIVE_SENSOR_VREF_MV     (11000)
 
 char ble_send_stack[2*THREAD_STACKSIZE_DEFAULT];
 char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
 
+inductive_sensor_t inductive_sensor;
+
+uint32_t inductive_sensor_measure_cb(void *ctx)
+{
+    inductive_sensor_t *is = (inductive_sensor_t*)ctx;
+    inductive_sensor_power(is, true);
+    ztimer_sleep(ZTIMER_MSEC, 50);
+    uint32_t sum = 0;
+    unsigned nsamples = 16;
+    for (unsigned i = 0; i < nsamples; i++) {
+       sum += inductive_sensor_sample(&inductive_sensor);
+    }
+    inductive_sensor_power(is, false);
+
+    uint32_t avg = sum / nsamples;
+    return inductive_sensor_sample2adc_voltage(is, avg);
+}
+
+gate_observer_t observer = {
+    .config = {
+        .distance_sensor_confs = {
+                                   { .closed_min = 30,
+                                     .closed_max = 2000,
+                                     .measure_cb_ctx = &inductive_sensor,
+                                     .measure_distance_cb = inductive_sensor_measure_cb },
+                                 },
+        .limit_switch_confs = {
+                                { .pin = REED_0_PIN_0,
+                                  .pull_conf = GPIO_IN_PU,
+                                  .closed_level = false }
+                              },
+    },
+};
+
+void gate_observer_state_change_cb(gate_state_t new_state)
+{
+    /* update own state entry in table */
+    gate_sensor_state_entry_t table_entry;
+    table_entry.gateID = RIOT_CONFIG_DEVICE_ID;
+    table_entry.state = new_state;
+    table_entry.timestamp = get_device_timestamp();
+
+    int tableUpdate = set_is_state_entry(&table_entry);
+    if( TABLE_UPDATED == tableUpdate){
+        /* inform lorawan to send an update */
+        event_post(EVENT_PRIO_MEDIUM, &send_is_state_table);
+    } else {
+        puts("[main]: writing to table failed!");
+    }
+}
+
 int main(void){
+    int isi_res = inductive_sensor_init(&inductive_sensor,
+                                        INDUCTIVE_SENSOR_DCDC_PWR_PIN,
+                                        INDUCTIVE_SENSOR_DCDC_PWR_PIN_AH,
+                                        INDUCTIVE_SENSOR_ADC_LINE,
+                                        INDUCTIVE_SENSOR_ADC_VREF_MV,
+                                        INDUCTIVE_SENSOR_VREF_MV);
+
     /* Sleep so that we do not miss this message while connecting */
     ztimer_sleep(ZTIMER_SEC, 3);
 
-    puts("starting");
-    init__door_interrupt();
-    puts("init tables");
+    puts("[main]: starting");
+
+    if (isi_res != ANALOG_GATE_SENSOR_SUCCESS) {
+        printf("[main]: inductive sensor init failed! %d\n", isi_res);
+    }
+
+    int goi_res = gate_observer_init(&observer, &observer.config,
+                                     gate_observer_state_change_cb);
+
+    if (goi_res != 0) {
+        printf("[main]: gate_observer_init failed! %d\n", goi_res);
+    }
+
+    puts("[main]: reading initial door state");
+    gate_observer_state_t obs_state;
+    gate_state_t initial_gate_state = gate_observer_get_state(&observer, &obs_state);
+
+    for (int i = 0; i < GATE_OBSERVER_LIMITSWITCH_SENSOR_CNT; i++) {
+        printf("[main]: limit switch[%d]: %s\n", i, obs_state.ls_states[i] == LIMIT_SWITCH_ENGAGED ? "CLOSED" : "OPEN");
+    }
+
+    for (int i = 0; i < GATE_OBSERVER_DISTANCE_SENSOR_CNT; i++) {
+        uint32_t distance = obs_state.distances[i];
+        printf("[gate_sensor]: distance[%d]: %lu\n", i, distance);
+    }
+
+    printf("[main]: initial gate state: %s\n",
+            initial_gate_state == GATE_CLOSED ? "CLOSED" :
+            (initial_gate_state == GATE_OPEN ? "OPEN" : "INVALID"));
+
+    puts("[main]: init tables");
     init_tables();
     
-    puts("reading initial door state");
-    uint8_t inital_door_state = initial_door_state();
-    // write initial_door_state to table
-    update_status(inital_door_state);
-
     // write to table
-    puts("write to table");
+    puts("[main]: write to table");
     gate_sensor_state_entry_t table_entry;
     table_entry.gateID = RIOT_CONFIG_DEVICE_ID;
-    table_entry.state = inital_door_state;
+    table_entry.state = initial_gate_state;
     table_entry.timestamp = get_device_timestamp();
 
     int sis_res = set_is_state_entry(&table_entry);
     if (TABLE_NEW_RECORD == sis_res){
-        if (!inital_door_state) {
-            puts("door closed initially");
-        }
-        else {
-            puts("door opened initially");
-        }
     } else {
-        puts("could not write initial gate state to table");
+        puts("[main]: could not write initial gate state to table");
     }
 
     // start lorawan
-    puts("starting lorawan");
+    puts("[main]: starting lorawan");
     int lorawanstarted = start_lorawan();
     if (-1 == lorawanstarted){
-        printf("starting lorawan failed");
+        printf("[main]: starting lorawan failed");
     }
 
 
     //start thread init bluetooth
-    puts("starting ble");
+    puts("[main]: starting ble");
     if (BLE_SUCCESS == ble_init()){
-        puts("Ble init complete");
+        puts("[main]: BLE init complete");
     } else {
-        puts("BLE not started");
+        puts("[main]: BLE not started");
     }
 
 
@@ -103,11 +184,11 @@ int main(void){
         if (timeToUpdateTable == TIME_PERIOD_TABLE_UPDATE) {
             gate_sensor_state_entry_t table_update_entry;
             table_update_entry.gateID = RIOT_CONFIG_DEVICE_ID;
-            table_update_entry.state = get_status();
+            table_update_entry.state = gate_observer_get_state(&observer, NULL);
             table_update_entry.timestamp = get_device_timestamp();
 
             if (TABLE_UPDATED == set_is_state_entry(&table_update_entry)){
-                puts("Table updated with newest timestamp");
+                puts("[main]: Table updated with newest timestamp");
             }
             timeToUpdateTable = 0;
         } else {
