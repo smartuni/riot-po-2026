@@ -8,10 +8,7 @@
 /**
  * @brief Type representing a store service iterator
  */
-typedef struct {
-    /** Private data for the iterator */
-    alignas(max_align_t) uint8_t _private_data[1];
-} store_service_iterator_t;
+typedef max_align_t store_service_iterator_t;
 
 /**
  * @brief Descriptor of a store advanced query.
@@ -164,10 +161,12 @@ typedef struct {
  * @param name      Name of the iterator variable
  * @param service   Pointer to the store service
  */
-#define STORE_ITERATOR(name, service)                                                   \
-        size_t name ## _needed_size = (service)->interface.iterator_size((service)->context); \
-        alignas(max_align_t) unsigned char name ## _buf[name ## _needed_size];                  \
-        store_service_iterator_t *name = (store_service_iterator_t *)name ## _buf
+#define STORE_ITERATOR(name, service)                                                       \
+        size_t name##_needed_size = (service)->interface.iterator_size((service)->context); \
+        size_t name##_count = (name##_needed_size + sizeof(store_service_iterator_t) - 1) / \
+                              sizeof(store_service_iterator_t);                             \
+        store_service_iterator_t name##_buf[name##_count];                                  \
+        store_service_iterator_t *name = name ##_buf
 
 /**
  * @brief Get raw data from the store.
