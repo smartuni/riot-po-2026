@@ -1,4 +1,4 @@
-APPLICATION = test_tables_module
+APPLICATION = test_module_hlc
 BOARD = native
 QUIET = 1
 DEVELHELP = 1
@@ -12,15 +12,18 @@ EXTERNAL_PKG_DIRS += $(PROJECT_BASE)/custom_packages
 # terminate native when the test is complete
 CFLAGS += -DNATIVE_AUTO_EXIT=1
 
-# Needed application configurations
-CFLAGS += -DRIOT_CONFIG_DEVICE_ID=1
-CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=0
+# include internal headers to test internal functionalities
+CFLAGS += -I$(EXTERNAL_MODULE_DIRS)/tables
 
 USEPKG += unity
-
-# TODO: need to disable?
-DISABLE_MODULE += auto_init auto_init_%
+FEATURES_REQUIRED += periph_rtc
+USEMODULE += periph_rtc
 
 USEMODULE += tables
+USEMODULE += crypto_service
+USEMODULE += od
+
 
 include $(RIOTBASE)/Makefile.include
+
+

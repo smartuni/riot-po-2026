@@ -1,0 +1,11 @@
+USEPKG += flashdb
+
+# select the VFS backend
+USEMODULE += flashdb_vfs
+
+# enable key-value database
+USEMODULE += flashdb_kvdb
+
+USEMODULE += base64
+
+USEMODULE += store_service

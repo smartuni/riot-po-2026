@@ -1,0 +1,5 @@
+USEPKG    += tinycbor
+USEPKG    += libcose
+USEMODULE += libcose_crypt_monocypher
+USEMODULE += crypto_service
+USEMODULE += credential_manager

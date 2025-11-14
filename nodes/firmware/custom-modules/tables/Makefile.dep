@@ -1,6 +1,3 @@
-# Include CBOR package
-USEPKG += tinycbor
-USEMODULE += tinycbor_float
-USEMODULE += embunit
-USEMODULE += fmt
-USEMODULE += mate_types
+USEMODULE += hybrid_logical_clock
+USEMODULE += crypto_service
+USEMODULE += store_service

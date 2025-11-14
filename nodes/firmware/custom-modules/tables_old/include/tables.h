@@ -1,0 +1,345 @@
+/**
+ * @brief       This module provides tables saved on the devices
+ *
+ * 
+ * @author      
+ */
+
+#ifndef TABLES_H
+#define TABLES_H
+#include <stdint.h>
+#include "mate_types.h"
+
+#define INVALID_GATE_ID (0xFF)
+#define MAX_GATE_COUNT (128)
+#define MAX_SENSE_COUNT (20)
+
+#define TARGET_STATE_KEY 0x00
+#define IS_STATE_KEY 0x01
+#define SEEN_STATUS_KEY 0x02
+#define JOBS_KEY 0x03
+#define TIMESTAMP_KEY 0x04
+
+//General table defines
+#define TABLE_SUCCESS                               0x00
+#define TABLE_NO_UPDATES                            0x00
+#define TABLE_UPDATED                               0x01
+#define TABLE_NEW_RECORD                            0x02
+#define TABLE_NEW_RECORD_AND_UPDATE                 (TABLE_UPDATED | TABLE_NEW_RECORD)
+#define TABLE_ERROR_SIZE_TOO_BIG                    -1
+#define TABLE_ERROR_INVALID_GATE_ID                 -2
+#define TABLE_ERROR_NOT_FOUND                       -3
+#define TABLE_ERROR_INVALID_MATE_ID                 -4
+
+
+//target state table defines
+#define TARGET_STATE_TABLE_BASE                     0x10
+#define TARGET_STATE_TABLE_NO_UPDATES               TARGET_STATE_TABLE_BASE | TABLE_NO_UPDATES
+#define TARGET_STATE_TABLE_UPDATED                  TARGET_STATE_TABLE_BASE | TABLE_UPDATED
+#define TARGET_STATE_TABLE_NEW_RECORD               TARGET_STATE_TABLE_BASE | TABLE_NEW_RECORD
+#define TARGET_STATE_TABLE_NEW_RECORD_AND_UPDATE    TARGET_STATE_TABLE_BASE | TABLE_NEW_RECORD_AND_UPDATE
+
+//is state table defines
+#define IS_STATE_TABLE_BASE                         0x20
+#define IS_STATE_TABLE_NO_UPDATES                   IS_STATE_TABLE_BASE     | TABLE_NO_UPDATES
+#define IS_STATE_TABLE_UPDATED                      IS_STATE_TABLE_BASE     | TABLE_UPDATED
+#define IS_STATE_TABLE_NEW_RECORD                   IS_STATE_TABLE_BASE     | TABLE_NEW_RECORD
+#define IS_STATE_TABLE_NEW_RECORD_AND_UPDATE        IS_STATE_TABLE_BASE     | TABLE_NEW_RECORD_AND_UPDATE
+
+//seen status table defines
+#define SEEN_STATUS_TABLE_BASE                      0x30
+#define SEEN_STATUS_TABLE_NO_UPDATES                SEEN_STATUS_TABLE_BASE  | TABLE_NO_UPDATES
+#define SEEN_STATUS_TABLE_UPDATED                   SEEN_STATUS_TABLE_BASE  | TABLE_UPDATED
+#define SEEN_STATUS_TABLE_NEW_RECORD                SEEN_STATUS_TABLE_BASE  | TABLE_NEW_RECORD
+#define SEEN_STATUS_TABLE_NEW_RECORD_AND_UPDATE     SEEN_STATUS_TABLE_BASE  | TABLE_NEW_RECORD_AND_UPDATE
+
+//timestamp table defines
+#define TIMESTAMP_TABLE_BASE                        0x40
+#define TIMESTAMP_TABLE_NO_UPDATES                  TIMESTAMP_TABLE_BASE    | TABLE_NO_UPDATES
+#define TIMESTAMP_TABLE_UPDATED                     TIMESTAMP_TABLE_BASE    | TABLE_UPDATED
+#define TIMESTAMP_TABLE_NEW_RECORD                  TIMESTAMP_TABLE_BASE    | TABLE_NEW_RECORD
+#define TIMESTAMP_TABLE_NEW_RECORD_AND_UPDATE       TIMESTAMP_TABLE_BASE    | TABLE_NEW_RECORD_AND_UPDATE
+
+//jobs table defines
+#define JOBS_TABLE_BASE                             0x50
+#define JOBS_STATE_TABLE_NO_UPDATES                 JOBS_TABLE_BASE         | TABLE_NO_UPDATES
+#define JOBS_TABLE_UPDATED                          JOBS_TABLE_BASE         | TABLE_UPDATED
+#define JOBS_TABLE_NEW_RECORD                       JOBS_TABLE_BASE         | TABLE_NEW_RECORD
+#define JOBS_TABLE_NEW_RECORD_AND_UPDATE            JOBS_TABLE_BASE         | TABLE_NEW_RECORD_AND_UPDATE
+
+#define BASE_CBOR_BYTE_SIZE 0x05
+#define CBOR_TARGET_STATE_MAX_BYTE_SIZE (0x06)
+#define CBOR_IS_STATE_MAX_BYTE_SIZE (0x06)
+#define CBOR_SEEN_STATUS_MAX_BYTE_SIZE (0x07)
+#define CBOR_JOBS_MAX_BYTE_SIZE (0x03)
+#define CBOR_TIMESTAMP_MAX_BYTE_SIZE (0x06)
+
+#define GATE_NODE 0x00
+#define SENSEMATE_NODE 0x01
+#define SERVER_SENDER 0x02
+
+typedef struct {
+    uint8_t* buffer;
+    int cbor_size;
+    uint8_t* package_size;
+    int capacity;
+} cbor_buffer;
+
+/**
+ * Utility functions for device timestamp
+ * management
+ * Thread-safe
+ */
+void increment_device_timestamp(void);
+uint32_t increment_and_get_device_timestamp(void);
+uint32_t get_device_timestamp(void);
+
+/**
+ * @param buffer cbor buffer to write the cbor package into
+ * @return 0 if successful
+ * converts the table to a cbor package
+ */
+int target_state_table_to_cbor(cbor_buffer* buffer);
+int is_state_table_to_cbor(cbor_buffer* buffer);
+int seen_status_table_to_cbor(cbor_buffer* buffer);
+int jobs_table_to_cbor(cbor_buffer* buffer);
+int timestamp_table_to_cbor(cbor_buffer* buffer);
+/**
+ * @param package_size maximum size of one cbor package
+ * @param buffer cbor buffer to write the cbor package into
+ * @return number of cbor streams the table was converted to, -1 if an error occurred
+ * turns the table into several cbor packages limited in size by the package_size parameter
+ */
+int target_state_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+int is_state_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+int seen_status_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+int jobs_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+int timestamp_table_to_cbor_many(int package_size, cbor_buffer* buffer);
+
+int is_state_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer);
+int seen_status_table_to_cbor_many_to_server(int package_size, cbor_buffer* buffer);
+
+/**
+ * @param buffer cbor buffer
+ * @return 0 if successful, -1 otherwise
+ * receives a cbor buffer and turns the sequence into table structs
+ * consequently calls functions to merge received table with saved table
+ */
+int cbor_to_table_test(cbor_buffer* buffer, int8_t rssi);
+
+    // Initialization
+int init_tables(void);
+
+// Setter functions (merge/update)
+/**
+ * Merge target state entries from another table
+ * @param other Pointer to array of gate_target_state_entry_t
+ * @param size Number of entries in other array
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int merge_target_state_entry_table(const gate_target_state_entry_t* other, uint8_t size);
+
+/**
+ * Merge is state entries from another table
+ * @param other Pointer to array of gate_sensor_state_entry_t
+ * @param size Number of entries in other array
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int merge_is_state_entry_table(const gate_sensor_state_entry_t* other, uint8_t size);
+
+/**
+ * Merge seen status entries from another table
+ * @param other Pointer to array of seen_status_entry
+ * @param size Number of entries in other array
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int merge_seen_status_entry_table(const gate_seen_state_entry_t* other, uint8_t size);
+
+/**
+ * Merge jobs entries from another table
+ * Note: Jobs are always overwritten (no timestamp comparison)
+ * @param other Pointer to array of jobs_entry
+ * @param size Number of entries in other array
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int merge_jobs_entry_table(const gate_job_entry_t* other, uint8_t size);
+
+/**
+ * Merge seen timestamp entries from another table
+ * @param other Pointer to array of timestamp_entry
+ * @param size Number of timestamp in other array
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int merge_timestamp_entry_table(const gate_timestamp_entry_t* other, uint8_t size);
+
+/**
+ * Set/update a single target state entry
+ * Updates only if new entry has newer timestamp
+ * @param entry Pointer to gate_target_state_entry_t to set
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int set_target_state_entry(const gate_target_state_entry_t* entry);
+
+/**
+ * Set/update a single is state entry
+ * Updates only if new entry has newer gateTime
+ * @param entry Pointer to gate_sensor_state_entry_t to set
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int set_is_state_entry(const gate_sensor_state_entry_t* entry);
+
+/**
+ * Set/update a single seen status entry
+ * Updates only if new entry has newer gateTime
+ * @param entry Pointer to gate_seen_state_entry_t to set
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int set_seen_status_entry(const gate_seen_state_entry_t* entry);
+
+/* no doc as this file will be relapced completley */
+int set_mate_seen_status_entry(const mate_seen_state_entry_t* entry);
+int get_mate_seen_status_entry(uint8_t mate_id, mate_seen_state_entry_t* entry);
+int tables_get_closeby_mate_seen_state_entry_count(int8_t minrssi);
+
+/**
+ * Set/update a single jobs entry
+ * Note: Jobs are always overwritten (no timestamp comparison)
+ * @param entry Pointer to gate_job_entry_t to set
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int set_jobs_entry(const gate_job_entry_t* entry);
+
+/**
+ * Set/update a single timestamp entry
+ * @param entry Pointer to gate_timestamp_entry_t to set
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int set_timestamp_entry(const gate_timestamp_entry_t* entry);
+
+/**
+ * Force set a target state entry (ignore timestamp)
+ * Always overwrites existing entry regardless of timestamp
+ * @param entry Pointer to gate_target_state_entry_t to set
+ * @return TABLE_SUCCESS on success, error code on failure
+ */
+int force_set_target_state_entry(const gate_target_state_entry_t* entry);
+
+// Getter functions
+/**
+ * Get a single target state entry by gate ID
+ * @param gate_id Gate ID to look up
+ * @param entry Pointer to gate_target_state_entry_t to store result
+ * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
+ */
+int get_target_state_entry(uint8_t gate_id, gate_target_state_entry_t* entry);
+
+/**
+ * Get a single is state entry by gate ID
+ * @param gate_id Gate ID to look up
+ * @param entry Pointer to gate_sensor_state_entry_t to store result
+ * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
+ */
+int get_is_state_entry(uint8_t gate_id, gate_sensor_state_entry_t* entry);
+
+/**
+ * Get a single seen status entry by gate ID
+ * @param gate_id Gate ID to look up
+ * @param entry Pointer to gate_seen_state_entry_t to store result
+ * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
+ */
+int get_seen_status_entry(uint8_t gate_id, uint8_t sense_id, gate_seen_state_entry_t* entry);
+
+/**
+ * Get a single jobs entry by gate ID
+ * @param gate_id Gate ID to look up
+ * @param entry Pointer to gate_job_entry_t to store result
+ * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
+ */
+int get_jobs_entry(uint8_t gate_id, gate_job_entry_t* entry);
+
+/**
+ * Get a single timestamp entry by gate ID
+ * @param gate_id Gate ID to look up
+ * @param entry Pointer to gate_timestamp_entry_t to store result
+ * @return TABLE_SUCCESS on success, TABLE_ERROR_NOT_FOUND if not found, error code on failure
+ */
+int get_timestamp_entry(uint8_t gate_id, gate_timestamp_entry_t* entry);
+
+/**
+ * Get direct pointer to target state table 
+ * @return Pointer to internal table array
+ */
+const gate_target_state_entry_t* get_target_state_table(void);
+
+/**
+ * Get direct pointer to is state table 
+ * @return Pointer to internal table array
+ */
+const gate_sensor_state_entry_t* get_is_state_table(void);
+
+/**
+ * Get direct pointer to seen status table 
+ * @return Pointer to internal table array
+ */
+const gate_seen_state_entry_t* get_seen_status_table(void);
+
+/**
+ * Get direct pointer to jobs table 
+ * @return Pointer to internal table array
+ */
+const gate_job_entry_t* get_jobs_table(void);
+
+/**
+ * Get direct pointer to jobs table 
+ * @return Pointer to internal table array
+ */
+const gate_timestamp_entry_t* get_timestamp_table(void);
+
+/**
+ * Get count of entries in the target state table.
+ * @return the count of entries
+ */
+int tables_get_target_state_entry_count(void);
+
+/**
+ * Get count of entries in the is/current state table.
+ * @return the count of entries
+ */
+int tables_get_is_state_entry_count(void);
+
+
+/**
+ * Get count of entries in the seen state table.
+ * @return the count of entries
+ */
+int tables_get_seen_state_entry_count(void);
+
+/**
+ * Get count of entries in the mate seen state table.
+ * @return the count of entries
+ */
+int tables_get_mate_seen_state_entry_count(void);
+
+/**
+ * Get count of entries in the jobs table.
+ * @return the count of entries
+ */
+int tables_get_jobs_entry_count(void);
+
+/**
+ * Get count of entries in the timestamp table.
+ * @return the count of entries
+ */
+int tables_get_timestamp_entry_count(void);
+
+int tables_get_local_info_entry(gate_id_t gate_id, gate_local_info_entry_t *li);
+
+    /**
+     * only for testing purposes
+    */
+    int target_state_table_to_cbor_test(gate_target_state_entry_t table[], cbor_buffer* buffer);
+    int target_state_table_to_cbor_many_test(gate_target_state_entry_t table[], int package_size, cbor_buffer* buffer);
+    int print_target_table_test(void);
+    int tables_print_all(void);
+
+#endif

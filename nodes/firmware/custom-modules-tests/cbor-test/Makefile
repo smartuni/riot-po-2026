@@ -21,11 +21,10 @@ DEVELHELP ?= 1
 # This board requires a start sleep to actually catch the printed output
 USEMODULE += ztimer_sec
 
-USEMODULE += tables
-EXTERNAL_MODULE_DIRS += ../../tables
+USEMODULE += tables_old
 
 
-USEMODULE += tables
+USEMODULE += tables_old
 
 # Include other packages here e.g.
 # include ../../other_package/other_package.inc.mk
@@ -39,6 +38,6 @@ QUIET ?= 1
 CFLAGS += -DDEBUG_ASSERT_VERBOSE
 
 CFLAGS += -DDEVICE_ID=$(RIOT_CONFIG_DEVICE_ID) #Device ID- change when flashing
-CFLAGS += -DDEVICE_TYPE=3 #Device Type 
+CFLAGS += -DDEVICE_TYPE=3 #Device Type
 
 include $(RIOTBASE)/Makefile.include
