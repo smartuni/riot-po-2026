@@ -3,7 +3,6 @@
 #include "assert.h"
 #include "flashdb.h"
 
-#include "vfs.h"
 #include "base64.h"
 #include "store_service.h"
 
