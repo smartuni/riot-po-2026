@@ -11,12 +11,6 @@
 #define ENABLE_DEBUG (1)
 #include "debug.h"
 
-typedef struct {
-    struct fdb_kv_iterator iterator;
-    store_service_query_t query;
-} flashdb_store_service_iterator_t;
-
-
 static void _lock_callback(fdb_db_t db)
 {
     assert(db != NULL);

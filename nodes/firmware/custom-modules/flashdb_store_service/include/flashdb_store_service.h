@@ -15,6 +15,11 @@ typedef struct {
     mutex_t lock;
 } flashdb_store_service_ctx_t;
 
+typedef struct {
+    struct fdb_kv_iterator iterator;
+    store_service_query_t query;
+} flashdb_store_service_iterator_t;
+
 /**
  * @brief Size of each sector in the FlashDB store service
  */
