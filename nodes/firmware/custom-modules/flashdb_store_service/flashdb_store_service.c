@@ -43,11 +43,10 @@ int flashdb_store_service_init(flashdb_store_service_ctx_t *ctx, const char *db_
     fdb_kvdb_control(&ctx->kvdb, FDB_KVDB_CTRL_SET_UNLOCK, _unlock_callback);
 
     /* set sizes */
+    uint32_t sec_size = FLASHDB_STORE_SERVICE_SECTOR_SIZE;
+    fdb_kvdb_control(&ctx->kvdb, FDB_KVDB_CTRL_SET_SEC_SIZE, &sec_size);
     uint32_t size = FLASHDB_STORE_SERVICE_DB_SIZE;
     fdb_kvdb_control(&ctx->kvdb, FDB_KVDB_CTRL_SET_MAX_SIZE, &size);
-
-    size = FLASHDB_STORE_SERVICE_SECTOR_SIZE;
-    fdb_kvdb_control(&ctx->kvdb, FDB_KVDB_CTRL_SET_SEC_SIZE, &size);
 
     result = fdb_kvdb_init(&ctx->kvdb, db_name, db_dir, NULL, ctx);
     if (result != FDB_NO_ERR) {
@@ -144,7 +143,7 @@ static int _delete_callback(const void *context, const uint8_t *key, size_t key_
 }
 
 static int _iterate_next_callback(const void *context,
-                                  store_service_iterator_t *iterator, uint8_t *key,
+                                  void *iterator, uint8_t *key,
                                   size_t *key_len, void *data, size_t *data_len)
 {
     assert(context != NULL);
@@ -170,7 +169,7 @@ static int _iterate_next_callback(const void *context,
         uint8_t _key[_key_len];
         int result = base64_decode(key_b64, key_b64_len, _key, &_key_len);
         if (result != BASE64_SUCCESS) {
-            return -1;
+            return -2;
         }
 
         if (store_service_key_matches_query(_key, _key_len, &flashdb_iterator->query)) {
@@ -179,7 +178,7 @@ static int _iterate_next_callback(const void *context,
             // Check if we have enough space to read the blob and key
             if (*data_len < kv->value_len || _key_len > *key_len) {
                 // TODO: We may want to indicate this differently
-                return -1;
+                return -3;
             }
 
             // Read and copy the blob over
@@ -187,7 +186,7 @@ static int _iterate_next_callback(const void *context,
             fdb_kv_to_blob(kv, &blob);
             *data_len = fdb_blob_read((fdb_db_t)&ctx->kvdb, &blob);
             if (*data_len == 0) {
-                return -1;
+                return -4;
             }
 
             // Copy the key over
@@ -201,7 +200,7 @@ static int _iterate_next_callback(const void *context,
 }
 
 static int _iterator_init_callback(const void *context,
-                                   store_service_iterator_t *iterator,
+                                   void *iterator,
                                    const store_service_query_t *query)
 {
     assert(context != NULL);

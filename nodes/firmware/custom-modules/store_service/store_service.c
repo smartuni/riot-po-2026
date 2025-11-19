@@ -35,7 +35,7 @@ int store_service_delete(store_service_t *service, const uint8_t *key, size_t ke
 }
 
 int store_service_iterator_init(store_service_t *service,
-                                store_service_iterator_t *iterator,
+                                void *iterator,
                                 store_service_query_t *query)
 {
     assert(service != NULL);
@@ -46,7 +46,7 @@ int store_service_iterator_init(store_service_t *service,
 }
 
 int store_service_iterator_next(store_service_t *service,
-                                store_service_iterator_t *iterator, uint8_t *key,
+                                void *iterator, uint8_t *key,
                                 size_t *key_len, uint8_t *data, size_t *data_len)
 {
     assert(service != NULL);

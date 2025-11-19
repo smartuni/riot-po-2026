@@ -88,7 +88,7 @@ typedef size_t (*store_iterator_size_t)(const void *context);
  * @retval negative value on error
  */
 typedef int (*store_iterator_init_t)(const void *context,
-                                     store_service_iterator_t *iterator,
+                                     void *iterator,
                                      const store_service_query_t *query);
 
 /**
@@ -105,7 +105,7 @@ typedef int (*store_iterator_init_t)(const void *context,
  * @retval negative value when the iterator is exhausted
  */
 typedef int (*store_iterator_next_t)(const void *context,
-                                     store_service_iterator_t *iterator, uint8_t *key,
+                                     void *iterator, uint8_t *key,
                                      size_t *key_len, void *data, size_t *data_len);
 
 /**
@@ -221,7 +221,7 @@ int store_service_delete(store_service_t *service, const uint8_t *key, size_t ke
  * @retval negative value on error
  */
 int store_service_iterator_init(store_service_t *service,
-                                store_service_iterator_t *iterator,
+                                void *iterator,
                                 store_service_query_t *query);
 
 /**
@@ -239,7 +239,7 @@ int store_service_iterator_init(store_service_t *service,
  * @retval negative value when the iterator is exhausted
  */
 int store_service_iterator_next(store_service_t *service,
-                                store_service_iterator_t *iterator, uint8_t *key,
+                                void *iterator, uint8_t *key,
                                 size_t *key_len, uint8_t *data, size_t *data_len);
 
 /**
