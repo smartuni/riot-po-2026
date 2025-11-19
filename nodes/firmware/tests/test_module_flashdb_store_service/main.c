@@ -5,12 +5,40 @@
 
 #include "flashdb_store_service.h"
 #include "store_service.h"
+#include "ztimer.h"
 
-#define DB_DIR VFS_DEFAULT_DATA "/fdb_kvdb1"
+#define MOUNT_POINT "/mtdRAM"
+#define DB_DIR MOUNT_POINT "/fdb_kvdb"
+
+#include "vfs.h"
+#include "vfs_util.h"
+
+#include "mtd_emulated.h"
+
+MTD_EMULATED_DEV(0, SECTOR_COUNT, PAGE_PER_SECTOR, PAGE_SIZE);
+#define MTD_SIZE_BYTES (PAGE_SIZE * PAGE_PER_SECTOR * SECTOR_COUNT)
+
+#define mtd_dev (&mtd_emulated_dev0.base)
+
+static littlefs2_desc_t littlefs_desc;
+
+static vfs_mount_t _test_littlefs_mount = {
+    .fs = &littlefs2_file_system,
+    .mount_point = MOUNT_POINT,
+    .private_data = &littlefs_desc,
+};
+
 void setUp(void)
 {
+    littlefs_desc.dev = mtd_dev;
+    TEST_ASSERT_EQUAL(0, mtd_init(mtd_dev));
+    TEST_ASSERT_EQUAL(0, mtd_erase(mtd_dev, 0, MTD_SIZE_BYTES));
+    TEST_ASSERT_EQUAL(0, vfs_format(&_test_littlefs_mount));
+    TEST_ASSERT_EQUAL(0, vfs_mount(&_test_littlefs_mount));
+
     /* Create the DB directory */
     int err = vfs_mkdir(DB_DIR, 0777);
+
     if (err != 0 && err != -EEXIST) {
         puts("Could not create the directory");
         printf("Error %d\n", err);
@@ -18,12 +46,21 @@ void setUp(void)
     }
 }
 
-void tearDown(void){}
+void tearDown(void)
+{
+    TEST_ASSERT_EQUAL_INT(0,
+        vfs_umount(&_test_littlefs_mount, true)
+    );
+}
 
 static void _test_put_get_delete(void)
 {
     uint8_t key[] = {0x01, 0x02, 0x03, 0x04};
     size_t key_len = sizeof(key);
+    uint8_t key2[] = {0x01, 0x02, 0x04, 0x05};
+    size_t key2_len = sizeof(key2);
+    uint8_t key3[] = {0x01, 0x02, 0x06, 0x07};
+    size_t key3_len = sizeof(key3);
     uint8_t data[] = {0xDE, 0xAD, 0xBE, 0xEF};
     size_t data_len = sizeof(data);
 
@@ -33,15 +70,29 @@ static void _test_put_get_delete(void)
         .interface = flashdb_store_service_interface
     };
 
-    TEST_ASSERT_EQUAL_INT(0,
-        flashdb_store_service_init(&context, "test_db", DB_DIR)
-    );
+    int res = flashdb_store_service_init(&context, "db_1", DB_DIR);
+
+    TEST_ASSERT_EQUAL_INT(0, res);
 
     TEST_ASSERT_EQUAL_INT(0,store_service_put(&service, key, key_len, data, data_len));
+
+    TEST_ASSERT_EQUAL_INT(0,store_service_put(&service, key2, key2_len, data, data_len));
+
+    TEST_ASSERT_EQUAL_INT(0,store_service_put(&service, key3, key3_len, data, data_len));
 
     uint8_t retrieved_data[data_len];
     TEST_ASSERT_EQUAL_INT(0,
         store_service_get(&service, key, key_len, retrieved_data, data_len)
+    );
+    TEST_ASSERT_EQUAL_MEMORY(data, retrieved_data, data_len);
+
+    TEST_ASSERT_EQUAL_INT(0,
+        store_service_get(&service, key2, key2_len, retrieved_data, data_len)
+    );
+    TEST_ASSERT_EQUAL_MEMORY(data, retrieved_data, data_len);
+
+    TEST_ASSERT_EQUAL_INT(0,
+        store_service_get(&service, key3, key3_len, retrieved_data, data_len)
     );
     TEST_ASSERT_EQUAL_MEMORY(data, retrieved_data, data_len);
 
@@ -67,7 +118,7 @@ static void _test_iterator(void)
     };
 
     TEST_ASSERT_EQUAL_INT(0,
-        flashdb_store_service_init(&context, "test_db_2", DB_DIR)
+        flashdb_store_service_init(&context, "db_2", DB_DIR)
     );
 
     TEST_ASSERT_EQUAL_INT(0,
@@ -103,6 +154,7 @@ static void _test_iterator(void)
         store_service_iterator_next(&service, iterator, key, &key_len, recovered_data,
                                     &data_len)
     );
+
     TEST_ASSERT_EQUAL_size_t(sizeof(key1), key_len);
     TEST_ASSERT_EQUAL_MEMORY(key1, key, sizeof(key1));
     TEST_ASSERT_EQUAL_size_t(sizeof(data), data_len);
@@ -167,6 +219,7 @@ static void _test_iterator(void)
 
 int main(void)
 {
+    ztimer_sleep(ZTIMER_MSEC, 3000);
     UNITY_BEGIN();
     RUN_TEST(_test_put_get_delete);
     RUN_TEST(_test_iterator);
