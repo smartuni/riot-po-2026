@@ -143,7 +143,7 @@ static int _delete_callback(const void *context, const uint8_t *key, size_t key_
 }
 
 static int _iterate_next_callback(const void *context,
-                                  void *iterator, uint8_t *key,
+                                  store_service_iterator_t *iterator, uint8_t *key,
                                   size_t *key_len, void *data, size_t *data_len)
 {
     assert(context != NULL);
@@ -200,7 +200,7 @@ static int _iterate_next_callback(const void *context,
 }
 
 static int _iterator_init_callback(const void *context,
-                                   void *iterator,
+                                   store_service_iterator_t *iterator,
                                    const store_service_query_t *query)
 {
     assert(context != NULL);
