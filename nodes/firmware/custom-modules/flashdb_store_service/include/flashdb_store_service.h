@@ -15,7 +15,7 @@ typedef struct {
     mutex_t lock;
 } flashdb_store_service_ctx_t;
 
-typedef struct {
+typedef struct __attribute__((aligned(__alignof__(store_service_iterator_t)))) {
     struct fdb_kv_iterator iterator;
     store_service_query_t query;
 } flashdb_store_service_iterator_t;
