@@ -9,7 +9,7 @@
 #include "hybrid_logical_clock.h"
 #include "clock_operations.h"
 
-int hlc_init(hlc_ctx_t *ctx, hlc_get_physical_time_fn get_time_fn)
+int hlc_init(hlc_ctx_t *ctx, hlc_get_physical_time_fn get_time_fn, void *arg)
 {
     assert(ctx != NULL);
     assert(get_time_fn != NULL);
@@ -17,11 +17,13 @@ int hlc_init(hlc_ctx_t *ctx, hlc_get_physical_time_fn get_time_fn)
     int result = 0;
 
     ctx->get_physical_time = get_time_fn;
+    ctx->get_physical_time_arg = arg;
     mutex_init(&ctx->lock);
     mutex_lock(&ctx->lock);
 
     // TODO: persistent storage restore?
-    result = ctx->get_physical_time(&ctx->local_hlc.physical);
+    result = ctx->get_physical_time(ctx->get_physical_time_arg,
+                                    &ctx->local_hlc.physical);
     if (result != 0) {
         result = HLC_ERROR_GET_TIME;
         goto free_and_exit;
@@ -57,7 +59,7 @@ int hlc_update_with_remote_timestamp(hlc_ctx_t *ctx, const hlc_timestamp_t *ts, 
     mutex_lock(&ctx->lock);
 
     // get p_now (physical now)
-    result = ctx->get_physical_time(&now_physical);
+    result = ctx->get_physical_time(ctx->get_physical_time_arg, &now_physical);
     if (result != 0) {
         result = HLC_ERROR_GET_TIME;
         goto free_and_exit;
@@ -106,7 +108,7 @@ int hlc_get_current_timestamp(hlc_ctx_t *ctx, hlc_timestamp_t *out)
 
     mutex_lock(&ctx->lock);
 
-    result = ctx->get_physical_time(&current_physical);
+    result = ctx->get_physical_time(ctx->get_physical_time_arg, &current_physical);
     if (result != 0) {
         result = HLC_ERROR_GET_TIME;
         goto free_and_exit;
