@@ -1,5 +1,5 @@
 APPLICATION = test_module_hlc
-BOARD = native
+BOARD ?= adafruit-feather-nrf52840-sense
 QUIET = 1
 DEVELHELP = 1
 
@@ -17,4 +17,5 @@ USEMODULE += periph_rtc
 USEPKG += unity
 USEMODULE += hybrid_logical_clock
 
+include ../ci.mk
 include $(RIOTBASE)/Makefile.include
