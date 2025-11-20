@@ -1,5 +1,5 @@
 APPLICATION = test_module_hlc
-BOARD = native
+BOARD ?= adafruit-feather-nrf52840-sense
 QUIET = 1
 DEVELHELP = 1
 
@@ -23,7 +23,5 @@ USEMODULE += tables
 USEMODULE += crypto_service
 USEMODULE += od
 
-
+include ../ci.mk
 include $(RIOTBASE)/Makefile.include
-
-
