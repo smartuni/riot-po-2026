@@ -29,11 +29,11 @@ static void test_cbor_deserialize_gate_observation(void)
     TEST_ASSERT_EQUAL_MEMORY(expected_writer, record.header.writer, NODE_ID_SIZE);
 
     // Check sequence number
-    TEST_ASSERT_EQUAL_UINT64(1, record.header.sequence);
+    TEST_ASSERT_EQUAL_UINT32(1, record.header.sequence);
 
     // Check timestamps
-    TEST_ASSERT_EQUAL_UINT64(0xAAFF, record.header.timestamp.physical);
-    TEST_ASSERT_EQUAL_UINT64(0xFFFF, record.header.timestamp.logical);
+    TEST_ASSERT_EQUAL_UINT32(0xAAFF, record.header.timestamp.physical);
+    TEST_ASSERT_EQUAL_UINT32(0xFFFF, record.header.timestamp.logical);
 
     // Check gate ID in observation data
     node_id_t expected_gate_id = {0x11, 0x12, 0x13, 0x14};
@@ -66,11 +66,11 @@ static void test_cbor_deserialize_gate_report(void)
     TEST_ASSERT_EQUAL_MEMORY(expected_writer, record.header.writer, NODE_ID_SIZE);
 
     // Check sequence number
-    TEST_ASSERT_EQUAL_UINT64(1, record.header.sequence);
+    TEST_ASSERT_EQUAL_UINT32(1, record.header.sequence);
 
     // Check timestamps
-    TEST_ASSERT_EQUAL_UINT64(0xAAFF, record.header.timestamp.physical);
-    TEST_ASSERT_EQUAL_UINT64(0xFFFF, record.header.timestamp.logical);
+    TEST_ASSERT_EQUAL_UINT32(0xAAFF, record.header.timestamp.physical);
+    TEST_ASSERT_EQUAL_UINT32(0xFFFF, record.header.timestamp.logical);
 
     // Check gate state
     TEST_ASSERT_EQUAL(GATE_STATE_CLOSED, record_data.gate_report.state);
@@ -99,11 +99,11 @@ static void test_cbor_deserialize_gate_job(void)
     TEST_ASSERT_EQUAL_MEMORY(expected_writer, record.header.writer, NODE_ID_SIZE);
 
     // Check sequence number
-    TEST_ASSERT_EQUAL_UINT64(1, record.header.sequence);
+    TEST_ASSERT_EQUAL_UINT32(1, record.header.sequence);
 
     // Check timestamps
-    TEST_ASSERT_EQUAL_UINT64(0xAABB, record.header.timestamp.physical);
-    TEST_ASSERT_EQUAL_UINT64(0x0A, record.header.timestamp.logical);
+    TEST_ASSERT_EQUAL_UINT32(0xAABB, record.header.timestamp.physical);
+    TEST_ASSERT_EQUAL_UINT32(0x0A, record.header.timestamp.logical);
 
     // Check gate ID in job data
     node_id_t expected_gate_id = {0x11, 0x12, 0x13, 0x14};
@@ -141,11 +141,11 @@ static void test_cbor_deserialize_gate_command(void)
     TEST_ASSERT_EQUAL_MEMORY(expected_writer, record.header.writer, NODE_ID_SIZE);
 
     // Check sequence number
-    TEST_ASSERT_EQUAL_UINT64(1, record.header.sequence);
+    TEST_ASSERT_EQUAL_UINT32(1, record.header.sequence);
 
     // Check timestamps
-    TEST_ASSERT_EQUAL_UINT64(0xDACB, record.header.timestamp.physical);
-    TEST_ASSERT_EQUAL_UINT64(0x0A, record.header.timestamp.logical);
+    TEST_ASSERT_EQUAL_UINT32(0xDACB, record.header.timestamp.physical);
+    TEST_ASSERT_EQUAL_UINT32(0x0A, record.header.timestamp.logical);
 
     // Check gate ID in command data
     node_id_t expected_gate_id = {0x11, 0x12, 0x13, 0x14};
