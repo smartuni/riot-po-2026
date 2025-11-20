@@ -38,8 +38,8 @@ ${name}_test:
   script:
     - cd "$d"
     - make clean
-    - make all
-    - make cleanterm
+    - make all flash
+    - make test
 YAML
 done
 
