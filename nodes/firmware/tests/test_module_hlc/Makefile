@@ -1,5 +1,5 @@
 APPLICATION = test_module_hlc
-BOARD ?= native
+BOARD ?= adafruit-feather-nrf52840-sense
 QUIET = 1
 DEVELHELP = 1
 
@@ -12,10 +12,9 @@ EXTERNAL_PKG_DIRS += $(PROJECT_BASE)/custom_packages
 # terminate native when the test is complete
 CFLAGS += -DNATIVE_AUTO_EXIT=1
 
-# This application provides a physical clock to the HLC module using RTC
-USEMODULE += periph_rtc
 USEPKG += unity
 USEMODULE += hybrid_logical_clock
+USEMODULE += hlc_ztimer
 
 include ../ci.mk
 include $(RIOTBASE)/Makefile.include
