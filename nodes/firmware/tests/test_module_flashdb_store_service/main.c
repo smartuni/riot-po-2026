@@ -133,6 +133,11 @@ static void _test_iterator(void)
 
     STORE_ITERATOR(iterator, &service);
 
+    TEST_ASSERT_EQUAL_INT(
+        alignof(store_service_iterator_t),
+        alignof(flashdb_store_service_iterator_t)
+    );
+
     uint8_t filter1[] = {0xAA, 0xB0, 0x00, 0x00, 0x00};
     uint8_t mask1[] = {0xFF, 0xF0, 0x00, 0x00, 0x00};
 
