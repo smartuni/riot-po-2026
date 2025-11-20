@@ -1,5 +1,5 @@
 APPLICATION = test_module_flashdb_store_service
-BOARD = native
+BOARD ?= adafruit-feather-nrf52840-sense
 QUIET = 1
 DEVELHELP = 1
 
@@ -39,4 +39,6 @@ USEPKG += unity
 
 USEMODULE += od
 USEMODULE += flashdb_store_service
+
+include ../ci.mk
 include $(RIOTBASE)/Makefile.include

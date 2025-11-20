@@ -1,5 +1,5 @@
 APPLICATION = test_module_cbor_serialization
-BOARD = native
+BOARD ?= adafruit-feather-nrf52840-sense
 QUIET = 1
 DEVELHELP = 1
 
@@ -16,5 +16,7 @@ USEPKG += unity
 USEMODULE += od
 USEMODULE += tables
 USEMODULE += cbor_serialization
+USEMODULE += test_utils_interactive_sync
 
+include ../ci.mk
 include $(RIOTBASE)/Makefile.include

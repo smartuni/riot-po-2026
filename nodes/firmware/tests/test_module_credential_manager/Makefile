@@ -1,5 +1,5 @@
 APPLICATION = test_module_credential_manager
-BOARD = native
+BOARD ?= adafruit-feather-nrf52840-sense
 QUIET = 1
 DEVELHELP = 1
 
@@ -22,4 +22,5 @@ USEMODULE += flashdb_kvdb
 USEMODULE += vfs_default
 USEMODULE += vfs_auto_format
 
+include ../ci.mk
 include $(RIOTBASE)/Makefile.include
