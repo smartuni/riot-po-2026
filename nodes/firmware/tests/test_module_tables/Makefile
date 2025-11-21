@@ -1,4 +1,4 @@
-APPLICATION = test_module_hlc
+APPLICATION = test_module_tables
 BOARD ?= adafruit-feather-nrf52840-sense
 QUIET = 1
 DEVELHELP = 1
