@@ -13,7 +13,7 @@ int crypto_service_sign(crypto_service_t *service, const uint8_t *kid, size_t ki
     assert(data != NULL);
     assert(signature_len != NULL);
 
-    return service->interface.sign(service->context, kid, kid_len, data, data_len,
+    return service->interface->sign(service->context, kid, kid_len, data, data_len,
                                    signature, signature_len);
 }
 
@@ -26,6 +26,6 @@ int crypto_service_verify(crypto_service_t *service, const uint8_t *kid, size_t 
     assert(data != NULL);
     assert(signature != NULL);
 
-    return service->interface.verify(service->context, kid, kid_len, data, data_len,
+    return service->interface->verify(service->context, kid, kid_len, data, data_len,
                                      signature, signature_len);
 }

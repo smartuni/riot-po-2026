@@ -224,7 +224,7 @@ static size_t _iterator_size_callback(const void *context)
     return sizeof(flashdb_store_service_iterator_t);
 }
 
-store_service_interface_t flashdb_store_service_interface = {
+const store_service_interface_t flashdb_store_service_interface = {
     .put = _put_callback,
     .get = _get_callback,
     .delete = _delete_callback,
