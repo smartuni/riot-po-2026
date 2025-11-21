@@ -1,10 +1,12 @@
 #include <stdio.h>
 
+#include "od.h"
 #include "board.h"
 #include "ztimer.h"
 #include "thread.h"
 #include "tables_old.h"
 #include "tables.h"
+#include "tables/records.h"
 #include "mate_lorawan.h"
 #include "mate_ble.h"
 #include "event/thread.h"
@@ -76,7 +78,68 @@ void gate_observer_state_change_cb(gate_state_t new_state)
     }
 }
 
+extern int credential_manager_setup(void);
+extern int tables_setup(tables_context_t **tables);
+
+static void _table_update_cb(tables_context_t *ctx, const table_record_t *record,
+                             const table_query_t *query, void *arg)
+{
+    (void)ctx;
+    (void)arg;
+    (void)query;
+
+    table_record_type_t type;
+    get_record_type(record, &type);
+    printf("record type: %d\n", type);
+
+    const node_id_t *writer_id;
+    get_record_writer_id(record, &writer_id);
+    od_hex_dump(writer_id, NODE_ID_SIZE, 0);
+
+    record_sequence_t sequence;
+    get_record_sequence(record, &sequence);
+    printf("record sequence: %llu\n", sequence);
+    printf("record sequence lower32: %lu\n", (uint32_t)sequence);
+
+    if (type == RECORD_GATE_REPORT) {
+        table_gate_report_t *report;
+        int res = get_gate_report_data(record, &report);
+        if (res) {
+            printf("get_gate_report_data failed\n");
+        } else {
+            gate_state_t state;
+            get_gate_report_state(report, &state);
+            printf("gate state: %d\n", state);
+        }
+    }
+}
+
 int main(void){
+    /* Sleep so that we do not miss this message while connecting */
+    ztimer_sleep(ZTIMER_SEC, 3);
+
+    int res = credential_manager_setup();
+    printf("credential_manager_setup: %d\n", res);
+
+    tables_context_t *tables;
+
+    res = tables_setup(&tables);
+    printf("tables_setup: %d\n", res);
+
+    table_memo_t memo;
+    table_query_t query;
+
+    void *cb_arg = 0;
+    tables_init_query(&query, RECORD_GATE_REPORT, NULL, NULL);
+    tables_add_memo(tables, &memo, &query, _table_update_cb, cb_arg);
+
+    for (unsigned i = 0; i < 5; i++) {
+        res = tables_put_gate_report(tables, (i % 2 == 0) ? GATE_STATE_OPEN : GATE_STATE_CLOSED);
+        printf("tables_put_gate_report: %d\n", res);
+        ztimer_sleep(ZTIMER_MSEC, 1000);
+    }
+
+    return 0;
     int isi_res = inductive_sensor_init(&inductive_sensor,
                                         INDUCTIVE_SENSOR_DCDC_PWR_PIN,
                                         INDUCTIVE_SENSOR_DCDC_PWR_PIN_AH,
@@ -84,8 +147,6 @@ int main(void){
                                         INDUCTIVE_SENSOR_ADC_VREF_MV,
                                         INDUCTIVE_SENSOR_VREF_MV);
 
-    /* Sleep so that we do not miss this message while connecting */
-    ztimer_sleep(ZTIMER_SEC, 3);
 
     puts("[main]: starting");
 

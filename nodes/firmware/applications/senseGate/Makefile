@@ -37,6 +37,19 @@ CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=$(RIOT_CONFIG_DEVICE_TYPE)
 CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=3*1024
 CFLAGS += -DEVENT_THREAD_MEDIUM_STACKSIZE=3*1024
 
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=THREAD_STACKSIZE_LARGE*2
+
+# credential manager stuff
+USEMODULE += credential_manager
+USEMODULE += flashdb_store_service
+USEMODULE += vfs_default
+USEMODULE += vfs_auto_format
+
+# tables stuff
+USEMODULE += tables
+USEMODULE += cose_crypto_service
+USEMODULE += hlc_ztimer
+
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
