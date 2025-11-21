@@ -5,7 +5,7 @@ from testrunner import run
 
 
 def testfunc(child):
-    child.expect("7 Tests 0 Failures 0 Ignored")
+    child.expect("8 Tests 0 Failures 0 Ignored")
     child.expect("OK")
 
     print("All tests successful")
