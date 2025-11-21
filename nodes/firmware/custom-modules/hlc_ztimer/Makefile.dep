@@ -1,0 +1,3 @@
+USEMODULE += ztimer
+USEMODULE += ztimer_sec
+USEMODULE += ztimer_stopwatch

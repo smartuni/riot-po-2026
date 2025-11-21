@@ -1,5 +1,5 @@
 APPLICATION = test_module_hlc
-BOARD ?= native
+BOARD ?= adafruit-feather-nrf52840-sense
 QUIET = 1
 DEVELHELP = 1
 
@@ -16,12 +16,11 @@ CFLAGS += -DNATIVE_AUTO_EXIT=1
 CFLAGS += -I$(EXTERNAL_MODULE_DIRS)/tables
 
 USEPKG += unity
-FEATURES_REQUIRED += periph_rtc
-USEMODULE += periph_rtc
 
 USEMODULE += tables
 USEMODULE += crypto_service
 USEMODULE += od
+USEMODULE += hlc_ztimer
 
 include ../ci.mk
 include $(RIOTBASE)/Makefile.include
