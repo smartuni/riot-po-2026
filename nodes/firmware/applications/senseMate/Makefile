@@ -37,6 +37,10 @@ USEMODULE += event_thread_highest
 USEMODULE += event_thread
 USEMODULE += event_timeout
 
+# new tables implementation (currently only added to compile with the new types)
+USEMODULE += tables
+
+#old tables implementation TODO: drop it with the migration
 USEMODULE += tables_old
 
 USEMODULE += mate_lorawan
@@ -74,4 +78,5 @@ USEMODULE += sensemate_ui
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 
+CFLAGS += -I$(APPDIR)/include
 include $(RIOTBASE)/Makefile.include

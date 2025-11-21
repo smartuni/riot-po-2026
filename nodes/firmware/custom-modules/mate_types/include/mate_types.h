@@ -7,15 +7,16 @@
 #define MATE_TYPES_H
 #include <stdint.h>
 #include <stdbool.h>
+#include "tables/types.h"
 
 typedef uint8_t gate_id_t;
 typedef uint8_t mate_id_t;
 typedef uint32_t mate_timestamp_t;
 
-typedef enum {
-    GATE_CLOSED = 0,
-    GATE_OPEN = 1,
-} gate_state_t;
+//typedef enum {
+//    GATE_CLOSED = 0,
+//    GATE_OPEN = 1,
+//} gate_state_t;
 
 typedef enum {
     JOB_IN_PROGRESS = 0,

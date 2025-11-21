@@ -49,4 +49,5 @@ PREFLASH_DELAY=8
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 CFLAGS += -DDEBUG_ASSERT_VERBOSE
+CFLAGS += -I$(APPDIR)/include
 include $(RIOTBASE)/Makefile.include

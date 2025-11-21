@@ -199,7 +199,7 @@ static void _gate_state_prompt_btn_handler(lv_event_t * e)
     void *usr_data = lv_event_get_user_data(e);
     int btn_idx = (int)usr_data;
     if (btn_idx != 2) { /* cancel*/
-        gate_state_t observed_state = (btn_idx == 0) ? GATE_OPEN : GATE_CLOSED;
+        gate_state_t observed_state = (btn_idx == 0) ? GATE_STATE_OPEN : GATE_STATE_CLOSED;
         ui_data_element_t data_elem = {
             .data.seen_state = {
                             .gateID = _gate_edit_ctx.gate_id,
@@ -342,7 +342,7 @@ static void _create_gate_list(lv_obj_t *parent, lv_group_t *grp, bool only_close
         lv_obj_set_user_data(btn, (void*)(uint32_t)li->gateID);
         if (li->sensor_data_present) {
             lv_obj_t *icon = lv_img_create(btn);
-            if (li->sensor_state == GATE_OPEN) {
+            if (li->sensor_state == GATE_STATE_OPEN) {
                 lv_img_set_src(icon, &lock_open_icon_16x16);
             } else {
                 lv_img_set_src(icon, &lock_closed_icon_16x16);
@@ -556,7 +556,7 @@ void _ui_update_gate_list(struct ui_dyn_menu_ctx_t *ctx)
             if (btn) {
                 lv_obj_t *img = _get_state_img_obj_from_gate_ui_handle(btn);
                 if (img) {
-                    if (li->sensor_state == GATE_OPEN) {
+                    if (li->sensor_state == GATE_STATE_OPEN) {
                         lv_img_set_src(img, &lock_open_icon_16x16);
                     } else {
                         lv_img_set_src(img, &lock_closed_icon_16x16);
