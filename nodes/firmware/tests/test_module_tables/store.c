@@ -10,7 +10,7 @@
 #include "store.h"
 #include "store_service.h"
 
-typedef struct {
+typedef struct __attribute__((aligned(__alignof__(store_service_iterator_t)))) {
     clist_node_t *node;
     store_service_query_t query;
 } store_iterator_t;
@@ -172,7 +172,13 @@ int _store_iterator_next(const void *context, store_service_iterator_t *iterator
     store_ctx *ctx = (store_ctx *) context;
     store_iterator_t *iter = (store_iterator_t *) iterator;
 
-    clist_node_t *node = iter->node;
+    clist_node_t *node;
+    if (iter->node == ctx->call_infos.next) {
+        node = iter->node;
+    } else{
+        node = iter->node;
+    }
+
     do {
         node = node->next;
         store_put_call_info_t *call = container_of(node, store_put_call_info_t, list);
