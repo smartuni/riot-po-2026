@@ -15,8 +15,8 @@
 
 #include "tables/records.h"
 
-#define ENABLE_DEBUG (0)
-#include "debug.h"
+#define LOG_LEVEL LOG_NONE
+#include "log.h"
 
 /**
  * @brief Structure passed to the memo list iteration
@@ -139,6 +139,7 @@ int tables_put_gate_report(tables_context_t *ctx, gate_state_t state)
     get_gate_report_key(ctx->self_id, &key);
     result = _create_new_record(ctx, &record);
     if (result != 0) {
+        LOG_DEBUG("%s: _create_new_record error\n", __func__);
         return result;
     }
 
@@ -149,6 +150,7 @@ int tables_put_gate_report(tables_context_t *ctx, gate_state_t state)
     /* get signature size */
     result = sign_record(ctx, &record, NULL, &signature_size);
     if (result != 0) {
+        LOG_DEBUG("%s: get signature len error\n", __func__);
         return result;
     }
 
@@ -156,11 +158,13 @@ int tables_put_gate_report(tables_context_t *ctx, gate_state_t state)
     /* get signature */
     result = sign_record(ctx, &record, signature_buffer, &signature_size);
     if (result != 0) {
+        LOG_DEBUG("%s: sign_record error\n", __func__);
         return result;
     }
 
     result = put_record_in_store(ctx, &record, &key);
     if (result < 0) {
+        LOG_DEBUG("%s: put_record_in_store error\n", __func__);
         return result;
     }
 
@@ -305,14 +309,14 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
     table_key_t key;
     table_record_type_t type;
 
-    DEBUG("tables_merge_record: merging\n");
+    LOG_DEBUG("tables_merge_record: merging\n");
 
     memset(result, 0, sizeof(table_merge_result_t));
 
     get_record_type(record, &type);
     if (type == RECORD_GATE_ENCOUNTER || type == RECORD_MATE_ENCOUNTER) {
         // these types should not be propagated
-        DEBUG("tables_merge_record: invalid type to merge (%d)\n", type);
+        LOG_DEBUG("tables_merge_record: invalid type to merge (%d)\n", type);
         return -1;
     }
 
@@ -320,7 +324,7 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
     res = verify_record(ctx, record);
     if (res != 0) {
         result->rejected_sig = true;
-        DEBUG("tables_merge_record: rejected signature\n");
+        LOG_DEBUG("tables_merge_record: rejected signature\n");
         return -1;
     }
 
@@ -331,7 +335,7 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
     res = get_record_header_from_store(ctx, &key, &record_in_store.header);
     if (res != 0) {
         result->new = true;
-        DEBUG("tables_merge_record: new record, adding it\n");
+        LOG_DEBUG("tables_merge_record: new record, adding it\n");
         return put_record_in_store(ctx, record, &key);
     }
 
@@ -367,7 +371,7 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
 
     if (merge) {
         result->updated = true;
-        DEBUG("tables_merge_record: existing record, updating it\n");
+        LOG_DEBUG("tables_merge_record: existing record, updating it\n");
         res = put_record_in_store(ctx, record, &key);
 
         _check_and_call_memos(ctx, record);
@@ -375,7 +379,7 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
         return res;
     }
 
-    DEBUG("tables_merge_record: record is older, skipping it\n");
+    LOG_DEBUG("tables_merge_record: record is older, skipping it\n");
     return -1;
 }
 
@@ -450,16 +454,16 @@ int tables_iterator_next(tables_context_t *ctx, table_iterator_t *iterator,
 
     int result;
 
-    DEBUG("tables_iterator_next: getting next record\n");
+    LOG_DEBUG("tables_iterator_next: getting next record\n");
 
     while (1) {
-        DEBUG("tables_iterator_next: state %d\n", iterator->state);
+        LOG_DEBUG("tables_iterator_next: state %d\n", iterator->state);
         switch (iterator->state) {
         case ITER_INIT:
             result = _init_store_iterator(ctx, iterator);
             if (result != 0) {
                 iterator->state = ITER_ERROR;
-                DEBUG("tables_iterator_next: error initializing store iterator\n");
+                LOG_DEBUG("tables_iterator_next: error initializing store iterator\n");
             }
 
             iterator->state = ITER_RUN;
@@ -475,7 +479,7 @@ int tables_iterator_next(tables_context_t *ctx, table_iterator_t *iterator,
                                                  &header_length);
             if (result != 0) {
                 iterator->state = ITER_DONE;
-                DEBUG("tables_iterator_next: no more records\n");
+                LOG_DEBUG("tables_iterator_next: no more records\n");
                 break;
             }
 
@@ -493,7 +497,7 @@ int tables_iterator_next(tables_context_t *ctx, table_iterator_t *iterator,
                                            _signature_len);
             if (result != 0) {
                 iterator->state = ITER_ERROR;
-                DEBUG("tables_iterator_next: error retrieving record from store\n");
+                LOG_DEBUG("tables_iterator_next: error retrieving record from store\n");
                 break;
             }
 
