@@ -9,6 +9,8 @@ RIOTBASE = $(PROJECT_BASE)/RIOT
 EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 EXTERNAL_PKG_DIRS += $(PROJECT_BASE)/custom_packages
 
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=THREAD_STACKSIZE_LARGE*2
+
 # terminate native when the test is complete
 CFLAGS += -DNATIVE_AUTO_EXIT=1
 

@@ -12,6 +12,8 @@ EXTERNAL_PKG_DIRS += $(PROJECT_BASE)/custom_packages
 # terminate native when the test is complete
 CFLAGS += -DNATIVE_AUTO_EXIT=1
 
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=THREAD_STACKSIZE_LARGE*2
+
 USEPKG += unity
 USEMODULE += credential_manager
 USEMODULE += flashdb_store_service
