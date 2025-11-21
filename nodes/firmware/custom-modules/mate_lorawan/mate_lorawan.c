@@ -42,7 +42,7 @@
 #include "event.h"
 #include "event/thread.h"
 #if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
-#include "include/events_creation.h"
+#include "events_creation.h"
 #endif
 #define LOG_LEVEL   LOG_NONE
 #include "log.h"
