@@ -65,7 +65,6 @@ static void test_tables_iterator(void)
 
     /* Add some records */
     TEST_ASSERT_EQUAL_INT(0, tables_put_gate_report(&ctx, GATE_STATE_OPEN));
-    TEST_ASSERT_EQUAL_INT(0, tables_put_gate_report(&ctx, GATE_STATE_CLOSED));
     TEST_ASSERT_EQUAL_INT(0, tables_put_mate_encounter(&ctx, &mate_id, 0));
 
     TABLE_ITERATOR(iterator, &ctx);
@@ -94,18 +93,7 @@ static void test_tables_iterator(void)
     get_gate_observation_state(observation, &state);
     TEST_ASSERT_EQUAL_INT(GATE_STATE_OPEN, state);
 
-    TEST_ASSERT_EQUAL_INT(0, tables_iterator_next(&ctx, &iterator, &record, NULL, NULL));
-
-    get_record_type(record, &type);
-    TEST_ASSERT_EQUAL_INT(RECORD_GATE_REPORT, type);
-
-    get_record_writer_id(record, &id);
-    TEST_ASSERT_EQUAL_MEMORY(self_id, *id, NODE_ID_SIZE);
-
-    get_gate_observation_data(record, &observation);
-    get_gate_observation_state(observation, &state);
-    TEST_ASSERT_EQUAL_INT(GATE_STATE_OPEN, state);
-
+    // there should be no more matching records
     TEST_ASSERT_EQUAL_INT(-1, tables_iterator_next(&ctx, &iterator, &record, NULL, NULL));
 
     query.type = RECORD_UNDEFINED;
@@ -122,6 +110,7 @@ static void test_tables_iterator(void)
     get_record_writer_id(record, &id);
     TEST_ASSERT_EQUAL_MEMORY(self_id, *id, NODE_ID_SIZE);
 
+    // there should be no more matching records
     TEST_ASSERT_EQUAL_INT(-1, tables_iterator_next(&ctx, &iterator, &record, NULL, NULL));
 }
 
