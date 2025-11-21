@@ -10,4 +10,5 @@ ifdef CI
   PREFFLAGS =
   PREFLASH_DELAY=10
   TERMFLAGS += --set-dtr=0
+  BUILD_IN_DOCKER=1
 endif
