@@ -51,4 +51,4 @@ int flashdb_store_service_init(flashdb_store_service_ctx_t *ctx, const char *db_
 /**
  * @brief FlashDB tables store service interface
  */
-extern store_service_interface_t flashdb_store_service_interface;
+extern const store_service_interface_t flashdb_store_service_interface;

@@ -137,7 +137,7 @@ typedef struct {
  */
 typedef struct {
     /** Interface to the store service */
-    store_service_interface_t interface;
+    const store_service_interface_t *interface;
 
     /** Context for the store service */
     const void *context;
