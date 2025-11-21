@@ -28,9 +28,9 @@ static void _update_state(gate_observer_t *observer)
     gate_state_t prev_state = observer->state.concluded_state;
     /* for now only consider the gate closed if all sensors indicate a closed state */
     if (close_cnt == (GATE_OBSERVER_DISTANCE_SENSOR_CNT + GATE_OBSERVER_DISTANCE_SENSOR_CNT)) {
-        observer->state.concluded_state = GATE_CLOSED;
+        observer->state.concluded_state = GATE_STATE_CLOSED;
     } else {
-        observer->state.concluded_state = GATE_OPEN;
+        observer->state.concluded_state = GATE_STATE_OPEN;
     }
 
     if (prev_state != observer->state.concluded_state) {

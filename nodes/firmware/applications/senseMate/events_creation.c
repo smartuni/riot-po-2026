@@ -5,7 +5,7 @@
 #include "event/timeout.h"
 #include "include/soundModule.h"
 #include "include/vibrationModule.h"
-#include "tables.h"
+#include "tables_old.h"
 #include "include/sensemate_ui.h"
 #define LOG_LEVEL   LOG_NONE
 #include "log.h"

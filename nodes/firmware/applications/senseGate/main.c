@@ -114,8 +114,8 @@ int main(void){
     }
 
     printf("[main]: initial gate state: %s\n",
-            initial_gate_state == GATE_CLOSED ? "CLOSED" :
-            (initial_gate_state == GATE_OPEN ? "OPEN" : "INVALID"));
+            initial_gate_state == GATE_STATE_CLOSED ? "CLOSED" :
+            (initial_gate_state == GATE_STATE_OPEN ? "OPEN" : "INVALID"));
 
     puts("[main]: init tables");
     init_tables();
