@@ -3,6 +3,7 @@
 #include "board.h"
 #include "ztimer.h"
 #include "thread.h"
+#include "tables_old.h"
 #include "tables.h"
 #include "mate_lorawan.h"
 #include "mate_ble.h"

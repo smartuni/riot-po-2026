@@ -20,7 +20,7 @@
 #define MATE_BLE_H
 
 #include "event.h"
-#include "tables.h"
+#include "tables_old.h"
 
 #define BLE_SEND_INTERVAL (5000) // in milliseconds
 
