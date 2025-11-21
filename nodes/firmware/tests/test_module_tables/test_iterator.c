@@ -79,8 +79,6 @@ static void test_tables_iterator(void)
     table_record_t *record;
     const node_id_t *id;
     table_record_type_t type;
-    gate_state_t state;
-    table_gate_observation_t *observation;
     TEST_ASSERT_EQUAL_INT(0, tables_iterator_next(&ctx, &iterator, &record, NULL, NULL));
 
     get_record_type(record, &type);
@@ -89,8 +87,10 @@ static void test_tables_iterator(void)
     get_record_writer_id(record, &id);
     TEST_ASSERT_EQUAL_MEMORY(self_id, *id, NODE_ID_SIZE);
 
-    get_gate_observation_data(record, &observation);
-    get_gate_observation_state(observation, &state);
+    gate_state_t state;
+    table_gate_report_t *report;
+    TEST_ASSERT_EQUAL_INT(0, get_gate_report_data(record, &report));
+    get_gate_report_state(report, &state);
     TEST_ASSERT_EQUAL_INT(GATE_STATE_OPEN, state);
 
     // there should be no more matching records
