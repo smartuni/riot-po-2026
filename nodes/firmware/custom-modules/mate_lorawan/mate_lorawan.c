@@ -38,7 +38,7 @@
 #include "ztimer.h"
 #include "event/timeout.h"
 #include "cbor.h"
-#include "tables.h"
+#include "tables_old.h"
 #include "event.h"
 #include "event/thread.h"
 #if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE

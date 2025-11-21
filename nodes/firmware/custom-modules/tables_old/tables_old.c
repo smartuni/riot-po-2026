@@ -1,4 +1,4 @@
-#include "include/tables.h"
+#include "tables_old.h"
 #include <stdatomic.h>
 #include <stdio.h>
 #include <string.h>
@@ -407,9 +407,9 @@ const char* _table_type_to_str(int table_type)
 const char* _gate_state_to_str(gate_state_t gate_state)
 {
     switch (gate_state) {
-        case GATE_CLOSED:
+        case GATE_STATE_CLOSED:
             return "GATE_CLOSED";
-        case GATE_OPEN:
+        case GATE_STATE_OPEN:
             return "GATE_OPEN";
         default:
             return "GATE_STATE_INVALID";

@@ -13,7 +13,7 @@
 #include "nimble/ble.h"
 #include "net/bluetil/ad.h"
 #include "shell.h"
-#include "tables.h"
+#include "tables_old.h"
 #include "timex.h"
 #include "ztimer.h"
 #include "cbor.h"

@@ -19,7 +19,6 @@
 #ifndef MATE_BLE_INCOMING_LIST_H
 #define MATE_BLE_INCOMING_LIST_H
 
-#include "tables.h"
 #include "mate_ble.h"
 
 #include "architecture.h"
