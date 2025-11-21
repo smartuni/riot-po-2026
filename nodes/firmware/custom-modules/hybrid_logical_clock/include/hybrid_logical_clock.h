@@ -32,12 +32,14 @@ typedef struct {
 
 /**
  * @brief Function type for getting the current physical time.
+ *
+ * @param ctx Optional pointer passed during initialization
  * @param out Pointer to store the current physical time
  *
  * @retval 0 on success
  * @retval HLC_ERROR_GET_TIME if an error occurred when getting the time
  */
-typedef int (*hlc_get_physical_time_fn)(hlc_physical_t *out);
+typedef int (*hlc_get_physical_time_fn)(void *arg, hlc_physical_t *out);
 
 /**
  * @brief Hybrid Logical Clock context structure
@@ -48,15 +50,22 @@ typedef struct {
 
     /**< Function to get current physical time */
     hlc_get_physical_time_fn get_physical_time;
+
+    /** Optional pointer passed to get_physical_time */
+    void *get_physical_time_arg;
 } hlc_ctx_t;
 
 /**
  * @brief Initialize a Hybrid Logical Clock context
  *
+ * @param ctx           Pointer to the context to initialize
+ * @param get_time_fn   Pointer to the function to get physical time
+ * @param arg           Optional pointer to be passed to @p get_time_fn
+ *
  * @retval 0 on success
  * @retval HLC_ERROR_GET_TIME if an error occurred when getting the current time
  */
-int hlc_init(hlc_ctx_t *ctx, hlc_get_physical_time_fn get_time_fn);
+int hlc_init(hlc_ctx_t *ctx, hlc_get_physical_time_fn get_time_fn, void* arg);
 
 /**
  * @brief Get the current HLC timestamp
