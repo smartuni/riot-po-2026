@@ -157,7 +157,7 @@ int sign_record(tables_context_t *ctx, table_record_t *record,
     memcpy(buffer + header_size, record->data.raw, data_size);
 
     result = crypto_service_sign(&ctx->crypto_service, (const uint8_t *)ctx->self_id,
-                                 TABLES_KEY_SIZE, buffer, buffer_size, signature_buffer,
+                                 NODE_ID_SIZE, buffer, buffer_size, signature_buffer,
                                  signature_buffer_size);
     if (result != 0) {
         return result;
@@ -190,7 +190,7 @@ int verify_record(tables_context_t *ctx, const table_record_t *record)
 
     return crypto_service_verify(&ctx->crypto_service,
                                  (const uint8_t *)&record->header.writer,
-                                 TABLES_KEY_SIZE, buffer, buffer_size,
+                                 NODE_ID_SIZE, buffer, buffer_size,
                                  record->signature, record->signature_len);
 }
 
