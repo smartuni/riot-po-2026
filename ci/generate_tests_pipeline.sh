@@ -27,6 +27,10 @@ for d in "$TEST_DIR"/test_*; do
   [ -d "$d" ] || continue
   found=true
   name=$(basename "$d" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]/_/g')
+
+  # Extract BOARD variable from Makefile
+  board=$(grep -E '^\s*BOARD\s*\?=\s*' "$d/Makefile" | head -n1 | sed -E 's/^\s*BOARD\s*\?=\s*([^[:space:]#]+).*/\1/')
+
   cat >> "$OUT_FILE" <<YAML
 ${name}_test:
   stage: test
@@ -34,12 +38,23 @@ ${name}_test:
     name: \$IMAGE
   rules:
     - when: always
+YAML
 
+  # Add tags only if board is not native
+  if [ "$board" != "native" ]; then
+    cat >> "$OUT_FILE" <<YAML
+  tags:
+    - hil
+YAML
+  fi
+
+  cat >> "$OUT_FILE" <<YAML
   script:
     - cd "$d"
     - make clean
     - make all flash
     - make test
+
 YAML
 done
 
