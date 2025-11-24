@@ -67,8 +67,6 @@ USEMODULE += tables
 USEMODULE += cose_crypto_service
 USEMODULE += hlc_ztimer
 
-USEMODULE += cbor_serialization
-
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
