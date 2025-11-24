@@ -21,13 +21,17 @@
 #define MATE_LORAWAN_H
 
 #include "event.h"
+#include "tables/types.h"
 
 /**
  * @brief   Intializes the LoRaWAN module and starts the event loop.
+ *
+ * @param   tables     Reference to sucessfully initialized tables instance
+ *
  * @retval  0 on success
  * @retval  -1 on failure
  */
-int start_lorawan(void);
+int mate_lorawan_start(tables_context_t *tables);
 
 extern event_t send_seen_status_table; // Event for sending seen status table
 extern event_t send_is_state_table; // Event for sending is state table
