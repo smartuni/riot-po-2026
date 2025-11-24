@@ -162,7 +162,7 @@ typedef struct {
  * @param service   Pointer to the store service
  */
 #define STORE_ITERATOR(name, service)                                                       \
-        size_t name##_needed_size = (service)->interface.iterator_size((service)->context); \
+        size_t name##_needed_size = (service)->interface->iterator_size((service)->context); \
         size_t name##_count = (name##_needed_size + sizeof(store_service_iterator_t) - 1) / \
                               sizeof(store_service_iterator_t);                             \
         store_service_iterator_t name##_buf[name##_count];                                  \
