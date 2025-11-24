@@ -41,7 +41,7 @@
 #include "tables_old.h"
 #include "event.h"
 #include "event/thread.h"
-#if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
 #include "events_creation.h"
 #endif
 #define LOG_LEVEL   LOG_NONE

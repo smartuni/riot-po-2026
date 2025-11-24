@@ -21,7 +21,7 @@
 #define LOG_LEVEL   LOG_NONE
 #include "log.h"
 /* include sound module only on SenseMate (gate has no audio) */
-#if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
 #include "include/soundModule.h"
 #endif
 
@@ -429,7 +429,7 @@ void* ble_receive_loop(void* args)
             if ((thr_args->receive_queue != NULL) && (table_result & TABLE_NEW_RECORD_AND_UPDATE)) {
                 event_post(thr_args->receive_queue, thr_args->receive_news_event);
             }
-#if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
             else{
                 /* only play sound on the is_state table */
                 if (metadata.message_type == IS_STATE_KEY) {
