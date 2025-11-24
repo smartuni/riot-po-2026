@@ -12,6 +12,7 @@
 #include "event/thread.h"
 #include "inductive_sensor.h"
 #include "include/gate_observer.h"
+#include "mtd.h"
 
 #define TIME_PERIOD_TABLE_UPDATE 30 // const defines time to update table periodically
 
@@ -114,11 +115,25 @@ static void _table_update_cb(tables_context_t *ctx, const table_record_t *record
     }
 }
 
+#define STORAGE_RAM_MOUNT_PATH "/ram0"
+#define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
+extern int storage_setup_ram_mtd(const char *mount_path);
+extern mtd_dev_t *storage_setup_get_ram_mtd(void);
+
 int main(void){
     /* Sleep so that we do not miss this message while connecting */
     ztimer_sleep(ZTIMER_SEC, 3);
 
-    int res = credential_manager_setup();
+
+    int res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
+    printf("storage_setup_ram_mtd: %d\n", res);
+    mtd_dev_t *mtd = storage_setup_get_ram_mtd();
+    printf("MTD '%s' device properties:\n", STORAGE_MOUNT_PATH);
+    printf("sector_count:     %"PRIu32"   \n", mtd->sector_count);
+    printf("pages_per_sector: %"PRIu32"   \n", mtd->pages_per_sector);
+    printf("page_size:        %"PRIu32"   \n", mtd->page_size);
+
+    res = credential_manager_setup();
     printf("credential_manager_setup: %d\n", res);
 
     tables_context_t *tables;
