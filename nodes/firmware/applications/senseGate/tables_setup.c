@@ -18,8 +18,6 @@
 #define LOG_LEVEL LOG_DEBUG
 #include "log.h"
 
-#define DB_DIR VFS_DEFAULT_DATA "/tables"
-
 static flashdb_store_service_ctx_t store_ctx;
 
 static hlc_ctx_t hlc_ctx;
@@ -43,17 +41,17 @@ static const char *ok(bool condition)
     return condition ? "[OK]" : "[ERROR]";
 }
 
-int tables_setup(tables_context_t **t) {
+int tables_setup(tables_context_t **t, const char *db_path) {
 
     /* Create the DB directory */
-    int err = vfs_mkdir(DB_DIR, 0777);
+    int err = vfs_mkdir(db_path, 0777);
     if (err != 0 && err != -EEXIST) {
         puts("Could not create the directory");
         printf("Error %d\n", err);
         return -1;
     }
 
-    err = flashdb_store_service_init(&store_ctx, "tables_db", DB_DIR);
+    err = flashdb_store_service_init(&store_ctx, "tables_db", db_path);
     LOG_DEBUG("%s: flashdb_store_service_init %s\n", __func__, ok(!err));
     if (err) {
         return -2;

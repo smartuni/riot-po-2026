@@ -6,8 +6,6 @@
 #include "credential_manager.h"
 #include "key_config.h"
 
-#define DB_DIR VFS_DEFAULT_DATA "/cred"
-
 static flashdb_store_service_ctx_t store_ctx;
 
 static store_service_t store_service = {
@@ -15,16 +13,16 @@ static store_service_t store_service = {
     .context = &store_ctx
 };
 
-int credential_manager_setup(void) {
+int credential_manager_setup(const char *db_path) {
     /* Create the DB directory */
-    int err = vfs_mkdir(DB_DIR, 0777);
+    int err = vfs_mkdir(db_path, 0777);
     if (err != 0 && err != -EEXIST) {
         puts("Could not create the directory");
         printf("Error %d\n", err);
         return -1;
     }
 
-    err = flashdb_store_service_init(&store_ctx, "cred_db", DB_DIR);
+    err = flashdb_store_service_init(&store_ctx, "cred_db", db_path);
     if (err) {
         printf("credential_manager_setup flashdb_store_service_init [FAILED]");
         return -2;
