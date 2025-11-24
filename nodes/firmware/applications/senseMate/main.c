@@ -11,10 +11,16 @@
 #include "include/soundModule.h"
 #include "include/vibrationModule.h"
 #include "include/sensemate_ui.h"
-
 #include "mate_ble.h"
+#include "mtd.h"
 
-//void fill_tables_test(void); //for menu testing purposes
+#define STORAGE_RAM_MOUNT_PATH "/ram0"
+#define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
+extern int credential_manager_setup(const char *db_path);
+extern int tables_setup(tables_context_t **t, const char *db_path);
+extern int storage_setup_ram_mtd(const char *mount_path);
+extern mtd_dev_t *storage_setup_get_ram_mtd(void);
+tables_context_t *tables;
 
 char ble_send_stack[2*THREAD_STACKSIZE_DEFAULT];
 char ble_reicv_stack[2*THREAD_STACKSIZE_DEFAULT];
@@ -54,7 +60,8 @@ static bool _set_gate_seen_state_cb(ui_data_element_t *elem)
         seen_state->timestamp = te.timestamp;
         int sres = set_seen_status_entry(seen_state);
         if (sres == TABLE_NEW_RECORD || sres == TABLE_UPDATED) {
-            event_post(EVENT_PRIO_MEDIUM, &send_seen_status_table);
+            ////TODO: move to new tables API
+            //event_post(EVENT_PRIO_MEDIUM, &send_seen_status_table);
             return true;
         }
     }
@@ -69,6 +76,22 @@ static ui_data_cbs_t _ui_data_cbs = {
 
 int main(void) {
     //ztimer_sleep(ZTIMER_MSEC, 3000);
+
+    int res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
+    printf("storage_setup_ram_mtd: %d\n", res);
+    mtd_dev_t *mtd = storage_setup_get_ram_mtd();
+    printf("MTD '%s' device properties:\n", STORAGE_MOUNT_PATH);
+    printf("sector_count:     %"PRIu32"   \n", mtd->sector_count);
+    printf("pages_per_sector: %"PRIu32"   \n", mtd->pages_per_sector);
+    printf("page_size:        %"PRIu32"   \n", mtd->page_size);
+
+    res = credential_manager_setup(STORAGE_MOUNT_PATH "/cred");
+    printf("credential_manager_setup: %d\n", res);
+
+    res = tables_setup(&tables, STORAGE_MOUNT_PATH "/tables");
+    printf("tables_setup: %d\n", res);
+
+
     printf("init menu...\n");
     sensemate_ui_init(&_ui_data_cbs);
     ui_data_t *ui_state = sensemate_ui_get_state();
@@ -125,7 +148,7 @@ int main(void) {
     ui_state->ble_state = CONNECTED;
     sensemate_ui_update();
 
-    lorawan_started = start_lorawan();
+    lorawan_started = mate_lorawan_start(tables);
 
     if (lorawan_started == 0) {
         ui_state->lora_state = CONNECTED;
@@ -136,7 +159,7 @@ int main(void) {
     while (1)
     {
         if(lorawan_started == -1){
-            lorawan_started = start_lorawan();
+            lorawan_started = mate_lorawan_start(tables);
             if (lorawan_started == 0) {
                 ui_state->lora_state = CONNECTED;
                 sensemate_ui_update();
