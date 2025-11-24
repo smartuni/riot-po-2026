@@ -12,6 +12,21 @@
 #include "store_service.h"
 
 /**
+ * @brief Device type value for a Gate node.
+ */
+#define DEVICE_TYPE_GATE (0)
+
+/**
+ * @brief Device type value for SenseMate node.
+ */
+#define DEVICE_TYPE_SENSEMATE (1)
+
+/**
+ * @brief Device type value for a server (backend) instance.
+ */
+#define DEVICE_TYPE_SERVER (2)
+
+/**
  * @brief Size of node ID in bytes
  */
 #define NODE_ID_SIZE 4
