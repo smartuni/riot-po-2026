@@ -4,7 +4,6 @@
 #include "board.h"
 #include "ztimer.h"
 #include "thread.h"
-#include "tables_old.h"
 #include "tables.h"
 #include "tables/records.h"
 #include "mate_lorawan.h"
@@ -16,6 +15,8 @@
 
 #define STORAGE_RAM_MOUNT_PATH "/ram0"
 #define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
+extern int credential_manager_setup(const char *db_path);
+extern int tables_setup(tables_context_t **t, const char *db_path);
 extern int storage_setup_ram_mtd(const char *mount_path);
 extern mtd_dev_t *storage_setup_get_ram_mtd(void);
 tables_context_t *tables;
@@ -70,23 +71,9 @@ gate_observer_t observer = {
 
 void gate_observer_state_change_cb(gate_state_t new_state)
 {
-    /* update own state entry in table */
-    gate_sensor_state_entry_t table_entry;
-    table_entry.gateID = RIOT_CONFIG_DEVICE_ID;
-    table_entry.state = new_state;
-    table_entry.timestamp = get_device_timestamp();
-
-    int tableUpdate = set_is_state_entry(&table_entry);
-    if( TABLE_UPDATED == tableUpdate){
-        /* inform lorawan to send an update */
-        event_post(EVENT_PRIO_MEDIUM, &send_is_state_table);
-    } else {
-        puts("[main]: writing to table failed!");
-    }
+    int res = tables_put_gate_report(tables, new_state);
+    printf("gate_observer_state_change_cb: %d\n", res);
 }
-
-extern int credential_manager_setup(const char *db_path);
-extern int tables_setup(tables_context_t **t, const char *db_path);
 
 static void _table_update_cb(tables_context_t *ctx, const table_record_t *record,
                              const table_query_t *query, void *arg)
@@ -94,7 +81,7 @@ static void _table_update_cb(tables_context_t *ctx, const table_record_t *record
     (void)ctx;
     (void)arg;
     (void)query;
-
+    printf("\n_table_update_cb\n");
     table_record_type_t type;
     get_record_type(record, &type);
     printf("record type: %d\n", type);
@@ -124,6 +111,7 @@ static void _table_update_cb(tables_context_t *ctx, const table_record_t *record
 int main(void){
     /* Sleep so that we do not miss this message while connecting */
     ztimer_sleep(ZTIMER_SEC, 3);
+    puts("[main]: starting");
 
     int res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
     printf("storage_setup_ram_mtd: %d\n", res);
@@ -146,22 +134,12 @@ int main(void){
     tables_init_query(&query, RECORD_GATE_REPORT, NULL, NULL);
     tables_add_memo(tables, &memo, &query, _table_update_cb, cb_arg);
 
-    for (unsigned i = 0; i < 5; i++) {
-        res = tables_put_gate_report(tables, (i % 2 == 0) ? GATE_STATE_OPEN : GATE_STATE_CLOSED);
-        printf("tables_put_gate_report: %d\n", res);
-        ztimer_sleep(ZTIMER_MSEC, 1000);
-    }
-
-    return 0;
     int isi_res = inductive_sensor_init(&inductive_sensor,
                                         INDUCTIVE_SENSOR_DCDC_PWR_PIN,
                                         INDUCTIVE_SENSOR_DCDC_PWR_PIN_AH,
                                         INDUCTIVE_SENSOR_ADC_LINE,
                                         INDUCTIVE_SENSOR_ADC_VREF_MV,
                                         INDUCTIVE_SENSOR_VREF_MV);
-
-
-    puts("[main]: starting");
 
     if (isi_res != ANALOG_GATE_SENSOR_SUCCESS) {
         printf("[main]: inductive sensor init failed! %d\n", isi_res);
@@ -190,30 +168,17 @@ int main(void){
     printf("[main]: initial gate state: %s\n",
             initial_gate_state == GATE_STATE_CLOSED ? "CLOSED" :
             (initial_gate_state == GATE_STATE_OPEN ? "OPEN" : "INVALID"));
-
-    puts("[main]: init tables");
-    init_tables();
     
-    // write to table
-    puts("[main]: write to table");
-    gate_sensor_state_entry_t table_entry;
-    table_entry.gateID = RIOT_CONFIG_DEVICE_ID;
-    table_entry.state = initial_gate_state;
-    table_entry.timestamp = get_device_timestamp();
-
-    int sis_res = set_is_state_entry(&table_entry);
-    if (TABLE_NEW_RECORD == sis_res){
-    } else {
-        puts("[main]: could not write initial gate state to table");
-    }
+    puts("[main]: put initial state to tables...");
+    res = tables_put_gate_report(tables, initial_gate_state);
+    printf("tables_put_gate_report: %d\n", res);
 
     // start lorawan
     puts("[main]: starting lorawan");
-    int lorawanstarted = start_lorawan();
+    int lorawanstarted = mate_lorawan_start(tables);
     if (-1 == lorawanstarted){
         printf("[main]: starting lorawan failed");
     }
-
 
     //start thread init bluetooth
     puts("[main]: starting ble");
@@ -222,7 +187,6 @@ int main(void){
     } else {
         puts("[main]: BLE not started");
     }
-
 
     thread_create(
         ble_send_stack,
@@ -234,36 +198,33 @@ int main(void){
        "bleSend"
     );
     
-     thread_create(
-         ble_reicv_stack,
-         sizeof(ble_reicv_stack),
-         THREAD_PRIORITY_MAIN - 3,
-         THREAD_CREATE_STACKTEST,
-         ble_receive_loop,
-         NULL,
-        "bleRecv"
-     );
+    thread_create(
+        ble_reicv_stack,
+        sizeof(ble_reicv_stack),
+        THREAD_PRIORITY_MAIN - 3,
+        THREAD_CREATE_STACKTEST,
+        ble_receive_loop,
+        NULL,
+       "bleRecv"
+    );
 
     int timeToUpdateTable = 0; // var to update table periodically
     
     while(1){
 
-        
         if (-1 == lorawanstarted){
-            lorawanstarted = start_lorawan();
+            lorawanstarted = mate_lorawan_start(tables);
         }
         
         increment_device_timestamp();
         ztimer_sleep(ZTIMER_MSEC,1000);
     
         if (timeToUpdateTable == TIME_PERIOD_TABLE_UPDATE) {
-            gate_sensor_state_entry_t table_update_entry;
-            table_update_entry.gateID = RIOT_CONFIG_DEVICE_ID;
-            table_update_entry.state = gate_observer_get_state(&observer, NULL);
-            table_update_entry.timestamp = get_device_timestamp();
-
-            if (TABLE_UPDATED == set_is_state_entry(&table_update_entry)){
-                puts("[main]: Table updated with newest timestamp");
+            printf("updating own reported state\n");
+            gate_state_t current_gate_state = gate_observer_get_state(&observer, &obs_state);
+            res = tables_put_gate_report(tables, current_gate_state);
+            if (res == 0) {
+                printf("tables_put_gate_report: %d\n", res);
             }
             timeToUpdateTable = 0;
         } else {

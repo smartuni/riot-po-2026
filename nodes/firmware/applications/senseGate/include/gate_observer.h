@@ -7,7 +7,7 @@
 #include "event.h"
 #include "event/timeout.h"
 #include "periph/gpio.h"
-#include "mate_types.h"
+#include "tables/types.h"
 
 #ifndef GATE_OBSERVER_DISTANCE_SENSOR_CNT
 #define GATE_OBSERVER_DISTANCE_SENSOR_CNT (1)
