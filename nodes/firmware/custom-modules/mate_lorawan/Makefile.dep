@@ -25,3 +25,4 @@ USEMODULE += event_timeout
 USEMODULE += event_thread_highest
 USEMODULE += event_thread
 USEMODULE += od
+USEMODULE += cbor_serialization
