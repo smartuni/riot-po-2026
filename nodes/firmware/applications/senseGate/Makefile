@@ -39,6 +39,9 @@ CFLAGS += -DEVENT_THREAD_MEDIUM_STACKSIZE=3*1024
 
 CFLAGS += -DTHREAD_STACKSIZE_MAIN=THREAD_STACKSIZE_LARGE*2
 
+# RAM-based storage backend
+USEMODULE += mtd_emulated
+
 # credential manager stuff
 USEMODULE += credential_manager
 USEMODULE += flashdb_store_service
