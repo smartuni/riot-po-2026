@@ -1,5 +1,5 @@
 #include <string.h>
-#include "include/gate_observer.h"
+#include "gate_observer.h"
 #include "event/thread.h"
 
 static void _update_state(gate_observer_t *observer)
