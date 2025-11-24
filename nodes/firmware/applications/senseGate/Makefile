@@ -11,7 +11,10 @@ EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 # Configrue device id and device type.
 # This will instruct the key-distro module to include required credentials.
 RIOT_CONFIG_DEVICE_ID ?= 1
-RIOT_CONFIG_DEVICE_TYPE ?= GATE_NODE
+# Set the device type to 'Gate' to configure some device specific behaviors.
+# Dont allow overwrites here, as that would only cause trouble anyway.
+# (the corresponding values are defined in tables/types.h)
+RIOT_CONFIG_DEVICE_TYPE = DEVICE_TYPE_GATE
 
 USEMODULE += periph_gpio
 USEMODULE += periph_gpio_irq
