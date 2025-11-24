@@ -10,13 +10,16 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-int _cbor_array_size_record(const table_record_t *record, size_t *size)
+int _cbor_array_size_record(const table_record_t *record, size_t *size, bool include_sig)
 {
     table_record_type_t type;
 
     get_record_type(record, &type);
 
-    *size = ARRAY_SIZE_MESSAGE + ARRAY_SIZE_RECORD_HEADER + ARRAY_SIZE_RECORD_SIGNATURE;
+    *size = ARRAY_SIZE_MESSAGE + ARRAY_SIZE_RECORD_HEADER;
+    if (include_sig) {
+        *size += ARRAY_SIZE_RECORD_SIGNATURE;
+    }
 
     if (type == RECORD_GATE_REPORT) {
         *size += ARRAY_SIZE_RECORD_DATA_GATE_REPORT;
@@ -257,7 +260,8 @@ int _cbor_encode_record_data(const table_record_t *record, CborEncoder *encoder)
     }
 }
 
-int cbor_serialize_record(table_record_t *record, uint8_t *out, size_t *out_len)
+static int _cbor_serialize_record(const table_record_t *record, uint8_t *out, size_t *out_len,
+                                  bool include_sig)
 {
     assert(record != NULL);
     assert(out != NULL);
@@ -269,7 +273,7 @@ int cbor_serialize_record(table_record_t *record, uint8_t *out, size_t *out_len)
 
     CborEncoder main_array_encoder;
     size_t main_array_size;
-    int res = _cbor_array_size_record(record, &main_array_size);
+    int res = _cbor_array_size_record(record, &main_array_size, include_sig);
     if (res != 0) {
         DEBUG("cbor_serialize_record: error getting main array size\n");
         return -1;
@@ -306,10 +310,12 @@ int cbor_serialize_record(table_record_t *record, uint8_t *out, size_t *out_len)
         return -1;
     }
 
-    res = _cbor_encode_record_signature(record, &main_array_encoder);
-    if (res != 0) {
-        DEBUG("cbor_serialize_record: error encoding record signature\n");
-        return -1;
+    if (include_sig) {
+        res = _cbor_encode_record_signature(record, &main_array_encoder);
+        if (res != 0) {
+            DEBUG("cbor_serialize_record: error encoding record signature\n");
+            return -1;
+        }
     }
 
     error = cbor_encoder_close_container(&root_encoder, &main_array_encoder);
@@ -320,8 +326,18 @@ int cbor_serialize_record(table_record_t *record, uint8_t *out, size_t *out_len)
 
     *out_len = cbor_encoder_get_buffer_size(&root_encoder, out);
     return 0;
+
 }
 
+int cbor_serialize_record(const table_record_t *record, uint8_t *out, size_t *out_len)
+{
+    return _cbor_serialize_record(record, out, out_len, true);
+}
+
+int cbor_serialize_record_no_sig(const table_record_t *record, uint8_t *out, size_t *out_len)
+{
+    return _cbor_serialize_record(record, out, out_len, false);
+}
 
 int _cbor_decode_version(CborValue *value, uint8_t *version)
 {
