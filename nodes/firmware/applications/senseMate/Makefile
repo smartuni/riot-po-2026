@@ -77,6 +77,31 @@ CFLAGS += -DLV_MEM_SIZE=1024*16
 DIRS += sensemate_ui
 USEMODULE += sensemate_ui
 
+# RAM-based storage backend
+USEMODULE += mtd_emulated
+
+# credential manager stuff
+USEMODULE += credential_manager
+USEMODULE += flashdb_store_service
+USEMODULE += vfs_default
+USEMODULE += vfs_auto_format
+
+# configure ram mtd to a size of 8 kByte
+CFLAGS += -DRAM_MTD_SECTOR_COUNT=\(16\)
+CFLAGS += -DRAM_MTD_PAGE_PER_SECTOR=\(64\)
+CFLAGS += -DRAM_MTD_PAGE_SIZE=\(64\)
+
+# use one quarter of the storage for flashdb (PER STORAGE SERVICE)
+# TODO: mke configurable for each store sercvice separately (?)
+CFLAGS += -DFLASHDB_STORE_SERVICE_SECTOR_SIZE=\(RAM_MTD_PAGE_PER_SECTOR*RAM_MTD_PAGE_SIZE\)
+CFLAGS += -DFLASHDB_STORE_SERVICE_DB_SIZE=\(\(FLASHDB_STORE_SERVICE_SECTOR_SIZE*RAM_MTD_SECTOR_COUNT\)/4\)
+
+# tables stuff
+USEMODULE += tables
+USEMODULE += cose_crypto_service
+USEMODULE += hlc_ztimer
+
+
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 
