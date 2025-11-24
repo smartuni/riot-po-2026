@@ -67,7 +67,7 @@ static void _test_put_get_delete(void)
     flashdb_store_service_ctx_t context;
     store_service_t service = {
         .context = &context,
-        .interface = flashdb_store_service_interface
+        .interface = &flashdb_store_service_interface
     };
 
     int res = flashdb_store_service_init(&context, "db_1", DB_DIR);
@@ -114,7 +114,7 @@ static void _test_iterator(void)
     flashdb_store_service_ctx_t context;
     store_service_t service = {
         .context = &context,
-        .interface = flashdb_store_service_interface
+        .interface = &flashdb_store_service_interface
     };
 
     TEST_ASSERT_EQUAL_INT(0,
