@@ -14,6 +14,12 @@
 #include "include/gate_observer.h"
 #include "mtd.h"
 
+#define STORAGE_RAM_MOUNT_PATH "/ram0"
+#define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
+extern int storage_setup_ram_mtd(const char *mount_path);
+extern mtd_dev_t *storage_setup_get_ram_mtd(void);
+tables_context_t *tables;
+
 #define TIME_PERIOD_TABLE_UPDATE 30 // const defines time to update table periodically
 
 /* PIN label on feather sense: "A1" */
@@ -79,8 +85,8 @@ void gate_observer_state_change_cb(gate_state_t new_state)
     }
 }
 
-extern int credential_manager_setup(void);
-extern int tables_setup(tables_context_t **tables);
+extern int credential_manager_setup(const char *db_path);
+extern int tables_setup(tables_context_t **t, const char *db_path);
 
 static void _table_update_cb(tables_context_t *ctx, const table_record_t *record,
                              const table_query_t *query, void *arg)
@@ -115,15 +121,9 @@ static void _table_update_cb(tables_context_t *ctx, const table_record_t *record
     }
 }
 
-#define STORAGE_RAM_MOUNT_PATH "/ram0"
-#define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
-extern int storage_setup_ram_mtd(const char *mount_path);
-extern mtd_dev_t *storage_setup_get_ram_mtd(void);
-
 int main(void){
     /* Sleep so that we do not miss this message while connecting */
     ztimer_sleep(ZTIMER_SEC, 3);
-
 
     int res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
     printf("storage_setup_ram_mtd: %d\n", res);
@@ -133,12 +133,10 @@ int main(void){
     printf("pages_per_sector: %"PRIu32"   \n", mtd->pages_per_sector);
     printf("page_size:        %"PRIu32"   \n", mtd->page_size);
 
-    res = credential_manager_setup();
+    res = credential_manager_setup(STORAGE_MOUNT_PATH "/cred");
     printf("credential_manager_setup: %d\n", res);
 
-    tables_context_t *tables;
-
-    res = tables_setup(&tables);
+    res = tables_setup(&tables, STORAGE_MOUNT_PATH "/tables");
     printf("tables_setup: %d\n", res);
 
     table_memo_t memo;
