@@ -1,0 +1,1 @@
+../senseGate/credential_manager_setup.c
