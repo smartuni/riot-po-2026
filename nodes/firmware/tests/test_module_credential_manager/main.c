@@ -45,7 +45,7 @@ static void _test_add_get_private_key(void)
     );
 
     store_service_t store_service = {
-        .interface = flashdb_store_service_interface,
+        .interface = &flashdb_store_service_interface,
         .context = &store_ctx
     };
     TEST_ASSERT_EQUAL_INT(0, credential_manager_init(&store_service));
@@ -87,7 +87,7 @@ static void _test_add_get_public_key(void)
     );
 
     store_service_t store_service = {
-        .interface = flashdb_store_service_interface,
+        .interface = &flashdb_store_service_interface,
         .context = &store_ctx
     };
     TEST_ASSERT_EQUAL_INT(0, credential_manager_init(&store_service));
