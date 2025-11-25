@@ -104,6 +104,7 @@ static int _cbor_decode_record_header(CborValue *value, table_record_header_t *h
     CborError error;
     uint8_t simple_value;
     int result;
+    memset(header, 0, sizeof(table_record_header_t));
 
     if (!cbor_value_is_simple_type(value)) {
         DEBUG("_cbor_decode_record_header: expected simple value for record type\n");
@@ -441,6 +442,9 @@ int cbor_decode_record(CborValue *array_item, table_record_t *record,
 
     CborError error;
     int result;
+
+    memset(record, 0, sizeof(table_record_t));
+    memset(record_data, 0, sizeof(table_record_data_buffer_t));
 
     result = _cbor_decode_record_header(array_item, &record->header);
     if (result != 0) {
