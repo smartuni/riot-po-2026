@@ -370,12 +370,12 @@ static int _cbor_decode_record_data(CborValue *array_item, table_record_t *recor
         DEBUG("_cbor_decode_record_data: error decoding specific data part\n");
         return -1;
     }
-
+    record->data.raw = record_data;
     return 0;
 }
 
-static int _cbor_decode_record_signature(CborValue *array_item, uint8_t *signature,
-                                         size_t *signature_len)
+static int _cbor_decode_record_signature(CborValue *array_item, table_record_t *record,
+                                         uint8_t *signature, size_t *signature_len)
 {
     assert(array_item != NULL);
     assert(signature_len != NULL);
@@ -395,6 +395,8 @@ static int _cbor_decode_record_signature(CborValue *array_item, uint8_t *signatu
               error);
         return -1;
     }
+
+    record->signature_len = length;
 
     if (signature == NULL) {
         *signature_len = length;
@@ -421,6 +423,8 @@ static int _cbor_decode_record_signature(CborValue *array_item, uint8_t *signatu
         DEBUG("_cbor_decode_record_signature: error gettting signature (%d)\n", error);
         return -1;
     }
+
+    record->signature = signature;
 
     return 0;
 }
@@ -462,7 +466,7 @@ int cbor_decode_record(CborValue *array_item, table_record_t *record,
         return -1;
     }
 
-    result = _cbor_decode_record_signature(array_item, signature, signature_len);
+    result = _cbor_decode_record_signature(array_item, record, signature, signature_len);
     if (result != 0) {
         DEBUG("cbor_decode_record: error decoding record signature\n");
         return -1;
