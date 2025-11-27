@@ -347,10 +347,6 @@ static void send_periodic_handler(event_t *event)
         .writer_id = &self_node_id
     };
 
-    /* fixed worst-case signature buffer size to avoid multiple iterator calls */
-    uint8_t signature[MAX_SIGNATURE_SIZE];
-    size_t signature_len = sizeof(signature);
-
     /* TODO: check if the other pattern with multiple calls to the iterator is safe to do.
      *     First getting the size, then the record seems problematic if the iterator may change
      *     inbetween.
@@ -362,7 +358,7 @@ static void send_periodic_handler(event_t *event)
         return;
     }
 
-    res = tables_iterator_next(_tables, &iterator, &record, signature, &signature_len);
+    res = tables_iterator_next(_tables, &iterator, &record, NULL, NULL);
     _LOGDBG("%s iter next (%d) %s\n", __func__, res, ok(res == 0));
     if (res) {
         return;
