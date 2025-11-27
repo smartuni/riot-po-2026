@@ -58,7 +58,7 @@ void limit_switch_reactivate_handler(event_t *event)
 
 void limit_switch_cb(void *arg) {
     event_t *evt = (event_t*)arg;
-    event_post(EVENT_PRIO_HIGHEST, evt);
+    event_post(EVENT_PRIO_MEDIUM, evt);
 }
 
 int gate_observer_init(gate_observer_t *observer, const gate_observer_config_t *config, gate_state_changed_cb_t cb)
@@ -75,7 +75,7 @@ int gate_observer_init(gate_observer_t *observer, const gate_observer_config_t *
     observer->ls_event_muted = false;
 
     event_timeout_ztimer_init(&observer->ls_reactivate_evt_timeout,
-                              ZTIMER_MSEC, EVENT_PRIO_HIGHEST,
+                              ZTIMER_MSEC, EVENT_PRIO_MEDIUM,
                               &observer->ls_reactivate_evt);
 
     for (int i = 0; i < GATE_OBSERVER_LIMITSWITCH_SENSOR_CNT; i++) {
