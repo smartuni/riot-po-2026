@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "crypto_service.h"
 #include "store_service.h"
@@ -470,24 +471,73 @@ bool record_matches_query(const table_record_t *record, const table_query_t *que
 const char* record_type_tostr(table_record_type_t rt)
 {
     switch (rt) {
-        case RECORD_UNDEFINED        : return "RECORD_UNDEFINED";
-        case RECORD_GATE_REPORT      : return "RECORD_GATE_REPORT";
-        case RECORD_GATE_OBSERVATION : return "RECORD_GATE_OBSERVATION";
-        case RECORD_GATE_ENCOUNTER   : return "RECORD_GATE_ENCOUNTER";
-        case RECORD_MATE_ENCOUNTER   : return "RECORD_MATE_ENCOUNTER";
-        case RECORD_GATE_COMMAND     : return "RECORD_GATE_COMMAND";
-        case RECORD_GATE_JOB         : return "RECORD_GATE_JOB";
-        default: return "INVALID_RECORD_TYPE";
+        case RECORD_UNDEFINED        : return "UNDEFINED";
+        case RECORD_GATE_REPORT      : return "GATE_REPORT";
+        case RECORD_GATE_OBSERVATION : return "GATE_OBSERVATION";
+        case RECORD_GATE_ENCOUNTER   : return "GATE_ENCOUNTER";
+        case RECORD_MATE_ENCOUNTER   : return "MATE_ENCOUNTER";
+        case RECORD_GATE_COMMAND     : return "GATE_COMMAND";
+        case RECORD_GATE_JOB         : return "GATE_JOB";
+        default                      : return "INVALID_RECORD_TYPE";
     }
 }
 
 const char* gate_state_tostr(gate_state_t s)
 {
     switch (s) {
-        case GATE_STATE_OPEN      : return "GATE_STATE_OPEN";
-        case GATE_STATE_CLOSED    : return "GATE_STATE_CLOSED";
-        case GATE_STATE_UNKNOWN   : return "GATE_STATE_UNKNOWN";
-        case GATE_STATE_DONT_CARE : return "GATE_STATE_DONT_CARE";
-        default: return "INVALID_GATE_SATE";
+        case GATE_STATE_OPEN      : return "OPEN";
+        case GATE_STATE_CLOSED    : return "CLOSED";
+        case GATE_STATE_UNKNOWN   : return "UNKNOWN";
+        case GATE_STATE_DONT_CARE : return "DONT_CARE";
+        default                   : return "INVALID_GATE_SATE";
     }
+}
+
+int node_id_tostr(const node_id_t id, char *str, size_t str_len)
+{
+    int pos = snprintf(str, str_len, "0x");
+    for (size_t i = 0; i < sizeof(node_id_t); i++) {
+        pos += snprintf(&str[pos], (str_len - pos), "%02x", id[i]);
+    }
+    /* return size without terminating zero */
+    return pos;
+}
+
+int record_sequence_tostr(const record_sequence_t *sequence, char *str, size_t str_len)
+{
+    int pos = snprintf(str, str_len, "0x");
+    for (size_t i = 0; i < sizeof(record_sequence_t); i++) {
+        pos += snprintf(&str[pos], (str_len - pos), "%02x", ((uint8_t*)sequence)[i]);
+    }
+    /* return size without terminating zero */
+    return pos;
+}
+
+int record_tostr(const table_record_t *record, char *str, size_t str_len)
+{
+    int pos = 0;
+    table_record_type_t type;
+    table_gate_report_t *rdata;
+    const node_id_t *writer_id;
+    record_sequence_t seq;
+
+    get_record_type(record, &type);
+    get_record_writer_id(record, &writer_id);
+    get_record_sequence(record, &seq);
+
+    pos += node_id_tostr(*writer_id, &str[pos], str_len - pos);
+
+    str[pos++] = ' ';
+
+    pos += record_sequence_tostr(&seq, &str[pos], str_len - pos);
+
+    str[pos++] = ' ';
+
+    if (get_gate_report_data(record, &rdata) == 0) {
+        pos += snprintf(&str[pos], (str_len - pos), "%s %s",
+                        record_type_tostr(type),
+                        gate_state_tostr(rdata->state));
+    }
+    /* return size without terminating zero */
+    return pos;
 }
