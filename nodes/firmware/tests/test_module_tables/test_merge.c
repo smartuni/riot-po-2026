@@ -101,6 +101,8 @@ static void test_tables_merge(void)
     TEST_ASSERT_EQUAL_INT(-1, tables_merge_record(&ctx, record, &result));
 
     record->signature = NULL;
+    // make sure this is treated as a new record to force checking the signature
+    set_record_sequence(record, 4);
     TEST_ASSERT_EQUAL_INT(-1, tables_merge_record(&ctx, record, &result));
     TEST_ASSERT_TRUE(result.rejected_sig);
 }
