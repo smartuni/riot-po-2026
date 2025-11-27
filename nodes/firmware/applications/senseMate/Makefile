@@ -73,6 +73,7 @@ CFLAGS += -DTHREAD_STACKSIZE_UI=2*4096
 CFLAGS += -DLV_MEM_SIZE=1024*16
 DIRS += sensemate_ui
 USEMODULE += sensemate_ui
+USEMODULE += ps
 
 # RAM-based storage backend
 USEMODULE += mtd_emulated
