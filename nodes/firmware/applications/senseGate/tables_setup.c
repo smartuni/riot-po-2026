@@ -41,8 +41,8 @@ static const char *ok(bool condition)
     return condition ? "[OK]" : "[ERROR]";
 }
 
-int tables_setup(tables_context_t **t, const char *db_path) {
-
+int tables_setup(tables_context_t **t, const char *db_path)
+{
     /* Create the DB directory */
     int err = vfs_mkdir(db_path, 0777);
     if (err != 0 && err != -EEXIST) {
