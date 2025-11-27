@@ -517,7 +517,6 @@ int record_tostr(const table_record_t *record, char *str, size_t str_len)
 {
     int pos = 0;
     table_record_type_t type;
-    table_gate_report_t *rdata;
     const node_id_t *writer_id;
     record_sequence_t seq;
 
@@ -533,10 +532,33 @@ int record_tostr(const table_record_t *record, char *str, size_t str_len)
 
     str[pos++] = ' ';
 
-    if (get_gate_report_data(record, &rdata) == 0) {
-        pos += snprintf(&str[pos], (str_len - pos), "%s %s",
-                        record_type_tostr(type),
-                        gate_state_tostr(rdata->state));
+    pos += snprintf(&str[pos], (str_len - pos), "%s ", record_type_tostr(type));
+
+    switch (type) {
+        case RECORD_GATE_REPORT:
+            {
+                table_gate_report_t *rdata;
+                if (get_gate_report_data(record, &rdata) == 0) {
+                    pos += snprintf(&str[pos], (str_len - pos), "%s ",
+                            gate_state_tostr(rdata->state));
+                }
+            }
+            break;
+        case RECORD_GATE_OBSERVATION:
+            {
+                table_gate_observation_t *odata;
+                if (get_gate_observation_data(record, &odata) == 0) {
+                    pos += snprintf(&str[pos], (str_len - pos), "%s ",
+                            gate_state_tostr(odata->state));
+                }
+            }
+            break;
+            //RECORD_GATE_ENCOUNTER
+            //RECORD_MATE_ENCOUNTER
+            //RECORD_GATE_COMMAND
+            //RECORD_GATE_JOB
+        default:
+            break;
     }
     /* return size without terminating zero */
     return pos;
