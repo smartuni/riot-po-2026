@@ -19,6 +19,7 @@
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[main]: " __VA_ARGS__)
 #define _LOGINF(...) LOG_INFO("[main]: " __VA_ARGS__)
+#include "ps.h"
 
 static const char *ok(bool condition)
 {
@@ -217,6 +218,7 @@ int main(void) {
 
     puts("entering main loop");
     uint32_t prev_cnt = 0;
+    uint32_t ps_cnt = 0;
     while (1)
     {
         ui_state->visible_gate_cnt = _get_known_gate_count();
@@ -236,6 +238,12 @@ int main(void) {
             }
         }
         ztimer_sleep(ZTIMER_MSEC, 1000);
+        //if (ps_cnt >= 10) {
+        //    printf("\n==============");
+        //    ps();
+        //    ps_cnt = 0;
+        //}
+        ps_cnt++;
     }
     
     printf("Display demo finished.\n");
