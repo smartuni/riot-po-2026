@@ -15,7 +15,7 @@
 #include "include/sensemate_ui.h"
 #include "mate_ble.h"
 #include "mtd.h"
-#define LOG_LEVEL   LOG_NONE
+#define LOG_LEVEL   LOG_INFO
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[main]: " __VA_ARGS__)
 #define _LOGINF(...) LOG_INFO("[main]: " __VA_ARGS__)
@@ -117,8 +117,11 @@ static bool _all_gates_iter(ui_data_element_t *prev)
 static bool _put_gate_observation_cb(ui_data_element_t *elem)
 {
     table_gate_observation_t *obs = &elem->data.gate_observation;
-    _LOGDBG("%s: %d %s\n", __func__, obs->gate_id[3], gate_state_tostr(obs->state));
     int res = tables_put_gate_observation(tables, &obs->gate_id, obs->state);
+    _LOGINF("%s: %d %s %s\n", __func__,
+                              obs->gate_id[3],
+                              gate_state_tostr(obs->state),
+                              ok(res == 0));
     if (res == 0) {
         /* changed */
         return true;
