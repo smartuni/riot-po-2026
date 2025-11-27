@@ -308,6 +308,7 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
     int res;
     table_key_t key;
     table_record_type_t type;
+    bool merge = false;
 
     LOG_DEBUG("tables_merge_record: merging\n");
 
@@ -320,58 +321,60 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
         return -1;
     }
 
-    // verify the signature on the record
-    res = verify_record(ctx, record);
-    if (res != 0) {
-        result->rejected_sig = true;
-        LOG_DEBUG("tables_merge_record: rejected signature\n");
-        return -1;
-    }
-
     get_record_key(record, &key);
     table_record_t record_in_store;
 
     // TODO: Should we only be able to retrieve complete records instead of header?
     res = get_record_header_from_store(ctx, &key, &record_in_store.header);
     if (res != 0) {
-        result->new = true;
-        LOG_DEBUG("tables_merge_record: new record, adding it\n");
-        return put_record_in_store(ctx, record, &key);
-    }
-
-    // the record exists, we need to device whether to replace it
-
-    record_sequence_t seq_in_store, seq_incoming;
-    get_record_sequence(record, &seq_incoming);
-    get_record_sequence(&record_in_store, &seq_in_store);
-
-    hlc_timestamp_t hlc_in_store, hlc_incoming;
-    get_record_timestamp(record, &hlc_incoming);
-    get_record_timestamp(&record_in_store, &hlc_in_store);
-
-    bool merge = false;
-    if (seq_incoming > seq_in_store) {
         merge = true;
+        result->new = true;
+        LOG_DEBUG("tables_merge_record: new record, should add it\n");
     }
-    else if (seq_incoming == seq_in_store) {
-        int hlcs = hlc_compare(&hlc_incoming, &hlc_in_store);
-        if (hlcs > 0) {
-            // incoming is newer
+
+    // the record exists, we need to decide whether to replace it
+    if (!result->new) {
+        record_sequence_t seq_in_store, seq_incoming;
+        get_record_sequence(record, &seq_incoming);
+        get_record_sequence(&record_in_store, &seq_in_store);
+
+        hlc_timestamp_t hlc_in_store, hlc_incoming;
+        get_record_timestamp(record, &hlc_incoming);
+        get_record_timestamp(&record_in_store, &hlc_in_store);
+
+        if (seq_incoming > seq_in_store) {
             merge = true;
         }
+        else if (seq_incoming == seq_in_store) {
+            int hlcs = hlc_compare(&hlc_incoming, &hlc_in_store);
+            if (hlcs > 0) {
+                // incoming is newer
+                merge = true;
+            }
+            else {
+                // same time or incoming is older
+                merge = false;
+            }
+        }
         else {
-            // same time or incoming is older
+            // incoming is older
             merge = false;
         }
     }
-    else {
-        // incoming is older
-        merge = false;
-    }
 
     if (merge) {
-        result->updated = true;
-        LOG_DEBUG("tables_merge_record: existing record, updating it\n");
+        // verify the signature on the record
+        res = verify_record(ctx, record);
+        if (res != 0) {
+            result->rejected_sig = true;
+            LOG_DEBUG("tables_merge_record: rejected signature\n");
+            return -1;
+        }
+
+        if (!result->new) {
+            result->updated = true;
+            LOG_DEBUG("tables_merge_record: existing record, updating it\n");
+        }
         res = put_record_in_store(ctx, record, &key);
 
         _check_and_call_memos(ctx, record);
