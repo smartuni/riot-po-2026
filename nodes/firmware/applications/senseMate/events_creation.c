@@ -28,8 +28,10 @@ void* thread_events_function(void *arg) {
 }
 
 void init_event(void){
-    thread_create(thread_stack, sizeof(thread_stack), THREAD_PRIORITY_MAIN - 1,
-                  THREAD_CREATE_STACKTEST, thread_events_function, NULL, "events_creation_thread");
+    thread_create(thread_stack, sizeof(thread_stack),
+                  THREAD_PRIORITY_MAIN - 1,
+                  THREAD_CREATE_STACKTEST, thread_events_function, NULL,
+                  "events_creation");
 }
 
 
