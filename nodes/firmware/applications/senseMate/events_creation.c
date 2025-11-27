@@ -6,7 +6,7 @@
 #include "include/soundModule.h"
 #include "include/vibrationModule.h"
 #include "include/sensemate_ui.h"
-#define LOG_LEVEL   LOG_DEBUG
+#define LOG_LEVEL   LOG_NONE
 #include "log.h"
 #define MIN_SIGNAL_STRENGTH -100 // Minimum signal strength for events
 #define DECREMENT_RSSI 10 // decrement rssi by 10
@@ -33,11 +33,11 @@ void init_event(void){
 }
 
 
-void event_callback (void *arg)
-{
-    (void) arg; /* the argument is not used */
-    ztimer_sleep(ZTIMER_MSEC, 500); // Wait for 0.1 second before accepting the next event
-}
+//void event_callback (void *arg)
+//{
+//    (void) arg; /* the argument is not used */
+//    ztimer_sleep(ZTIMER_MSEC, 500); // Wait for 0.1 second before accepting the next event
+//}
 
 void event_handlerNews(event_t *event)
 {
