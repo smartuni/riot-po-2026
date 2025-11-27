@@ -20,7 +20,7 @@
 #define MATE_BLE_H
 
 #include "event.h"
-#include "tables_old.h"
+#include "tables.h"
 
 #define BLE_SEND_INTERVAL (5000) // in milliseconds
 
@@ -66,26 +66,13 @@ typedef struct ble_tx_thread_args {
 void ble_run_propagation(void);
 
 /**
- * @brief           Blocking function to receive data over BLE
- * @param[in]       type    Type of data to receive
- * @param[inout]    cbor_packet  Pointer to output cbor packet
- * @param[inout]    metadata  Pointer to output metadata
- * @return          0 on success, negative error code on failure
- */
-int ble_receive(cbor_message_type_t type, cbor_buffer* cbor_packet, ble_metadata_ptr_t metadata);
-
-/**
- * @brief           Function to send data over BLE
- * @param[in]       data    Pointer to the data to send
- * @return          0 on success, negative error code on failure
- */
-int ble_send(cbor_buffer* cbor_packet);
-
-/**
  * @brief           Function to initialize the BLE module
+ *
+ * @param   tables  Reference to sucessfully initialized tables instance
+ *
  * @return          0 on success, negative error code on failure
  */
-int ble_init(void);
+int mate_ble_init(tables_context_t *tables);
 
 /**
  * @brief           Sender loop of the BLE module. Propagates the state tables
