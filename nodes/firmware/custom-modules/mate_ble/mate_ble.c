@@ -35,8 +35,8 @@
 #include "events_creation.h"
 #endif
 
-event_t *_mateble_send_event;
-event_queue_t *_mateble_send_queue;
+event_t *_mateble_send_event = NULL;
+event_queue_t *_mateble_send_queue = NULL;
 event_timeout_t *_mateble_periodic_send_event_timeout;
 
 static void mateble_send_event_handler(event_t *e);
@@ -366,6 +366,7 @@ static void wait_for_ble_init(void)
         }
     }
 }
+char _send_record_str_buf[TABLE_RECORD_STRING_SIZE];
 
 static int _send_record(const table_record_t *record)
 {
@@ -381,12 +382,10 @@ static int _send_record(const table_record_t *record)
 
     table_record_type_t type;
     get_record_type(record, &type);
-    _LOGINF("sending %s\n", record_type_tostr(type));
     if (type == RECORD_GATE_REPORT) {
-        table_gate_report_t *rdata;
-        if (get_gate_report_data(record, &rdata) == 0) {
-            _LOGINF("State: %s\n", gate_state_tostr(rdata->state));
-        }
+        record_tostr(record, _send_record_str_buf,
+                     sizeof(_send_record_str_buf));
+        _LOGINF("TX %s\n", _send_record_str_buf);
     }
 
     if (LOG_LEVEL == LOG_DEBUG) {
@@ -448,10 +447,8 @@ void* ble_send_loop(void* arg)
     // TODO: debug issue with heap allocated events getting corrupted
     event_t mateble_send_event = { .handler = mateble_send_event_handler,
                                .list_node.next = NULL };
-    _mateble_send_event = &mateble_send_event;
 
     event_queue_t mateble_send_queue;
-    _mateble_send_queue = &mateble_send_queue;
 
     event_timeout_t mateble_periodic_send_event_timeout;
     _mateble_periodic_send_event_timeout = &mateble_periodic_send_event_timeout;
@@ -463,12 +460,16 @@ void* ble_send_loop(void* arg)
                               &mateble_send_event);
 
     event_timeout_set(&mateble_periodic_send_event_timeout, BLE_SEND_INTERVAL);
-    event_post(&mateble_send_queue, &mateble_send_event);
+
+    _mateble_send_queue = &mateble_send_queue;
+    _mateble_send_event = &mateble_send_event;
 
     event_loop(&mateble_send_queue);
 
     return NULL;
 }
+
+char _recv_record_str_buf[TABLE_RECORD_STRING_SIZE];
 
 void* ble_receive_loop(void* args)
 {
@@ -516,15 +517,9 @@ void* ble_receive_loop(void* args)
 
         _LOGDBG("signature length: %d\n", signature_len);
 
-        table_record_type_t type;
-        get_record_type(&record, &type);
-        _LOGINF("received %s\n", record_type_tostr(type));
-        if (type == RECORD_GATE_REPORT) {
-            table_gate_report_t *rdata;
-            if (get_gate_report_data(&record, &rdata) == 0) {
-                _LOGINF("State: %s\n", gate_state_tostr(rdata->state));
-            }
-        }
+        record_tostr(&record, _recv_record_str_buf,
+                     sizeof(_recv_record_str_buf));
+        _LOGINF("RX %s\n", _recv_record_str_buf);
 
         _LOGDBG("trying to merge record...\n");
         table_merge_result_t result;
