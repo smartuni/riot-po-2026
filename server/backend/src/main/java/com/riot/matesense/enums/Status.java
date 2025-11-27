@@ -11,9 +11,9 @@ public enum Status {
         switch (statusCode) 
         {
             case 0:
-                return Status.CLOSED;
-            case 1:
                 return Status.OPENED;
+            case 1:
+                return Status.CLOSED;
             case 2:
                 return Status.UNKNOWN;
             default:
