@@ -43,7 +43,7 @@ USEMODULE += event_timeout
 USEMODULE += tables
 
 #old tables implementation TODO: drop it with the migration
-USEMODULE += tables_old
+#USEMODULE += tables_old
 
 USEMODULE += mate_lorawan
 USEMODULE += mate_ble
@@ -72,7 +72,8 @@ USEMODULE += lvgl_extra_layout_flex
 USEMODULE += lvgl_extra_theme_mono
 USEMODULE += u8g2_disp_dev
 CFLAGS += -DTHREAD_STACKSIZE_MAIN=2*4096
-CFLAGS += -DTHREAD_STACKSIZE_UI=2*4096
+#CFLAGS += -DTHREAD_STACKSIZE_UI=2*4096
+CFLAGS += -DTHREAD_STACKSIZE_UI=4*4096
 CFLAGS += -DLV_MEM_SIZE=1024*16
 DIRS += sensemate_ui
 USEMODULE += sensemate_ui
@@ -91,10 +92,10 @@ CFLAGS += -DRAM_MTD_SECTOR_COUNT=\(16\)
 CFLAGS += -DRAM_MTD_PAGE_PER_SECTOR=\(64\)
 CFLAGS += -DRAM_MTD_PAGE_SIZE=\(64\)
 
-# use one quarter of the storage for flashdb (PER STORAGE SERVICE)
-# TODO: mke configurable for each store sercvice separately (?)
+# use two sectors of the storage for flashdb (PER STORAGE SERVICE)
+# TODO: make configurable for each store sercvice separately
 CFLAGS += -DFLASHDB_STORE_SERVICE_SECTOR_SIZE=\(RAM_MTD_PAGE_PER_SECTOR*RAM_MTD_PAGE_SIZE\)
-CFLAGS += -DFLASHDB_STORE_SERVICE_DB_SIZE=\(\(FLASHDB_STORE_SERVICE_SECTOR_SIZE*RAM_MTD_SECTOR_COUNT\)/4\)
+CFLAGS += -DFLASHDB_STORE_SERVICE_DB_SIZE=\(\(FLASHDB_STORE_SERVICE_SECTOR_SIZE*2\)\)
 
 # tables stuff
 USEMODULE += tables
