@@ -32,8 +32,8 @@ extern int tables_setup(tables_context_t **t, const char *db_path);
 extern int storage_setup_ram_mtd(const char *mount_path);
 tables_context_t *tables;
 
-//#define TIME_PERIOD_TABLE_UPDATE 30 // const defines time to update table periodically
-#define TIME_PERIOD_TABLE_UPDATE 2 // const defines time to update table periodically
+#define TIME_PERIOD_TABLE_UPDATE 30 // const defines time to update table periodically
+//#define TIME_PERIOD_TABLE_UPDATE 2 // const defines time to update table periodically
 
 /* PIN label on feather sense: "A1" */
 #define REED_0_PIN_0 GPIO_PIN(0, 5)
@@ -44,8 +44,8 @@ tables_context_t *tables;
 #define INDUCTIVE_SENSOR_ADC_VREF_MV (3300)
 #define INDUCTIVE_SENSOR_VREF_MV     (11000)
 
-char ble_send_stack[4*THREAD_STACKSIZE_DEFAULT];
-char ble_reicv_stack[4*THREAD_STACKSIZE_DEFAULT];
+char ble_send_stack[8*THREAD_STACKSIZE_DEFAULT];
+char ble_reicv_stack[8*THREAD_STACKSIZE_DEFAULT];
 
 extern event_t *_mateble_send_event;
 extern event_queue_t *_mateble_send_queue;
@@ -100,6 +100,11 @@ void gate_observer_state_change_cb(gate_state_t new_state)
     _LOGDBG("%s new state = %s\n", __func__, gate_state_tostr(new_state));
     int res = tables_put_gate_report(tables, new_state);
     _LOGDBG("%s tables_put_gate_report %s\n", __func__, ok(res == 0));
+    // if ble-mate is ready to accept events
+    if (_mateble_send_queue && _mateble_send_event) {
+        // trigger ble TX
+        event_post(_mateble_send_queue, _mateble_send_event);
+    }
 }
 
 static void _table_update_cb(tables_context_t *ctx, const table_record_t *record,
@@ -127,9 +132,11 @@ static void _table_update_cb(tables_context_t *ctx, const table_record_t *record
             _LOGDBG("gate state: %s\n", gate_state_tostr(state));
         }
     }
-    //TODO: trigger ble send if there was an update
-    //event_post(_mateble_send_queue, _mateble_send_event);
+
+    // don't unconditionally trigger TX here.
+    // The change may aswell come from a recent RX.
 }
+
 
 int main(void){
     /* Sleep so that we do not miss this message while connecting */
