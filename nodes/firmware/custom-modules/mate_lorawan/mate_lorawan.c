@@ -48,10 +48,11 @@
 #if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
 #include "events_creation.h"
 #endif
-#define LOG_LEVEL   LOG_DEBUG
+#define LOG_LEVEL   LOG_INFO
 #include "log.h"
 
 #define _LOGDBG(...) LOG_DEBUG("[LoRaWAN]: " __VA_ARGS__)
+#define _LOGINF(...) LOG_INFO("[LoRaWAN]: " __VA_ARGS__)
 
 /* Interval between data transmissions, in seconds */
 #define SEND_INTERVAL_SEC 1
@@ -396,12 +397,14 @@ int mate_lorawan_start(tables_context_t *t)
     /* find the LoRaWAN network interface and connect */
     netif = _find_lorawan_network_interface();
     if (netif == NULL) {
-        _LOGDBG("No network interface found.\n");
+        _LOGINF("No network interface found.\n");
         return -1;
     }
     if(_join_lorawan_network(netif) == -1){
-        _LOGDBG("Joining LoRaWAN failed.\n");
+        _LOGINF("Join failed.\n");
         return -1;
+    } else {
+        _LOGINF("Joined.\n");
     }
 
     _LOGDBG("Starting receive thread.\n");
