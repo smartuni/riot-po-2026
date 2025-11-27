@@ -343,30 +343,32 @@ static void send_periodic_handler(event_t *event)
     TABLE_ITERATOR(iterator, _tables);
 
     table_record_t *record;
-    table_query_t query = {
-        .type = RECORD_GATE_REPORT,
-        .writer_id = &self_node_id
-    };
+    table_query_t query;
+    tables_init_query(&query, RECORD_GATE_REPORT, NULL, NULL);
 
-    /* TODO: check if the other pattern with multiple calls to the iterator is safe to do.
-     *     First getting the size, then the record seems problematic if the iterator may change
-     *     inbetween.
-     *     Maybe, a separate api to get the signature for a specific record would be better?
-     */
     int res = tables_iterator_init(_tables, &iterator, &query);
     _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
     if (res) {
         return;
     }
 
-    res = tables_iterator_next(_tables, &iterator, &record, NULL, NULL);
-    _LOGDBG("%s iter next (%d) %s\n", __func__, res, ok(res == 0));
+    while(tables_iterator_next(_tables, &iterator, &record, NULL, NULL) == 0) {
+        res = _send_record(record);
+        _LOGDBG("send_periodic_handler _send_record: %d\n", res);
+    }
+
+    tables_init_query(&query, RECORD_GATE_OBSERVATION, NULL, NULL);
+
+    res = tables_iterator_init(_tables, &iterator, &query);
+    _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
     if (res) {
         return;
     }
 
-    res = _send_record(record);
-    _LOGDBG("send_periodic_handler _send_record: %d\n", res);
+    while(tables_iterator_next(_tables, &iterator, &record, NULL, NULL) == 0) {
+        res = _send_record(record);
+        _LOGDBG("send_periodic_handler _send_record: %d\n", res);
+    }
 }
 
 static void _table_self_state_updated_cb(tables_context_t *ctx, const table_record_t *record,
@@ -430,7 +432,7 @@ int mate_lorawan_start(tables_context_t *t)
      * written by this node itself. No involed Id is needed. */
     const node_id_t *writer_id = &self_node_id;
     const node_id_t *involved_id = NULL;
-    tables_init_query(&_self_state_change_query, RECORD_GATE_REPORT, writer_id, involved_id);
+    tables_init_query(&_self_state_change_query, RECORD_UNDEFINED, writer_id, involved_id);
     tables_add_memo(_tables, &_self_state_change_memo, &_self_state_change_query,
                     _table_self_state_updated_cb, cb_arg);
 
