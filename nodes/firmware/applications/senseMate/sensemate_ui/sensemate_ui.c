@@ -13,6 +13,10 @@
 #include "periph/gpio.h"
 #include "include/sensemate_ui.h"
 #include "timex.h"
+#define LOG_LEVEL   LOG_NONE
+#include "log.h"
+#define _LOGDBG(...) LOG_DEBUG("[ui]: " __VA_ARGS__)
+#define _LOGINF(...) LOG_INFO("[ui]: " __VA_ARGS__)
 
 #ifndef CONFIG_LVGL_INACTIVITY_PERIOD_MS
 #define CONFIG_LVGL_INACTIVITY_PERIOD_MS    (5 * MS_PER_SEC)    /* 5s */
@@ -715,30 +719,25 @@ static bool _refresh_ui_elements_needed = false;
 static void _custom_lvgl_run(void)
 {
     _task_thread_pid = thread_getpid();
-    bool do_sleep = true;
     while (1) {
         /* Normal operation (no sleep) in < CONFIG_LVGL_INACTIVITY_PERIOD_MS msec
            inactivity */
         if (lv_disp_get_inactive_time(NULL) < CONFIG_LVGL_INACTIVITY_PERIOD_MS) {
+            if (_refresh_ui_elements_needed) {
+                /* consume refresh flag */
+                _refresh_ui_elements_needed = false;
+                /* update ui elements such as labels etc. */
+                sensemate_ui_update();
+            }
             lv_timer_handler();
         } else {
             /* Block after LVGL_ACTIVITY_PERIOD msec inactivity */
             thread_flags_wait_one(LVGL_THREAD_FLAG);
-            if (_refresh_ui_elements_needed) {
-                _refresh_ui_elements_needed = false;
-                sensemate_ui_update();
-                do_sleep= false;
-            }
-
             /* trigger an activity so the task handler is called on the next loop */
             lv_disp_trig_activity(NULL);
         }
 
-        if (do_sleep) {
-            ztimer_sleep(ZTIMER_MSEC, CONFIG_LVGL_TASK_HANDLER_DELAY_MS);
-        } else {
-            do_sleep = true;
-        }
+        ztimer_sleep(ZTIMER_MSEC, CONFIG_LVGL_TASK_HANDLER_DELAY_MS);
     }
 }
 
@@ -751,6 +750,7 @@ static void _custom_lvgl_wakeup(void)
 static void _ui_trigger_refresh(event_t *event)
 {
     (void)event;
+    _LOGDBG("trigger refresh...\n");
     _refresh_ui_elements_needed = true;
     _custom_lvgl_wakeup();
 }
@@ -852,7 +852,7 @@ int sensemate_ui_init(ui_data_cbs_t *data_cbs)
 
     /* create the reception thread] */
     kernel_pid_t ui_pid = thread_create(_ui_thread_stack, sizeof(_ui_thread_stack),
-                                        THREAD_PRIORITY_MAIN - 1,
+                                        THREAD_PRIORITY_MAIN - 2,
                                         THREAD_CREATE_STACKTEST, _ui_thread, NULL,
                                         "ui");
     if (-EINVAL == ui_pid) {
@@ -907,6 +907,7 @@ static void _update_connection_state_obj(ui_conn_state_obj_ctx_t *ctx)
 }
 void sensemate_ui_update(void)
 {
+    _LOGDBG("%s\n", __func__);
     _update_badge_counter_label(badge_lbl_gates, _ui_state.visible_gate_cnt);
     _update_badge_counter_label(badge_lbl_tasks, _ui_state.pending_jobs_cnt);
     _update_badge_counter_label(badge_lbl_persons, _ui_state.visible_mate_cnt);
