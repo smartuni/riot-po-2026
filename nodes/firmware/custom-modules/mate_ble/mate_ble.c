@@ -380,13 +380,9 @@ static int _send_record(const table_record_t *record)
         return -1;
     }
 
-    table_record_type_t type;
-    get_record_type(record, &type);
-    if (type == RECORD_GATE_REPORT) {
-        record_tostr(record, _send_record_str_buf,
-                     sizeof(_send_record_str_buf));
-        _LOGINF("TX %s\n", _send_record_str_buf);
-    }
+    record_tostr(record, _send_record_str_buf,
+            sizeof(_send_record_str_buf));
+    _LOGINF("TX %s\n", _send_record_str_buf);
 
     if (LOG_LEVEL == LOG_DEBUG) {
         _LOGDBG("_send_record: \n");
