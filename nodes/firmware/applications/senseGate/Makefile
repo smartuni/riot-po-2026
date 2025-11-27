@@ -30,7 +30,6 @@ USEMODULE += event
 USEMODULE += event_thread_highest
 USEMODULE += event_thread
 USEMODULE += event_timeout
-USEMODULE += tables_old
 USEMODULE += mate_lorawan
 USEMODULE += mate_ble
 USEMODULE += inductive_sensor
