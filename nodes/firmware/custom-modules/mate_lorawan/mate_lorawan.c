@@ -158,13 +158,13 @@ static int _join_lorawan_network(const netif_t *netif)
     uint8_t data_rate = 5;
     int joinAttempts = 0;
 
-    while (joinAttempts < 5) {
+    while (joinAttempts < 1) {
         status = NETOPT_ENABLE;
         _LOGDBG("Joining LoRaWAN network...\n");
         ztimer_now_t timeout = ztimer_now(ZTIMER_SEC);
         netif_set_opt(netif, NETOPT_LINK, 0, &status, sizeof(status));
 
-        while (ztimer_now(ZTIMER_SEC) - timeout < 1000) {
+        while (ztimer_now(ZTIMER_SEC) - timeout < 20) {
             /* Wait for a while to allow the join process to complete */
             ztimer_sleep(ZTIMER_SEC, 2);
 
