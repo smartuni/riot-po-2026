@@ -33,8 +33,8 @@ extern int storage_setup_ram_mtd(const char *mount_path);
 extern mtd_dev_t *storage_setup_get_ram_mtd(void);
 tables_context_t *tables;
 
-char ble_send_stack[2*THREAD_STACKSIZE_DEFAULT];
-char ble_reicv_stack[4*THREAD_STACKSIZE_MAIN];
+char ble_send_stack[8*THREAD_STACKSIZE_DEFAULT];
+char ble_reicv_stack[8*THREAD_STACKSIZE_DEFAULT];
 
 int lorawan_started = -1;
 
