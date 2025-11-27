@@ -75,6 +75,13 @@ DEVELHELP ?= 1
 # some computers.
 PREFLASH_DELAY=8
 
+# for debugging
+USEMODULE += vfs_default
+USEMODULE += vfs_auto_format
+USEMODULE += ps
+USEMODULE += shell_cmd_genfile
+USEMODULE += shell_cmds_default
+
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 CFLAGS += -DDEBUG_ASSERT_VERBOSE
