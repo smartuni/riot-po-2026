@@ -65,7 +65,8 @@
 #define MAX_SERIALIZED_RECORD_SIZE 128
 
 /* Duration to trigger send_event */
-#define TIMEOUT_DURATION 60000000
+//#define TIMEOUT_DURATION 60000000
+#define TIMEOUT_DURATION 20000000
 /* Stack for reception thread */
 static char _rx_thread_stack[THREAD_STACKSIZE_MAIN];
 /* Message queue for reception thread] */
@@ -198,7 +199,7 @@ static int _send_lorawan_packet(const netif_t *netif, const uint8_t *buf, size_t
     msg_t msg;
 
     _LOGDBG("Package size: %d\n", len);
-    print_hex_arr(buf, len);
+    //print_hex_arr(buf, len);
     packet = gnrc_pktbuf_add(NULL, buf, len, GNRC_NETTYPE_UNDEF);
     if (packet == NULL) {
         _LOGDBG("Failed to create packet.");
