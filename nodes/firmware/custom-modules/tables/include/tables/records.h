@@ -536,4 +536,18 @@ void get_gate_job_assigned_device(const table_gate_job_t *data, const node_id_t 
  * @param device_id Pointer to the device ID to set
  */
 void set_gate_job_assigned_device(table_gate_job_t *data, const node_id_t *device_id);
+
+/**
+ * @brief Get a string representation from a record type value.
+ * @param rt      The record type
+ * @return        The string representation of the record type
+ */
+const char* record_type_tostr(table_record_type_t rt);
+
+/**
+ * @brief Get a string representation from a record type value.
+ * @param rt      The record type
+ * @return        The string representation of the record type
+ */
+const char* gate_state_tostr(gate_state_t s);
 /** @} */

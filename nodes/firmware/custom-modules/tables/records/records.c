@@ -466,3 +466,28 @@ bool record_matches_query(const table_record_t *record, const table_query_t *que
 
     return true;
 }
+
+const char* record_type_tostr(table_record_type_t rt)
+{
+    switch (rt) {
+        case RECORD_UNDEFINED        : return "RECORD_UNDEFINED";
+        case RECORD_GATE_REPORT      : return "RECORD_GATE_REPORT";
+        case RECORD_GATE_OBSERVATION : return "RECORD_GATE_OBSERVATION";
+        case RECORD_GATE_ENCOUNTER   : return "RECORD_GATE_ENCOUNTER";
+        case RECORD_MATE_ENCOUNTER   : return "RECORD_MATE_ENCOUNTER";
+        case RECORD_GATE_COMMAND     : return "RECORD_GATE_COMMAND";
+        case RECORD_GATE_JOB         : return "RECORD_GATE_JOB";
+        default: return "INVALID_RECORD_TYPE";
+    }
+}
+
+const char* gate_state_tostr(gate_state_t s)
+{
+    switch (s) {
+        case GATE_STATE_OPEN      : return "GATE_STATE_OPEN";
+        case GATE_STATE_CLOSED    : return "GATE_STATE_CLOSED";
+        case GATE_STATE_UNKNOWN   : return "GATE_STATE_UNKNOWN";
+        case GATE_STATE_DONT_CARE : return "GATE_STATE_DONT_CARE";
+        default: return "INVALID_GATE_SATE";
+    }
+}
