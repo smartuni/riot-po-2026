@@ -517,6 +517,13 @@ void* ble_receive_loop(void* args)
                      sizeof(_recv_record_str_buf));
         _LOGINF("RX %s\n", _recv_record_str_buf);
 
+        const node_id_t *writer_id;
+        get_record_writer_id(&record, &writer_id);
+        if (memcmp(writer_id, &self_node_id, sizeof(node_id_t)) == 0) {
+            _LOGDBG("ignoring received data about this device\n");
+            continue;
+        }
+
         _LOGDBG("trying to merge record...\n");
         table_merge_result_t result;
         res = tables_merge_record(_tables, &record, &result);
