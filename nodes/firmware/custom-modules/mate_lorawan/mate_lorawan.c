@@ -350,7 +350,9 @@ static void send_periodic_handler(event_t *event)
 
     table_record_t *record;
     table_query_t query;
-    tables_init_query(&query, RECORD_GATE_REPORT, NULL, NULL);
+    const node_id_t *writer_id = &self_node_id;
+
+    tables_init_query(&query, RECORD_GATE_REPORT, writer_id, NULL);
 
     int res = tables_iterator_init(_tables, &iterator, &query);
     _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
@@ -363,7 +365,7 @@ static void send_periodic_handler(event_t *event)
         _LOGDBG("send_periodic_handler _send_record: %d\n", res);
     }
 
-    tables_init_query(&query, RECORD_GATE_OBSERVATION, NULL, NULL);
+    tables_init_query(&query, RECORD_GATE_OBSERVATION, writer_id, NULL);
 
     res = tables_iterator_init(_tables, &iterator, &query);
     _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
