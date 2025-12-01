@@ -319,6 +319,8 @@ static void send_current_state_handler(event_t *event)
     (void) event;
 }
 
+static char _send_record_str_buf[TABLE_RECORD_STRING_SIZE];
+
 static int _send_record(const table_record_t *record)
 {
     size_t out_len = MAX_SERIALIZED_RECORD_SIZE;
@@ -329,6 +331,10 @@ static int _send_record(const table_record_t *record)
     if (res) {
         return -1;
     }
+
+    record_tostr(record, _send_record_str_buf,
+            sizeof(_send_record_str_buf));
+    _LOGINF("TX %s\n", _send_record_str_buf);
 
     return _send_lorawan_packet(netif, out_buf, out_len);
 }
