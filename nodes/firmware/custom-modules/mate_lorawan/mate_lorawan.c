@@ -72,7 +72,7 @@
  * should currently always trigger an update before the timeout */
 #define MATE_LORAWAN_PERIODIC_SEND_INTERVAL_MS (60000)
 /* Stack for reception thread */
-static char _rx_thread_stack[THREAD_STACKSIZE_MAIN];
+static char _mate_lorawan_stack[THREAD_STACKSIZE_MAIN];
 /* Message queue for reception thread] */
 static msg_t _rx_msg_queue[QUEUE_SIZE];
 static table_memo_t _self_state_change_memo;
@@ -243,7 +243,7 @@ static int _send_lorawan_packet(const netif_t *netif, const uint8_t *buf, size_t
     return 0;
 }
 
-void *rx_thread(void *arg)
+static void *mate_lorawan_thread(void *arg)
 {
     (void)arg;
     msg_t msg;
@@ -436,10 +436,10 @@ int mate_lorawan_start(tables_context_t *t)
 
     _LOGDBG("Starting receive thread.\n");
     /* create the reception thread] */
-    kernel_pid_t rx_pid = thread_create(_rx_thread_stack, sizeof(_rx_thread_stack),
+    kernel_pid_t rx_pid = thread_create(_mate_lorawan_stack, sizeof(_mate_lorawan_stack),
                                         THREAD_PRIORITY_MAIN + 1,
-                                        THREAD_CREATE_STACKTEST, rx_thread, NULL,
-                                        "lorawan_rx");
+                                        THREAD_CREATE_STACKTEST, mate_lorawan_thread, NULL,
+                                        "mate_lorawan");
     if (-EINVAL == rx_pid) {
         _LOGDBG("Failed to create reception thread.\n");
         return -1;
