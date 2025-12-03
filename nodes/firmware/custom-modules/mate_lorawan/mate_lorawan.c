@@ -297,6 +297,8 @@ static void *mate_lorawan_thread(void *arg)
     return NULL;
 }
 
+static char _rx_record_str_buf[TABLE_RECORD_STRING_SIZE];
+
 static void _handle_received_packet(gnrc_pktsnip_t *pkt)
 {
     _LOGDBG("Received package from TTN.\n");
@@ -311,16 +313,17 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
 
             table_record_t record;
             table_record_data_buffer_t record_data;
-            uint8_t signature[MAX_SIGNATURE_SIZE];
-            size_t signature_len = sizeof(signature);
-
+            size_t signature_len = 0;
             int res = cbor_deserialize(pkt->data, pkt->size, &record,
-                                        &record_data, signature, &signature_len);
+                                        &record_data, NULL, &signature_len);
 
             if (res) {
-                _LOGDBG("cbor_deserialize failed: %d\n", res);
+                _LOGINF("cbor_deserialize failed: %d\n", res);
                 break;
             }
+
+            record_tostr(&record, _rx_record_str_buf, sizeof(_rx_record_str_buf));
+            _LOGINF("RX: %s\n", _rx_record_str_buf);
 
             table_merge_result_t result;
             res = tables_merge_record(_tables, &record, &result);
