@@ -44,7 +44,7 @@ public class GateActivityService {
         List<GateActivityEntity> gates = gateActivityRepository.findAll();
         List<GateActivity> customGateActivities = new ArrayList<>();
         gates.forEach(e -> {
-            GateActivity gateActivity = new GateActivity(e.getLocalTimeStamp(), e.getGateTimeStamp(), e.getGateId(), e.getRequestedStatus(), e.getMessage(), e.getId(), e.getWorkerId());
+            GateActivity gateActivity = new GateActivity(e.getLocalTimeStamp(), e.getGateTimeStamp(), e.getGateId(), e.getRequestedStatus(), e.getMessage(), e.getId(), e.getWorkerId(), e.getActivityType());
             customGateActivities.add(gateActivity);
         });
         return customGateActivities;
@@ -121,7 +121,9 @@ public class GateActivityService {
         List<GateActivityEntity> gateActivities = gateActivityRepository.findAll().stream().filter(e -> e.getGateId().equals(gateId)).toList();
         List<GateActivity> customGateActivities = new ArrayList<>();
         for (GateActivityEntity gateActivityEntity : gateActivities) {
-            GateActivity gateActivity = new GateActivity(gateActivityEntity.getLocalTimeStamp(), gateActivityEntity.getGateTimeStamp(), gateActivityEntity.getGateId(), gateActivityEntity.getRequestedStatus(), gateActivityEntity.getMessage(), gateActivityEntity.getId(), gateActivityEntity.getWorkerId());
+            GateActivity gateActivity = new GateActivity(gateActivityEntity.getLocalTimeStamp(), gateActivityEntity.getGateTimeStamp(),
+                                                         gateActivityEntity.getGateId(), gateActivityEntity.getRequestedStatus(), gateActivityEntity.getMessage(),
+                                                         gateActivityEntity.getId(), gateActivityEntity.getWorkerId(), gateActivityEntity.getActivityType());
             customGateActivities.add(gateActivity);
         }
         return customGateActivities;
@@ -158,7 +160,8 @@ public class GateActivityService {
                         gae.getRequestedStatus(),
                         gae.getMessage(),
                         gae.getId(),
-                        gae.getWorkerId()));
+                        gae.getWorkerId(),
+                        gae.getActivityType()));
             }
 
         }
