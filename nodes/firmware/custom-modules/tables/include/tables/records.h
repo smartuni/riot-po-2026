@@ -19,7 +19,7 @@
 
 /* buffer size for a table_record_t string representation in the format
  * "0x12345678 0x1234567812345678 RECORD_GATE_OBSERVATION GATE_STATE_DONT_CARE\0" */
-#define TABLE_RECORD_STRING_SIZE (100) // pessimistic value
+#define TABLE_RECORD_STRING_SIZE (128) // pessimistic value
 
 /**
  * @{

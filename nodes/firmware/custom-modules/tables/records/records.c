@@ -524,12 +524,15 @@ int record_tostr(const table_record_t *record, char *str, size_t str_len)
     get_record_writer_id(record, &writer_id);
     get_record_sequence(record, &seq);
 
-    pos += node_id_tostr(*writer_id, &str[pos], str_len - pos);
+    hlc_timestamp_t hlc;
+    get_record_timestamp(record, &hlc);
+    pos += hlc_tostr(&hlc, &str[pos], str_len - pos);
+    str[pos++] = ' ';
 
+    pos += node_id_tostr(*writer_id, &str[pos], str_len - pos);
     str[pos++] = ' ';
 
     pos += record_sequence_tostr(&seq, &str[pos], str_len - pos);
-
     str[pos++] = ' ';
 
     pos += snprintf(&str[pos], (str_len - pos), "%s ", record_type_tostr(type));
