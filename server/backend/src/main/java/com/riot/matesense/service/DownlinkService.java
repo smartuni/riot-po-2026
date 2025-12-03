@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+import static com.riot.matesense.enums.RecordType.GATE_COMMAND;
+
 @Service
 public class DownlinkService {
 

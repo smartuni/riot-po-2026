@@ -1,5 +1,6 @@
 package com.riot.matesense.model;
 
+import com.riot.matesense.enums.ActivityType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,8 +21,10 @@ public class GateActivity {
 	private Long workerId;
     @Getter
     private String message;
+    private ActivityType activityType;
 
-	public GateActivity(Timestamp localTimeStamp, Timestamp gateTimeStamp, Long gateId, String requestedStatus, String message, Long id, Long workerId) {
+	public GateActivity(Timestamp localTimeStamp, Timestamp gateTimeStamp, Long gateId, String requestedStatus,
+                        String message, Long id, Long workerId, ActivityType activityType) {
         this.id = id;
         this.lastTimeStamp = localTimeStamp;
         this.localTimeStamp = localTimeStamp;
@@ -30,5 +33,6 @@ public class GateActivity {
 		this.requestedStatus = requestedStatus;
         this.message = message;
 		this.workerId = workerId;
+		this.activityType = activityType;
 	}
 }
