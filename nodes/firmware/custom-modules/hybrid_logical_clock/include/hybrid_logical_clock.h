@@ -10,6 +10,10 @@
 
 #include "mutex.h"
 
+/* buffer size for a hlc_timestamp_t string representation in the format
+ * "[1234567890.1234567890]\0" */
+#define HLC_STRING_SIZE (24)
+
 /**
  * @brief Hybrid Logical Clock physical timestamp type
  */
@@ -53,6 +57,7 @@ typedef struct {
 
     /** Optional pointer passed to get_physical_time */
     void *get_physical_time_arg;
+    hlc_physical_t physical_offset; /**< Physical offset */
 } hlc_ctx_t;
 
 /**
@@ -107,3 +112,13 @@ int hlc_compare(const hlc_timestamp_t *ts1, const hlc_timestamp_t *ts2);
  * @retval HLC_ERROR_GET_TIME if an error occurred when getting the current time
  */
 int hlc_update_with_remote_timestamp(hlc_ctx_t *ctx, const hlc_timestamp_t *ts, hlc_timestamp_t *out);
+
+/**
+ * @brief Get a string representation of an hlc_timestamp_t value.
+ * @param hlc      The hlc value
+ * @param str      Buffer to store the string representation
+ *                 (must be >= HLC_STRING_SIZE bytes)
+ * @param str_len  Length of @p str buffer
+ * @return         Number of bytes written to @p str (excluding terminating zero)
+ */
+int hlc_tostr(const hlc_timestamp_t *hlc, char *str, size_t str_len);
