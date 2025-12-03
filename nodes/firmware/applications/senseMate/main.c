@@ -72,6 +72,11 @@ uint32_t _get_known_gate_count(void)
 
 static bool _all_gates_iter(ui_data_element_t *prev)
 {
+    /* abort if the iterator was not setup yet */
+    if (_all_gates_iterator == NULL) {
+        return false;
+    }
+
     if (prev->iter_ctx.ptr == NULL) {
         int res = tables_iterator_init(tables, _all_gates_iterator, &all_gates_query);
         _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
@@ -117,6 +122,11 @@ static bool _all_gates_iter(ui_data_element_t *prev)
 
 static bool _put_gate_observation_cb(ui_data_element_t *elem)
 {
+    /* abort if the iterator was not setup yet */
+    if (_all_gates_iterator == NULL) {
+        return false;
+    }
+
     table_gate_observation_t *obs = &elem->data.gate_observation;
     int res = tables_put_gate_observation(tables, &obs->gate_id, obs->state);
     _LOGINF("%s: %d %s %s\n", __func__,
@@ -151,6 +161,12 @@ void* shell_thread(void* arg)
 }
 
 int main(void) {
+    printf("init menu...\n");
+    sensemate_ui_init(&_ui_data_cbs);
+    ui_data_t *ui_state = sensemate_ui_get_state();
+    ui_state->ble_state = ESTABLISHING_CONNECTION;
+    sensemate_ui_update();
+
     //ztimer_sleep(ZTIMER_MSEC, 3000);
     int res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
     _LOGDBG("storage_setup_ram_mtd: %s\n", ok(res == 0));
@@ -163,10 +179,6 @@ int main(void) {
 
     TABLE_ITERATOR(all_gates_iterator, tables);
     _all_gates_iterator = &all_gates_iterator;
-
-    printf("init menu...\n");
-    sensemate_ui_init(&_ui_data_cbs);
-    ui_data_t *ui_state = sensemate_ui_get_state();
 
     init_interrupt();
     init_sound_module();
