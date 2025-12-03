@@ -15,6 +15,7 @@
 #include "include/sensemate_ui.h"
 #include "mate_ble.h"
 #include "mtd.h"
+#include "shell.h"
 #define LOG_LEVEL   LOG_INFO
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[main]: " __VA_ARGS__)
@@ -138,6 +139,17 @@ static ui_data_cbs_t _ui_data_cbs = {
     .jobs_iter = NULL,
 };
 
+char shell_stack[2*THREAD_STACKSIZE_DEFAULT];
+
+void* shell_thread(void* arg)
+{
+    (void)arg;
+    char line_buf[SHELL_DEFAULT_BUFSIZE];
+    shell_run(NULL, line_buf, SHELL_DEFAULT_BUFSIZE);
+
+    return 0;
+}
+
 int main(void) {
     //ztimer_sleep(ZTIMER_MSEC, 3000);
     int res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
@@ -165,11 +177,21 @@ int main(void) {
                                               RIOT_CONFIG_DEVICE_ID);
     init_event();
 
+    thread_create(
+        shell_stack,
+        sizeof(shell_stack),
+        THREAD_PRIORITY_MAIN - 2,
+        THREAD_CREATE_STACKTEST,
+        shell_thread,
+        NULL,
+       "shell"
+    );
+
     //for (unsigned i = 0; i < 2; i++) {
     //    printf("put report %d\n", i);
     //    res = tables_put_gate_report(tables, GATE_STATE_OPEN);
     //}
-    
+
     puts("starting ble");
     if (BLE_SUCCESS == mate_ble_init(tables)){
         puts("Ble init complete");
@@ -248,7 +270,7 @@ int main(void) {
         //}
         ps_cnt++;
     }
-    
+
     printf("Display demo finished.\n");
 
     return 0;
