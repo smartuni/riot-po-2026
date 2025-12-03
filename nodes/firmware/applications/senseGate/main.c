@@ -45,8 +45,6 @@ tables_context_t *tables;
 #define INDUCTIVE_SENSOR_ADC_VREF_MV (3300)
 #define INDUCTIVE_SENSOR_VREF_MV     (11000)
 
-char ble_send_stack[8*THREAD_STACKSIZE_DEFAULT];
-char ble_reicv_stack[8*THREAD_STACKSIZE_DEFAULT];
 static kernel_pid_t ble_tx_pid = KERNEL_PID_UNDEF;
 
 #include "shell.h"
@@ -204,31 +202,11 @@ int main(void){
 
     //start thread init bluetooth
     _LOGDBG("starting [mate_ble]\n");
-    if (BLE_SUCCESS == mate_ble_init(tables)){
+    if (BLE_SUCCESS == mate_ble_init(tables, &ble_tx_pid)){
         _LOGDBG("[mate_ble] init complete\n");
     } else {
         _LOGDBG("[mate_ble] not started\n");
     }
-
-    ble_tx_pid = thread_create(
-        ble_send_stack,
-        sizeof(ble_send_stack),
-        THREAD_PRIORITY_MAIN - 2,
-        THREAD_CREATE_STACKTEST,
-        ble_send_loop,
-        NULL,
-       "bleSend"
-    );
-
-    thread_create(
-        ble_reicv_stack,
-        sizeof(ble_reicv_stack),
-        THREAD_PRIORITY_MAIN + 3,
-        THREAD_CREATE_STACKTEST,
-        ble_receive_loop,
-        NULL,
-       "bleRecv"
-    );
 
     int timeToUpdateTable = 0; // var to update table periodically
     int put_cnt = 0;
