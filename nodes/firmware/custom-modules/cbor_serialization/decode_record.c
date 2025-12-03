@@ -470,10 +470,20 @@ int cbor_decode_record(CborValue *array_item, table_record_t *record,
         return -1;
     }
 
-    result = _cbor_decode_record_signature(array_item, record, signature, signature_len);
-    if (result != 0) {
-        DEBUG("cbor_decode_record: error decoding record signature\n");
-        return -1;
+    /* if the serialized data does not contain a signature, don't try to decode it */
+    if (cbor_value_at_end(array_item)) {
+        *signature_len = 0;
+        /* in case a signature was expected by the caller but there is none,
+         * treat this as an error */
+        if (signature) {
+            return -1;
+        }
+    } else {
+        result = _cbor_decode_record_signature(array_item, record, signature, signature_len);
+        if (result != 0) {
+            DEBUG("cbor_decode_record: error decoding record signature\n");
+            return -1;
+        }
     }
 
     return 0;
