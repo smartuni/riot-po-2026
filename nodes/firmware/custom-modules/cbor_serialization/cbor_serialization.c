@@ -10,6 +10,8 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
+extern CborError cbor_deserialize_simple_or_u8(CborValue *value, uint8_t *val);
+
 int _cbor_array_size_record(const table_record_t *record, size_t *size, bool include_sig)
 {
     table_record_type_t type;
@@ -344,14 +346,9 @@ int _cbor_decode_version(CborValue *value, uint8_t *version)
     assert(value != NULL);
     assert(version != NULL);
 
-    if (!cbor_value_is_simple_type(value)) {
-        DEBUG("_cbor_decode_version: expected simple value for version\n");
-        return -1;
-    }
-
-    CborError error = cbor_value_get_simple_type(value, version);
+    CborError error = cbor_deserialize_simple_or_u8(value, version);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_version: error getting encoding version (%d)\n", error);
+        DEBUG("%s expected simple or unsigned value for version (%d)\n", __func__, error);
         return -1;
     }
 
@@ -370,14 +367,9 @@ int _cbor_decode_message_type(CborValue *value, uint8_t *message_type)
     assert(value != NULL);
     assert(message_type != NULL);
 
-    if (!cbor_value_is_simple_type(value)) {
-        DEBUG("_cbor_decode_message_type: expected simple value for message type\n");
-        return -1;
-    }
-
-    CborError error = cbor_value_get_simple_type(value, message_type);
+    CborError error = cbor_deserialize_simple_or_u8(value, message_type);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_message_type: error getting message type (%d)\n", error);
+        DEBUG("%s expected simple or unsigned value for message type (%d)\n", __func__, error);
         return -1;
     }
 
