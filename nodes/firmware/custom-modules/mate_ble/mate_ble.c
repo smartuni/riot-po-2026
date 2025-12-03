@@ -47,7 +47,12 @@ typedef struct {
     nimble_scanner_info_t info;
 } payload_descriptor_t;
 
+char ble_tx_thread_stack[8*THREAD_STACKSIZE_DEFAULT];
+char ble_rx_thread_stack[8*THREAD_STACKSIZE_DEFAULT];
+
 static kernel_pid_t _ble_receive_pid = KERNEL_PID_UNDEF;
+void* ble_tx_thread(void* arg);
+void* ble_rx_thread(void* args);
 
 /* max record / serialization sizes
  * TODO: obtain from records/tables interface ? */
@@ -79,7 +84,6 @@ static kernel_pid_t _ble_receive_pid = KERNEL_PID_UNDEF;
 #define TX_MSG_QUEUE_SIZE (8)
 
 static uint8_t id_addr_type;
-static uint8_t ble_initialized = 0;
 
 /* Singleton reference to the tables instance. Is provided on init. */
 static tables_context_t *_tables = NULL;
@@ -301,7 +305,7 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
     }
 }
 
-int mate_ble_init(tables_context_t *tables)
+int mate_ble_init(tables_context_t *tables, kernel_pid_t *txpid)
 {
     _LOGDBG("Initializing BLE extended advertisement...\n");
     _tables = tables;
@@ -325,7 +329,37 @@ int mate_ble_init(tables_context_t *tables)
     nimble_scanner_init(&params, nimble_scan_evt_cb);
     // start the scanner
     nimble_scanner_start();
-    ble_initialized = 1;
+
+    *txpid = thread_create(
+        ble_tx_thread_stack,
+        sizeof(ble_tx_thread_stack),
+        THREAD_PRIORITY_MAIN - 2,
+        THREAD_CREATE_STACKTEST,
+        ble_tx_thread,
+        NULL,
+       "mate_ble_tx"
+    );
+
+    if (*txpid <= 0) {
+        _LOGINF("%s tx thread init failed %d\n", __func__, *txpid);
+        return BLE_ERROR;
+    }
+
+    kernel_pid_t rxpid = thread_create(
+        ble_rx_thread_stack,
+        sizeof(ble_rx_thread_stack),
+        THREAD_PRIORITY_MAIN + 2,
+        THREAD_CREATE_STACKTEST,
+        ble_rx_thread,
+        NULL,
+       "mate_ble_rx"
+    );
+
+    if (rxpid <= 0) {
+        _LOGINF("%s rx thread init failed %d\n", __func__, rxpid);
+        return BLE_ERROR;
+    }
+
     return BLE_SUCCESS;
 }
 
@@ -363,15 +397,6 @@ static int _ble_send(uint8_t *buf, size_t len)
     return BLE_SUCCESS;
 }
 
-static void wait_for_ble_init(void)
-{
-    if (!ble_initialized) {
-        LOG_DEBUG("ble_send_loop: BLE not initialized\n");
-        while (!ble_initialized) {
-            ztimer_sleep(ZTIMER_MSEC, 100);
-        }
-    }
-}
 char _send_record_str_buf[TABLE_RECORD_STRING_SIZE];
 
 static int _send_record(const table_record_t *record)
@@ -420,7 +445,7 @@ static void mateble_send_query_matches(table_query_t *q)
     }
 }
 
-void* ble_send_loop(void* arg)
+void* ble_tx_thread(void* arg)
 {
     //TODO: properly integrate the thread args to pass event queues,
     //      events etc. for signalling stuff to other components.
@@ -434,7 +459,6 @@ void* ble_send_loop(void* arg)
 
     _LOGDBG("%s\n", __func__);
 
-    wait_for_ble_init();
     table_query_t send_all_query ;
     tables_init_query(&send_all_query, RECORD_UNDEFINED, NULL, NULL);
 
@@ -493,7 +517,7 @@ void _print_table(void)
     printf("================\n");
 }
 
-void* ble_receive_loop(void* args)
+void* ble_rx_thread(void* args)
 {
     _ble_receive_pid = thread_getpid();
 
@@ -505,8 +529,6 @@ void* ble_receive_loop(void* args)
 
     /* initialize the message queue] */
     msg_init_queue(rx_msg_queue, RX_MSG_QUEUE_SIZE);
-
-    wait_for_ble_init();
 
     while (1) {
         msg_t msg;

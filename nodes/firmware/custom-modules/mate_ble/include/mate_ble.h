@@ -63,29 +63,13 @@ typedef struct ble_tx_thread_args {
 } ble_tx_thread_args_t;
 
 /**
- * @brief           Loop that manages the propagation of state tables via ble
- */
-void ble_run_propagation(void);
-
-/**
  * @brief           Function to initialize the BLE module
  *
  * @param   tables  Reference to sucessfully initialized tables instance
+ * @param   txpid   Used to return the tx thread pid
  *
  * @return          0 on success, negative error code on failure
  */
-int mate_ble_init(tables_context_t *tables);
-
-/**
- * @brief           Sender loop of the BLE module. Propagates the state tables
- *                  via BLE advertisements.
- */
-void* ble_send_loop(void*);
-
-/**
- * @brief           Receiver loop of the BLE module. Receives the propagated state tables
- * @param[in]       args    Pointer to ble_receive_thread_args_t structure containing the event queue and event
- */
-void* ble_receive_loop(void* args);
+int mate_ble_init(tables_context_t *tables, kernel_pid_t *txpid);
 
 #endif /* MATE_BLE_H */

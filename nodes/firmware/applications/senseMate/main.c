@@ -35,9 +35,6 @@ extern int storage_setup_ram_mtd(const char *mount_path);
 extern mtd_dev_t *storage_setup_get_ram_mtd(void);
 tables_context_t *tables;
 
-char ble_send_stack[8*THREAD_STACKSIZE_DEFAULT];
-char ble_reicv_stack[8*THREAD_STACKSIZE_DEFAULT];
-
 int lorawan_started = -1;
 
 table_iterator_t *_all_gates_iterator;
@@ -205,42 +202,12 @@ int main(void) {
     //}
 
     puts("starting ble");
-    if (BLE_SUCCESS == mate_ble_init(tables)){
+    kernel_pid_t ble_tx_pid = KERNEL_PID_UNDEF;
+    if (BLE_SUCCESS == mate_ble_init(tables, &ble_tx_pid)){
         puts("Ble init complete");
     } else {
         puts("BLE not started");
     }
-
-    ble_tx_thread_args_t ble_tx_args = {
-        .event_queue = &events_creation_queue,
-        .tx_event = &eventBleTx,
-    };
-
-    thread_create(
-        ble_send_stack,
-        sizeof(ble_send_stack),
-        THREAD_PRIORITY_MAIN - 1,
-        THREAD_CREATE_STACKTEST,
-        ble_send_loop,
-        &ble_tx_args,
-       "bleSend"
-    );
-
-    ble_receive_thread_args_t args = {
-        .receive_queue = &events_creation_queue,
-        .receive_news_event = &eventBleNews,
-        .receive_any_event = &eventBleRx,
-    };
-
-    thread_create(
-        ble_reicv_stack,
-        sizeof(ble_reicv_stack),
-        THREAD_PRIORITY_MAIN - 1,
-        THREAD_CREATE_STACKTEST,
-        ble_receive_loop,
-        &args,
-       "bleRecv"
-    );
 
     ui_state->lora_state = ESTABLISHING_CONNECTION;
     ui_state->ble_state = CONNECTED;
