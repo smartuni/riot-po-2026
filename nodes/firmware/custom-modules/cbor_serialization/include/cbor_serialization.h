@@ -62,6 +62,10 @@ int cbor_serialize_record_no_sig(const table_record_t *record, uint8_t *out, siz
  * @param record            Pointer to the record to populate
  * @param record_data       Memory for the record data
  * @param signature         Buffer to place the deserialized signature. Can be NULL.
+ *                          If NULL is passed as signature buffer no error will be generated if
+ *                          the serialized data carries no signature.
+ *                          If a valid buffer is passed but the data contains no signature
+ *                          this will be treated as an error.
  * @param signature_len     Pointer to the length of @p signature. Will contain the
  *                          signature length.
  *
