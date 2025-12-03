@@ -72,7 +72,7 @@ static kernel_pid_t _ble_receive_pid = KERNEL_PID_UNDEF;
  * MATE_BLE_SCAN_INTERVAL_MS = MATE_BLE_SCAN_WINDOW_MS results in continuous scanning.*/
 #define MATE_BLE_SCAN_INTERVAL_MS 30
 #define MATE_BLE_ADV_START_MS 20
-#define MATE_BLE_ADV_STOP_MS 200
+#define MATE_BLE_ADV_STOP_MS 100
 
 #define MATE_BLE_THRESHOLD  (-85)
 
