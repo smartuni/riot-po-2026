@@ -30,6 +30,7 @@
 #include "net/gnrc/pkt.h"
 #include "net/gnrc/netreg.h"
 #include "net/gnrc/netif/hdr.h"
+#include "random.h"
 #include "saul_reg.h"
 #include "phydat.h"
 #include "od.h"
@@ -66,7 +67,10 @@
 
 /* Duration to trigger send_event */
 //#define TIMEOUT_DURATION 60000000
-#define TIMEOUT_DURATION 20000000
+/* A high value for the periodic send should result in no periodic updates at all
+ * because the regular tables update (e.g. due to a refreshed gate state)
+ * should currently always trigger an update before the timeout */
+#define MATE_LORAWAN_PERIODIC_SEND_INTERVAL_MS (60000)
 /* Stack for reception thread */
 static char _rx_thread_stack[THREAD_STACKSIZE_MAIN];
 /* Message queue for reception thread] */
@@ -74,6 +78,8 @@ static msg_t _rx_msg_queue[QUEUE_SIZE];
 static table_memo_t _self_state_change_memo;
 static table_query_t _self_state_change_query;
 static tables_context_t *_tables;
+
+kernel_pid_t mate_lorawan_pid = KERNEL_PID_UNDEF;
 
 netif_t *netif = NULL;
 
@@ -112,11 +118,7 @@ static int _send_lorawan_packet(const netif_t *netif, const uint8_t *buf, size_t
  */
 static void _handle_received_packet(gnrc_pktsnip_t *pkt);
 
-static void send_current_state_handler(event_t *event);
-static void send_periodic_handler(event_t *event);
-event_t send_periodic_event = { .handler = send_periodic_handler };
-event_t send_current_state_event = { .handler = send_current_state_handler};
-event_timeout_t periodic_send_timeout;
+static void mate_lorawan_send_query_matches(table_query_t *q);
 
 static const char *ok(bool condition)
 {
@@ -258,13 +260,37 @@ void *rx_thread(void *arg)
 
     gnrc_netreg_register(GNRC_NETTYPE_UNDEF, &netreg_entry);
 
-    while (1) {
-        /* wait until we get a message]*/
-        msg_receive(&msg);
+    /* update the pid with valid value once it is ready to receive messages */
+    mate_lorawan_pid = thread_getpid();
 
-        if (msg.type == GNRC_NETAPI_MSG_TYPE_RCV) {
-            gnrc_pktsnip_t *pkt = msg.content.ptr;
-            _handle_received_packet(pkt);
+    /* TODO: merge record/observation query into ingle query once is supports ORed record types */
+    table_query_t report_query;
+    /* TODO: for now this only sends updates about this node, also propagate other nodes data
+     *        once the related node-timing and backend logical issues are resolved. */
+    const node_id_t *writer_id = &self_node_id;
+    tables_init_query(&report_query, RECORD_GATE_REPORT, writer_id, NULL);
+
+    table_query_t observation_query;
+    tables_init_query(&observation_query, RECORD_GATE_REPORT, writer_id, NULL);
+
+    while (1) {
+        uint32_t periodic_tx_delay = MATE_LORAWAN_PERIODIC_SEND_INTERVAL_MS +
+                     random_uint32_range(0, MATE_LORAWAN_PERIODIC_SEND_INTERVAL_MS / 10);
+        /* wait until we get a message or a timeout.
+         * in case of a timeout we repeat periodic uplinks */
+        int res = ztimer_msg_receive_timeout(ZTIMER_MSEC, &msg, periodic_tx_delay);
+        if (res >= 0) { /* received a message */
+            if (msg.type == GNRC_NETAPI_MSG_TYPE_RCV) {
+                gnrc_pktsnip_t *pkt = msg.content.ptr;
+                _handle_received_packet(pkt);
+            } else if(msg.type == MATE_LORAWAN_TX_QUERY_MATCHES_MSG_TYPE) {
+                table_query_t *q = (table_query_t*)msg.content.ptr;
+                mate_lorawan_send_query_matches(q);
+                free(q);
+            }
+        } else { /* timeout */
+            mate_lorawan_send_query_matches(&report_query);
+            mate_lorawan_send_query_matches(&observation_query);
         }
     }
     /* never reached */
@@ -321,12 +347,6 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
     gnrc_pktbuf_release(pkt);
 }
 
-static void send_current_state_handler(event_t *event)
-{
-    _LOGDBG("send_current_state_handler\n");
-    (void) event;
-}
-
 static char _send_record_str_buf[TABLE_RECORD_STRING_SIZE];
 
 static int _send_record(const table_record_t *record)
@@ -347,22 +367,13 @@ static int _send_record(const table_record_t *record)
     return _send_lorawan_packet(netif, out_buf, out_len);
 }
 
-static void send_periodic_handler(event_t *event)
+static void mate_lorawan_send_query_matches(table_query_t *q)
 {
-    (void)event;
-
-    /* reset periodic timeout */
-    event_timeout_set(&periodic_send_timeout, TIMEOUT_DURATION);
-
     TABLE_ITERATOR(iterator, _tables);
 
     table_record_t *record;
-    table_query_t query;
-    const node_id_t *writer_id = &self_node_id;
 
-    tables_init_query(&query, RECORD_GATE_REPORT, writer_id, NULL);
-
-    int res = tables_iterator_init(_tables, &iterator, &query);
+    int res = tables_iterator_init(_tables, &iterator, q);
     _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
     if (res) {
         return;
@@ -370,20 +381,7 @@ static void send_periodic_handler(event_t *event)
 
     while(tables_iterator_next(_tables, &iterator, &record, NULL, NULL) == 0) {
         res = _send_record(record);
-        _LOGDBG("send_periodic_handler _send_record: %d\n", res);
-    }
-
-    tables_init_query(&query, RECORD_GATE_OBSERVATION, writer_id, NULL);
-
-    res = tables_iterator_init(_tables, &iterator, &query);
-    _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
-    if (res) {
-        return;
-    }
-
-    while(tables_iterator_next(_tables, &iterator, &record, NULL, NULL) == 0) {
-        res = _send_record(record);
-        _LOGDBG("send_periodic_handler _send_record: %d\n", res);
+        _LOGDBG("%s _send_record: %d\n", __func__, res);
     }
 }
 
@@ -401,7 +399,21 @@ static void _table_self_state_updated_cb(tables_context_t *ctx, const table_reco
      * cannot be safely called from any thread-context (but the callback will be executed in
      * the thread that modified the record).
      * Alternatively this function could copy the record to an offloaded queue instead. */
-    event_post(EVENT_PRIO_MEDIUM, &send_periodic_event);
+    //event_post(EVENT_PRIO_MEDIUM, &send_periodic_event);
+
+    // if the lora thread is ready to receive messages
+    if (mate_lorawan_pid != KERNEL_PID_UNDEF) {
+        table_query_t *q = malloc(sizeof(table_query_t));
+        if (q) {
+            /* offload sending query matches to the mate_lorawan thread */
+            table_record_type_t type;
+            get_record_type(record, &type);
+            tables_init_query(q, type, &self_node_id, NULL);
+            msg_t m = { .type = MATE_LORAWAN_TX_QUERY_MATCHES_MSG_TYPE,
+                        .content.ptr = q };
+            msg_send(&m, mate_lorawan_pid);
+        }
+    }
 }
 
 int mate_lorawan_start(tables_context_t *t)
@@ -435,15 +447,7 @@ int mate_lorawan_start(tables_context_t *t)
         _LOGDBG("Receive thread started successfully.\n");
     }
 
-    /* Init timeout event */
-    event_timeout_init(&periodic_send_timeout, EVENT_PRIO_MEDIUM, (event_t*)&send_periodic_event);
-    event_timeout_set(&periodic_send_timeout, TIMEOUT_DURATION);
-
-    ///* send the first uplink right away so that the device shows up fast */
-    //event_post(EVENT_PRIO_HIGHEST, &send_event_timeout);
-
     void *cb_arg = 0;
-
     /* register for changes in the table. In this case we only care about gate report updates
      * written by this node itself. No involed Id is needed. */
     const node_id_t *writer_id = &self_node_id;

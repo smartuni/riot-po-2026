@@ -23,6 +23,8 @@
 #include "event.h"
 #include "tables/types.h"
 
+#define MATE_LORAWAN_TX_QUERY_MATCHES_MSG_TYPE (0x66)
+
 /**
  * @brief   Intializes the LoRaWAN module and starts the event loop.
  *
