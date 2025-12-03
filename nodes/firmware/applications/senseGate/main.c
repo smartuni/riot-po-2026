@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "od.h"
 #include "board.h"
@@ -46,9 +47,7 @@ tables_context_t *tables;
 
 char ble_send_stack[8*THREAD_STACKSIZE_DEFAULT];
 char ble_reicv_stack[8*THREAD_STACKSIZE_DEFAULT];
-
-extern event_t *_mateble_send_event;
-extern event_queue_t *_mateble_send_queue;
+static kernel_pid_t ble_tx_pid = KERNEL_PID_UNDEF;
 
 #include "shell.h"
 char shell_stack[2*THREAD_STACKSIZE_DEFAULT];
@@ -102,10 +101,15 @@ void gate_observer_state_change_cb(gate_state_t new_state)
     _LOGDBG("%s new state = %s\n", __func__, gate_state_tostr(new_state));
     int res = tables_put_gate_report(tables, new_state);
     _LOGDBG("%s tables_put_gate_report %s\n", __func__, ok(res == 0));
-    // if ble-mate is ready to accept events
-    if (_mateble_send_queue && _mateble_send_event) {
-        // trigger ble TX
-        event_post(_mateble_send_queue, _mateble_send_event);
+    // if ble-mate is ready to receive messages
+    if (ble_tx_pid != KERNEL_PID_UNDEF) {
+        table_query_t *q = malloc(sizeof(table_query_t));
+        if (q) {
+            tables_init_query(q, RECORD_GATE_REPORT, &self_node_id, NULL);
+            msg_t m = { .type = MATE_BLE_TX_QUERY_MATCHES_MSG_TYPE,
+                        .content.ptr = q };
+            msg_send(&m, ble_tx_pid);
+        }
     }
 }
 
@@ -186,7 +190,7 @@ int main(void){
     _LOGDBG("initial gate state: %s\n",
             initial_gate_state == GATE_STATE_CLOSED ? "CLOSED" :
             (initial_gate_state == GATE_STATE_OPEN ? "OPEN" : "INVALID"));
-    
+
     _LOGDBG("put initial state to tables...\n");
     res = tables_put_gate_report(tables, initial_gate_state);
     _LOGDBG("put initial gate report %s\n", ok(res == 0));
@@ -206,11 +210,10 @@ int main(void){
         _LOGDBG("[mate_ble] not started\n");
     }
 
-    thread_create(
+    ble_tx_pid = thread_create(
         ble_send_stack,
         sizeof(ble_send_stack),
-        THREAD_PRIORITY_MAIN - 3,
-        //THREAD_PRIORITY_MAIN - 2,
+        THREAD_PRIORITY_MAIN - 2,
         THREAD_CREATE_STACKTEST,
         ble_send_loop,
         NULL,
@@ -220,7 +223,7 @@ int main(void){
     thread_create(
         ble_reicv_stack,
         sizeof(ble_reicv_stack),
-        THREAD_PRIORITY_MAIN - 3,
+        THREAD_PRIORITY_MAIN + 3,
         THREAD_CREATE_STACKTEST,
         ble_receive_loop,
         NULL,
