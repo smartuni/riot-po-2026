@@ -14,6 +14,7 @@
 #include "nimble_addr.h"
 #include "nimble/ble.h"
 #include "net/bluetil/ad.h"
+#include "random.h"
 #include "shell.h"
 #include "tables.h"
 #include "tables/records.h"
@@ -34,12 +35,6 @@
 #include "include/soundModule.h"
 #include "events_creation.h"
 #endif
-
-event_t *_mateble_send_event = NULL;
-event_queue_t *_mateble_send_queue = NULL;
-event_timeout_t *_mateble_periodic_send_event_timeout;
-
-static void mateble_send_event_handler(event_t *e);
 
 static const char *ok(bool condition)
 {
@@ -81,6 +76,7 @@ static kernel_pid_t _ble_receive_pid = KERNEL_PID_UNDEF;
  * In the thread context heavier processing such as signature verification
  * and table traversal and merges can be done. */
 #define RX_MSG_QUEUE_SIZE (8)
+#define TX_MSG_QUEUE_SIZE (8)
 
 static uint8_t id_addr_type;
 static uint8_t ble_initialized = 0;
@@ -92,7 +88,7 @@ static const char adv_name[] = BLE_ADVERTISE_NAME;
 
 /* The first two bytes of the manufacturer specific data type contain
  * a company ID code which for a final product must be requested from
- * the Bluetooth SIG. 
+ * the Bluetooth SIG.
  * For testing purposes we use 0xFFFF as an unassigned identifier code.
  */
 static const uint8_t _company_id_code[] = { 0xFF, 0xFF };
@@ -401,10 +397,78 @@ static int _send_record(const table_record_t *record)
     return _ble_send(out_buf, out_len);
 }
 
-static void mateble_send_event_handler(event_t *e)
+static void mateble_send_query_matches(table_query_t *q)
 {
-    (void)e;
     _LOGDBG("%s\n", __func__);
+    TABLE_ITERATOR(iterator, _tables);
+
+    table_record_t *record;
+
+    /* fixed worst-case signature buffer size to avoid multiple iterator calls */
+    uint8_t signature[MAX_SIGNATURE_SIZE];
+    size_t signature_len = sizeof(signature);
+
+    int res = tables_iterator_init(_tables, &iterator, q);
+    _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
+    if (res) {
+        return;
+    }
+
+    while(tables_iterator_next(_tables, &iterator, &record, signature, &signature_len) == 0) {
+        res = _send_record(record);
+        _LOGDBG("%s _send_record: %d\n", __func__, res);
+    }
+}
+
+void* ble_send_loop(void* arg)
+{
+    //TODO: properly integrate the thread args to pass event queues,
+    //      events etc. for signalling stuff to other components.
+    //ble_tx_thread_args_t *thr_args = (ble_tx_thread_args_t*)arg;
+    (void)arg;
+
+    static msg_t tx_msg_queue[TX_MSG_QUEUE_SIZE];
+
+    /* initialize the message queue] */
+    msg_init_queue(tx_msg_queue, TX_MSG_QUEUE_SIZE);
+
+    _LOGDBG("%s\n", __func__);
+
+    wait_for_ble_init();
+    table_query_t send_all_query ;
+    tables_init_query(&send_all_query, RECORD_UNDEFINED, NULL, NULL);
+
+    while (true) {
+        msg_t m;
+        table_query_t *q = NULL;
+        uint32_t periodic_tx_delay = BLE_SEND_INTERVAL + random_uint32_range(0, BLE_SEND_INTERVAL / 10);
+        int res = ztimer_msg_receive_timeout(ZTIMER_MSEC, &m, periodic_tx_delay);
+        bool received_msg = res >= 0;
+        if (received_msg) {
+            //got msg
+            if (m.type != MATE_BLE_TX_QUERY_MATCHES_MSG_TYPE) {
+                continue;
+            }
+            q = (table_query_t*)m.content.ptr;
+        } else {
+            q = &send_all_query;
+        }
+        mateble_send_query_matches(q);
+
+        if (received_msg) {
+            free(q);
+        }
+    }
+
+    return NULL;
+}
+
+char _recv_record_str_buf[TABLE_RECORD_STRING_SIZE];
+
+char _print_table_record_str_buf[TABLE_RECORD_STRING_SIZE];
+
+void _print_table(void)
+{
     TABLE_ITERATOR(iterator, _tables);
 
     table_record_t *record;
@@ -415,67 +479,19 @@ static void mateble_send_event_handler(event_t *e)
         .involved_id = NULL
     };
 
-    /* fixed worst-case signature buffer size to avoid multiple iterator calls */
-    uint8_t signature[MAX_SIGNATURE_SIZE];
-    size_t signature_len = sizeof(signature);
-
-    /* TODO: check if the other pattern with multiple calls to the iterator is safe to do.
-     *     First getting the size, then the record seems problematic if the iterator may change
-     *     inbetween.
-     *     Maybe, a separate api to get the signature for a specific record would be better?
-     */
     int res = tables_iterator_init(_tables, &iterator, &query);
-    _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
+    printf("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
     if (res) {
-        event_timeout_set(_mateble_periodic_send_event_timeout, BLE_SEND_INTERVAL);
         return;
     }
 
-    while(tables_iterator_next(_tables, &iterator, &record, signature, &signature_len) == 0) {
-        //_LOGDBG("%s iter next (%d) %s\n", __func__, res, ok(res == 0));
-        res = _send_record(record);
-        _LOGDBG("%s _send_record: %d\n", __func__, res);
+    printf("================\n");
+    while(tables_iterator_next(_tables, &iterator, &record, NULL, NULL) == 0) {
+        record_tostr(record, _print_table_record_str_buf, sizeof(_print_table_record_str_buf));
+        printf("%s: %s\n", __func__, _print_table_record_str_buf);
     }
-    event_timeout_set(_mateble_periodic_send_event_timeout, BLE_SEND_INTERVAL);
+    printf("================\n");
 }
-
-void* ble_send_loop(void* arg)
-{
-    //TODO: properly integrate the thread args to pass event queues,
-    //      events etc. for signalling stuff to other components.
-    //ble_tx_thread_args_t *thr_args = (ble_tx_thread_args_t*)arg;
-    (void)arg;
-
-    _LOGDBG("%s\n", __func__);
-
-    wait_for_ble_init();
-
-    // TODO: debug issue with heap allocated events getting corrupted
-    event_t mateble_send_event = { .handler = mateble_send_event_handler,
-                               .list_node.next = NULL };
-
-    event_queue_t mateble_send_queue;
-
-    event_timeout_t mateble_periodic_send_event_timeout;
-    _mateble_periodic_send_event_timeout = &mateble_periodic_send_event_timeout;
-
-    event_queue_init(&mateble_send_queue);
-
-    event_timeout_ztimer_init(&mateble_periodic_send_event_timeout, ZTIMER_MSEC,
-                              &mateble_send_queue,
-                              &mateble_send_event);
-
-    event_timeout_set(&mateble_periodic_send_event_timeout, BLE_SEND_INTERVAL);
-
-    _mateble_send_queue = &mateble_send_queue;
-    _mateble_send_event = &mateble_send_event;
-
-    event_loop(&mateble_send_queue);
-
-    return NULL;
-}
-
-char _recv_record_str_buf[TABLE_RECORD_STRING_SIZE];
 
 void* ble_receive_loop(void* args)
 {
@@ -484,7 +500,7 @@ void* ble_receive_loop(void* args)
     (void)args;
     //TODO: same as for the send loop: integrate the parameters
     //ble_receive_thread_args_ptr_t thr_args = (ble_receive_thread_args_ptr_t)args;
-    
+
     static msg_t rx_msg_queue[RX_MSG_QUEUE_SIZE];
 
     /* initialize the message queue] */
@@ -539,6 +555,7 @@ void* ble_receive_loop(void* args)
         res = tables_merge_record(_tables, &record, &result);
         if (res) {
             _LOGDBG("tables_merge_record failed: %d\n", res);
+            //_print_table();
         }
 
         if (!res && (result.updated || result.new)) {
