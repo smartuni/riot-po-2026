@@ -309,6 +309,7 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
     table_key_t key;
     table_record_type_t type;
     bool merge = false;
+    hlc_timestamp_t hlc_incoming;
 
     LOG_DEBUG("tables_merge_record: merging\n");
 
@@ -323,6 +324,7 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
 
     get_record_key(record, &key);
     table_record_t record_in_store;
+    get_record_timestamp(record, &hlc_incoming);
 
     // TODO: Should we only be able to retrieve complete records instead of header?
     res = get_record_header_from_store(ctx, &key, &record_in_store.header);
@@ -338,8 +340,7 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
         get_record_sequence(record, &seq_incoming);
         get_record_sequence(&record_in_store, &seq_in_store);
 
-        hlc_timestamp_t hlc_in_store, hlc_incoming;
-        get_record_timestamp(record, &hlc_incoming);
+        hlc_timestamp_t hlc_in_store;
         get_record_timestamp(&record_in_store, &hlc_in_store);
 
         if (seq_incoming > seq_in_store) {
@@ -374,6 +375,11 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
         if (!result->new) {
             result->updated = true;
             LOG_DEBUG("tables_merge_record: existing record, updating it\n");
+        }
+        res = hlc_update_with_remote_timestamp(ctx->hlc_ctx, &hlc_incoming, NULL);
+        if (res) {
+            LOG_DEBUG("hlc_update_with_remote_timestamp failed\n");
+            return -1;
         }
         res = put_record_in_store(ctx, record, &key);
 
