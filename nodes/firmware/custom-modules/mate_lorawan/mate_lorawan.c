@@ -395,12 +395,6 @@ static void _table_self_state_updated_cb(tables_context_t *ctx, const table_reco
 
     _LOGDBG("%s\n", __func__);
 
-    /* For now just offload the event to periodic event context baceause the send function
-     * cannot be safely called from any thread-context (but the callback will be executed in
-     * the thread that modified the record).
-     * Alternatively this function could copy the record to an offloaded queue instead. */
-    //event_post(EVENT_PRIO_MEDIUM, &send_periodic_event);
-
     // if the lora thread is ready to receive messages
     if (mate_lorawan_pid != KERNEL_PID_UNDEF) {
         table_query_t *q = malloc(sizeof(table_query_t));
