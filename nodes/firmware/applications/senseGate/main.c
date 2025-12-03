@@ -115,24 +115,10 @@ static void _table_update_cb(tables_context_t *ctx, const table_record_t *record
     (void)ctx;
     (void)arg;
     (void)query;
-    table_record_type_t type;
-    get_record_type(record, &type);
-    _LOGDBG("%s record type: %s\n", __func__, record_type_tostr(type));
     if (LOG_LEVEL >= LOG_DEBUG) {
-        const node_id_t *writer_id;
-        get_record_writer_id(record, &writer_id);
-        od_hex_dump(writer_id, NODE_ID_SIZE, 0);
-    }
-    if (type == RECORD_GATE_REPORT) {
-        table_gate_report_t *report;
-        int res = get_gate_report_data(record, &report);
-        if (res) {
-            _LOGDBG("get_gate_report_data failed\n");
-        } else {
-            gate_state_t state;
-            get_gate_report_state(report, &state);
-            _LOGDBG("gate state: %s\n", gate_state_tostr(state));
-        }
+        char record_str[TABLE_RECORD_STRING_SIZE];
+        record_tostr(record, record_str, sizeof(record_str));
+        _LOGDBG("UPDT: %s\n", record_str);
     }
 
     // don't unconditionally trigger TX here.
