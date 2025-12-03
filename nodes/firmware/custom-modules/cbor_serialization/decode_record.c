@@ -12,6 +12,33 @@
 
 #include "od.h"
 
+CborError cbor_deserialize_simple_or_u8(CborValue *value, uint8_t *val)
+{
+    CborError error;
+    if (cbor_value_is_simple_type(value)) {
+        error = cbor_value_get_simple_type(value, val);
+        if (error != CborNoError) {
+            DEBUG("%s cbor_value_get_simple_type error: (%d)\n", __func__, error);
+            return error;
+        }
+        return CborNoError;
+    } else if (cbor_value_is_unsigned_integer(value)) {
+        uint64_t tmp;
+        error = cbor_value_get_uint64(value, &tmp);
+        if (error != CborNoError) {
+            DEBUG("%s cbor_value_get_uint64 (%d)\n", __func__, error);
+            return error;
+        }
+        if (tmp > 255) {
+            DEBUG("%s cbor_value_get_uint64 larger than uint8_t!\n", __func__);
+            return CborErrorIllegalType;
+        }
+        *val = (uint8_t)tmp;
+        return CborNoError;
+    }
+    return CborErrorIllegalType;
+}
+
 static int _cbor_decode_hlc_timestamp(CborValue *value, hlc_timestamp_t *hlc)
 {
     CborError error;
@@ -106,14 +133,9 @@ static int _cbor_decode_record_header(CborValue *value, table_record_header_t *h
     int result;
     memset(header, 0, sizeof(table_record_header_t));
 
-    if (!cbor_value_is_simple_type(value)) {
-        DEBUG("_cbor_decode_record_header: expected simple value for record type\n");
-        return -1;
-    }
-
-    error = cbor_value_get_simple_type(value, &simple_value);
+    error = cbor_deserialize_simple_or_u8(value, &simple_value);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_record_header: error getting record type (%d)\n", error);
+        DEBUG("%s expected simple or unsigned value for record type (%d)\n", __func__, error);
         return -1;
     }
 
@@ -178,17 +200,10 @@ static int _cbor_decode_gate_report(CborValue *array_item, table_gate_report_t *
     assert(array_item != NULL);
     assert(report != NULL);
 
-    CborError error;
-
-    if (!cbor_value_is_simple_type(array_item)) {
-        DEBUG("_cbor_decode_gate_report: expected simple type for gate state\n");
-        return -1;
-    }
-
     uint8_t gate_state;
-    error = cbor_value_get_simple_type(array_item, &gate_state);
+    CborError error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_gate_report: error getting gate state\n");
+        DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
     }
 
@@ -221,15 +236,10 @@ static int _cbor_decode_gate_observation(CborValue *array_item,
         return -1;
     }
 
-    if (!cbor_value_is_simple_type(array_item)) {
-        DEBUG("_cbor_decode_gate_observation: expected simple type for gate state\n");
-        return -1;
-    }
-
     uint8_t gate_state;
-    error = cbor_value_get_simple_type(array_item, &gate_state);
+    error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_gate_observation: error getting gate state\n");
+        DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
     }
 
@@ -262,15 +272,10 @@ static int _cbor_decode_gate_command(CborValue *array_item,
         return -1;
     }
 
-    if (!cbor_value_is_simple_type(array_item)) {
-        DEBUG("_cbor_decode_gate_command: expected simple type for gate state\n");
-        return -1;
-    }
-
     uint8_t gate_state;
-    error = cbor_value_get_simple_type(array_item, &gate_state);
+    error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_gate_command: error getting gate state\n");
+        DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
     }
 
@@ -309,15 +314,10 @@ static int _cbor_decode_gate_job(CborValue *array_item,
         return -1;
     }
 
-    if (!cbor_value_is_simple_type(array_item)) {
-        DEBUG("_cbor_decode_gate_job: expected simple type for gate state\n");
-        return -1;
-    }
-
     uint8_t gate_state;
-    error = cbor_value_get_simple_type(array_item, &gate_state);
+    error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_gate_job: error getting gate state\n");
+        DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
     }
 
