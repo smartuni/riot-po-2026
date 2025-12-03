@@ -77,9 +77,6 @@ static tables_context_t *_tables;
 
 netif_t *netif = NULL;
 
-/* registration entry for incoming packets */
-static gnrc_netreg_entry_t netreg_entry;
-
 /**
  * @brief   Find the LoRaWAN network interface in the registry.
  * @return Pointer to the LoRaWAN network interface, or NULL if not found.
@@ -183,7 +180,7 @@ static int _join_lorawan_network(const netif_t *netif)
         }
         joinAttempts++;
     }
-    
+
     return -1;
 }
 
@@ -250,6 +247,17 @@ void *rx_thread(void *arg)
     msg_t msg;
     /* initialize the message queue] */
     msg_init_queue(_rx_msg_queue, QUEUE_SIZE);
+
+    /* registration entry for incoming packets */
+    static gnrc_netreg_entry_t netreg_entry;
+
+    /* register for receiving  LoRaWAN packets in our rx thread */
+    gnrc_netreg_entry_init_pid(&netreg_entry,
+                               GNRC_NETREG_DEMUX_CTX_ALL,
+                               thread_getpid());
+
+    gnrc_netreg_register(GNRC_NETTYPE_UNDEF, &netreg_entry);
+
     while (1) {
         /* wait until we get a message]*/
         msg_receive(&msg);
@@ -386,9 +394,9 @@ static void _table_self_state_updated_cb(tables_context_t *ctx, const table_reco
     (void)arg;
     (void)query;
     (void)record;
-    
+
     _LOGDBG("%s\n", __func__);
-    
+
     /* For now just offload the event to periodic event context baceause the send function
      * cannot be safely called from any thread-context (but the callback will be executed in
      * the thread that modified the record).
@@ -417,7 +425,7 @@ int mate_lorawan_start(tables_context_t *t)
     _LOGDBG("Starting receive thread.\n");
     /* create the reception thread] */
     kernel_pid_t rx_pid = thread_create(_rx_thread_stack, sizeof(_rx_thread_stack),
-                                        THREAD_PRIORITY_MAIN - 1,
+                                        THREAD_PRIORITY_MAIN + 1,
                                         THREAD_CREATE_STACKTEST, rx_thread, NULL,
                                         "lorawan_rx");
     if (-EINVAL == rx_pid) {
@@ -444,11 +452,6 @@ int mate_lorawan_start(tables_context_t *t)
     tables_add_memo(_tables, &_self_state_change_memo, &_self_state_change_query,
                     _table_self_state_updated_cb, cb_arg);
 
-    /* register for receiving  LoRaWAN packets in our rx thread */
-    gnrc_netreg_entry_init_pid(&netreg_entry,
-                               GNRC_NETREG_DEMUX_CTX_ALL,
-                               rx_pid);
-    gnrc_netreg_register(GNRC_NETTYPE_UNDEF, &netreg_entry);
     _LOGDBG("Start up succesful.\n");
     return 0;
 }
