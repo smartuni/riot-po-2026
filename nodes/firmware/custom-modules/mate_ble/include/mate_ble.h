@@ -41,6 +41,8 @@
 #define MATE_BLE_MAX_CBOR_PACKAGE_COUNT (10)
 #define MATE_BLE_MAX_CBOR_PACKAGE_SIZE  (MATE_BLE_MAX_PAYLOAD_SIZE - MATE_BLE_SIGNING_DATA_SIZE)
 
+#define MATE_BLE_TX_QUERY_MATCHES_MSG_TYPE (0x55)
+
 typedef uint8_t cbor_message_type_t;
 
 typedef struct ble_metadata {
