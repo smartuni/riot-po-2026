@@ -109,12 +109,10 @@ static const uint8_t _custom_msd_marker_pattern[] = {
 #define MATE_BLE_MSD_PAYLOAD_OFFS (sizeof(_company_id_code) + \
                           sizeof(_custom_msd_marker_pattern))
 
-/* TODO: This semaphore was previously used to synchronize to the advertisement done
- * event. An unresolved bug resulted in endless waiting for the semaphore to be posted.
- * It is currently worked around with a timer based delay but it should eventually be
- * replaced by a proper synchronization method.
- **/
-//static sem_t adv_done_sem;
+/* mutex to synchronize the ble send loop to the BLE_GAP_EVENT_ADV_COMPLETE event in
+ * ble_gap_event_cb. The send loop will wait for the callback to unlock the mutex
+ * so it can safely and quickly stop the current advertisement. */
+static mutex_t adv_done_mutex = MUTEX_INIT;
 
 static int ble_gap_event_cb(struct ble_gap_event *event, void *arg);
 static void ad_append(bluetil_ad_t *ad, const uint8_t *data, unsigned len);
@@ -150,12 +148,12 @@ static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payloa
     ad_append(ad, payload, len);
 }
 
-static int ble_gap_event_cb(struct ble_gap_event *event, void *arg) 
+static int ble_gap_event_cb(struct ble_gap_event *event, void *arg)
 {
     (void)arg;
     switch (event->type) {
         case BLE_GAP_EVENT_ADV_COMPLETE:
-            //sem_post(&adv_done_sem);
+            mutex_unlock(&adv_done_mutex);
             break;
         default:
             break;
@@ -343,12 +341,24 @@ static int _ble_send(uint8_t *buf, size_t len)
         ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
     }
 
+    /* lock mutex before starting advertisement */
+    mutex_lock(&adv_done_mutex);
+
     // update the payload with the given message
     start_adv(buf, len);
 
-    // Block here until the ADV_COMPLETE event posts the sem
-    //sem_wait(&adv_done_sem);
-    ztimer_sleep(ZTIMER_MSEC, MATE_BLE_ADV_STOP_MS);
+    // Block here until the ADV_COMPLETE event callback unlocks the mutex.
+    // Use a timeout as fallback in case the ble stack does not correctly trigger the event
+    // (this bahevior was sporadically seen before when using a semaphore without timeout).
+    // Set the timeout to the max configured adv interval + 20%.
+    uint32_t adv_timeout = MATE_BLE_ADV_STOP_MS * 120 / 100;
+    int res = ztimer_mutex_lock_timeout(ZTIMER_MSEC, &adv_done_mutex, adv_timeout);
+    if (!res) {
+        /* restore mutex to unlocked state if it was obtained */
+        mutex_unlock(&adv_done_mutex);
+    } else {
+        printf("TIMED OUT WATING FOR ADV COMPLETE!\n");
+    }
 
     _LOGDBG("stopping advertisement...\n");
     ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
