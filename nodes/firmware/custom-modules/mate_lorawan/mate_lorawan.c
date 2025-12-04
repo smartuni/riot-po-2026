@@ -78,6 +78,7 @@ static msg_t _rx_msg_queue[QUEUE_SIZE];
 static table_memo_t _self_state_change_memo;
 static table_query_t _self_state_change_query;
 static tables_context_t *_tables;
+static bool _joined = false;
 
 kernel_pid_t mate_lorawan_pid = KERNEL_PID_UNDEF;
 
@@ -156,31 +157,27 @@ static int _join_lorawan_network(const netif_t *netif)
     assert(netif != NULL);
     netopt_enable_t status;
     uint8_t data_rate = 5;
-    int joinAttempts = 0;
 
-    while (joinAttempts < 1) {
-        status = NETOPT_ENABLE;
-        _LOGDBG("Joining LoRaWAN network...\n");
-        ztimer_now_t timeout = ztimer_now(ZTIMER_SEC);
-        netif_set_opt(netif, NETOPT_LINK, 0, &status, sizeof(status));
+    status = NETOPT_ENABLE;
+    _LOGDBG("Joining LoRaWAN network...\n");
+    ztimer_now_t timeout = ztimer_now(ZTIMER_SEC);
+    netif_set_opt(netif, NETOPT_LINK, 0, &status, sizeof(status));
 
-        while (ztimer_now(ZTIMER_SEC) - timeout < 20) {
-            /* Wait for a while to allow the join process to complete */
-            ztimer_sleep(ZTIMER_SEC, 2);
+    while (ztimer_now(ZTIMER_SEC) - timeout < 20) {
+        /* Wait for a while to allow the join process to complete */
+        ztimer_sleep(ZTIMER_SEC, 2);
 
-            netif_get_opt(netif, NETOPT_LINK, 0, &status, sizeof(status));
-            if (status == NETOPT_ENABLE) {
-                _LOGDBG("Joined network successfully.\n");
-                /* Set the data rate */
-                netif_set_opt(netif, NETOPT_LORAWAN_DR, 0, &data_rate, sizeof(data_rate));
-                /* Disable uplink confirmation requests */
-                status = NETOPT_DISABLE;
-                netif_set_opt(netif, NETOPT_ACK_REQ, 0, &status, sizeof(status));
-                _LOGDBG("Uplink confirmation requests disabled.\n");
-                return 0;
-            }
+        netif_get_opt(netif, NETOPT_LINK, 0, &status, sizeof(status));
+        if (status == NETOPT_ENABLE) {
+            _LOGDBG("Joined network successfully.\n");
+            /* Set the data rate */
+            netif_set_opt(netif, NETOPT_LORAWAN_DR, 0, &data_rate, sizeof(data_rate));
+            /* Disable uplink confirmation requests */
+            status = NETOPT_DISABLE;
+            netif_set_opt(netif, NETOPT_ACK_REQ, 0, &status, sizeof(status));
+            _LOGDBG("Uplink confirmation requests disabled.\n");
+            return 0;
         }
-        joinAttempts++;
     }
 
     return -1;
@@ -249,6 +246,15 @@ static void *mate_lorawan_thread(void *arg)
     msg_t msg;
     /* initialize the message queue] */
     msg_init_queue(_rx_msg_queue, QUEUE_SIZE);
+
+    while (_join_lorawan_network(netif) == -1) {
+        _LOGINF("Join failed.\n");
+        ztimer_sleep(ZTIMER_MSEC, 1000);
+        _LOGINF("Join retry...\n");
+    }
+
+    _joined = true;
+    _LOGINF("Joined.\n");
 
     /* registration entry for incoming packets */
     static gnrc_netreg_entry_t netreg_entry;
@@ -328,7 +334,7 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             table_merge_result_t result;
             res = tables_merge_record(_tables, &record, &result);
             if (res) {
-                _LOGDBG("tables_merge_record failed: %d\n", res);
+                _LOGINF("tables_merge_record failed: %d\n", res);
                 break;
             }
             _LOGDBG("merge result: %d\n", result.updated);
@@ -424,24 +430,18 @@ int mate_lorawan_start(tables_context_t *t)
         _LOGINF("No network interface found.\n");
         return -1;
     }
-    if(_join_lorawan_network(netif) == -1){
-        _LOGINF("Join failed.\n");
-        return -1;
-    } else {
-        _LOGINF("Joined.\n");
-    }
 
-    _LOGDBG("Starting receive thread.\n");
+    _LOGDBG("Starting thread...\n");
     /* create the reception thread] */
     kernel_pid_t rx_pid = thread_create(_mate_lorawan_stack, sizeof(_mate_lorawan_stack),
                                         THREAD_PRIORITY_MAIN + 1,
                                         THREAD_CREATE_STACKTEST, mate_lorawan_thread, NULL,
                                         "mate_lorawan");
     if (-EINVAL == rx_pid) {
-        _LOGDBG("Failed to create reception thread.\n");
+        _LOGDBG("Failed to create thread.\n");
         return -1;
     }else{
-        _LOGDBG("Receive thread started successfully.\n");
+        _LOGDBG("Thread started successfully.\n");
     }
 
     void *cb_arg = 0;
@@ -457,4 +457,8 @@ int mate_lorawan_start(tables_context_t *t)
     return 0;
 }
 
+bool mate_lorawan_joined(void)
+{
+    return _joined;
+}
 
