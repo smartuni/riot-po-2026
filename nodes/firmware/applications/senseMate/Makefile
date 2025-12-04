@@ -39,8 +39,8 @@ USEMODULE += event_thread_highest
 USEMODULE += event_thread
 USEMODULE += event_timeout
 
-# new tables implementation (currently only added to compile with the new types)
 USEMODULE += tables
+USEMODULE += tables_shell
 
 USEMODULE += mate_lorawan
 USEMODULE += mate_ble
