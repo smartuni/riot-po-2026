@@ -15,14 +15,14 @@ static void _lock_callback(fdb_db_t db)
 {
     assert(db != NULL);
     flashdb_store_service_ctx_t *ctx = db->user_data;
-    mutex_lock(&ctx->lock);
+    mutex_lock(&ctx->fdb_lock);
 }
 
 static void _unlock_callback(fdb_db_t db)
 {
     assert(db != NULL);
     flashdb_store_service_ctx_t *ctx = db->user_data;
-    mutex_unlock(&ctx->lock);
+    mutex_unlock(&ctx->fdb_lock);
 }
 
 int flashdb_store_service_init(flashdb_store_service_ctx_t *ctx, const char *db_name,
@@ -37,8 +37,10 @@ int flashdb_store_service_init(flashdb_store_service_ctx_t *ctx, const char *db_
     bool file_mode = true;
     fdb_kvdb_control(&ctx->kvdb, FDB_KVDB_CTRL_SET_FILE_MODE, &file_mode);
 
+    mutex_init(&ctx->service_lock);
+
     /* set the lock and unlock callbacks */
-    mutex_init(&ctx->lock);
+    mutex_init(&ctx->fdb_lock);
     fdb_kvdb_control(&ctx->kvdb, FDB_KVDB_CTRL_SET_LOCK, _lock_callback);
     fdb_kvdb_control(&ctx->kvdb, FDB_KVDB_CTRL_SET_UNLOCK, _unlock_callback);
 
@@ -66,12 +68,14 @@ static int _put_callback(const void *context, const uint8_t *key, size_t key_len
     flashdb_store_service_ctx_t *ctx = (flashdb_store_service_ctx_t *)context;
     fdb_err_t result;
     struct fdb_blob blob;
+    mutex_lock(&ctx->service_lock);
 
     size_t key_b64_len = base64_estimate_encode_size(key_len);
     char key_b64[key_b64_len + 1];
 
     int res = base64_encode(key, key_len, key_b64, &key_b64_len);
     if (res != BASE64_SUCCESS) {
+        mutex_unlock(&ctx->service_lock);
         return -1;
     }
     key_b64[key_b64_len] = '\0';
@@ -82,8 +86,10 @@ static int _put_callback(const void *context, const uint8_t *key, size_t key_len
     /* Store the blob in the KVDB */
     result = fdb_kv_set_blob(&ctx->kvdb, key_b64, &blob);
     if (result != FDB_NO_ERR) {
+        mutex_unlock(&ctx->service_lock);
         return -1;
     }
+    mutex_unlock(&ctx->service_lock);
     return 0;
 }
 
@@ -96,12 +102,14 @@ static int _get_callback(const void *context, const uint8_t *key, size_t key_len
 
     flashdb_store_service_ctx_t *ctx = (flashdb_store_service_ctx_t *)context;
     struct fdb_blob blob;
+    mutex_lock(&ctx->service_lock);
 
     size_t key_b64_len = base64_estimate_encode_size(key_len);
     char key_b64[key_b64_len + 1];
 
     int result = base64_encode(key, key_len, key_b64, &key_b64_len);
     if (result != BASE64_SUCCESS) {
+        mutex_unlock(&ctx->service_lock);
         return -1;
     }
     key_b64[key_b64_len] = '\0';
@@ -112,9 +120,11 @@ static int _get_callback(const void *context, const uint8_t *key, size_t key_len
     /* Retrieve the blob from the KVDB */
     fdb_kv_get_blob(&ctx->kvdb, key_b64, &blob);
     if (blob.saved.len == 0) {
+        mutex_unlock(&ctx->service_lock);
         return -1;
     }
 
+    mutex_unlock(&ctx->service_lock);
     return 0;
 }
 
@@ -124,21 +134,25 @@ static int _delete_callback(const void *context, const uint8_t *key, size_t key_
     assert(key != NULL);
 
     flashdb_store_service_ctx_t *ctx = (flashdb_store_service_ctx_t *)context;
+    mutex_lock(&ctx->service_lock);
 
     size_t key_b64_len = base64_estimate_encode_size(key_len);
     char key_b64[key_b64_len + 1];
 
     int result = base64_encode(key, key_len, key_b64, &key_b64_len);
     if (result != BASE64_SUCCESS) {
+        mutex_unlock(&ctx->service_lock);
         return -1;
     }
     key_b64[key_b64_len] = '\0';
 
     fdb_err_t res = fdb_kv_del(&ctx->kvdb, key_b64);
     if (res != FDB_NO_ERR) {
+        mutex_unlock(&ctx->service_lock);
         return -1;
     }
 
+    mutex_unlock(&ctx->service_lock);
     return 0;
 }
 
@@ -160,6 +174,8 @@ static int _iterate_next_callback(const void *context,
     flashdb_store_service_iterator_t *flashdb_iterator =
         (flashdb_store_service_iterator_t *)iterator;
 
+    mutex_lock(&ctx->service_lock);
+    int res = -1;
     while (fdb_kv_iterate(&ctx->kvdb, &flashdb_iterator->iterator)) {
         fdb_kv_t kv = &(flashdb_iterator->iterator.curr_kv);
         uint8_t *key_b64 = (uint8_t *)kv->name;
@@ -169,7 +185,8 @@ static int _iterate_next_callback(const void *context,
         uint8_t _key[_key_len];
         int result = base64_decode(key_b64, key_b64_len, _key, &_key_len);
         if (result != BASE64_SUCCESS) {
-            return -2;
+            res = -2;
+            break;
         }
 
         if (store_service_key_matches_query(_key, _key_len, &flashdb_iterator->query)) {
@@ -178,7 +195,8 @@ static int _iterate_next_callback(const void *context,
             // Check if we have enough space to read the blob and key
             if (*data_len < kv->value_len || _key_len > *key_len) {
                 // TODO: We may want to indicate this differently
-                return -3;
+                res = -3;
+                break;
             }
 
             // Read and copy the blob over
@@ -186,17 +204,20 @@ static int _iterate_next_callback(const void *context,
             fdb_kv_to_blob(kv, &blob);
             *data_len = fdb_blob_read((fdb_db_t)&ctx->kvdb, &blob);
             if (*data_len == 0) {
-                return -4;
+                res = -4;
+                break;
             }
 
             // Copy the key over
             memcpy(key, _key, _key_len);
             *key_len = _key_len;
-            return 0;
+            res = 0;
+            break;
         }
     }
 
-    return -1;
+    mutex_unlock(&ctx->service_lock);
+    return res;
 }
 
 static int _iterator_init_callback(const void *context,
