@@ -70,6 +70,7 @@ CFLAGS += -DFLASHDB_STORE_SERVICE_DB_SIZE=\(\(FLASHDB_STORE_SERVICE_SECTOR_SIZE*
 
 # tables stuff
 USEMODULE += tables
+USEMODULE += tables_shell
 USEMODULE += cose_crypto_service
 USEMODULE += hlc_ztimer
 
