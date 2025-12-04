@@ -45,6 +45,7 @@ typedef struct {
     uint8_t *buf;
     size_t buf_len;
     nimble_scanner_info_t info;
+    char dev_name[BLE_ADV_PDU_LEN + 1];
 } payload_descriptor_t;
 
 char ble_tx_thread_stack[8*THREAD_STACKSIZE_DEFAULT];
@@ -286,6 +287,12 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
                     pd->buf = buf;
                     pd->buf_len = pl;
                     pd->info = *info;
+                    size_t adv_name_len = strlen(name);
+                    if (adv_name_len <= (sizeof(pd->dev_name) + 1)) {
+                        memcpy(pd->dev_name, name, adv_name_len);
+                        pd->dev_name[adv_name_len] = '\0';
+                    }
+
                     msg_t offload_msg = { .content.ptr = pd };
                     if (msg_send(&offload_msg, _ble_receive_pid) != 1) {
                         _LOGDBG("offload to RX thread failed -> discard packet!\n");
@@ -550,6 +557,19 @@ void* ble_rx_thread(void* args)
         int res = cbor_deserialize(pd->buf, pd->buf_len, &record,
                                     &record_data, signature, &signature_len);
 
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+        /* this part is only needed on the SenseMate to populate the encounter table */
+        //TODO: instead of parsing this from the advertised device name, extend the message format
+        //      to include a sender id (would also be useful for debugging).
+        //      Alternatively: use only specific message type (digest?) for mate encounters.
+        rssi_t rssi = pd->info.rssi;
+        const char *sensemate_prefix = "SenseMate-";
+        size_t prefix_len = strlen(sensemate_prefix);
+        bool sent_by_mate = strncmp(sensemate_prefix, pd->dev_name, prefix_len) == 0;
+        uint8_t matenum = sent_by_mate ? atoi(&pd->dev_name[prefix_len]) : 0;
+        node_id_t mate_id = { 0x00, 0x00, DEVICE_TYPE_SENSEMATE, matenum };
+#endif
+
         free(pd->buf);
         free(pd);
         _LOGDBG("freed buffers\n");
@@ -582,6 +602,9 @@ void* ble_rx_thread(void* args)
 
         if (!res && (result.updated || result.new)) {
 #if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+            if (sent_by_mate) {
+                tables_put_mate_encounter(_tables, &mate_id, rssi);
+            }
             event_post(EVENT_PRIO_MEDIUM, &eventBleNews);
             _LOGINF("table updated.\n");
 #endif
@@ -589,6 +612,9 @@ void* ble_rx_thread(void* args)
             _LOGINF("Error updating table.\n");
         } else {
 #if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+            if (sent_by_mate) {
+                tables_put_mate_encounter(_tables, &mate_id, rssi);
+            }
             event_post(EVENT_PRIO_MEDIUM, &eventBleRx);
 #endif
             _LOGINF("No updates.\n");
