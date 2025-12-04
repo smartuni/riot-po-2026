@@ -67,6 +67,29 @@ uint32_t _get_known_gate_count(void)
     return gates_cnt;
 }
 
+uint32_t _get_known_mate_count(void)
+{
+    uint32_t mate_cnt = 0;
+    TABLE_ITERATOR(iter, tables);
+    table_query_t query;
+    tables_init_query(&query, RECORD_MATE_ENCOUNTER, NULL, NULL);
+
+    int res = tables_iterator_init(tables, &iter, &query);
+    _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
+    if (res) {
+        return false;
+    }
+
+    table_record_t *record;
+
+    while( tables_iterator_next(tables, &iter, &record, NULL, NULL) == 0) {
+        _LOGDBG("%s iter next (%d) %s\n", __func__, res, ok(res == 0));
+        mate_cnt++;
+    }
+
+    return mate_cnt;
+}
+
 static bool _all_gates_iter(ui_data_element_t *prev)
 {
     /* abort if the iterator was not setup yet */
@@ -215,31 +238,35 @@ int main(void) {
 
     lorawan_started = mate_lorawan_start(tables);
 
-    if (lorawan_started == 0) {
-        ui_state->lora_state = CONNECTED;
-        sensemate_ui_update();
-    }
-
     puts("entering main loop");
-    uint32_t prev_cnt = 0;
+    uint32_t prev_gate_cnt = 0;
+    uint32_t prev_mate_cnt = 0;
     uint32_t ps_cnt = 0;
+    bool join_done = false;
     while (1)
     {
         ui_state->visible_gate_cnt = _get_known_gate_count();
+        ui_state->visible_mate_cnt = _get_known_mate_count();
         //TODO: Re-add below functionality, but now based on new API
         //ui_state->pending_jobs_cnt = tables_get_jobs_entry_count();
         //ui_state->visible_mate_cnt = tables_get_closeby_mate_seen_state_entry_count(-80);
-        if (prev_cnt != ui_state->visible_gate_cnt) {
-            sensemate_ui_update();
-            prev_cnt = ui_state->visible_gate_cnt;
+        bool updateui = false;
+
+        if (prev_gate_cnt != ui_state->visible_gate_cnt ||
+            prev_mate_cnt != ui_state->visible_mate_cnt) {
+            prev_gate_cnt = ui_state->visible_gate_cnt;
+            prev_mate_cnt = ui_state->visible_mate_cnt;
+            updateui = true;
         }
 
-        if(lorawan_started == -1){
-            lorawan_started = mate_lorawan_start(tables);
-            if (lorawan_started == 0) {
-                ui_state->lora_state = CONNECTED;
-                sensemate_ui_update();
-            }
+        if(!join_done && mate_lorawan_joined()) {
+            ui_state->lora_state = CONNECTED;
+            join_done = true;
+            updateui = true;
+        }
+
+        if (updateui) {
+            sensemate_ui_update();
         }
         ztimer_sleep(ZTIMER_MSEC, 1000);
         //if (ps_cnt >= 10) {
