@@ -212,11 +212,6 @@ int main(void){
     int put_cnt = 0;
     int put_err_cnt = 0;
     while(1){
-
-        if (-1 == lorawanstarted){
-            lorawanstarted = mate_lorawan_start(tables);
-        }
-
         ztimer_sleep(ZTIMER_MSEC,1000);
 
         if (timeToUpdateTable == TIME_PERIOD_TABLE_UPDATE) {
