@@ -390,16 +390,16 @@ static int _ble_send(uint8_t *buf, size_t len)
     // Set the timeout to the max configured adv interval + 20%.
     uint32_t adv_timeout = MATE_BLE_ADV_STOP_MS * 120 / 100;
     int res = ztimer_mutex_lock_timeout(ZTIMER_MSEC, &adv_done_mutex, adv_timeout);
-    if (!res) {
-        /* restore mutex to unlocked state if it was obtained */
-        mutex_unlock(&adv_done_mutex);
-    } else {
+    if (res) {
         printf("TIMED OUT WATING FOR ADV COMPLETE!\n");
     }
 
     _LOGDBG("stopping advertisement...\n");
     ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
     _LOGDBG("stopped advertisement...\n");
+
+    /* restore mutex to unlocked state */
+    mutex_unlock(&adv_done_mutex);
 
     return BLE_SUCCESS;
 }
