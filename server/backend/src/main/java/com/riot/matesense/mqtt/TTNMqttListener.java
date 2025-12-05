@@ -65,6 +65,7 @@ public class TTNMqttListener {
                                     System.out.println("frm_payload erkannt: " + frmPayloadBase64);
 
                                     List<Object> decodedList = converter.decodeBase64ToList(frmPayloadBase64);
+                                    System.out.println(decodedList);
                                     String formattedJson = jsonFormatter.toJsonFormat(decodedList);
 
                                     System.out.println("Dekodiertes JSON: " + formattedJson);

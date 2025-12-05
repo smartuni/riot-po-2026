@@ -10,13 +10,18 @@
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
-int _cbor_array_size_record(const table_record_t *record, size_t *size)
+extern CborError cbor_deserialize_simple_or_u8(CborValue *value, uint8_t *val);
+
+int _cbor_array_size_record(const table_record_t *record, size_t *size, bool include_sig)
 {
     table_record_type_t type;
 
     get_record_type(record, &type);
 
-    *size = ARRAY_SIZE_MESSAGE + ARRAY_SIZE_RECORD_HEADER + ARRAY_SIZE_RECORD_SIGNATURE;
+    *size = ARRAY_SIZE_MESSAGE + ARRAY_SIZE_RECORD_HEADER;
+    if (include_sig) {
+        *size += ARRAY_SIZE_RECORD_SIGNATURE;
+    }
 
     if (type == RECORD_GATE_REPORT) {
         *size += ARRAY_SIZE_RECORD_DATA_GATE_REPORT;
@@ -257,7 +262,8 @@ int _cbor_encode_record_data(const table_record_t *record, CborEncoder *encoder)
     }
 }
 
-int cbor_serialize_record(table_record_t *record, uint8_t *out, size_t *out_len)
+static int _cbor_serialize_record(const table_record_t *record, uint8_t *out, size_t *out_len,
+                                  bool include_sig)
 {
     assert(record != NULL);
     assert(out != NULL);
@@ -269,7 +275,7 @@ int cbor_serialize_record(table_record_t *record, uint8_t *out, size_t *out_len)
 
     CborEncoder main_array_encoder;
     size_t main_array_size;
-    int res = _cbor_array_size_record(record, &main_array_size);
+    int res = _cbor_array_size_record(record, &main_array_size, include_sig);
     if (res != 0) {
         DEBUG("cbor_serialize_record: error getting main array size\n");
         return -1;
@@ -306,10 +312,12 @@ int cbor_serialize_record(table_record_t *record, uint8_t *out, size_t *out_len)
         return -1;
     }
 
-    res = _cbor_encode_record_signature(record, &main_array_encoder);
-    if (res != 0) {
-        DEBUG("cbor_serialize_record: error encoding record signature\n");
-        return -1;
+    if (include_sig) {
+        res = _cbor_encode_record_signature(record, &main_array_encoder);
+        if (res != 0) {
+            DEBUG("cbor_serialize_record: error encoding record signature\n");
+            return -1;
+        }
     }
 
     error = cbor_encoder_close_container(&root_encoder, &main_array_encoder);
@@ -320,22 +328,27 @@ int cbor_serialize_record(table_record_t *record, uint8_t *out, size_t *out_len)
 
     *out_len = cbor_encoder_get_buffer_size(&root_encoder, out);
     return 0;
+
 }
 
+int cbor_serialize_record(const table_record_t *record, uint8_t *out, size_t *out_len)
+{
+    return _cbor_serialize_record(record, out, out_len, true);
+}
+
+int cbor_serialize_record_no_sig(const table_record_t *record, uint8_t *out, size_t *out_len)
+{
+    return _cbor_serialize_record(record, out, out_len, false);
+}
 
 int _cbor_decode_version(CborValue *value, uint8_t *version)
 {
     assert(value != NULL);
     assert(version != NULL);
 
-    if (!cbor_value_is_simple_type(value)) {
-        DEBUG("_cbor_decode_version: expected simple value for version\n");
-        return -1;
-    }
-
-    CborError error = cbor_value_get_simple_type(value, version);
+    CborError error = cbor_deserialize_simple_or_u8(value, version);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_version: error getting encoding version (%d)\n", error);
+        DEBUG("%s expected simple or unsigned value for version (%d)\n", __func__, error);
         return -1;
     }
 
@@ -354,14 +367,9 @@ int _cbor_decode_message_type(CborValue *value, uint8_t *message_type)
     assert(value != NULL);
     assert(message_type != NULL);
 
-    if (!cbor_value_is_simple_type(value)) {
-        DEBUG("_cbor_decode_message_type: expected simple value for message type\n");
-        return -1;
-    }
-
-    CborError error = cbor_value_get_simple_type(value, message_type);
+    CborError error = cbor_deserialize_simple_or_u8(value, message_type);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_message_type: error getting message type (%d)\n", error);
+        DEBUG("%s expected simple or unsigned value for message type (%d)\n", __func__, error);
         return -1;
     }
 

@@ -1,6 +1,7 @@
 #ifndef SENSEMATE_UI_H
 #define SENSEMATE_UI_H
-#include "mate_types.h"
+
+#include "tables/types.h"
 
 typedef enum {
     DISCONNECTED,
@@ -10,13 +11,24 @@ typedef enum {
     TRANSMITTED,
 } ui_connection_state_t;
 
+/* A struct which combines the local knowledge about a gate */
+typedef struct {
+    gate_state_t sensor_state;
+    gate_state_t target_state;
+    node_id_t gateID;
+    int8_t beacon_rssi;
+    bool sensor_data_present : 1;
+    bool target_data_present : 1;
+    bool beacon_data_present : 1;
+} gate_local_info_entry_t;
+
 /* type used to pass a gate state to the UI */
 typedef struct {
     union {
-        gate_state_entry_t     gate_state;
-        gate_timestamp_entry_t timestamp_entry;
+        //TODO: replace local_gate_info type with
+        //      something more appropriate for new tables API
         gate_local_info_entry_t local_gate_info;
-        gate_seen_state_entry_t seen_state;
+        table_gate_observation_t gate_observation;
     } data;
     union {
         void *ptr;
@@ -38,7 +50,7 @@ typedef bool (*ui_create_data_element_cb_t)(ui_data_element_t *element);
 typedef struct {
     ui_data_element_iter_cb_t all_gates_iter;
     ui_data_element_iter_cb_t jobs_iter;
-    ui_create_data_element_cb_t set_seen_state;
+    ui_create_data_element_cb_t put_gate_observation;
 } ui_data_cbs_t;
 
 typedef struct {

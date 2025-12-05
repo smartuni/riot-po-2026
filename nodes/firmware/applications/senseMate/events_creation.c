@@ -5,7 +5,6 @@
 #include "event/timeout.h"
 #include "include/soundModule.h"
 #include "include/vibrationModule.h"
-#include "tables.h"
 #include "include/sensemate_ui.h"
 #define LOG_LEVEL   LOG_NONE
 #include "log.h"
@@ -13,24 +12,9 @@
 #define DECREMENT_RSSI 10 // decrement rssi by 10
 #define RSSI_DECREMENT_TIMEOUT 5000 // in milliseconds
 
-bool event_accepted = true;
-event_timeout_t reactivate;
-event_timeout_t decrement_rssi_timeout;
+extern event_t event_trigger_ui_refresh;
 event_queue_t events_creation_queue;
 static char thread_stack[THREAD_STACKSIZE_DEFAULT];
-static gate_timestamp_entry_t timestamp_tbl_entry_buf;
-void event_handler_decrement_rssi_timeout(event_t *event);
-event_t event_rssi_timeout = { .handler = event_handler_decrement_rssi_timeout };
-
-static void _update_ui(void){
-    ui_data_t *ui_state = sensemate_ui_get_state();
-
-    ui_state->visible_gate_cnt = tables_get_is_state_entry_count();
-    ui_state->pending_jobs_cnt = tables_get_jobs_entry_count();
-    ui_state->visible_mate_cnt = tables_get_closeby_mate_seen_state_entry_count(-80);
-
-    sensemate_ui_update();
-}
 
 void* thread_events_function(void *arg) {
     (void)arg; // Unused argument
@@ -44,60 +28,18 @@ void* thread_events_function(void *arg) {
 }
 
 void init_event(void){
-    event_timeout_ztimer_init(&reactivate, ZTIMER_MSEC, &events_creation_queue, &event_reactivate);
-    
-    event_timeout_ztimer_init(&decrement_rssi_timeout, ZTIMER_MSEC, &events_creation_queue, &event_rssi_timeout);
-    thread_create(thread_stack, sizeof(thread_stack), THREAD_PRIORITY_MAIN - 1,
-                  THREAD_CREATE_STACKTEST, thread_events_function, NULL, "events_creation_thread");
-    
-    event_timeout_set(&decrement_rssi_timeout, RSSI_DECREMENT_TIMEOUT); // Set a timeout for the next decrement
+    thread_create(thread_stack, sizeof(thread_stack),
+                  THREAD_PRIORITY_MAIN - 1,
+                  THREAD_CREATE_STACKTEST, thread_events_function, NULL,
+                  "events_creation");
 }
 
 
-void event_callback (void *arg)
-{
-    (void) arg; /* the argument is not used */
-    ztimer_sleep(ZTIMER_MSEC, 500); // Wait for 0.1 second before accepting the next event
-    event_accepted = true; // Allow the event handler to be called again
-}
-
-void event_handler_decrement_rssi_timeout(event_t *event)
-{
-    (void) event;   /* Not used */
-    event_accepted = true; // Allow the event handler to be called again
-    for(int i = 0; i< MAX_GATE_COUNT; i++){
-        if(get_timestamp_entry(i, &timestamp_tbl_entry_buf)==TABLE_SUCCESS){
-            if(timestamp_tbl_entry_buf.rssi > MIN_SIGNAL_STRENGTH){
-                timestamp_tbl_entry_buf.rssi -= DECREMENT_RSSI; //decrement rssi by 10
-                LOG_DEBUG("[events_creation]: Decremented rssi for gate %d to %d\n", timestamp_tbl_entry_buf.gateID, timestamp_tbl_entry_buf.rssi);
-            }
-            set_timestamp_entry(&(gate_timestamp_entry_t){
-                .gateID = timestamp_tbl_entry_buf.gateID,
-                .timestamp = timestamp_tbl_entry_buf.timestamp,
-                .rssi = timestamp_tbl_entry_buf.rssi
-            });
-        };
-    }
-    for(int i = 0; i< MAX_SENSE_COUNT; i++){
-        mate_seen_state_entry_t se;
-        if (get_mate_seen_status_entry(i, &se) == TABLE_SUCCESS) {
-            int8_t rssi = se.rssi;
-            if (rssi > MIN_SIGNAL_STRENGTH) {
-                se.rssi = rssi - 1;
-                set_mate_seen_status_entry(&se);
-            }
-        }
-    }
-    _update_ui();
-    event_timeout_set(&decrement_rssi_timeout, RSSI_DECREMENT_TIMEOUT); // Set a timeout for the next decrement
-}
-
-void event_handler_reactivate(event_t *event)
-{
-    (void) event;   /* Not used */
-    event_accepted = true; // Allow the event handler to be called again
-    
-}
+//void event_callback (void *arg)
+//{
+//    (void) arg; /* the argument is not used */
+//    ztimer_sleep(ZTIMER_MSEC, 500); // Wait for 0.1 second before accepting the next event
+//}
 
 void event_handlerNews(event_t *event)
 {
@@ -107,10 +49,9 @@ void event_handlerNews(event_t *event)
     start_vibration();
     ui_data_t *ui_state = sensemate_ui_get_state();
     ui_state->lora_state = RECEIVED;
-    _update_ui();
+    //_update_ui();
     event_post(&sound_queue, &downlink_sound_event);
     //downlink_reveived_sound();
-    event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
     stop_vibration();
 }
 
@@ -119,15 +60,15 @@ void event_handlerBleNews(event_t *event)
     (void) event;   /* Not used */
     
     LOG_DEBUG("[events_creation]: got ble news\n");
-    start_vibration();
+    //start_vibration();
     ui_data_t *ui_state = sensemate_ui_get_state();
     ui_state->ble_state = RECEIVED;
-    _update_ui();
+    //_update_ui();
+
+    event_post(EVENT_PRIO_MEDIUM, &event_trigger_ui_refresh);
     event_post(&sound_queue, &tables_news_sound_event);
     //ble_reveived_sound();
-    event_timeout_set(&reactivate, 250); // Set a timeout to allow reactivation
-    stop_vibration();
-    
+    //stop_vibration();
 }
 
 void event_handlerBleRx(event_t *event)
@@ -135,7 +76,7 @@ void event_handlerBleRx(event_t *event)
     (void) event;   /* Not used */
     ui_data_t *ui_state = sensemate_ui_get_state();
     ui_state->ble_state = RECEIVED;
-    _update_ui();
+    //_update_ui();
     event_post(&sound_queue, &ble_received_sound_event);
 }
 
@@ -144,11 +85,10 @@ void event_handlerBleTx(event_t *event)
     (void) event;   /* Not used */
     ui_data_t *ui_state = sensemate_ui_get_state();
     ui_state->ble_state = TRANSMITTED;
-    _update_ui();
+    //_update_ui();
 }
 
 event_t eventNews = { .handler = event_handlerNews };
 event_t eventBleNews = { .handler = event_handlerBleNews };
 event_t eventBleRx = { .handler = event_handlerBleRx };
 event_t eventBleTx = { .handler = event_handlerBleTx };
-event_t event_reactivate = { .handler = event_handler_reactivate };

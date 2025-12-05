@@ -87,8 +87,8 @@ public class MqttMessageHandler {
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
                             //add new Gate
-                            //GateEntity newGate = new GateEntity(gateId,status, localTimeStamp, 53.5633146 + (1.0* gateId / 20000.0),9.9873ct261 +  (1.0 * gateId / 20000.0), "Hamburg", "REQUESTED_NONE", 0, "PENDING_NONE", 3  ); //Need to be changed
-                            GateEntity newGate = new GateEntity(gateId,status, localTimeStamp, 53.557120, 10.022826, "HAW", "REQUESTED_NONE", 0, "PENDING_NONE", 3  ); //Need to be changed
+                            //GateEntity newGate = new GateEntity(gateId,status, localTimeStamp, 53.5633146 + (1.0* gateId / 20000.0),9.9873ct261 +  (1.0 * gateId / 20000.0), "Hamburg", "REQUESTED_NONE", 0, "PENDING_NONE", 3  );
+                            GateEntity newGate = new GateEntity(gateId,status, localTimeStamp, 53.557120, 10.022826, "Hamburg", "REQUESTED_NONE", 0, "PENDING_NONE", 3  );
                             gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
                             System.out.println("GateID:" + gateId + "Timestamp" + localTimeStamp.getTime());
@@ -112,11 +112,16 @@ public class MqttMessageHandler {
 
                         List<GateActivity> allGateActivities = gateActivityService.getGateActivitiesByGateId(gateId);
                         Status status = Status.fromCode(statusCode);
-                        GateActivityEntity ngae = new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), ActivityType.SENSEMATE_WORKER_REPORT, senseMateId);
-                        GateActivity nga = new GateActivity(ngae.getLocalTimeStamp(), ngae.getGateTimeStamp(), ngae.getGateId(), ngae.getRequestedStatus(), ngae.getMessage(), ngae.getId(), ngae.getWorkerId());
+                        GateActivityEntity ngae = new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId,
+                                                                         status.toString(), ActivityType.SENSEMATE_WORKER_REPORT,
+                                                                         senseMateId);
+                        GateActivity nga = new GateActivity(ngae.getLocalTimeStamp(), ngae.getGateTimeStamp(), ngae.getGateId(),
+                                                            ngae.getRequestedStatus(), ngae.getMessage(), ngae.getId(),
+                                                            ngae.getWorkerId(), ngae.getActivityType());
                         boolean already_exists = false;
                         for (GateActivity ega: allGateActivities) {
-                            if (ega.getGateTimeStamp().equals(nga.getGateTimeStamp())) {
+                            if (ega.getActivityType().equals(nga.getActivityType()) &&
+                                ega.getGateTimeStamp().equals(nga.getGateTimeStamp())) {
                                 System.out.println("This seen state was already reported!");
                                 already_exists = true;
                                 break;

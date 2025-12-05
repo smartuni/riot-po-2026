@@ -13,7 +13,7 @@ int store_service_get(store_service_t *service, const uint8_t *key, size_t key_l
     assert(key != NULL);
     assert(data != NULL);
 
-    return service->interface.get(service->context, key, key_len, data, data_len);
+    return service->interface->get(service->context, key, key_len, data, data_len);
 }
 
 int store_service_put(store_service_t *service, const uint8_t *key, size_t key_len,
@@ -23,7 +23,7 @@ int store_service_put(store_service_t *service, const uint8_t *key, size_t key_l
     assert(key != NULL);
     assert(data != NULL);
 
-    return service->interface.put(service->context, key, key_len, data, data_len);
+    return service->interface->put(service->context, key, key_len, data, data_len);
 }
 
 int store_service_delete(store_service_t *service, const uint8_t *key, size_t key_len)
@@ -31,7 +31,7 @@ int store_service_delete(store_service_t *service, const uint8_t *key, size_t ke
     assert(service != NULL);
     assert(key != NULL);
 
-    return service->interface.delete(service->context, key, key_len);
+    return service->interface->delete(service->context, key, key_len);
 }
 
 int store_service_iterator_init(store_service_t *service,
@@ -42,7 +42,7 @@ int store_service_iterator_init(store_service_t *service,
     assert(iterator != NULL);
     assert(query != NULL);
 
-    return service->interface.iterator_init(service->context, iterator, query);
+    return service->interface->iterator_init(service->context, iterator, query);
 }
 
 int store_service_iterator_next(store_service_t *service,
@@ -55,7 +55,7 @@ int store_service_iterator_next(store_service_t *service,
     assert(key_len != NULL);
     assert(data_len != NULL);
 
-    return service->interface.iterator_next(service->context, iterator, key, key_len,
+    return service->interface->iterator_next(service->context, iterator, key, key_len,
                                             data, data_len);
 }
 

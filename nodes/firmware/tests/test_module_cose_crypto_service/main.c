@@ -45,7 +45,7 @@ void setUp(void)
         flashdb_store_service_init(&store_ctx, "credentials_db", DB_DIR)
     );
 
-    store_service.interface = flashdb_store_service_interface;
+    store_service.interface = &flashdb_store_service_interface;
     store_service.context = &store_ctx;
 
     TEST_ASSERT_EQUAL_INT(0, credential_manager_init(&store_service));
@@ -67,7 +67,7 @@ static void test_cose_crypto_service_init(void)
 {
     TEST_ASSERT_EQUAL_INT(0, cose_crypto_service_init(&crypto_ctx));
     crypto_service.context = &crypto_ctx;
-    crypto_service.interface = cose_crypto_service_interface;
+    crypto_service.interface = &cose_crypto_service_interface;
 }
 
 static void test_sign_verify(void)

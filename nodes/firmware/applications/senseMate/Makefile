@@ -16,8 +16,10 @@ VERBOSE_ASSERT ?= 1
 # Configrue device id and device type.
 # This will instruct the key-distro module to include required credentials.
 RIOT_CONFIG_DEVICE_ID ?= 1
-RIOT_CONFIG_DEVICE_TYPE ?= SENSEMATE_NODE
-
+# Set the device type to SenseMate to configure some device specific behaviors.
+# Dont allow overwrites here, as that would only cause trouble anyway.
+# (the corresponding values are defined in tables/types.h)
+RIOT_CONFIG_DEVICE_TYPE = DEVICE_TYPE_SENSEMATE
 # Some workarounds are needed in order to get the tutorial running on
 # some computers.
 -include ../../lab_workarounds.mk
@@ -37,7 +39,8 @@ USEMODULE += event_thread_highest
 USEMODULE += event_thread
 USEMODULE += event_timeout
 
-USEMODULE += tables_old
+USEMODULE += tables
+USEMODULE += tables_shell
 
 USEMODULE += mate_lorawan
 USEMODULE += mate_ble
@@ -70,8 +73,36 @@ CFLAGS += -DTHREAD_STACKSIZE_UI=2*4096
 CFLAGS += -DLV_MEM_SIZE=1024*16
 DIRS += sensemate_ui
 USEMODULE += sensemate_ui
+USEMODULE += ps
+USEMODULE += shell_cmds_default
+
+# RAM-based storage backend
+USEMODULE += mtd_emulated
+
+# credential manager stuff
+USEMODULE += credential_manager
+USEMODULE += flashdb_store_service
+USEMODULE += vfs_default
+USEMODULE += vfs_auto_format
+
+# configure ram mtd to a size of 8 kByte
+CFLAGS += -DRAM_MTD_SECTOR_COUNT=\(16\)
+CFLAGS += -DRAM_MTD_PAGE_PER_SECTOR=\(64\)
+CFLAGS += -DRAM_MTD_PAGE_SIZE=\(64\)
+
+# use two sectors of the storage for flashdb (PER STORAGE SERVICE)
+# TODO: make configurable for each store sercvice separately
+CFLAGS += -DFLASHDB_STORE_SERVICE_SECTOR_SIZE=\(RAM_MTD_PAGE_PER_SECTOR*RAM_MTD_PAGE_SIZE\)
+CFLAGS += -DFLASHDB_STORE_SERVICE_DB_SIZE=\(\(FLASHDB_STORE_SERVICE_SECTOR_SIZE*2\)\)
+
+# tables stuff
+USEMODULE += tables
+USEMODULE += cose_crypto_service
+USEMODULE += hlc_ztimer
+
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 
+CFLAGS += -I$(APPDIR)/include
 include $(RIOTBASE)/Makefile.include

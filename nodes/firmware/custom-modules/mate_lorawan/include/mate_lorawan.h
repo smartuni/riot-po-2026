@@ -21,21 +21,27 @@
 #define MATE_LORAWAN_H
 
 #include "event.h"
+#include "tables/types.h"
+
+#define MATE_LORAWAN_TX_QUERY_MATCHES_MSG_TYPE (0x66)
 
 /**
  * @brief   Intializes the LoRaWAN module and starts the event loop.
+ *
+ * @param   tables     Reference to sucessfully initialized tables instance
+ *
  * @retval  0 on success
  * @retval  -1 on failure
  */
-int start_lorawan(void);
+int mate_lorawan_start(tables_context_t *tables);
 
-extern event_t send_seen_status_table; // Event for sending seen status table
-extern event_t send_is_state_table; // Event for sending is state table
-
-// extern event_t send_event; // Generic event for sending data
-// extern event_t send_target_state_table; // Event for sending target state table
-// extern event_t send_jobs_table; // Event for sending jobs table
-// extern event_t send_timestamp_table; // Event for sending timestamp table
+/**
+ * @brief   Check if joining lorawan network finished sucessfully.
+ *
+ * @retval  true if the node joined
+ * @retval  false if the join did not finish yet
+ */
+bool mate_lorawan_joined(void);
 
 #endif /* MATE_LORAWAN_H */
 /** @} */

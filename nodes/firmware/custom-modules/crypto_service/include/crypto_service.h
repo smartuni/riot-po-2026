@@ -60,7 +60,7 @@ typedef struct {
  */
 typedef struct {
     /**< Interface to the table crypto service */
-    crypto_service_interface_t interface;
+    const crypto_service_interface_t *interface;
 
     /**< Context for the table crypto service */
     const void *context;

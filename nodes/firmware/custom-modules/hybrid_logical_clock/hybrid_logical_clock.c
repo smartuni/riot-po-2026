@@ -3,6 +3,7 @@
  *
  * @author     Leandro Lanzieri
  */
+#include <stdio.h>
 #include <assert.h>
 
 #include "mutex.h"
@@ -30,6 +31,7 @@ int hlc_init(hlc_ctx_t *ctx, hlc_get_physical_time_fn get_time_fn, void *arg)
     }
 
     ctx->local_hlc.logical  = 0;
+    ctx->physical_offset  = 0;
 
 free_and_exit:
     mutex_unlock(&ctx->lock);
@@ -64,6 +66,7 @@ int hlc_update_with_remote_timestamp(hlc_ctx_t *ctx, const hlc_timestamp_t *ts, 
         result = HLC_ERROR_GET_TIME;
         goto free_and_exit;
     }
+    now_physical += ctx->physical_offset;
 
     // p_now > p_local && p_now > p_remote -> p_local = p_now; l_local = 0
     if (_hlc_compare_physical(&now_physical, &ctx->local_hlc.physical) > 0 &&
@@ -85,6 +88,11 @@ int hlc_update_with_remote_timestamp(hlc_ctx_t *ctx, const hlc_timestamp_t *ts, 
 
     // else (p_remote > p_local) -> p_local = p_remote; l_local = l_remote + 1
     else {
+        // bump the physical time offset
+        // (-1 to ensure we never leap ahead the remote which could cause network wide drift)
+        // TODO: verify if this is always safe to do.
+        ctx->physical_offset = (ts->physical - now_physical) - 1;
+
         ctx->local_hlc.physical = ts->physical;
         ctx->local_hlc.logical  = ts->logical + 1;
     }
@@ -113,6 +121,7 @@ int hlc_get_current_timestamp(hlc_ctx_t *ctx, hlc_timestamp_t *out)
         result = HLC_ERROR_GET_TIME;
         goto free_and_exit;
     }
+    current_physical += ctx->physical_offset;
 
     if (_hlc_compare_physical(&current_physical, &ctx->local_hlc.physical) > 0) {
         ctx->local_hlc.physical = current_physical;
@@ -126,4 +135,14 @@ int hlc_get_current_timestamp(hlc_ctx_t *ctx, hlc_timestamp_t *out)
 free_and_exit:
     mutex_unlock(&ctx->lock);
     return result;
+}
+
+int hlc_tostr(const hlc_timestamp_t *hlc, char *str, size_t str_len)
+{
+    int pos = snprintf(str, str_len, "[%010"PRIu32, hlc->physical);
+    str[pos++] = '.';
+    pos += snprintf(&str[pos], str_len - pos, "%010"PRIu32"]", hlc->logical);
+    /* return size without terminating zero */
+    return pos;
+
 }

@@ -30,11 +30,11 @@ static void _setup_test(tables_context_t *ctx,
                         hlc_ztimer_t *hlc_ztimer_ctx,
                         const node_id_t *self_id)
 {
-    store_service->interface = store_interface;
+    store_service->interface = &store_interface;
     store_service->context = store_context;
     store_init_ctx(store_context);
 
-    crypto_service->interface = crypto_interface;
+    crypto_service->interface = &crypto_interface;
     crypto_service->context = crypto_context;
     crypto_init_ctx(crypto_context, (const uint8_t[]){ DUMMY_SIGNATURE },
                     DUMMY_SIGNATURE_LEN);
@@ -101,6 +101,8 @@ static void test_tables_merge(void)
     TEST_ASSERT_EQUAL_INT(-1, tables_merge_record(&ctx, record, &result));
 
     record->signature = NULL;
+    // make sure this is treated as a new record to force checking the signature
+    set_record_sequence(record, 4);
     TEST_ASSERT_EQUAL_INT(-1, tables_merge_record(&ctx, record, &result));
     TEST_ASSERT_TRUE(result.rejected_sig);
 }

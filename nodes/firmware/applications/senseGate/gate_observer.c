@@ -1,6 +1,9 @@
 #include <string.h>
-#include "include/gate_observer.h"
+#include "gate_observer.h"
 #include "event/thread.h"
+
+event_queue_t *_observer_event_queue = NULL;
+static char observer_stack[2*THREAD_STACKSIZE_DEFAULT];
 
 static void _update_state(gate_observer_t *observer)
 {
@@ -28,9 +31,9 @@ static void _update_state(gate_observer_t *observer)
     gate_state_t prev_state = observer->state.concluded_state;
     /* for now only consider the gate closed if all sensors indicate a closed state */
     if (close_cnt == (GATE_OBSERVER_DISTANCE_SENSOR_CNT + GATE_OBSERVER_DISTANCE_SENSOR_CNT)) {
-        observer->state.concluded_state = GATE_CLOSED;
+        observer->state.concluded_state = GATE_STATE_CLOSED;
     } else {
-        observer->state.concluded_state = GATE_OPEN;
+        observer->state.concluded_state = GATE_STATE_OPEN;
     }
 
     if (prev_state != observer->state.concluded_state) {
@@ -58,7 +61,26 @@ void limit_switch_reactivate_handler(event_t *event)
 
 void limit_switch_cb(void *arg) {
     event_t *evt = (event_t*)arg;
-    event_post(EVENT_PRIO_HIGHEST, evt);
+    if (_observer_event_queue) {
+        event_post(_observer_event_queue, evt);
+    }
+}
+
+void* observer_thread(void* arg)
+{
+    gate_observer_t *observer = (gate_observer_t*)arg;
+
+    event_queue_t observer_event_queue;
+    _observer_event_queue = &observer_event_queue;
+    event_queue_init(&observer_event_queue);
+
+    event_timeout_ztimer_init(&observer->ls_reactivate_evt_timeout,
+                              ZTIMER_MSEC, &observer_event_queue,
+                              &observer->ls_reactivate_evt);
+
+    event_loop(&observer_event_queue);
+
+    return NULL;
 }
 
 int gate_observer_init(gate_observer_t *observer, const gate_observer_config_t *config, gate_state_changed_cb_t cb)
@@ -74,9 +96,15 @@ int gate_observer_init(gate_observer_t *observer, const gate_observer_config_t *
     observer->ls_reactivate_evt.handler = limit_switch_reactivate_handler;
     observer->ls_event_muted = false;
 
-    event_timeout_ztimer_init(&observer->ls_reactivate_evt_timeout,
-                              ZTIMER_MSEC, EVENT_PRIO_HIGHEST,
-                              &observer->ls_reactivate_evt);
+    thread_create(
+        observer_stack,
+        sizeof(observer_stack),
+        THREAD_PRIORITY_MAIN - 3,
+        THREAD_CREATE_STACKTEST,
+        observer_thread,
+        observer,
+       "gate_observer"
+    );
 
     for (int i = 0; i < GATE_OBSERVER_LIMITSWITCH_SENSOR_CNT; i++) {
         limit_switch_pin_conf_t *lsc = &observer->config.limit_switch_confs[i];
