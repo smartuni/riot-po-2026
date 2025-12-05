@@ -10,6 +10,17 @@
 #include "tables/types.h"
 #include "hybrid_logical_clock.h"
 
+/* buffer size for a node_id_t string representation in the format "0x12345678\0" */
+#define NODE_ID_STRING_SIZE (11)
+
+/* buffer size for a record_sequence_t string representation in the format
+ * "0x1234567812345678\0" */
+#define SEQUENCE_STRING_SIZE (19)
+
+/* buffer size for a table_record_t string representation in the format
+ * "0x12345678 0x1234567812345678 RECORD_GATE_OBSERVATION GATE_STATE_DONT_CARE\0" */
+#define TABLE_RECORD_STRING_SIZE (128) // pessimistic value
+
 /**
  * @{
  * @defgroup Record Storage and Retrieval
@@ -536,4 +547,48 @@ void get_gate_job_assigned_device(const table_gate_job_t *data, const node_id_t 
  * @param device_id Pointer to the device ID to set
  */
 void set_gate_job_assigned_device(table_gate_job_t *data, const node_id_t *device_id);
+
+/**
+ * @brief Get a string representation from a record type value.
+ * @param rt      The record type
+ * @return        The string representation of the record type
+ */
+const char* record_type_tostr(table_record_type_t rt);
+
+/**
+ * @brief Get a string representation from a record type value.
+ * @param rt      The record type
+ * @return        The string representation of the record type
+ */
+const char* gate_state_tostr(gate_state_t s);
+
+/**
+ * @brief Get a string representation from a node_id_t value.
+ * @param id       The node id
+ * @param str      Buffer to store the string representation
+ *                 (must be >= NODE_ID_STRING_SIZE bytes)
+ * @param str_len  Length of @p str buffer
+ * @return         Number of bytes written to @p str (excluding terminating zero)
+ */
+int node_id_tostr(const node_id_t id, char *str, size_t str_len);
+
+/**
+ * @brief Get a string representation from a record_sequence_t value.
+ * @param sequence  The sequence
+ * @param str       Buffer to store the string representation
+ *                  (must be >= SEQUENCE_STRING_SIZE bytes)
+ * @param str_len   Length of @p str buffer
+ * @return          Number of bytes written to @p str (excluding terminating zero)
+ */
+int record_sequence_tostr(const record_sequence_t *sequence, char *str, size_t str_len);
+
+/**
+ * @brief Get a string representation from a table_record_t value.
+ * @param record   The table record
+ * @param str      Buffer to store the string representation
+ *                 (must be >= TABLE_RECORD_STRING_SIZE bytes)
+ * @param str_len  Length of @p str buffer
+ * @return         Number of bytes written to @p str (excluding terminating zero)
+ */
+int record_tostr(const table_record_t *record, char *str, size_t str_len);
 /** @} */

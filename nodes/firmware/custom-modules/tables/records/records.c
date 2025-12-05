@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "crypto_service.h"
 #include "store_service.h"
@@ -157,7 +158,7 @@ int sign_record(tables_context_t *ctx, table_record_t *record,
     memcpy(buffer + header_size, record->data.raw, data_size);
 
     result = crypto_service_sign(&ctx->crypto_service, (const uint8_t *)ctx->self_id,
-                                 TABLES_KEY_SIZE, buffer, buffer_size, signature_buffer,
+                                 NODE_ID_SIZE, buffer, buffer_size, signature_buffer,
                                  signature_buffer_size);
     if (result != 0) {
         return result;
@@ -190,7 +191,7 @@ int verify_record(tables_context_t *ctx, const table_record_t *record)
 
     return crypto_service_verify(&ctx->crypto_service,
                                  (const uint8_t *)&record->header.writer,
-                                 TABLES_KEY_SIZE, buffer, buffer_size,
+                                 NODE_ID_SIZE, buffer, buffer_size,
                                  record->signature, record->signature_len);
 }
 
@@ -465,4 +466,103 @@ bool record_matches_query(const table_record_t *record, const table_query_t *que
     }
 
     return true;
+}
+
+const char* record_type_tostr(table_record_type_t rt)
+{
+    switch (rt) {
+        case RECORD_UNDEFINED        : return "UNDEFINED";
+        case RECORD_GATE_REPORT      : return "GATE_REPORT";
+        case RECORD_GATE_OBSERVATION : return "GATE_OBSERVATION";
+        case RECORD_GATE_ENCOUNTER   : return "GATE_ENCOUNTER";
+        case RECORD_MATE_ENCOUNTER   : return "MATE_ENCOUNTER";
+        case RECORD_GATE_COMMAND     : return "GATE_COMMAND";
+        case RECORD_GATE_JOB         : return "GATE_JOB";
+        default                      : return "INVALID_RECORD_TYPE";
+    }
+}
+
+const char* gate_state_tostr(gate_state_t s)
+{
+    switch (s) {
+        case GATE_STATE_OPEN      : return "OPEN";
+        case GATE_STATE_CLOSED    : return "CLOSED";
+        case GATE_STATE_UNKNOWN   : return "UNKNOWN";
+        case GATE_STATE_DONT_CARE : return "DONT_CARE";
+        default                   : return "INVALID_GATE_SATE";
+    }
+}
+
+int node_id_tostr(const node_id_t id, char *str, size_t str_len)
+{
+    int pos = snprintf(str, str_len, "0x");
+    for (size_t i = 0; i < sizeof(node_id_t); i++) {
+        pos += snprintf(&str[pos], (str_len - pos), "%02x", id[i]);
+    }
+    /* return size without terminating zero */
+    return pos;
+}
+
+int record_sequence_tostr(const record_sequence_t *sequence, char *str, size_t str_len)
+{
+    int pos = snprintf(str, str_len, "0x");
+    for (size_t i = 0; i < sizeof(record_sequence_t); i++) {
+        pos += snprintf(&str[pos], (str_len - pos), "%02x", ((uint8_t*)sequence)[i]);
+    }
+    /* return size without terminating zero */
+    return pos;
+}
+
+int record_tostr(const table_record_t *record, char *str, size_t str_len)
+{
+    int pos = 0;
+    table_record_type_t type;
+    const node_id_t *writer_id;
+    record_sequence_t seq;
+
+    get_record_type(record, &type);
+    get_record_writer_id(record, &writer_id);
+    get_record_sequence(record, &seq);
+
+    hlc_timestamp_t hlc;
+    get_record_timestamp(record, &hlc);
+    pos += hlc_tostr(&hlc, &str[pos], str_len - pos);
+    str[pos++] = ' ';
+
+    pos += node_id_tostr(*writer_id, &str[pos], str_len - pos);
+    str[pos++] = ' ';
+
+    pos += record_sequence_tostr(&seq, &str[pos], str_len - pos);
+    str[pos++] = ' ';
+
+    pos += snprintf(&str[pos], (str_len - pos), "%s ", record_type_tostr(type));
+
+    switch (type) {
+        case RECORD_GATE_REPORT:
+            {
+                table_gate_report_t *rdata;
+                if (get_gate_report_data(record, &rdata) == 0) {
+                    pos += snprintf(&str[pos], (str_len - pos), "%s ",
+                            gate_state_tostr(rdata->state));
+                }
+            }
+            break;
+        case RECORD_GATE_OBSERVATION:
+            {
+                table_gate_observation_t *odata;
+                if (get_gate_observation_data(record, &odata) == 0) {
+                    pos += snprintf(&str[pos], (str_len - pos), "%s ",
+                            gate_state_tostr(odata->state));
+                }
+            }
+            break;
+            //RECORD_GATE_ENCOUNTER
+            //RECORD_MATE_ENCOUNTER
+            //RECORD_GATE_COMMAND
+            //RECORD_GATE_JOB
+        default:
+            break;
+    }
+    /* return size without terminating zero */
+    return pos;
 }

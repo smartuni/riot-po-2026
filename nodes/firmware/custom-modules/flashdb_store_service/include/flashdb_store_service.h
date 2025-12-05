@@ -12,7 +12,10 @@ typedef struct {
     struct fdb_kvdb kvdb;
 
     /**< Mutex to protect access to the context */
-    mutex_t lock;
+    mutex_t fdb_lock;
+
+    /**< Mutex to protect service operations */
+    mutex_t service_lock;
 } flashdb_store_service_ctx_t;
 
 typedef struct __attribute__((aligned(__alignof__(store_service_iterator_t)))) {
@@ -51,4 +54,4 @@ int flashdb_store_service_init(flashdb_store_service_ctx_t *ctx, const char *db_
 /**
  * @brief FlashDB tables store service interface
  */
-extern store_service_interface_t flashdb_store_service_interface;
+extern const store_service_interface_t flashdb_store_service_interface;

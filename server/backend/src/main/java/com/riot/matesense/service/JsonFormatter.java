@@ -3,9 +3,16 @@ package com.riot.matesense.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.riot.matesense.enums.RecordType;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+
+import static com.riot.matesense.enums.MsgType.IST_STATE;
+import static com.riot.matesense.enums.MsgType.SEEN_TABLE_STATE;
+import static com.riot.matesense.enums.RecordType.GATE_OBSERVATION;
+import static com.riot.matesense.enums.RecordType.GATE_REPORT;
+
 @Service
 public class JsonFormatter {
 
@@ -59,25 +66,47 @@ public class JsonFormatter {
     // ========================= Methoden =========================
 
     public String toJsonFormat(List<Object> rawData) throws Exception {
-        int messageType = (int) rawData.get(0);
-        List<List<Integer>> entries = (List<List<Integer>>) rawData.get(1);
+        //===== Header -----vvvvv
+        int version = (int) rawData.get(0);
+        int messageType = (int)rawData.get(1);
+        RecordType recordType = RecordType.fromCode((int)rawData.get(2));
+        byte[] writerId= (byte[])rawData.get(3);
+        int hlc_phy = (int)rawData.get(5);
+        int hlc_log = (int)rawData.get(6);
+        //===== Header -----^^^^^
 
-        if (messageType == 1) { // IST_STATE
-            List<StatusEntry> statusList = new ArrayList<>();
-            for (List<Integer> entry : entries) {
-                statusList.add(new StatusEntry(entry.get(0), entry.get(1), entry.get(2)));
-            }
-            Message message = new Message(messageType, statusList);
+        // TODO: add proper support for HLC instead fo this custom conversion onto the old int-timestamp
+        int timestamp = hlc_phy * 1000 + hlc_log;
+        /*
+        int cnt = 0;
+        for (Object o: rawData) {
+            System.out.println("========");
+            System.out.println(cnt++);
+            System.out.println(o.getClass());
+            System.out.println(o);
+            System.out.println("========");
+        }
+        */
+
+        if (GATE_REPORT.equals(recordType)) {
+            int gateid = writerId[3];
+            int gateState = (int)rawData.get(7);
+            StatusEntry se = new StatusEntry(gateid, gateState, timestamp);
+            Message message = new Message(IST_STATE.getCode(), List.of(se));
             return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
-        } else if (messageType == 2) { // SEEN_TABLE_STATE
+        } else if (GATE_OBSERVATION.equals(recordType)) {
             List<SeenTableEntry> seenTableList = new ArrayList<>();
-            for (List<Integer> entry : entries) {
-                seenTableList.add(new SeenTableEntry(entry.get(0), entry.get(1), entry.get(2), entry.get(3)));
-            }
-            Message message = new Message(messageType, seenTableList);
+            byte[] gateId= (byte[])rawData.get(7);
+            //TODO: add native support of new node_id type
+            int gateid = gateId[3];
+            int gateState = (int)rawData.get(8);
+            int mateid = writerId[3];
+
+            seenTableList.add(new SeenTableEntry(gateid, timestamp, gateState, mateid));
+            Message message = new Message(SEEN_TABLE_STATE.getCode(), seenTableList);
             return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
-        } else {
-            throw new IllegalArgumentException("Unbekannter MessageType: " + messageType);
+        }else {
+            throw new IllegalArgumentException("Unknown RecordType: " + recordType);
         }
     }
 

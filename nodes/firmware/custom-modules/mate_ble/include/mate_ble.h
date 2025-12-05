@@ -22,7 +22,7 @@
 #include "event.h"
 #include "tables.h"
 
-#define BLE_SEND_INTERVAL (5000) // in milliseconds
+#define BLE_SEND_INTERVAL (10000) // in milliseconds
 
 #define BLE_SUCCESS (0)
 #define BLE_ERROR (-1)
@@ -40,6 +40,8 @@
 #define MATE_BLE_MAX_PAYLOAD_SIZE       (MATE_BLE_ADV_PKT_BUFFER_SIZE)
 #define MATE_BLE_MAX_CBOR_PACKAGE_COUNT (10)
 #define MATE_BLE_MAX_CBOR_PACKAGE_SIZE  (MATE_BLE_MAX_PAYLOAD_SIZE - MATE_BLE_SIGNING_DATA_SIZE)
+
+#define MATE_BLE_TX_QUERY_MATCHES_MSG_TYPE (0x55)
 
 typedef uint8_t cbor_message_type_t;
 
@@ -61,42 +63,13 @@ typedef struct ble_tx_thread_args {
 } ble_tx_thread_args_t;
 
 /**
- * @brief           Loop that manages the propagation of state tables via ble
- */
-void ble_run_propagation(void);
-
-/**
- * @brief           Blocking function to receive data over BLE
- * @param[in]       type    Type of data to receive
- * @param[inout]    cbor_packet  Pointer to output cbor packet
- * @param[inout]    metadata  Pointer to output metadata
- * @return          0 on success, negative error code on failure
- */
-int ble_receive(cbor_message_type_t type, cbor_buffer* cbor_packet, ble_metadata_ptr_t metadata);
-
-/**
- * @brief           Function to send data over BLE
- * @param[in]       data    Pointer to the data to send
- * @return          0 on success, negative error code on failure
- */
-int ble_send(cbor_buffer* cbor_packet);
-
-/**
  * @brief           Function to initialize the BLE module
+ *
+ * @param   tables  Reference to sucessfully initialized tables instance
+ * @param   txpid   Used to return the tx thread pid
+ *
  * @return          0 on success, negative error code on failure
  */
-int ble_init(void);
-
-/**
- * @brief           Sender loop of the BLE module. Propagates the state tables
- *                  via BLE advertisements.
- */
-void* ble_send_loop(void*);
-
-/**
- * @brief           Receiver loop of the BLE module. Receives the propagated state tables
- * @param[in]       args    Pointer to ble_receive_thread_args_t structure containing the event queue and event
- */
-void* ble_receive_loop(void* args);
+int mate_ble_init(tables_context_t *tables, kernel_pid_t *txpid);
 
 #endif /* MATE_BLE_H */

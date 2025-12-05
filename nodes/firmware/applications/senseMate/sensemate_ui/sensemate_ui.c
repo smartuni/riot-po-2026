@@ -1,5 +1,7 @@
 #include <errno.h>
 #include <stdio.h>
+#include "od.h"
+#include "event.h"
 #include "lvgl/lvgl.h"
 #include "lvgl_riot.h"
 #include "disp_dev.h"
@@ -10,6 +12,23 @@
 #include "lvgl/src/extra/themes/mono/lv_theme_mono.h"
 #include "periph/gpio.h"
 #include "include/sensemate_ui.h"
+#include "timex.h"
+#define LOG_LEVEL   LOG_NONE
+#include "log.h"
+#define _LOGDBG(...) LOG_DEBUG("[ui]: " __VA_ARGS__)
+#define _LOGINF(...) LOG_INFO("[ui]: " __VA_ARGS__)
+
+#ifndef CONFIG_LVGL_INACTIVITY_PERIOD_MS
+#define CONFIG_LVGL_INACTIVITY_PERIOD_MS    (5 * MS_PER_SEC)    /* 5s */
+#endif
+
+#ifndef CONFIG_LVGL_TASK_HANDLER_DELAY_MS
+#define CONFIG_LVGL_TASK_HANDLER_DELAY_MS   (5)                 /* 5ms */
+#endif
+
+#ifndef LVGL_THREAD_FLAG
+#define LVGL_THREAD_FLAG                    (1 << 7)
+#endif
 
 #define XSTR(s) #s
 #define STR(s) XSTR(s)
@@ -20,6 +39,10 @@
 #define INVALID_GATE_MARKER (0xFFFFFFFF)
 /* Stack for the ui thread */
 static char _ui_thread_stack[THREAD_STACKSIZE_UI];
+
+static void _ui_trigger_refresh(event_t *event);
+static void _custom_lvgl_wakeup(void);
+event_t event_trigger_ui_refresh = { .handler = _ui_trigger_refresh };
 
 /* Must be lower than LVGL_INACTIVITY_PERIOD_MS for autorefresh */
 #define REFR_TIME           200
@@ -76,7 +99,7 @@ typedef struct ui_dyn_menu_ctx_t {
 } ui_dyn_menu_ctx_t;
 
 typedef struct {
-    gate_id_t gate_id;
+    node_id_t gate_id;
     lv_obj_t *delete_on_exit;
     lv_group_t *prev_nav_group;
 } ui_gate_edit_ctx_t;
@@ -126,7 +149,7 @@ static void wakeup_task(lv_timer_t *param)
     (void)param;
     /* Force a wakeup of lvgl when each task is called: this ensures an activity
        is triggered and wakes up lvgl during the next LVGL_INACTIVITY_PERIOD ms */
-    lvgl_wakeup();
+    _custom_lvgl_wakeup();
 }
 
 static void establ_conn_blink_task(lv_timer_t *timer)
@@ -199,14 +222,16 @@ static void _gate_state_prompt_btn_handler(lv_event_t * e)
     void *usr_data = lv_event_get_user_data(e);
     int btn_idx = (int)usr_data;
     if (btn_idx != 2) { /* cancel*/
-        gate_state_t observed_state = (btn_idx == 0) ? GATE_OPEN : GATE_CLOSED;
+        gate_state_t observed_state = (btn_idx == 0) ? GATE_STATE_OPEN : GATE_STATE_CLOSED;
         ui_data_element_t data_elem = {
-            .data.seen_state = {
-                            .gateID = _gate_edit_ctx.gate_id,
+            .data.gate_observation = {
                             .state = observed_state,
             },
         };
-        _data_cbs->set_seen_state(&data_elem);
+        //TODO change the gate id type to something that can be assigned by value directly
+        //     or introduce some better accessor/translator functions.
+        memcpy(data_elem.data.gate_observation.gate_id, _gate_edit_ctx.gate_id, sizeof(node_id_t));
+        _data_cbs->put_gate_observation(&data_elem);
     }
 
     lv_indev_set_group(indev, _gate_edit_ctx.prev_nav_group);
@@ -270,6 +295,16 @@ static lv_obj_t* _create_dialog(lv_obj_t *parent, const char *txt, const char *o
     return dialog_cont;
 }
 
+void _uint32_to_node_id(uint32_t i, node_id_t ni)
+{
+    memcpy(ni, &i, sizeof(node_id_t));
+}
+
+void _node_id_to_uint32(node_id_t ni, uint32_t *i)
+{
+    memcpy(i, ni, sizeof(node_id_t));
+}
+
 static void _gate_edit_btn_handler(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -278,13 +313,16 @@ static void _gate_edit_btn_handler(lv_event_t * e)
     if(code == LV_EVENT_CLICKED) {
         void *usr_data = lv_event_get_user_data(e);
         if (usr_data) {
-            gate_id_t gate_id = (gate_id_t)(uint32_t)usr_data;
+            node_id_t gate_id;
+            _uint32_to_node_id((uint32_t)usr_data, gate_id);
+
             /* TODO: is there a safer /more generic  way for this? */
             lv_obj_t *tile = lv_obj_get_parent(lv_obj_get_parent(obj));
             char prompt[32];
-            lv_snprintf(prompt, sizeof(prompt), "Report Gate-%d as:", gate_id);
+            //TODO: replace this hack with a proper translation/ lookup function
+            lv_snprintf(prompt, sizeof(prompt), "Report Gate-%d as:", gate_id[3]);
             lv_obj_t *dialog = _create_dialog(tile, prompt, _observed_gate_state_opts);
-            _gate_edit_ctx.gate_id = gate_id;
+            memcpy(_gate_edit_ctx.gate_id, gate_id, sizeof(node_id_t));
             _gate_edit_ctx.prev_nav_group = lv_obj_get_group(obj);
             _gate_edit_ctx.delete_on_exit = dialog;
         }
@@ -337,19 +375,25 @@ static void _create_gate_list(lv_obj_t *parent, lv_group_t *grp, bool only_close
             continue;
         }
         char buf[16];
-        lv_snprintf(buf, sizeof(buf), "Gate %d", li->gateID);
+        //TODO: replace this hack with a proper translation/ lookup function
+        lv_snprintf(buf, sizeof(buf), "Gate %d", ((uint8_t*)li->gateID)[3]);
         lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, buf);
-        lv_obj_set_user_data(btn, (void*)(uint32_t)li->gateID);
+
+        uint32_t id;
+        _node_id_to_uint32(li->gateID, &id);
+
+        lv_obj_set_user_data(btn, (void*)id);
         if (li->sensor_data_present) {
             lv_obj_t *icon = lv_img_create(btn);
-            if (li->sensor_state == GATE_OPEN) {
+            if (li->sensor_state == GATE_STATE_OPEN) {
                 lv_img_set_src(icon, &lock_open_icon_16x16);
             } else {
                 lv_img_set_src(icon, &lock_closed_icon_16x16);
             }
         }
         lv_group_add_obj(grp, btn);
-        lv_obj_add_event_cb(btn, _gate_edit_btn_handler, LV_EVENT_CLICKED, (void*)(uint32_t)li->gateID);
+
+        lv_obj_add_event_cb(btn, _gate_edit_btn_handler, LV_EVENT_CLICKED, (void*)id);
     }
 
     lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_NEW_LINE, "back");
@@ -498,7 +542,7 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     badge_lbl_persons = _add_badged_icon(dash_cont, &person_icon_32x32, "0");
 }
 
-lv_obj_t * _get_gate_state_ui_handle_from_list(lv_obj_t *list, gate_id_t gateid)
+lv_obj_t * _get_gate_state_ui_handle_from_list(lv_obj_t *list, node_id_t gateid)
 {
     uint32_t child_cnt = lv_obj_get_child_cnt(list);
     for (uint32_t i = 0; i < child_cnt; i++) {
@@ -507,9 +551,13 @@ lv_obj_t * _get_gate_state_ui_handle_from_list(lv_obj_t *list, gate_id_t gateid)
             //const char *btn_str = lv_list_get_btn_text(l, child);
             uint32_t user_data = (uint32_t)lv_obj_get_user_data(child);
             if (user_data != INVALID_GATE_MARKER) {
-                gate_id_t gi = (gate_id_t)(uint32_t)lv_obj_get_user_data(child);
+                //gate_id_t gi = (gate_id_t)(uint32_t)lv_obj_get_user_data(child);
+                node_id_t gi;
+                _uint32_to_node_id(user_data, gi);
+                //
                 //printf("%s -> gate id = %u\n", btn_str, gi);
-                if (gi == gateid) {
+                //if (gi == gateid) {
+                if (memcmp(gi, gateid, sizeof(node_id_t)) == 0) {
                     return child;
                 }
             }
@@ -556,7 +604,7 @@ void _ui_update_gate_list(struct ui_dyn_menu_ctx_t *ctx)
             if (btn) {
                 lv_obj_t *img = _get_state_img_obj_from_gate_ui_handle(btn);
                 if (img) {
-                    if (li->sensor_state == GATE_OPEN) {
+                    if (li->sensor_state == GATE_STATE_OPEN) {
                         lv_img_set_src(img, &lock_open_icon_16x16);
                     } else {
                         lv_img_set_src(img, &lock_closed_icon_16x16);
@@ -599,7 +647,6 @@ static void _clear_tile_dyn_leave(ui_dyn_menu_ctx_t *c)
     lv_group_del(c->nav_group);
 
     uint32_t child_cnt = lv_obj_get_child_cnt(c->tile);
-    printf("leave! (delete %lu children)\n", child_cnt);
     for (uint32_t i = 0; i < child_cnt; i++) {
         lv_obj_t *child = lv_obj_get_child(c->tile, i);
         lv_obj_del(child);
@@ -664,6 +711,48 @@ static void _switch_to_contex_tile_enter_cb(ui_dyn_menu_ctx_t *c)
     (void)c;
     lv_obj_set_tile(c->tileview, c->tile, LV_ANIM_ON);
     lv_indev_set_group(indev, c->nav_group);
+}
+
+static kernel_pid_t _task_thread_pid;
+static bool _refresh_ui_elements_needed = false;
+
+static void _custom_lvgl_run(void)
+{
+    _task_thread_pid = thread_getpid();
+    while (1) {
+        /* Normal operation (no sleep) in < CONFIG_LVGL_INACTIVITY_PERIOD_MS msec
+           inactivity */
+        if (lv_disp_get_inactive_time(NULL) < CONFIG_LVGL_INACTIVITY_PERIOD_MS) {
+            if (_refresh_ui_elements_needed) {
+                /* consume refresh flag */
+                _refresh_ui_elements_needed = false;
+                /* update ui elements such as labels etc. */
+                sensemate_ui_update();
+            }
+            lv_timer_handler();
+        } else {
+            /* Block after LVGL_ACTIVITY_PERIOD msec inactivity */
+            thread_flags_wait_one(LVGL_THREAD_FLAG);
+            /* trigger an activity so the task handler is called on the next loop */
+            lv_disp_trig_activity(NULL);
+        }
+
+        ztimer_sleep(ZTIMER_MSEC, CONFIG_LVGL_TASK_HANDLER_DELAY_MS);
+    }
+}
+
+static void _custom_lvgl_wakeup(void)
+{
+    thread_t *tcb = thread_get(_task_thread_pid);
+    thread_flags_set(tcb, LVGL_THREAD_FLAG);
+}
+
+static void _ui_trigger_refresh(event_t *event)
+{
+    (void)event;
+    _LOGDBG("trigger refresh...\n");
+    _refresh_ui_elements_needed = true;
+    _custom_lvgl_wakeup();
 }
 
 static void *_ui_thread(void *arg)
@@ -745,7 +834,7 @@ static void *_ui_thread(void *arg)
     refr_task = lv_timer_create(wakeup_task, REFR_TIME, NULL);
 
     sensemate_ui_update();
-    lvgl_run();
+    _custom_lvgl_run();
 
     /* will never be reached, lvgl_run() is blocking */
     return NULL;
@@ -763,7 +852,7 @@ int sensemate_ui_init(ui_data_cbs_t *data_cbs)
 
     /* create the reception thread] */
     kernel_pid_t ui_pid = thread_create(_ui_thread_stack, sizeof(_ui_thread_stack),
-                                        THREAD_PRIORITY_MAIN - 1,
+                                        THREAD_PRIORITY_MAIN - 2,
                                         THREAD_CREATE_STACKTEST, _ui_thread, NULL,
                                         "ui");
     if (-EINVAL == ui_pid) {
@@ -818,6 +907,7 @@ static void _update_connection_state_obj(ui_conn_state_obj_ctx_t *ctx)
 }
 void sensemate_ui_update(void)
 {
+    _LOGDBG("%s\n", __func__);
     _update_badge_counter_label(badge_lbl_gates, _ui_state.visible_gate_cnt);
     _update_badge_counter_label(badge_lbl_tasks, _ui_state.pending_jobs_cnt);
     _update_badge_counter_label(badge_lbl_persons, _ui_state.visible_mate_cnt);

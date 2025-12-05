@@ -7,7 +7,7 @@
 #include "event.h"
 #include "event/timeout.h"
 #include "periph/gpio.h"
-#include "mate_types.h"
+#include "tables/types.h"
 
 #ifndef GATE_OBSERVER_DISTANCE_SENSOR_CNT
 #define GATE_OBSERVER_DISTANCE_SENSOR_CNT (1)
@@ -18,7 +18,7 @@
 #endif
 
 #ifndef GATE_OBSERVER_LIMITSWITCH_DEBOUNCE_MS
-#define GATE_OBSERVER_LIMITSWITCH_DEBOUNCE_MS (2000)
+#define GATE_OBSERVER_LIMITSWITCH_DEBOUNCE_MS (1000)
 #endif
 
 typedef enum {

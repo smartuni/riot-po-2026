@@ -12,6 +12,33 @@
 
 #include "od.h"
 
+CborError cbor_deserialize_simple_or_u8(CborValue *value, uint8_t *val)
+{
+    CborError error;
+    if (cbor_value_is_simple_type(value)) {
+        error = cbor_value_get_simple_type(value, val);
+        if (error != CborNoError) {
+            DEBUG("%s cbor_value_get_simple_type error: (%d)\n", __func__, error);
+            return error;
+        }
+        return CborNoError;
+    } else if (cbor_value_is_unsigned_integer(value)) {
+        uint64_t tmp;
+        error = cbor_value_get_uint64(value, &tmp);
+        if (error != CborNoError) {
+            DEBUG("%s cbor_value_get_uint64 (%d)\n", __func__, error);
+            return error;
+        }
+        if (tmp > 255) {
+            DEBUG("%s cbor_value_get_uint64 larger than uint8_t!\n", __func__);
+            return CborErrorIllegalType;
+        }
+        *val = (uint8_t)tmp;
+        return CborNoError;
+    }
+    return CborErrorIllegalType;
+}
+
 static int _cbor_decode_hlc_timestamp(CborValue *value, hlc_timestamp_t *hlc)
 {
     CborError error;
@@ -104,15 +131,11 @@ static int _cbor_decode_record_header(CborValue *value, table_record_header_t *h
     CborError error;
     uint8_t simple_value;
     int result;
+    memset(header, 0, sizeof(table_record_header_t));
 
-    if (!cbor_value_is_simple_type(value)) {
-        DEBUG("_cbor_decode_record_header: expected simple value for record type\n");
-        return -1;
-    }
-
-    error = cbor_value_get_simple_type(value, &simple_value);
+    error = cbor_deserialize_simple_or_u8(value, &simple_value);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_record_header: error getting record type (%d)\n", error);
+        DEBUG("%s expected simple or unsigned value for record type (%d)\n", __func__, error);
         return -1;
     }
 
@@ -177,17 +200,10 @@ static int _cbor_decode_gate_report(CborValue *array_item, table_gate_report_t *
     assert(array_item != NULL);
     assert(report != NULL);
 
-    CborError error;
-
-    if (!cbor_value_is_simple_type(array_item)) {
-        DEBUG("_cbor_decode_gate_report: expected simple type for gate state\n");
-        return -1;
-    }
-
     uint8_t gate_state;
-    error = cbor_value_get_simple_type(array_item, &gate_state);
+    CborError error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_gate_report: error getting gate state\n");
+        DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
     }
 
@@ -220,15 +236,10 @@ static int _cbor_decode_gate_observation(CborValue *array_item,
         return -1;
     }
 
-    if (!cbor_value_is_simple_type(array_item)) {
-        DEBUG("_cbor_decode_gate_observation: expected simple type for gate state\n");
-        return -1;
-    }
-
     uint8_t gate_state;
-    error = cbor_value_get_simple_type(array_item, &gate_state);
+    error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_gate_observation: error getting gate state\n");
+        DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
     }
 
@@ -261,15 +272,10 @@ static int _cbor_decode_gate_command(CborValue *array_item,
         return -1;
     }
 
-    if (!cbor_value_is_simple_type(array_item)) {
-        DEBUG("_cbor_decode_gate_command: expected simple type for gate state\n");
-        return -1;
-    }
-
     uint8_t gate_state;
-    error = cbor_value_get_simple_type(array_item, &gate_state);
+    error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_gate_command: error getting gate state\n");
+        DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
     }
 
@@ -308,15 +314,10 @@ static int _cbor_decode_gate_job(CborValue *array_item,
         return -1;
     }
 
-    if (!cbor_value_is_simple_type(array_item)) {
-        DEBUG("_cbor_decode_gate_job: expected simple type for gate state\n");
-        return -1;
-    }
-
     uint8_t gate_state;
-    error = cbor_value_get_simple_type(array_item, &gate_state);
+    error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
-        DEBUG("_cbor_decode_gate_job: error getting gate state\n");
+        DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
     }
 
@@ -370,12 +371,12 @@ static int _cbor_decode_record_data(CborValue *array_item, table_record_t *recor
         DEBUG("_cbor_decode_record_data: error decoding specific data part\n");
         return -1;
     }
-
+    record->data.raw = record_data;
     return 0;
 }
 
-static int _cbor_decode_record_signature(CborValue *array_item, uint8_t *signature,
-                                         size_t *signature_len)
+static int _cbor_decode_record_signature(CborValue *array_item, table_record_t *record,
+                                         uint8_t *signature, size_t *signature_len)
 {
     assert(array_item != NULL);
     assert(signature_len != NULL);
@@ -395,6 +396,8 @@ static int _cbor_decode_record_signature(CborValue *array_item, uint8_t *signatu
               error);
         return -1;
     }
+
+    record->signature_len = length;
 
     if (signature == NULL) {
         *signature_len = length;
@@ -422,6 +425,8 @@ static int _cbor_decode_record_signature(CborValue *array_item, uint8_t *signatu
         return -1;
     }
 
+    record->signature = signature;
+
     return 0;
 }
 
@@ -437,6 +442,9 @@ int cbor_decode_record(CborValue *array_item, table_record_t *record,
 
     CborError error;
     int result;
+
+    memset(record, 0, sizeof(table_record_t));
+    memset(record_data, 0, sizeof(table_record_data_buffer_t));
 
     result = _cbor_decode_record_header(array_item, &record->header);
     if (result != 0) {
@@ -462,10 +470,20 @@ int cbor_decode_record(CborValue *array_item, table_record_t *record,
         return -1;
     }
 
-    result = _cbor_decode_record_signature(array_item, signature, signature_len);
-    if (result != 0) {
-        DEBUG("cbor_decode_record: error decoding record signature\n");
-        return -1;
+    /* if the serialized data does not contain a signature, don't try to decode it */
+    if (cbor_value_at_end(array_item)) {
+        *signature_len = 0;
+        /* in case a signature was expected by the caller but there is none,
+         * treat this as an error */
+        if (signature) {
+            return -1;
+        }
+    } else {
+        result = _cbor_decode_record_signature(array_item, record, signature, signature_len);
+        if (result != 0) {
+            DEBUG("cbor_decode_record: error decoding record signature\n");
+            return -1;
+        }
     }
 
     return 0;

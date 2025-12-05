@@ -5,27 +5,60 @@
 #include <stdlib.h>
 #include <sys/_intsup.h>
 
+#include "od.h"
 #include "event.h"
+#include "event/timeout.h"
 #include "host/util/util.h"
 #include "host/ble_hs.h"
 #include "nimble_scanner.h"
 #include "nimble_addr.h"
 #include "nimble/ble.h"
 #include "net/bluetil/ad.h"
+#include "random.h"
 #include "shell.h"
 #include "tables.h"
+#include "tables/records.h"
+#include "tables/types.h"
 #include "timex.h"
 #include "ztimer.h"
 #include "cbor.h"
 #include "cose-service.h"
-#define LOG_LEVEL   LOG_NONE
+#include "cbor_serialization.h"
+#include "personalization.h"
+#define LOG_LEVEL   LOG_INFO
 #include "log.h"
+#define _LOGDBG(...) LOG_DEBUG("[mate_ble]: " __VA_ARGS__)
+#define _LOGINF(...) LOG_INFO("[mate_ble]: " __VA_ARGS__)
+
 /* include sound module only on SenseMate (gate has no audio) */
-#if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
 #include "include/soundModule.h"
+#include "events_creation.h"
 #endif
 
-#include "incoming_list.h"
+static const char *ok(bool condition)
+{
+    return condition ? "[OK]" : "[ERROR]";
+}
+
+typedef struct {
+    uint8_t *buf;
+    size_t buf_len;
+    nimble_scanner_info_t info;
+    char dev_name[BLE_ADV_PDU_LEN + 1];
+} payload_descriptor_t;
+
+char ble_tx_thread_stack[8*THREAD_STACKSIZE_DEFAULT];
+char ble_rx_thread_stack[8*THREAD_STACKSIZE_DEFAULT];
+
+static kernel_pid_t _ble_receive_pid = KERNEL_PID_UNDEF;
+void* ble_tx_thread(void* arg);
+void* ble_rx_thread(void* args);
+
+/* max record / serialization sizes
+ * TODO: obtain from records/tables interface ? */
+#define MAX_SIGNATURE_SIZE 80
+#define MAX_SERIALIZED_RECORD_SIZE 128
 
 #define MATE_BLE_TX_POWER_UNDEF (127)
 
@@ -40,19 +73,27 @@
  * MATE_BLE_SCAN_INTERVAL_MS = MATE_BLE_SCAN_WINDOW_MS results in continuous scanning.*/
 #define MATE_BLE_SCAN_INTERVAL_MS 30
 #define MATE_BLE_ADV_START_MS 20
-#define MATE_BLE_ADV_STOP_MS 200
+#define MATE_BLE_ADV_STOP_MS 100
 
 #define MATE_BLE_THRESHOLD  (-85)
 
+/* Message queue size for offloading received data
+ * from the nimble callback to the rx thread context.
+ * In the thread context heavier processing such as signature verification
+ * and table traversal and merges can be done. */
+#define RX_MSG_QUEUE_SIZE (8)
+#define TX_MSG_QUEUE_SIZE (8)
 
 static uint8_t id_addr_type;
-static uint8_t ble_initialized = 0;
+
+/* Singleton reference to the tables instance. Is provided on init. */
+static tables_context_t *_tables = NULL;
 
 static const char adv_name[] = BLE_ADVERTISE_NAME;
 
 /* The first two bytes of the manufacturer specific data type contain
  * a company ID code which for a final product must be requested from
- * the Bluetooth SIG. 
+ * the Bluetooth SIG.
  * For testing purposes we use 0xFFFF as an unassigned identifier code.
  */
 static const uint8_t _company_id_code[] = { 0xFF, 0xFF };
@@ -69,25 +110,15 @@ static const uint8_t _custom_msd_marker_pattern[] = {
 #define MATE_BLE_MSD_PAYLOAD_OFFS (sizeof(_company_id_code) + \
                           sizeof(_custom_msd_marker_pattern))
 
-static uint8_t encode_outbuf[MATE_BLE_MAX_PAYLOAD_SIZE];
-static uint8_t send_buffer[MATE_BLE_MAX_CBOR_PACKAGE_SIZE * MATE_BLE_MAX_CBOR_PACKAGE_COUNT];
-static uint8_t send_package_size_buffer[MATE_BLE_MAX_CBOR_PACKAGE_COUNT];
-static uint8_t recv_buffer[MATE_BLE_MAX_CBOR_PACKAGE_SIZE * MATE_BLE_MAX_CBOR_PACKAGE_COUNT];
-static uint8_t recv_package_size_buffer[MATE_BLE_MAX_CBOR_PACKAGE_COUNT];
-uint8_t verify_outbuf[1024];  // ausreichend groß dimensionieren //TODO
-
-/* TODO: This semaphore was previously used to synchronize to the advertisement done
- * event. An unresolved bug resulted in endless waiting for the semaphore to be posted.
- * It is currently worked around with a timer based delay but it should eventually be
- * replaced by a proper synchronization method.
- **/
-//static sem_t adv_done_sem;
+/* mutex to synchronize the ble send loop to the BLE_GAP_EVENT_ADV_COMPLETE event in
+ * ble_gap_event_cb. The send loop will wait for the callback to unlock the mutex
+ * so it can safely and quickly stop the current advertisement. */
+static mutex_t adv_done_mutex = MUTEX_INIT;
 
 static int ble_gap_event_cb(struct ble_gap_event *event, void *arg);
 static void ad_append(bluetil_ad_t *ad, const uint8_t *data, unsigned len);
 static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payload, unsigned len);
 static void start_adv(uint8_t *payload, unsigned payload_len);
-void print_hex_arr(const uint8_t *data, unsigned len);
 static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr, const nimble_scanner_info_t *info, const uint8_t *ad, size_t len);
 
 static void ad_append(bluetil_ad_t *ad, const uint8_t *data, unsigned len)
@@ -118,12 +149,12 @@ static void ad_append_marked_msd_payload(bluetil_ad_t *ad, const uint8_t *payloa
     ad_append(ad, payload, len);
 }
 
-static int ble_gap_event_cb(struct ble_gap_event *event, void *arg) 
+static int ble_gap_event_cb(struct ble_gap_event *event, void *arg)
 {
     (void)arg;
     switch (event->type) {
         case BLE_GAP_EVENT_ADV_COMPLETE:
-            //sem_post(&adv_done_sem);
+            mutex_unlock(&adv_done_mutex);
             break;
         default:
             break;
@@ -189,22 +220,15 @@ static void start_adv(uint8_t *payload, unsigned payload_len)
     rc = ble_gap_ext_adv_set_data(MATE_BLE_NIMBLE_INSTANCE, data);
     assert (rc == 0);
 
-    LOG_DEBUG("[mate_ble]: triggering advertisement...\n");
-    //print_hex_arr(payload, payload_len);
+    _LOGDBG("triggering advertisement...\n");
+    if (LOG_LEVEL >= LOG_DEBUG) {
+        od_hex_dump(payload, payload_len, 0);
+    }
     //tables_print_all();
 
     // Start advertising
     rc = ble_gap_ext_adv_start(MATE_BLE_NIMBLE_INSTANCE, 0, 1);
     assert (rc == 0);
-}
-
-void print_hex_arr(const uint8_t *data, unsigned len)
-{
-    printf("{");
-    for (unsigned i = 0; i < len; i++) {
-        printf(" 0x%02x%c", data[i], (i == len-1) ? ' ' : ',');
-    }
-    printf("}\n");
 }
 
 static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
@@ -233,13 +257,15 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
                                 name, sizeof(name));
     // Output name, address, and data of the advertisement
     if (table_result == BLUETIL_AD_OK) {
-        LOG_DEBUG("\n[mate_ble]: \"%s\" @", name);
+        _LOGDBG("\"%s\" @", name);
     }
     if (LOG_LEVEL >= LOG_DEBUG) {
         nimble_addr_print(addr);
     }
-    LOG_DEBUG("sent %d bytes\n", len);
-    //print_hex_arr(ad, len);
+    _LOGDBG("sent %d bytes\n", len);
+    if (LOG_LEVEL >= LOG_DEBUG) {
+        od_hex_dump(ad, len, 0);
+    }
 
     // output our payload marke# BUILD_IN_DOCKER ?= 1d by our custom byte pattern
     bluetil_ad_data_t msd;
@@ -253,33 +279,43 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
             // length of the payload without the marker
             int pl = msd.len - MATE_BLE_MSD_PAYLOAD_OFFS;
 
-            ble_metadata_t metadata = {};
-            metadata.rssi = info->rssi;
+            payload_descriptor_t *pd = malloc(sizeof(payload_descriptor_t));
+            if (pd) {
+                uint8_t *buf = malloc(pl);
+                if (buf) {
+                    memcpy(buf, payload, pl);
+                    pd->buf = buf;
+                    pd->buf_len = pl;
+                    pd->info = *info;
+                    size_t adv_name_len = strlen(name);
+                    if (adv_name_len <= (sizeof(pd->dev_name) + 1)) {
+                        memcpy(pd->dev_name, name, adv_name_len);
+                        pd->dev_name[adv_name_len] = '\0';
+                    }
 
-            size_t verify_payload_len = 0;
-            int verify_result = verify_decode(
-                payload, 
-                pl,
-                verify_outbuf, 
-                sizeof(verify_outbuf),
-                &verify_payload_len
-            );
-
-            if(verify_result == 0) {
-                insert_message(verify_outbuf, verify_payload_len, metadata);
-                LOG_DEBUG("[mate_ble]: %d bytes of playload verified.\n", verify_payload_len);
-                //print_hex_arr(verify_outbuf,verify_payload_len);
-                //tables_print_all();
+                    msg_t offload_msg = { .content.ptr = pd };
+                    if (msg_send(&offload_msg, _ble_receive_pid) != 1) {
+                        _LOGDBG("offload to RX thread failed -> discard packet!\n");
+                        free(buf);
+                        free(pd);
+                    } else {
+                        _LOGDBG("offloaded %d bytes to RX thread\n", pl);
+                    }
+                } else {
+                    _LOGDBG("malloc of payload buffer failed (%d B) -> discard packet!\n", pl);
+                    free(pd);
+                }
             } else {
-                LOG_DEBUG("[mate_ble]: Failed to verify!\n");
+                _LOGDBG("malloc payload descriptor failed! -> discard packet!\n");
             }
         }
     }
 }
 
-int ble_init(void)
+int mate_ble_init(tables_context_t *tables, kernel_pid_t *txpid)
 {
-    puts("Initializing BLE extended advertisement!");
+    _LOGDBG("Initializing BLE extended advertisement...\n");
+    _tables = tables;
 
     //sem_init(&adv_done_sem, 0, 0);
 
@@ -300,16 +336,41 @@ int ble_init(void)
     nimble_scanner_init(&params, nimble_scan_evt_cb);
     // start the scanner
     nimble_scanner_start();
-    ble_initialized = 1;
+
+    *txpid = thread_create(
+        ble_tx_thread_stack,
+        sizeof(ble_tx_thread_stack),
+        THREAD_PRIORITY_MAIN - 2,
+        THREAD_CREATE_STACKTEST,
+        ble_tx_thread,
+        NULL,
+       "mate_ble_tx"
+    );
+
+    if (*txpid <= 0) {
+        _LOGINF("%s tx thread init failed %d\n", __func__, *txpid);
+        return BLE_ERROR;
+    }
+
+    kernel_pid_t rxpid = thread_create(
+        ble_rx_thread_stack,
+        sizeof(ble_rx_thread_stack),
+        THREAD_PRIORITY_MAIN + 2,
+        THREAD_CREATE_STACKTEST,
+        ble_rx_thread,
+        NULL,
+       "mate_ble_rx"
+    );
+
+    if (rxpid <= 0) {
+        _LOGINF("%s rx thread init failed %d\n", __func__, rxpid);
+        return BLE_ERROR;
+    }
+
     return BLE_SUCCESS;
 }
 
-int ble_receive(cbor_message_type_t type, cbor_buffer* cbor_packet, ble_metadata_ptr_t metadata)
-{
-    return wait_for_message(type, cbor_packet, metadata);
-}
-
-int ble_send(cbor_buffer* cbor_packet)
+static int _ble_send(uint8_t *buf, size_t len)
 {
     /* if advertising is already active stop it before updating
     * the advertised content */
@@ -317,127 +378,248 @@ int ble_send(cbor_buffer* cbor_packet)
         ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
     }
 
-    int packet_offset = 0;
-    for (int i = 0; i < cbor_packet->cbor_size; i++) {
-        // --- Encode code ---
-        uint8_t *encoded_ptr = NULL;
-        size_t encoded_len = 0;
-        sign_payload(
-            cbor_packet->buffer + packet_offset, 
-            cbor_packet->package_size[i], 
-            encode_outbuf, 
-            &encoded_ptr, 
-            &encoded_len
-        );
+    /* lock mutex before starting advertisement */
+    mutex_lock(&adv_done_mutex);
 
-        // update the payload with the given message
-        start_adv(encoded_ptr, encoded_len);
+    // update the payload with the given message
+    start_adv(buf, len);
 
-        // Block here until the ADV_COMPLETE event posts the sem
-        //sem_wait(&adv_done_sem);
-        ztimer_sleep(ZTIMER_MSEC, MATE_BLE_ADV_STOP_MS);
-
-        ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
-
-        packet_offset += cbor_packet->package_size[i];
+    // Block here until the ADV_COMPLETE event callback unlocks the mutex.
+    // Use a timeout as fallback in case the ble stack does not correctly trigger the event
+    // (this bahevior was sporadically seen before when using a semaphore without timeout).
+    // Set the timeout to the max configured adv interval + 20%.
+    uint32_t adv_timeout = MATE_BLE_ADV_STOP_MS * 120 / 100;
+    int res = ztimer_mutex_lock_timeout(ZTIMER_MSEC, &adv_done_mutex, adv_timeout);
+    if (!res) {
+        /* restore mutex to unlocked state if it was obtained */
+        mutex_unlock(&adv_done_mutex);
+    } else {
+        printf("TIMED OUT WATING FOR ADV COMPLETE!\n");
     }
+
+    _LOGDBG("stopping advertisement...\n");
+    ble_gap_ext_adv_stop(MATE_BLE_NIMBLE_INSTANCE);
+    _LOGDBG("stopped advertisement...\n");
 
     return BLE_SUCCESS;
 }
 
-static void wait_for_ble_init(void)
+char _send_record_str_buf[TABLE_RECORD_STRING_SIZE];
+
+static int _send_record(const table_record_t *record)
 {
-    if (!ble_initialized) {
-        LOG_DEBUG("ble_send_loop: BLE not initialized\n");
-        while (!ble_initialized) {
-            ztimer_sleep(ZTIMER_MSEC, 100);
-        }
+    size_t out_len = MAX_SERIALIZED_RECORD_SIZE;
+    uint8_t out_buf[out_len];
+
+    int res = cbor_serialize_record(record, out_buf, &out_len);
+    _LOGDBG("%s serialize:(%d) %s\n", __func__, res, ok(res == 0));
+    if (res) {
+        _LOGINF("_send_record serialize failed!\n");
+        return -1;
+    }
+
+    record_tostr(record, _send_record_str_buf,
+            sizeof(_send_record_str_buf));
+    _LOGINF("TX %s\n", _send_record_str_buf);
+
+    if (LOG_LEVEL == LOG_DEBUG) {
+        _LOGDBG("_send_record: \n");
+        od_hex_dump(out_buf, out_len, 0);
+    }
+    return _ble_send(out_buf, out_len);
+}
+
+static void mateble_send_query_matches(table_query_t *q)
+{
+    _LOGDBG("%s\n", __func__);
+    TABLE_ITERATOR(iterator, _tables);
+
+    table_record_t *record;
+
+    /* fixed worst-case signature buffer size to avoid multiple iterator calls */
+    uint8_t signature[MAX_SIGNATURE_SIZE];
+    size_t signature_len = sizeof(signature);
+
+    int res = tables_iterator_init(_tables, &iterator, q);
+    _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
+    if (res) {
+        return;
+    }
+
+    while(tables_iterator_next(_tables, &iterator, &record, signature, &signature_len) == 0) {
+        res = _send_record(record);
+        _LOGDBG("%s _send_record: %d\n", __func__, res);
     }
 }
 
-void* ble_send_loop(void* arg)
+void* ble_tx_thread(void* arg)
 {
-    ble_tx_thread_args_t *thr_args = (ble_tx_thread_args_t*)arg;
+    //TODO: properly integrate the thread args to pass event queues,
+    //      events etc. for signalling stuff to other components.
+    //ble_tx_thread_args_t *thr_args = (ble_tx_thread_args_t*)arg;
+    (void)arg;
 
-    wait_for_ble_init();
+    static msg_t tx_msg_queue[TX_MSG_QUEUE_SIZE];
 
-    cbor_buffer buffer;
-    buffer.buffer = send_buffer;
-    buffer.capacity = MATE_BLE_MAX_CBOR_PACKAGE_SIZE * MATE_BLE_MAX_CBOR_PACKAGE_COUNT;
-    buffer.package_size = send_package_size_buffer;
+    /* initialize the message queue] */
+    msg_init_queue(tx_msg_queue, TX_MSG_QUEUE_SIZE);
 
-    typedef int (*cbor_fn_t)(int, cbor_buffer *);
-    static const cbor_fn_t cbor_fns[] = {
-        target_state_table_to_cbor_many,
-        is_state_table_to_cbor_many,
-        seen_status_table_to_cbor_many
-    };
+    _LOGDBG("%s\n", __func__);
 
-    for (;;) {
-        event_post(thr_args->event_queue, thr_args->tx_event);
-        for (size_t i = 0; i < sizeof(cbor_fns) / sizeof(*cbor_fns); ++i) {
-            int count = cbor_fns[i](MATE_BLE_MAX_CBOR_PACKAGE_SIZE, &buffer);
-            if (count > 0) {
-                ble_send(&buffer);
-            }
-        }
-        ztimer_sleep(ZTIMER_MSEC, BLE_SEND_INTERVAL);
-    }
-}
-
-void* ble_receive_loop(void* args)
-{
-    ble_receive_thread_args_ptr_t thr_args = (ble_receive_thread_args_ptr_t)args;
-
-    wait_for_ble_init();
-    
-    cbor_buffer buffer;
-    buffer.buffer = recv_buffer;
-    buffer.capacity = MATE_BLE_MAX_CBOR_PACKAGE_SIZE * MATE_BLE_MAX_CBOR_PACKAGE_COUNT;
-    buffer.package_size = recv_package_size_buffer;
-    
-    ble_metadata_t metadata;
+    table_query_t send_all_query ;
+    tables_init_query(&send_all_query, RECORD_UNDEFINED, NULL, NULL);
 
     while (true) {
-        if (ble_receive(CBOR_MESSAGE_TYPE_WILDCARD, &buffer, &metadata) != BLE_SUCCESS) {
-            continue;
-        }
-
-        //printf("BLE: receive\n"
-        //    "metadata\n"
-        //    "\t.type %d\n"
-        //    "\t.rssi %d\n"
-        //    "buffer\n"
-        //    "\t.buffer %d\n"
-        //    "\t.cbor_size %d\n"
-        //    "\t.buffer_size[0] %d\n"
-        //    "\t.capacity %d\n",
-        //    metadata.message_type,
-        //    metadata.rssi,
-        //    (int)buffer.buffer,
-        //    buffer.cbor_size,
-        //    buffer.package_size[0],
-        //    buffer.capacity
-        //);
-
-        int table_result = cbor_to_table_test(&buffer, metadata.rssi);
-        if (metadata.rssi < MATE_BLE_THRESHOLD){
-            continue;
-        }
-
-        if (thr_args != NULL) {
-            if ((thr_args->receive_queue != NULL) && (table_result & TABLE_NEW_RECORD_AND_UPDATE)) {
-                event_post(thr_args->receive_queue, thr_args->receive_news_event);
+        msg_t m;
+        table_query_t *q = NULL;
+        uint32_t periodic_tx_delay = BLE_SEND_INTERVAL + random_uint32_range(0, BLE_SEND_INTERVAL / 10);
+        int res = ztimer_msg_receive_timeout(ZTIMER_MSEC, &m, periodic_tx_delay);
+        bool received_msg = res >= 0;
+        if (received_msg) {
+            //got msg
+            if (m.type != MATE_BLE_TX_QUERY_MATCHES_MSG_TYPE) {
+                continue;
             }
-#if RIOT_CONFIG_DEVICE_TYPE == SENSEMATE_NODE
-            else{
-                /* only play sound on the is_state table */
-                if (metadata.message_type == IS_STATE_KEY) {
-                    event_post(thr_args->receive_queue, thr_args->receive_any_event);
-                }
-            }
-#endif            
+            q = (table_query_t*)m.content.ptr;
+        } else {
+            q = &send_all_query;
+        }
+        mateble_send_query_matches(q);
+
+        if (received_msg) {
+            free(q);
         }
     }
+
+    return NULL;
+}
+
+char _recv_record_str_buf[TABLE_RECORD_STRING_SIZE];
+
+char _print_table_record_str_buf[TABLE_RECORD_STRING_SIZE];
+
+void _print_table(void)
+{
+    TABLE_ITERATOR(iterator, _tables);
+
+    table_record_t *record;
+    table_query_t query = {
+        //TODO: ignore non-propageted records
+        .type = RECORD_UNDEFINED,
+        .writer_id = NULL,
+        .involved_id = NULL
+    };
+
+    int res = tables_iterator_init(_tables, &iterator, &query);
+    printf("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
+    if (res) {
+        return;
+    }
+
+    printf("================\n");
+    while(tables_iterator_next(_tables, &iterator, &record, NULL, NULL) == 0) {
+        record_tostr(record, _print_table_record_str_buf, sizeof(_print_table_record_str_buf));
+        printf("%s: %s\n", __func__, _print_table_record_str_buf);
+    }
+    printf("================\n");
+}
+
+void* ble_rx_thread(void* args)
+{
+    _ble_receive_pid = thread_getpid();
+
+    (void)args;
+    //TODO: same as for the send loop: integrate the parameters
+    //ble_receive_thread_args_ptr_t thr_args = (ble_receive_thread_args_ptr_t)args;
+
+    static msg_t rx_msg_queue[RX_MSG_QUEUE_SIZE];
+
+    /* initialize the message queue] */
+    msg_init_queue(rx_msg_queue, RX_MSG_QUEUE_SIZE);
+
+    while (1) {
+        msg_t msg;
+        _LOGDBG("ble_receive_loop waiting for msg...\n");
+        msg_receive(&msg);
+        payload_descriptor_t *pd = (payload_descriptor_t*)msg.content.ptr;
+        //TODO interpret pd->info to decide if we ignore low RSSI packet;
+
+        table_record_t record;
+        table_record_data_buffer_t record_data;
+        uint8_t signature[MAX_SIGNATURE_SIZE];
+        size_t signature_len = sizeof(signature);
+
+        _LOGDBG("received %d bytes (RSSI %d):\n", pd->buf_len, pd->info.rssi);
+        if (LOG_LEVEL >= LOG_DEBUG) {
+            od_hex_dump(pd->buf, pd->buf_len, 0);
+        }
+
+        int res = cbor_deserialize(pd->buf, pd->buf_len, &record,
+                                    &record_data, signature, &signature_len);
+
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+        /* this part is only needed on the SenseMate to populate the encounter table */
+        //TODO: instead of parsing this from the advertised device name, extend the message format
+        //      to include a sender id (would also be useful for debugging).
+        //      Alternatively: use only specific message type (digest?) for mate encounters.
+        rssi_t rssi = pd->info.rssi;
+        const char *sensemate_prefix = "SenseMate-";
+        size_t prefix_len = strlen(sensemate_prefix);
+        bool sent_by_mate = strncmp(sensemate_prefix, pd->dev_name, prefix_len) == 0;
+        uint8_t matenum = sent_by_mate ? atoi(&pd->dev_name[prefix_len]) : 0;
+        node_id_t mate_id = { 0x00, 0x00, DEVICE_TYPE_SENSEMATE, matenum };
+#endif
+
+        free(pd->buf);
+        free(pd);
+        _LOGDBG("freed buffers\n");
+
+        if (res) {
+            _LOGDBG("cbor_deserialize failed: %d\n", res);
+            continue;
+        }
+
+        _LOGDBG("signature length: %d\n", signature_len);
+
+        record_tostr(&record, _recv_record_str_buf,
+                     sizeof(_recv_record_str_buf));
+        _LOGINF("RX %s\n", _recv_record_str_buf);
+
+        const node_id_t *writer_id;
+        get_record_writer_id(&record, &writer_id);
+        if (memcmp(writer_id, &self_node_id, sizeof(node_id_t)) == 0) {
+            _LOGDBG("ignoring received data about this device\n");
+            continue;
+        }
+
+        _LOGDBG("trying to merge record...\n");
+        table_merge_result_t result;
+        res = tables_merge_record(_tables, &record, &result);
+        if (res) {
+            _LOGDBG("tables_merge_record failed: %d\n", res);
+            //_print_table();
+        }
+
+        if (!res && (result.updated || result.new)) {
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+            if (sent_by_mate) {
+                tables_put_mate_encounter(_tables, &mate_id, rssi);
+            }
+            event_post(EVENT_PRIO_MEDIUM, &eventBleNews);
+            _LOGINF("table updated.\n");
+#endif
+        } else if (result.rejected_sig || result.invalid_record){
+            _LOGINF("Error updating table.\n");
+        } else {
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+            if (sent_by_mate) {
+                tables_put_mate_encounter(_tables, &mate_id, rssi);
+            }
+            event_post(EVENT_PRIO_MEDIUM, &eventBleRx);
+#endif
+            _LOGINF("No updates.\n");
+        }
+    }
+    /* never reached */
     return NULL;
 }
