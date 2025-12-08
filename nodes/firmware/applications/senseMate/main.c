@@ -28,7 +28,14 @@ static const char *ok(bool condition)
 }
 
 #define STORAGE_RAM_MOUNT_PATH "/ram0"
+//#define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
+
+#if IS_USED(MODULE_FLASHDB_MTD)
+#define STORAGE_MOUNT_PATH ""
+#else
 #define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
+#endif
+
 extern int credential_manager_setup(const char *db_path);
 extern int tables_setup(tables_context_t **t, const char *db_path);
 extern int storage_setup_ram_mtd(const char *mount_path);

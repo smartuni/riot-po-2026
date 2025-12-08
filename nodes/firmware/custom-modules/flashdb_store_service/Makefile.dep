@@ -1,7 +1,10 @@
 USEPKG += flashdb
 
-# select the VFS backend
-USEMODULE += flashdb_vfs
+# if flashdb_mtd is not selected manually, select the VFS backend instead
+ifeq (,$(filter flashdb_mtd,$(USEMODULE)))
+  USEMODULE += flashdb_vfs
+endif
+
 
 # enable key-value database
 USEMODULE += flashdb_kvdb
