@@ -11,12 +11,6 @@
 
 gpio_t sound = GPIO_PIN(0, 8);
 gpio_mode_t sound_mode = GPIO_OUT;
-bool thread_job = false;
-bool startup_toplay = false;
-bool ble_received_toplay = false;
-bool ble_send_toplay = false;
-bool uplink_sent_toplay = false;
-bool downlink_received_toplay = false;
 event_queue_t sound_queue;
 
 char thread_stack[THREAD_STACKSIZE_DEFAULT];
@@ -135,40 +129,13 @@ event_t close_by_todo_sound_event = { .handler = sound_handler };
 
 void* thread_sound_function(void *arg) {
     (void)arg; // Unused argument
-    
+
     event_queue_init(&sound_queue); // Initialize the sound event queue
 
     while(1){
         puts("Sound thread running.");
         event_loop(&sound_queue);
-        //event_t *ev = event_wait(&sound_queue);
-        //ev->handler(ev);
         puts("Sound thread event loop finished.");
-        /*ztimer_sleep(ZTIMER_MSEC, 500); // Sleep for 1 second
-        if(thread_job){
-            thread_job = false;
-            if(startup_toplay){
-                startup_toplay = false;
-                internal_startup();
-                printf("Playing startup sound.\n");
-            }
-            if(ble_received_toplay){
-                ble_received_toplay = false;
-                internal_ble_received();
-            }
-            if(ble_send_toplay){
-                ble_send_toplay = false;
-                internal_ble_send();
-            }
-            if(uplink_sent_toplay){
-                uplink_sent_toplay = false;
-                internal_uplink_send();
-            }
-            if(downlink_received_toplay){
-                downlink_received_toplay = false;
-                internal_downlink_reveived();
-            }
-        }*/
     }
 }
 
@@ -186,28 +153,9 @@ void init_sound_module(void) {
 void downlink_reveived_sound(void) {
     event_post(&sound_queue, &downlink_sound_event);
     puts("Downlink sound event posted.");
-    //downlink_received_toplay = true;
-    //thread_job = true;
-}
-
-void uplink_sent_sound(void) {
-    uplink_sent_toplay = true;
-    thread_job = true;
-}
-
-void ble_reveived_sound(void) {
-    ble_received_toplay = true;
-    thread_job = true;
-}
-
-void ble_sent_sound(void) {
-    ble_send_toplay = true;
-    thread_job = true;
 }
 
 void startup_sound(void){
     event_post(&sound_queue, &start_sound_event);
     puts("Startup sound event posted.");
-    //startup_toplay = true;
-    //thread_job = true;
 }
