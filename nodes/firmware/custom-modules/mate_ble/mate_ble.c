@@ -296,18 +296,18 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
 
                     msg_t offload_msg = { .content.ptr = pd };
                     if (msg_send(&offload_msg, _ble_receive_pid) != 1) {
-                        _LOGDBG("offload to RX thread failed -> discard packet!\n");
+                        _LOGINF("offload to RX thread failed -> discard packet!\n");
                         free(buf);
                         free(pd);
                     } else {
                         _LOGDBG("offloaded %d bytes to RX thread\n", pl);
                     }
                 } else {
-                    _LOGDBG("malloc of payload buffer failed (%d B) -> discard packet!\n", pl);
+                    _LOGINF("malloc of payload buffer failed (%d B) -> discard packet!\n", pl);
                     free(pd);
                 }
             } else {
-                _LOGDBG("malloc payload descriptor failed! -> discard packet!\n");
+                _LOGINF("malloc payload descriptor failed! -> discard packet!\n");
             }
         }
     }
