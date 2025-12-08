@@ -1,9 +1,13 @@
+#include <string.h>
+#include <stdlib.h>
 #include <errno.h>
 #include "od.h"
 #include "personalization.h"
 #include "flashdb_store_service.h"
 #include "store_service.h"
+#if IS_USED(MODULE_FLASHDB_VFS)
 #include "vfs_default.h"
+#endif
 #include "credential_manager.h"
 #include "key_config.h"
 #include "secrets/public_keys.h"
@@ -21,13 +25,16 @@ static store_service_t store_service = {
 };
 
 int credential_manager_setup(const char *db_path) {
+    int err;
+#if IS_USED(MODULE_FLASHDB_VFS)
     /* Create the DB directory */
-    int err = vfs_mkdir(db_path, 0777);
+    err = vfs_mkdir(db_path, 0777);
     if (err != 0 && err != -EEXIST) {
         _LOGERR("Could not create the directory");
         printf("Error %d\n", err);
         return -1;
     }
+#endif
 
     err = flashdb_store_service_init(&store_ctx, "cred_db", db_path);
     if (err) {

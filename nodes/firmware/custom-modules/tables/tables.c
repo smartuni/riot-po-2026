@@ -15,8 +15,14 @@
 
 #include "tables/records.h"
 
-#define LOG_LEVEL LOG_NONE
+#define LOG_LEVEL   LOG_NONE
 #include "log.h"
+#define _LOGDBG(...) LOG_DEBUG("[tables]: " __VA_ARGS__)
+
+static const char *ok(bool condition)
+{
+    return condition ? "[OK]" : "[ERROR]";
+}
 
 /**
  * @brief Structure passed to the memo list iteration
@@ -175,6 +181,7 @@ int tables_put_gate_report(tables_context_t *ctx, gate_state_t state)
 
 int tables_put_gate_observation(tables_context_t *ctx, const node_id_t *gate_id, gate_state_t state)
 {
+    _LOGDBG("%s\n", __func__);
     table_record_t record;
     table_gate_observation_t gate_observation;
     int result = 0;
@@ -182,6 +189,7 @@ int tables_put_gate_observation(tables_context_t *ctx, const node_id_t *gate_id,
 
     get_gate_observation_key(ctx->self_id, gate_id, &key);
     result = _create_new_record(ctx, &record);
+    _LOGDBG("%s _create_new_record %s\n", __func__, ok(result == 0));
     if (result != 0) {
         return result;
     }
@@ -193,6 +201,7 @@ int tables_put_gate_observation(tables_context_t *ctx, const node_id_t *gate_id,
     size_t signature_size;
     /* get signature size */
     result = sign_record(ctx, &record, NULL, &signature_size);
+    _LOGDBG("%s sig size %zu\n", __func__, signature_size);
     if (result != 0) {
         return result;
     }
@@ -200,16 +209,22 @@ int tables_put_gate_observation(tables_context_t *ctx, const node_id_t *gate_id,
     uint8_t signature_buffer[signature_size];
     /* get signature */
     result = sign_record(ctx, &record, signature_buffer, &signature_size);
+    _LOGDBG("%s sign_record %s\n", __func__, ok(result == 0));
     if (result != 0) {
         return result;
     }
 
     result = put_record_in_store(ctx, &record, &key);
+    _LOGDBG("%s put_record_in_store %s\n", __func__, ok(result == 0));
     if (result < 0) {
         return result;
     }
 
+    _LOGDBG("%s call memos...\n", __func__);
+
     _check_and_call_memos(ctx, &record);
+
+    _LOGDBG("%s call memos [DONE]\n", __func__);
 
     return 0;
 }

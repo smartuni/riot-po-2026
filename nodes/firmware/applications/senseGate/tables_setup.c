@@ -1,8 +1,10 @@
 #include <errno.h>
 
 #include "hlc_ztimer.h"
+#if IS_USED(MODULE_FLASHDB_VFS)
 #include "vfs.h"
 #include "vfs_default.h"
+#endif
 #include "hybrid_logical_clock.h"
 #include "crypto_service.h"
 #include "cose_crypto_service.h"
@@ -43,13 +45,16 @@ static const char *ok(bool condition)
 
 int tables_setup(tables_context_t **t, const char *db_path)
 {
+    int err;
+#if IS_USED(MODULE_FLASHDB_VFS)
     /* Create the DB directory */
-    int err = vfs_mkdir(db_path, 0777);
+    err = vfs_mkdir(db_path, 0777);
     if (err != 0 && err != -EEXIST) {
         puts("Could not create the directory");
         printf("Error %d\n", err);
         return -1;
     }
+#endif
 
     err = flashdb_store_service_init(&store_ctx, "tables_db", db_path);
     LOG_DEBUG("%s: flashdb_store_service_init %s\n", __func__, ok(!err));

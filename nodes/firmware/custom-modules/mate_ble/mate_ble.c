@@ -73,7 +73,8 @@ void* ble_rx_thread(void* args);
  * MATE_BLE_SCAN_INTERVAL_MS = MATE_BLE_SCAN_WINDOW_MS results in continuous scanning.*/
 #define MATE_BLE_SCAN_INTERVAL_MS 30
 #define MATE_BLE_ADV_START_MS 20
-#define MATE_BLE_ADV_STOP_MS 100
+#define MATE_BLE_ADV_STOP_MS 40
+#define MATE_BLE_ADV_TIMEOUT_MS 100
 
 #define MATE_BLE_THRESHOLD  (-85)
 
@@ -295,18 +296,18 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
 
                     msg_t offload_msg = { .content.ptr = pd };
                     if (msg_send(&offload_msg, _ble_receive_pid) != 1) {
-                        _LOGDBG("offload to RX thread failed -> discard packet!\n");
+                        _LOGINF("offload to RX thread failed -> discard packet!\n");
                         free(buf);
                         free(pd);
                     } else {
                         _LOGDBG("offloaded %d bytes to RX thread\n", pl);
                     }
                 } else {
-                    _LOGDBG("malloc of payload buffer failed (%d B) -> discard packet!\n", pl);
+                    _LOGINF("malloc of payload buffer failed (%d B) -> discard packet!\n", pl);
                     free(pd);
                 }
             } else {
-                _LOGDBG("malloc payload descriptor failed! -> discard packet!\n");
+                _LOGINF("malloc payload descriptor failed! -> discard packet!\n");
             }
         }
     }
@@ -387,8 +388,8 @@ static int _ble_send(uint8_t *buf, size_t len)
     // Block here until the ADV_COMPLETE event callback unlocks the mutex.
     // Use a timeout as fallback in case the ble stack does not correctly trigger the event
     // (this bahevior was sporadically seen before when using a semaphore without timeout).
-    // Set the timeout to the max configured adv interval + 20%.
-    uint32_t adv_timeout = MATE_BLE_ADV_STOP_MS * 120 / 100;
+    // Set the timeout to sufficiently larger than the max configured adv interval.
+    uint32_t adv_timeout = MATE_BLE_ADV_TIMEOUT_MS;
     int res = ztimer_mutex_lock_timeout(ZTIMER_MSEC, &adv_done_mutex, adv_timeout);
     if (res) {
         printf("TIMED OUT WATING FOR ADV COMPLETE!\n");
