@@ -8,8 +8,14 @@
 
 #include "flashdb_store_service.h"
 
-#define ENABLE_DEBUG (1)
-#include "debug.h"
+#define LOG_LEVEL   LOG_NONE
+#include "log.h"
+#define _LOGDBG(...) LOG_DEBUG("[flashdb_store_service]: " __VA_ARGS__)
+
+static const char *ok(bool condition)
+{
+    return condition ? "[OK]" : "[ERROR]";
+}
 
 static void _lock_callback(fdb_db_t db)
 {
@@ -33,9 +39,11 @@ int flashdb_store_service_init(flashdb_store_service_ctx_t *ctx, const char *db_
 
     memset(&ctx->kvdb, 0, sizeof(struct fdb_kvdb));
 
-    /* enable file mode */
-    bool file_mode = true;
-    fdb_kvdb_control(&ctx->kvdb, FDB_KVDB_CTRL_SET_FILE_MODE, &file_mode);
+    if (IS_USED(MODULE_FLASHDB_VFS)) {
+        /* enable file mode */
+        bool file_mode = true;
+        fdb_kvdb_control(&ctx->kvdb, FDB_KVDB_CTRL_SET_FILE_MODE, &file_mode);
+    }
 
     mutex_init(&ctx->service_lock);
 
@@ -64,7 +72,7 @@ static int _put_callback(const void *context, const uint8_t *key, size_t key_len
     assert(context != NULL);
     assert(key != NULL);
     assert(data != NULL);
-
+    _LOGDBG("%s\n", __func__);
     flashdb_store_service_ctx_t *ctx = (flashdb_store_service_ctx_t *)context;
     fdb_err_t result;
     struct fdb_blob blob;
@@ -72,8 +80,10 @@ static int _put_callback(const void *context, const uint8_t *key, size_t key_len
 
     size_t key_b64_len = base64_estimate_encode_size(key_len);
     char key_b64[key_b64_len + 1];
+    _LOGDBG("%s b64 estimated key len: %zu\n", __func__, key_b64_len);
 
     int res = base64_encode(key, key_len, key_b64, &key_b64_len);
+    _LOGDBG("%s b64 encode %s\n", __func__, ok(res == BASE64_SUCCESS));
     if (res != BASE64_SUCCESS) {
         mutex_unlock(&ctx->service_lock);
         return -1;
@@ -85,6 +95,7 @@ static int _put_callback(const void *context, const uint8_t *key, size_t key_len
 
     /* Store the blob in the KVDB */
     result = fdb_kv_set_blob(&ctx->kvdb, key_b64, &blob);
+    _LOGDBG("%s set blob %s\n", __func__, ok(result == FDB_NO_ERR));
     if (result != FDB_NO_ERR) {
         mutex_unlock(&ctx->service_lock);
         return -1;
