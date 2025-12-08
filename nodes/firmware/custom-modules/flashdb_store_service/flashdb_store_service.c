@@ -33,9 +33,11 @@ int flashdb_store_service_init(flashdb_store_service_ctx_t *ctx, const char *db_
 
     memset(&ctx->kvdb, 0, sizeof(struct fdb_kvdb));
 
-    /* enable file mode */
-    bool file_mode = true;
-    fdb_kvdb_control(&ctx->kvdb, FDB_KVDB_CTRL_SET_FILE_MODE, &file_mode);
+    if (IS_USED(MODULE_FLASHDB_VFS)) {
+        /* enable file mode */
+        bool file_mode = true;
+        fdb_kvdb_control(&ctx->kvdb, FDB_KVDB_CTRL_SET_FILE_MODE, &file_mode);
+    }
 
     mutex_init(&ctx->service_lock);
 
