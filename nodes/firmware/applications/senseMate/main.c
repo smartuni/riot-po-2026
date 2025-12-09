@@ -5,12 +5,11 @@
 #include "board.h"
 #include "periph/gpio.h"
 #include "ztimer.h"
-#include "include/interrupts.h"
 #include "include/events_creation.h"
 #include "tables.h"
 #include "tables/records.h"
 #include "mate_lorawan.h"
-#include "include/soundModule.h"
+#include "include/sound.h"
 #include "include/vibrationModule.h"
 #include "include/sensemate_ui.h"
 #include "mate_ble.h"
@@ -41,6 +40,10 @@ extern int tables_setup(tables_context_t **t, const char *db_path);
 extern int storage_setup_ram_mtd(const char *mount_path);
 extern mtd_dev_t *storage_setup_get_ram_mtd(void);
 tables_context_t *tables;
+
+#define SOUND_PWM_DEV PWM_DEV(0)
+#define SOUND_PWM_CHANNEL (1)
+sound_module_t sound_module;
 
 int lorawan_started = -1;
 
@@ -207,8 +210,8 @@ int main(void) {
     TABLE_ITERATOR(all_gates_iterator, tables);
     _all_gates_iterator = &all_gates_iterator;
 
-    init_interrupt();
-    init_sound_module();
+    res = sound_init(&sound_module, SOUND_PWM_DEV, SOUND_PWM_CHANNEL);
+    _LOGDBG("sound_init: %s\n", ok(res == 0));
     init_vibration_module();
     //event_post(&sound_queue, &start_sound_event);
 
