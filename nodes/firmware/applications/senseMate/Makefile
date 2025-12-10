@@ -116,7 +116,7 @@ USEMODULE += tables
 USEMODULE += cose_crypto_service
 USEMODULE += hlc_ztimer
 
-
+FEATURES_REQUIRED = periph_pwm
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 

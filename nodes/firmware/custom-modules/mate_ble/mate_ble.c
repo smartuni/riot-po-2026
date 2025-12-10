@@ -32,7 +32,7 @@
 
 /* include sound module only on SenseMate (gate has no audio) */
 #if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
-#include "include/soundModule.h"
+#include "include/sound.h"
 #include "events_creation.h"
 #endif
 
