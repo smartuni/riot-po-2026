@@ -3,7 +3,7 @@
 #include "ztimer.h"
 #include "board.h"
 #include "event/timeout.h"
-#include "include/soundModule.h"
+#include "include/sound.h"
 #include "include/vibrationModule.h"
 #include "include/sensemate_ui.h"
 #define LOG_LEVEL   LOG_NONE
@@ -15,10 +15,11 @@
 extern event_t event_trigger_ui_refresh;
 event_queue_t events_creation_queue;
 static char thread_stack[THREAD_STACKSIZE_DEFAULT];
+extern sound_module_t sound_module;
 
 void* thread_events_function(void *arg) {
     (void)arg; // Unused argument
-    
+
     event_queue_init(&events_creation_queue); // Initialize the sound event queue
 
     while(1){
@@ -44,13 +45,14 @@ void init_event(void){
 void event_handlerNews(event_t *event)
 {
     (void) event;   /* Not used */
-    
+
     LOG_DEBUG("[events_creation]: got news\n");
     start_vibration();
     ui_data_t *ui_state = sensemate_ui_get_state();
     ui_state->lora_state = RECEIVED;
     //_update_ui();
-    event_post(&sound_queue, &downlink_sound_event);
+    sound_play(&sound_module, &downlink_rx_seq);
+
     //downlink_reveived_sound();
     stop_vibration();
 }
@@ -58,7 +60,7 @@ void event_handlerNews(event_t *event)
 void event_handlerBleNews(event_t *event)
 {
     (void) event;   /* Not used */
-    
+
     LOG_DEBUG("[events_creation]: got ble news\n");
     //start_vibration();
     ui_data_t *ui_state = sensemate_ui_get_state();
@@ -66,8 +68,8 @@ void event_handlerBleNews(event_t *event)
     //_update_ui();
 
     event_post(EVENT_PRIO_MEDIUM, &event_trigger_ui_refresh);
-    event_post(&sound_queue, &tables_news_sound_event);
-    //ble_reveived_sound();
+
+    sound_play(&sound_module, &tables_news_seq);
     //stop_vibration();
 }
 
@@ -77,7 +79,7 @@ void event_handlerBleRx(event_t *event)
     ui_data_t *ui_state = sensemate_ui_get_state();
     ui_state->ble_state = RECEIVED;
     //_update_ui();
-    event_post(&sound_queue, &ble_received_sound_event);
+    sound_play(&sound_module, &ble_rx_seq);
 }
 
 void event_handlerBleTx(event_t *event)
