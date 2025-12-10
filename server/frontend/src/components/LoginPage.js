@@ -41,6 +41,7 @@ const LoginPage = () => {
       // console.log(token);
       if (response.status === 200) {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        document.cookie = `jwt = ${token}`;
         try {
           const response = await api.get('auth/user-details');
           const {name, email, role} = response.data;
