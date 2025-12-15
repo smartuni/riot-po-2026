@@ -3,6 +3,9 @@ import api from '../services/api';
 import { useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 
+function eraseCookie(name) {
+    document.cookie = name + '=; Max-Age=0'
+}
 
 const LogoutButton = () => {
   const navigate = useNavigate();
@@ -15,7 +18,7 @@ const LogoutButton = () => {
       if (response.status === 200) {
         // console.log('success logout');
         delete api.defaults.headers.common['Authorization'];
-
+        eraseCookie("jwt");
       }
 
     }
