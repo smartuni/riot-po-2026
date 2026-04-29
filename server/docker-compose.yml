@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    # Optional: You can map backend volumes here if you want live-reloading for the backend as well
+
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount the frontend directory to the container for hot reloading
+      - ./frontend:/app
+      # Anonymous volume for node_modules to avoid overwriting them with the host's directory
+      - /app/node_modules
+    environment:
+      # Enables hot reloading on some OS/filesystem combinations within Docker
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      # Force bind to all network interfaces
+      - HOST=0.0.0.0
+      # Provide the backend URL to the frontend
+      - REACT_APP_BACKEND_URL=http://localhost:8080
+    # Required for Create React App (react-scripts start) to keep the dev server running in a container
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
