@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
+import { test, expect } from 'vitest';
 
-test('renders learn react link', () => {
+test('renders Sense Mate description', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  const descriptionElement = screen.getByText(/Sense Mate is an intelligent dashboard/i);
+  expect(descriptionElement).toBeInTheDocument();
 });
