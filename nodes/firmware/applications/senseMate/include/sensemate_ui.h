@@ -16,6 +16,7 @@ typedef struct {
     gate_state_t sensor_state;
     gate_state_t target_state;
     node_id_t gateID;
+    hlc_timestamp_t sensor_timestamp;
     int8_t beacon_rssi;
     bool sensor_data_present : 1;
     bool target_data_present : 1;

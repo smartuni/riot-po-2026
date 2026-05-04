@@ -138,8 +138,9 @@ static bool _all_gates_iter(ui_data_element_t *prev)
         }
         if (get_gate_report_data(record, &rdata) == 0) {
             _LOGDBG("%s Gate State: %s\n", __func__, gate_state_tostr(rdata->state));
-            //TODO: void get_record_timestamp(const table_record_t *record, hlc_timestamp_t *timestamp);
-            //li->sensor_timestamp = sensor.timestamp;
+            hlc_timestamp_t timestamp;
+            get_record_timestamp(record, &timestamp);
+            li->sensor_timestamp = timestamp;
             memcpy(li->gateID, writer_id, sizeof(node_id_t));
             li->sensor_state = rdata->state;
             li->sensor_data_present = true;
