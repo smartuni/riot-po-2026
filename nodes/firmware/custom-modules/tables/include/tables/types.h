@@ -59,6 +59,16 @@ typedef enum {
 typedef uint8_t node_id_t[NODE_ID_SIZE];
 
 /**
+ * @brief Type representing the values represented by the node_id_t type
+ */
+typedef enum {
+    NODE_ID_UNUSED,
+    NODE_ID_UNUSED,
+    NODE_ID_DEVICE_TYPE,
+    NODE_ID_DEVICE_ID
+} node_id_value_t;
+
+/**
  * @brief RSSI type
  */
 typedef int8_t rssi_t;

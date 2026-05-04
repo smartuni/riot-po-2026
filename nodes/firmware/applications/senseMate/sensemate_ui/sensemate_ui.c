@@ -305,6 +305,10 @@ void _node_id_to_uint32(node_id_t ni, uint32_t *i)
     memcpy(i, ni, sizeof(node_id_t));
 }
 
+uint8_t node_id_to_value(node_id_t node_id, node_id_value_t node_value){
+    return node_id[node_value];
+}
+
 static void _gate_edit_btn_handler(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -319,8 +323,7 @@ static void _gate_edit_btn_handler(lv_event_t * e)
             /* TODO: is there a safer /more generic  way for this? */
             lv_obj_t *tile = lv_obj_get_parent(lv_obj_get_parent(obj));
             char prompt[32];
-            //TODO: replace this hack with a proper translation/ lookup function
-            lv_snprintf(prompt, sizeof(prompt), "Report Gate-%d as:", gate_id[3]);
+            lv_snprintf(prompt, sizeof(prompt), "Report Gate-%d as:", node_id_to_value(gate_id, NODE_ID_DEVICE_ID));
             lv_obj_t *dialog = _create_dialog(tile, prompt, _observed_gate_state_opts);
             memcpy(_gate_edit_ctx.gate_id, gate_id, sizeof(node_id_t));
             _gate_edit_ctx.prev_nav_group = lv_obj_get_group(obj);
@@ -375,8 +378,7 @@ static void _create_gate_list(lv_obj_t *parent, lv_group_t *grp, bool only_close
             continue;
         }
         char buf[16];
-        //TODO: replace this hack with a proper translation/ lookup function
-        lv_snprintf(buf, sizeof(buf), "Gate %d", ((uint8_t*)li->gateID)[3]);
+        lv_snprintf(buf, sizeof(buf), "Gate %d", node_id_to_value(li->gateID, NODE_ID_DEVICE_ID));
         lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_LIST, buf);
 
         uint32_t id;
