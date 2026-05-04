@@ -107,4 +107,31 @@ USEMODULE += shell_cmds_default
 QUIET ?= 1
 CFLAGS += -DDEBUG_ASSERT_VERBOSE
 CFLAGS += -I$(APPDIR)/include
+
+# If you want to modify this code, be sure to make some adjustments in
+# nodes/firmware/custom-modules/key-distro/Makefile.include as well! (include $(CONFIG_FILE)
+.PHONY: init-keys generate-keys delete-keys
+
+init-keys:
+	@echo
+	@{ \
+		if [ -n "$$TTN_API_KEY" ]; then \
+			input="$$TTN_API_KEY"; \
+		else \
+			printf "Enter TTN API key: " >&2; \
+			IFS= read -r input; \
+		fi; \
+		printf "ttn_auth_token: %s\n" "$$input" > $(EXTERNAL_MODULE_DIRS)/key-distro/util_scripts/secrets.yaml; \
+	}
+
+generate-keys:
+	@echo
+	@echo Generating TTN Keys...
+	@cd $(EXTERNAL_MODULE_DIRS)/key-distro/util_scripts && python generate_prod_keys.py && python generate_ttn_devices.py
+
+delete-keys:
+	@echo
+	rm -rf $(EXTERNAL_MODULE_DIRS)/key-distro/include/secrets
+	rm -rf $(EXTERNAL_MODULE_DIRS)/key-distro/ttn_configs/*_config.mk
+
 include $(RIOTBASE)/Makefile.include

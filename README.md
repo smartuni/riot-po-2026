@@ -30,7 +30,7 @@ Our proposed solution replaces the inefficient methods currently used by the cit
 
 #### Deployment
 
-Before flashing make sure [signature keys](nodes/firmware/custom-modules/key-distro/README.md) are generated! 
+Before flashing make sure [signature keys](https://github.com/smartuni/riot-po-2026/wiki/Set-up-private-public-key-in-order-to-flash-SenseGate-or-SenseMate) are generated! 
 
 #### Testing 
 
@@ -48,7 +48,7 @@ Before flashing make sure [signature keys](nodes/firmware/custom-modules/key-dis
 
 #### Deployment
 
-Before flashing make sure [signature keys](nodes/firmware/custom-modules/key-distro/README.md) are generated! 
+Before flashing make sure [signature keys](https://github.com/smartuni/riot-po-2026/wiki/Set-up-private-public-key-in-order-to-flash-SenseGate-or-SenseMate) are generated! 
 
 #### Testing 
 
