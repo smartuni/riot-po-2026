@@ -63,7 +63,7 @@ typedef uint8_t node_id_t[NODE_ID_SIZE];
  */
 typedef enum {
     NODE_ID_UNUSED,
-    NODE_ID_UNUSED,
+    NODE_ID_UNUSED2,
     NODE_ID_DEVICE_TYPE,
     NODE_ID_DEVICE_ID
 } node_id_value_t;
