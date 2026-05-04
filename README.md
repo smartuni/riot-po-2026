@@ -1,4 +1,4 @@
-# RIOT im Internet of Things, Sommersemester 2025
+# RIOT im Internet of Things, Sommersemester 2026
 
 Welcome to the primary repository of the RIOT im Internet of Things project for the Summer 2025 semester at HAW Hamburg. The project was concerned with designing, implementing and presenting technologies to improve the city of Hamburg's methods of managing its harbor's floodgates.
 
