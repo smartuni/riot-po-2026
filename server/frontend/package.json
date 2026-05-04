@@ -26,7 +26,8 @@
     "start": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "docs": "npx docsify-cli serve docs"
   },
   "eslintConfig": {
     "extends": [
