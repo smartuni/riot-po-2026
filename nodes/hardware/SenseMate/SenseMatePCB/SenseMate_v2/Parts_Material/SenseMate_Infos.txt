@@ -1,0 +1,14 @@
+Seeed Studio XIAO nRF52840 Sense Plus
+-> Sensoren
+https://wiki.seeedstudio.com/XIAO_BLE/
+https://www.seeedstudio.com/Seeed-Studio-XIAO-nRF52840-Sense-Plus-p-6360.html
+
+
+LoRa1276-C1-915
+https://www.nicerf.com/lora-module/sx1276-lora-module-lora1276-c1.html
+
+-> https://www.snapeda.com/parts/RFM95W-868S2/RF%20Solutions/view-part/?__cf_chl_tk=9DQQU76qPELOlz9hr0pCy.9XXAIYIgDiZYWJobSDGd0-1778270744-1.0.1.1-LTMnxIh86fmAZY1MrrbumcUSoRKKH1tgRTeE0oPD4Ww
+
+-
+
+https://www.lcsc.com/product-detail/C7279189.html
