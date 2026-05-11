@@ -11,23 +11,23 @@ const DashboardViewPage = () => {
     const [popupOpen, setPopupOpen] = useState(false);
     const navigate = useNavigate();
 
-    var jwt = getCookie("jwt");
-    if (jwt != null) {
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${jwt}`;
-    }
-
-    const loadDetails = async () => {
-        try {
-            const response = await apiClient.get('/auth/user-details');
-            if (response.status !== 200) {
-                throw new Error('Request failed with status code ' + response.status);
-            }
-        } catch (e) {
-            setPopupOpen(true);
-        }
-    };
-
     useEffect(() => {
+        const jwt = getCookie("jwt");
+        if (jwt != null) {
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${jwt}`;
+        }
+
+        const loadDetails = async () => {
+            try {
+                const response = await apiClient.get('/auth/user-details');
+                if (response.status !== 200) {
+                    throw new Error('Request failed with status code ' + response.status);
+                }
+            } catch (e) {
+                setPopupOpen(true);
+            }
+        };
+
         loadDetails();
     }, []);
 

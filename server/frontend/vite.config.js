@@ -6,7 +6,7 @@ export default defineConfig(() => {
         build: {
             outDir: 'build',
         },
-        plugins: [react()],
+        plugins: [react({ reactCompiler: true })],
         define: {
             global: 'window',
         },
