@@ -6,9 +6,8 @@ import {
     DialogContent, DialogContentText, DialogActions
 } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
-import { NotificationPopup, fetchNotificationByWorkerId, markNotificationAsRead } from '../notifications';
+import { NotificationPopup, fetchNotificationByWorkerId, markNotificationAsRead } from '../../notifications';
 import { apiClient } from '../../../shared';
-import { NotificationPopup, fetchNotificationByWorkerId, markNotificationAsRead } from '../notifications';
 
 function HeaderBar() {
     const navigate = useNavigate();
