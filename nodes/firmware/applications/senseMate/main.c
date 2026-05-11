@@ -54,12 +54,12 @@ table_query_t all_gates_query = {
     .involved_id = NULL
 };
 
-uint32_t _get_known_gate_count(void)
+uint32_t _get_known_gate_count_by_type(table_record_type_t type)
 {
     uint32_t gates_cnt = 0;
     TABLE_ITERATOR(iter, tables);
     table_query_t query;
-    tables_init_query(&query, RECORD_GATE_REPORT, NULL, NULL);
+    tables_init_query(&query, type, NULL, NULL);
 
     int res = tables_iterator_init(tables, &iter, &query);
     _LOGDBG("%s iter init (%d) %s\n", __func__, res, ok(res == 0));
@@ -77,7 +77,12 @@ uint32_t _get_known_gate_count(void)
     return gates_cnt;
 }
 
-uint32_t _get_known_mate_count(void)
+uint32_t _get_known_gate_count(void)
+{
+    return _get_known_gate_count_by_type(RECORD_GATE_REPORT);
+}
+
+uint32_t _get_visible_mate_count(rssi_t min_rssi)
 {
     uint32_t mate_cnt = 0;
     TABLE_ITERATOR(iter, tables);
@@ -94,7 +99,12 @@ uint32_t _get_known_mate_count(void)
 
     while( tables_iterator_next(tables, &iter, &record, NULL, NULL) == 0) {
         _LOGDBG("%s iter next (%d) %s\n", __func__, res, ok(res == 0));
-        mate_cnt++;
+        if(record->data.mate_encounter->rssi > min_rssi){
+            mate_cnt++;
+        } else {
+            _LOGDBG("%s rssi of mate is too weak, not considered visible\n", __func__);
+        }
+        
     }
 
     return mate_cnt;
@@ -119,7 +129,7 @@ static bool _all_gates_iter(ui_data_element_t *prev)
 
     int res = tables_iterator_next(tables, _all_gates_iterator, &record, NULL, NULL);
     _LOGDBG("%s iter next (%d) %s\n", __func__, res, ok(res == 0));
-    if (res) {
+    if (res != 0) {
         prev->iter_ctx.ptr = NULL;
         return false;
     }
@@ -257,10 +267,9 @@ int main(void) {
     while (1)
     {
         ui_state->visible_gate_cnt = _get_known_gate_count();
-        ui_state->visible_mate_cnt = _get_known_mate_count();
-        //TODO: Re-add below functionality, but now based on new API
-        //ui_state->pending_jobs_cnt = tables_get_jobs_entry_count();
-        //ui_state->visible_mate_cnt = tables_get_closeby_mate_seen_state_entry_count(-80);
+        ui_state->visible_mate_cnt = _get_visible_mate_count(-80);
+        ui_state->pending_jobs_cnt = _get_known_gate_count_by_type(RECORD_GATE_JOB);
+
         bool updateui = false;
 
         if (prev_gate_cnt != ui_state->visible_gate_cnt ||
