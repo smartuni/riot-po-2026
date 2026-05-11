@@ -26,8 +26,8 @@ services:
       # Force bind to all network interfaces
       - HOST=0.0.0.0
       # Provide the backend URL to the frontend
-      - REACT_APP_BACKEND_URL=http://localhost:8080
-    # Required for Create React App (react-scripts start) to keep the dev server running in a container
+      - VITE_BACKEND_URL=http://localhost:8080
+    # Required for Vite dev server to keep running in a container
     stdin_open: true
     tty: true
     depends_on:
