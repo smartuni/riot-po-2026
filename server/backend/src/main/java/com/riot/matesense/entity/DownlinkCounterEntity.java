@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @Entity
-@Table(name = "counter_downlink")
+@Table(name = "downlink_counter")
 public class DownlinkCounterEntity {
 
     @Id

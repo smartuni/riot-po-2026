@@ -1,12 +1,38 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:15
+    container_name: matesense-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-matesense}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
     ports:
       - "8080:8080"
-    # Optional: You can map backend volumes here if you want live-reloading for the backend as well
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB:-matesense}
+      - DB_USERNAME=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - SPRING_PROFILES_ACTIVE=dev
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   frontend:
     build:
@@ -32,3 +58,6 @@ services:
     tty: true
     depends_on:
       - backend
+
+volumes:
+  postgres_data:

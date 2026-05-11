@@ -21,7 +21,7 @@ public class ConfidenceCalculator
         Status[] gateArray = entity.getGateStatusArray() != null ? entity.getGateStatusArray() : new Status[0];
         Status[] workerArray = entity.getWorkerStatusArray() != null ? entity.getWorkerStatusArray() : new Status[0];
 
-        if (gateStatus == Status.UNKNOWN || gateStatus == Status.NONE) { // if we don't know the status of the gate, we can be sure that we don't know, set confidence to 100
+        if (gateStatus == Status.OUT_OF_SERVICE || gateStatus == Status.NONE) { // if we don't know the status of the gate, we can be sure that we don't know, set confidence to 100
             confidence = 100;
             System.out.println("Gate status is unknown/none. Setting confidence to max (100).");
         }
@@ -72,14 +72,8 @@ public class ConfidenceCalculator
         if (confidence >= 90){ // set a keyword depending on confidence level
             entity.setQuality(ConfidenceQuality.HIGH);
         }
-        else if (confidence >= 80){
-            entity.setQuality(ConfidenceQuality.MED_HIGH);
-        }
-        else if (confidence >= 70){
-            entity.setQuality(ConfidenceQuality.MED);
-        }
         else if (confidence >= 60){
-            entity.setQuality(ConfidenceQuality.MED_LOW);
+            entity.setQuality(ConfidenceQuality.MEDIUM);
         }
         else {
             entity.setQuality(ConfidenceQuality.LOW);
@@ -90,8 +84,8 @@ public class ConfidenceCalculator
         // Pending Job Check - only if confidenc is 100% set Pending to none!
         String pendingJob = entity.getPendingJob();
         if (entity.getQuality() == ConfidenceQuality.HIGH) {
-            if (gateStatus == Status.OPENED && "PENDING_OPEN".equals(pendingJob)) {
-                System.out.println("High confidence and gate is OPENED with PENDING_OPEN. Clearing pending job.");
+            if (gateStatus == Status.OPEN && "PENDING_OPEN".equals(pendingJob)) {
+                System.out.println("High confidence and gate is OPEN with PENDING_OPEN. Clearing pending job.");
                 entity.setPendingJob("None");
             } else if (gateStatus == Status.CLOSED && "PENDING_CLOSE".equals(pendingJob)) {
                 System.out.println("High confidence and gate is CLOSED with PENDING_CLOSE. Clearing pending job.");
