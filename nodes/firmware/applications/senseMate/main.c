@@ -99,12 +99,17 @@ uint32_t _get_visible_mate_count(rssi_t min_rssi)
 
     while( tables_iterator_next(tables, &iter, &record, NULL, NULL) == 0) {
         _LOGDBG("%s iter next (%d) %s\n", __func__, res, ok(res == 0));
-        if(record->data.mate_encounter->rssi > min_rssi){
-            mate_cnt++;
-        } else {
-            _LOGDBG("%s rssi of mate is too weak, not considered visible\n", __func__);
+        table_mate_encounter_t* data;
+        rssi_t rssi;
+        if(get_mate_encounter_data(record, &data) == 0){
+            get_mate_encounter_rssi(data, &rssi);
+            if(rssi > min_rssi){
+                mate_cnt++;
+            } else {
+                _LOGDBG("%s rssi of mate is too weak, not considered visible\n", __func__);
+            }
         }
-        
+   
     }
 
     return mate_cnt;
