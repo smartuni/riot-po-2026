@@ -101,6 +101,29 @@ No external library. React's built-in mechanisms only:
 | Real-time data | WebSocket message → local `useState` | Gate status changes, new activities |
 | Downlink counter | Local `useState` + REST | Count value, rate limiting state |
 
+## React Compiler
+
+The project uses React Compiler to automatically memoize components at compile time, removing the need for manual optimization.
+
+### How it works
+
+React Compiler runs as a Babel transform (`babel-plugin-react-compiler`) during the Vite build process. It analyzes component render functions and automatically wraps expensive computations and JSX trees with memoization, similar to what developers would otherwise do manually with `useMemo` and `useCallback`.
+
+### Build pipeline integration
+
+```
+vite.config.js → @vitejs/plugin-react({ reactCompiler: true })
+                     → @rolldown/plugin-babel → babel-plugin-react-compiler
+```
+
+The compiler is enabled via the `reactCompiler` option in the `react()` plugin call in `vite.config.js`. No changes to component code were required — the compiler is purely additive.
+
+### Impact
+
+- No manual memoization (`useMemo`, `useCallback`, `React.memo`) is needed in the codebase
+- ESLint compiler rules (via `eslint-plugin-react-hooks`) enforce safe React patterns at "error" severity
+- Rollback is trivial: set `reactCompiler: false` in `vite.config.js`
+
 ## Component Dependencies
 
 ```mermaid

@@ -17,6 +17,8 @@ SenseMate is a **flood gate monitoring and control dashboard** that allows opera
 
 The frontend communicates with a Java Spring Boot backend over REST APIs and STOMP/WebSocket for real-time updates.
 
+React Compiler is enabled for automatic component memoization at compile time — see the [documentation](docs/techstack.md) for details.
+
 ## Getting Started
 
 ### Prerequisites
