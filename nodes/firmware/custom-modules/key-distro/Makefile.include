@@ -20,8 +20,14 @@ $(info [key-distro] Building for device ID:   $(RIOT_CONFIG_DEVICE_ID))
 
 # Dynamisch die passende Konfigurationsdatei aus ttn_configs einbinden
 CONFIG_FILE := $(LAST_MAKEFILEDIR)/ttn_configs/$(DEVICE_PREFIX)-$(RIOT_CONFIG_DEVICE_ID)_config.mk
-ifneq ("$(wildcard $(CONFIG_FILE))","")
-    include $(CONFIG_FILE)
+
+
+ifneq ($(filter init-keys generate-keys delete-keys clean,$(MAKECMDGOALS)),)
+  $(info [key-distro] Skipping config include for goals: $(MAKECMDGOALS))
 else
-    $(error Config file $(CONFIG_FILE) not found!)
+ifneq ("$(wildcard $(CONFIG_FILE))","")
+  include $(CONFIG_FILE)
+else
+  $(error Config file $(CONFIG_FILE) not found!)
+endif
 endif
