@@ -1,21 +1,18 @@
 # Ed25519 Key-Setup & TTN-Device-configuration
 This module automatically generates Ed25519-Keys as well as registers devices inside an existing TTN-Application.
   
-> [!CAUTION]
-> ### Note regarding security
-> Private Keys can be accessed inside `.h`-files – these **should not be accessible from a public repository**.
-> `secrets.yaml` also contains sensitive data and should be excluded via `.gitignore`.
-# How to: Setting up the keys
+# How to: Set up the keys
 ## A. Requirements
 
 * An **existing LoRaWAN-Application** in [The Things Stack (TTN)](https://www.thethingsnetwork.org/)
 * A **TTN API Token** with full application access (via [TTN Console → API Keys](https://eu1.cloud.thethings.network/console/applications/hawriotfloodgates26/))
 * Python 3.6 or later
 * Dependencies:
-```
+
+```bash
 pip install pynacl requests pyyaml
 ```
-## B. Makefiles to automate the keys generation
+## B. Makefiles to automate key generation
 > [!NOTE]
 > Only steps 1 and 2 are neccessary if you want to flash the board. Do them only once after you clone the repository. 
 ### 1. TTN API Key
@@ -23,21 +20,29 @@ pip install pynacl requests pyyaml
 2. Press **API Keys**
 3. **Add API Key** and copy it
 4. Run this command inside **senseGate** or **senseMate** folder and paste in the API key
-```
+
+```bash
 make init-keys
 ```
+
 This automates the step **C1**
+
 ### 2. Generate private & public keys
-```
+
+```bash
 make generate-keys
 ```
+
 This automates the step **D1** and **D2**
+
 ### 3. Deleting generated keys (only for debug reasons)
-```
+
+```bash
 make delete-keys
 ```
 
 ---
+
 # Documentation for manual configuration 
 ## C. Configuration files
 
@@ -62,11 +67,12 @@ This file should save the TTN-Auth-Token.
 1. Head to the [TTN Portal](https://eu1.cloud.thethings.network/console/applications/hawriotfloodgates26/) and sign in
 2. Press **API Keys**
 3. **Add API Key** and copy it
-4. Create a file **secrets.yaml** on  
+4. Create a file named **secrets.yaml** in  
 ```
 nodes/firmware/custom-modules/key-distro/util_scripts/
 ```
 5. and put this in:
+
 ```yaml
 ttn_auth_token: "NNSXS.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 ```
@@ -76,7 +82,8 @@ and replace it with your **API Key**
 ## D. Usage
 
 ### 1. Generate Keys
-```
+
+```bash
 cd nodes/firmware/custom-modules/key-distro/util_scripts
 python generate_prod_keys.py
 ```
@@ -87,7 +94,7 @@ This generates:
 
 ### 2. Generate TTN-devices
 
-```
+```bash
 cd nodes/firmware/custom-modules/key-distro/util_scripts
 python generate_ttn_devices.py
 ```
