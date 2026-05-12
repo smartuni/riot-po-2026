@@ -1,22 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch, useSelector } from 'react-redux';
-import { getCookie } from '../../shared/utils/cookie';
 import { api } from './api/api';
-
-const initialAuthState = {
-  token: getCookie('jwt') || null,
-};
-
-function authReducer(state = initialAuthState, action) {
-  switch (action.type) {
-    case 'auth/setToken':
-      return { ...state, token: action.payload };
-    case 'auth/clearToken':
-      return { ...state, token: null };
-    default:
-      return state;
-  }
-}
+import authReducer from './slices/authSlice';
 
 export const store = configureStore({
   reducer: {
