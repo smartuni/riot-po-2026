@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polygon } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../styles/MapView.css";
+import { CircularProgress, Alert } from "@mui/material";
 // import FloodGatePopup from "./FloodGatePopup";
 import { useGetGatesQuery } from "../../../app/store/api/api";
 
@@ -23,7 +24,23 @@ const getArrowIcon = (status) => {
 };
 
 function MapView({ search, statusFilter }) {
-    const { data: gates = [] } = useGetGatesQuery();
+    const { data: gates = [], isLoading, error } = useGetGatesQuery();
+
+    if (isLoading) {
+        return (
+            <div className="map-view" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '500px' }}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="map-view" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '500px' }}>
+                <Alert severity="error">Failed to load gates data: {error.toString()}</Alert>
+            </div>
+        );
+    }
 
     const filteredGates = gates.filter(
         (gate) =>
