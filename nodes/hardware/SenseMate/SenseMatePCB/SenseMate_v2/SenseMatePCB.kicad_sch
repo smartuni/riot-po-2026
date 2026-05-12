@@ -3846,6 +3846,48 @@
 			(embedded_fonts no)
 		)
 	)
+	(text_box "Note:\n-----\nMoved from Adafruite Feather nRF52840 Sense \nLoRa_RST - PIN9 - D9 (P0.26 | HS)\n\nTo -> TBD\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO1 - PIN5 - D5 (P1.08 | HS)\n\nTo -> TBD\n----\nMoved from Adafruite Feather nRF52840 Sense\r\nLoRa_DIO2 - PIN6 - D6 (P0.07 | HS)\r\n\r\nTo -> TBD\r\n----\nMoved from Adafruite Feather nRF52840 Sense\r\nLoRa_CS - PIN10 - D10 (P0.27 | HS)\r\n\r\nTo -> TBD\r\n----\nMoved from Adafruite Feather nRF52840 Sense\r\nLoRa_IRQ - PIN11 - D11 (P0.06 | HS)\r\n\r\nTo -> TBD\r\n----"
+		(exclude_from_sim no)
+		(at -34.29 11.4082 0)
+		(size 41.91 123.2118)
+		(margins 0.9525 0.9525 0.9525 0.9525)
+		(stroke
+			(width 0)
+			(type solid)
+		)
+		(fill
+			(type color)
+			(color 255 255 194 1)
+		)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left top)
+		)
+		(uuid "63f686a4-6f8c-49e0-b896-e6a4c4788716")
+	)
+	(text_box "Note:\n-----\nSD-Karte\nMit MOSI1 & MISO1 verbinden. \n---\nSenseGate\r\nEin ADC frei lassen -> A0\n---\nPogo Pins\nUART - RX1\n---\nDisplay\nI2C: SDA & SCL\n"
+		(exclude_from_sim no)
+		(at 12.7 13.0838 0)
+		(size 41.91 42.7962)
+		(margins 0.9525 0.9525 0.9525 0.9525)
+		(stroke
+			(width 0)
+			(type solid)
+		)
+		(fill
+			(type color)
+			(color 255 255 194 1)
+		)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left top)
+		)
+		(uuid "eee747c2-75d8-4896-aa22-5d7ee84c0cf0")
+	)
 	(junction
 		(at 204.47 87.63)
 		(diameter 0)
@@ -3952,6 +3994,16 @@
 	)
 	(wire
 		(pts
+			(xy 135.89 74.93) (xy 139.7 74.93)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "02ec2f1d-8dd9-4bcd-bace-5caa72f05384")
+	)
+	(wire
+		(pts
 			(xy 179.07 104.14) (xy 189.23 104.14)
 		)
 		(stroke
@@ -4012,16 +4064,6 @@
 	)
 	(wire
 		(pts
-			(xy 165.1 77.47) (xy 182.88 77.47)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "130e6a50-e9ab-49a3-97e9-669b325affc0")
-	)
-	(wire
-		(pts
 			(xy 204.47 87.63) (xy 204.47 88.9)
 		)
 		(stroke
@@ -4079,6 +4121,16 @@
 			(type default)
 		)
 		(uuid "325c23b5-f9bb-4db5-ad4b-cfc85a0dd7ed")
+	)
+	(wire
+		(pts
+			(xy 165.1 77.47) (xy 168.91 77.47)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "337403ab-5953-4a49-ad3e-8251bc2e003b")
 	)
 	(wire
 		(pts
@@ -4182,6 +4234,26 @@
 	)
 	(wire
 		(pts
+			(xy 71.12 95.25) (xy 68.58 95.25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4ad3e0f1-5b04-41c7-94be-6c0d12d5cfaf")
+	)
+	(wire
+		(pts
+			(xy 165.1 74.93) (xy 168.91 74.93)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "56186861-25b3-4a80-91e0-473caf3f87d4")
+	)
+	(wire
+		(pts
 			(xy 219.71 114.3) (xy 217.17 114.3)
 		)
 		(stroke
@@ -4189,6 +4261,16 @@
 			(type default)
 		)
 		(uuid "5a20ae5d-92fd-4dab-b838-08f626172e9a")
+	)
+	(wire
+		(pts
+			(xy 137.16 62.23) (xy 139.7 62.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5e2408a1-1ac9-4d91-ac4a-9786d851b8f6")
 	)
 	(wire
 		(pts
@@ -4242,6 +4324,16 @@
 	)
 	(wire
 		(pts
+			(xy 137.16 67.31) (xy 139.7 67.31)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6ec6eb0f-1e1f-4ca0-bd68-deac45f211ba")
+	)
+	(wire
+		(pts
 			(xy 88.9 156.21) (xy 101.6 156.21)
 		)
 		(stroke
@@ -4282,6 +4374,16 @@
 	)
 	(wire
 		(pts
+			(xy 137.16 69.85) (xy 139.7 69.85)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7e57c37a-5776-4759-8aa8-94e4e13f5ba4")
+	)
+	(wire
+		(pts
 			(xy 180.34 144.78) (xy 181.61 144.78)
 		)
 		(stroke
@@ -4299,6 +4401,16 @@
 			(type default)
 		)
 		(uuid "8c9509a1-81e0-4ecf-8d57-54d461c00829")
+	)
+	(wire
+		(pts
+			(xy 168.91 80.01) (xy 165.1 80.01)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "96a9e64d-7af9-498f-9fd8-0a23af28b344")
 	)
 	(wire
 		(pts
@@ -4452,16 +4564,6 @@
 	)
 	(wire
 		(pts
-			(xy 165.1 74.93) (xy 189.23 74.93)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "dcd9d866-7cd3-4948-b8ab-c14c6039b9d4")
-	)
-	(wire
-		(pts
 			(xy 129.54 134.62) (xy 129.54 135.89)
 		)
 		(stroke
@@ -4482,6 +4584,16 @@
 	)
 	(wire
 		(pts
+			(xy 71.12 91.44) (xy 68.58 91.44)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e733686c-d8f8-4643-94c6-aa22d8daa40f")
+	)
+	(wire
+		(pts
 			(xy 190.5 54.61) (xy 191.77 54.61)
 		)
 		(stroke
@@ -4499,6 +4611,26 @@
 			(type default)
 		)
 		(uuid "e83a0642-93a6-4fb0-80bb-87773298b9a8")
+	)
+	(wire
+		(pts
+			(xy 71.12 99.06) (xy 68.58 99.06)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f0196045-c534-4e1f-8e1b-40052a1b4ea7")
+	)
+	(wire
+		(pts
+			(xy 137.16 64.77) (xy 139.7 64.77)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f46dc721-d629-4499-90b3-512dcd60b640")
 	)
 	(wire
 		(pts
@@ -4540,7 +4672,31 @@
 		)
 		(uuid "fd18df30-95cb-4909-a524-caadf586454e")
 	)
-	(global_label "LoRa_IRQ"
+	(global_label "LoRa_SCK"
+		(shape input)
+		(at 71.12 99.06 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "0024d28d-f892-4a21-9ca0-7af2bebd3db6")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 83.4184 99.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
+	(global_label "LoRa_DIO0"
 		(shape input)
 		(at 179.07 109.22 180)
 		(fields_autoplaced yes)
@@ -4552,7 +4708,7 @@
 		)
 		(uuid "00367d15-735c-4292-96a2-d5d7f5eb84f8")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 167.3158 109.22 0)
+			(at 166.1063 109.22 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4561,6 +4717,54 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
+			)
+		)
+	)
+	(global_label "LoRa_RST"
+		(shape input)
+		(at 135.89 74.93 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "051ce702-546d-4a7b-b47c-907f6c434171")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 123.894 74.93 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "LoRa_DIO0"
+		(shape input)
+		(at 168.91 80.01 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "05d3e490-06d5-44a5-9eed-cc931f62fdd3")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 181.8737 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
 			)
 		)
 	)
@@ -4588,7 +4792,55 @@
 			)
 		)
 	)
-	(global_label "LoRa_CS"
+	(global_label "LoRa_MOSI"
+		(shape input)
+		(at 71.12 91.44 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "143c23ae-bbb6-4aaa-8ae1-66d87064671c")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 84.2651 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
+	(global_label "LoRa_DIO1"
+		(shape input)
+		(at 35.56 137.16 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "24d9098b-b459-40ce-8814-0c02f5575870")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 22.5963 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "LoRa_NSS"
 		(shape input)
 		(at 179.07 106.68 180)
 		(fields_autoplaced yes)
@@ -4600,7 +4852,271 @@
 		)
 		(uuid "3d58dd28-f5d4-4092-b2dd-4370f241f312")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 168.0416 106.68 0)
+			(at 166.7716 106.68 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "LoRa_DIO0"
+		(shape input)
+		(at 35.56 148.59 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "3ec1152b-9846-4c8f-bb18-8d7e5ba46371")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 22.5963 148.59 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "LoRa_SCK"
+		(shape input)
+		(at 137.16 62.23 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "45130d70-ac90-4392-bda8-f31f5b97a60b")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 124.8616 62.23 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "LoRa_DIO1"
+		(shape input)
+		(at 168.91 77.47 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "6096f5f9-24b2-4fb0-bdec-77860d537c0e")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 181.8737 77.47 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
+	(global_label "LoRa_DIO2"
+		(shape input)
+		(at 168.91 74.93 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "6db94f34-de81-4f43-84fb-944cd51353a7")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 181.8737 74.93 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
+	(global_label "LoRa_NSS"
+		(shape input)
+		(at 137.16 69.85 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "7b036384-bff3-49ef-8c70-74e1244a2f4f")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 124.8616 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "LoRa_DIO2"
+		(shape input)
+		(at 35.56 140.97 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "8e1fc3f6-1d2e-42d5-ae32-b350eb96e9c0")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 22.5963 140.97 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "LoRa_RST"
+		(shape input)
+		(at 35.56 133.35 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "aa59e3aa-544e-4652-96b1-e026c4879338")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 23.564 133.35 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "LoRa_MISO"
+		(shape input)
+		(at 71.12 95.25 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "c160a4e4-0bdb-458d-8348-8111bce01913")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 84.2651 95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
+	(global_label "LoRa_NSS"
+		(shape input)
+		(at 35.56 144.78 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "d02dd0a9-ef80-4d8d-b674-2903164326ad")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 23.2616 144.78 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "LoRa_MOSI"
+		(shape input)
+		(at 137.16 64.77 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "eb662be3-df15-44a7-ae3a-d7a08fe5bf5c")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 124.0149 64.77 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "LoRa_MISO"
+		(shape input)
+		(at 137.16 67.31 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "f1d995c8-38c7-4642-828e-12130f7e9e6c")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 124.0149 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6786,6 +7302,85 @@
 		)
 	)
 	(symbol
+		(lib_id "power:+3V3")
+		(at 68.58 87.63 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "be4ff68f-57b3-42df-9b84-d385c0f84bcf")
+		(property "Reference" "#PWR016"
+			(at 64.77 87.63 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 72.39 87.6299 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 68.58 87.63 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 68.58 87.63 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 68.58 87.63 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "bd49df2c-af61-4f04-9bd3-2fb0f3a8ea14")
+		)
+		(instances
+			(project "SenseMatePCB"
+				(path "/70e40189-008f-4f72-8f4c-fe289f3548a4"
+					(reference "#PWR016")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:R")
 		(at 144.78 140.97 90)
 		(unit 1)
@@ -6867,7 +7462,7 @@
 	)
 	(symbol
 		(lib_id "XIAO:XIAO-nRF52840_Plus_SMD")
-		(at 74.93 44.45 0)
+		(at 22.86 77.47 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -6878,7 +7473,7 @@
 		(fields_autoplaced yes)
 		(uuid "cb24f37b-38f1-4d6c-836f-d37d7b16215c")
 		(property "Reference" "U1"
-			(at 96.52 39.37 0)
+			(at 44.45 72.39 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6888,7 +7483,7 @@
 			)
 		)
 		(property "Value" "XIAO-nRF52840-Plus-SMD"
-			(at 96.52 41.91 0)
+			(at 44.45 74.93 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6898,7 +7493,7 @@
 			)
 		)
 		(property "Footprint" "SenseMateLibrary:XIAO-nRF52840-Plus-SMD"
-			(at 97.028 64.77 0)
+			(at 44.958 97.79 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6908,7 +7503,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 74.93 44.45 0)
+			(at 22.86 77.47 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6919,7 +7514,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 74.93 44.45 0)
+			(at 22.86 77.47 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
