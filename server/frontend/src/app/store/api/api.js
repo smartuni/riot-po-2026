@@ -68,7 +68,7 @@ export const api = createApi({
     // ── Gates ─────────────────────────────────────────────
     getGates: builder.query({
       query: () => '/gates',
-      providesTags: ['Gate'],
+      providesTags: (result) => result ? result.map((gate) => ({ type: 'Gate', id: gate.id })) : [{ type: 'Gate' }],
     }),
     createGate: builder.mutation({
       query: (newGateData) => ({
@@ -130,12 +130,13 @@ export const api = createApi({
         method: 'POST',
         body: payload,
       }),
+      invalidatesTags: ['Gate'],
     }),
 
     // ── Activities ────────────────────────────────────────
     getActivities: builder.query({
       query: () => '/gate-activities',
-      providesTags: ['Activity'],
+      providesTags: (result) => result ? result.map((activity) => ({ type: 'Activity', id: activity.id })) : [{ type: 'Activity' }],
     }),
     addActivities: builder.mutation({
       query: (newActivities) => ({
@@ -149,11 +150,11 @@ export const api = createApi({
     // ── Notifications ─────────────────────────────────────
     getNotifications: builder.query({
       query: () => '/notifications',
-      providesTags: ['Notification'],
+      providesTags: (result) => result ? result.map((notification) => ({ type: 'Notification', id: notification.id })) : [{ type: 'Notification' }],
     }),
     getNotificationsByWorkerId: builder.query({
       query: (workerId) => `/notifications/${workerId}`,
-      providesTags: ['Notification'],
+      providesTags: (result) => result ? result.map((notification) => ({ type: 'Notification', id: notification.id })) : [{ type: 'Notification' }],
     }),
     markNotificationAsRead: builder.mutation({
       query: (notificationId) => ({
