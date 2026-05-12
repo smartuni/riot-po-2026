@@ -1,8 +1,8 @@
 import '../shared/styles/App.css';
 import { useEffect } from 'react';
-import { useDispatch, Provider } from 'react-redux';
+import { Provider } from 'react-redux';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { store } from './store';
+import { store, useAppDispatch } from './store';
 import { APP_START, APP_STOP } from './store/middleware/wsMiddleware';
 import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/LoginPage';
@@ -13,7 +13,7 @@ import DashboardViewPage from '../pages/DashboardViewPage';
 import DashboardGuestPage from '../pages/DashboardGuestPage';
 
 function AppContent() {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch({ type: APP_START });
