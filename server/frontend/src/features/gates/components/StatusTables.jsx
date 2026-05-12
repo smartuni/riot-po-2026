@@ -27,6 +27,7 @@ import {
     FormControl,
     InputLabel,
     Box, Tooltip, DialogActions, DialogContent, DialogTitle, Dialog,
+    CircularProgress, Alert,
 } from "@mui/material";
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
@@ -42,13 +43,11 @@ import StatusChangedDialog from "./StatusChangedDialog";
 
 
 function StatusTables() {
-    useGetGatesQuery();
-    useGetActivitiesQuery();
-    const { data: downlinkCounterData, refetch: refetchDownlinkCounter } = useGetDownlinkCounterQuery();
+    const { data: gates = [], isLoading: gatesLoading, error: gatesError } = useGetGatesQuery();
+    const { data: activities = [], isLoading: activitiesLoading, error: activitiesError } = useGetActivitiesQuery();
+    const { data: downlinkCounterData } = useGetDownlinkCounterQuery();
     const { data: userDetails } = useGetUserDetailsQuery();
 
-    const gates = useAppSelector(state => state.gates.gates);
-    const activities = useAppSelector(state => state.activities.activities);
     const uplinkString = useAppSelector(state => state.gates.uplinkString);
 
     const downlinkCount = downlinkCounterData ?? 0;
@@ -115,7 +114,6 @@ function StatusTables() {
         try {
             await resetDownlinkCounter().unwrap();
             alert("Counter reset successfully.");
-            refetchDownlinkCounter();
             setResetDialogOpen(false);
             setResetPassword("");
             setResetError("");
@@ -251,7 +249,6 @@ function StatusTables() {
             await tryIncrementDownlinkCounter().unwrap();
             await sendDownlink(payload).unwrap();
             alert("Downlink sent.");
-            refetchDownlinkCounter();
         } catch (error) {
             console.error("Error sending downlink:", error);
             alert("Failed to send downlink.");
@@ -305,6 +302,25 @@ function StatusTables() {
 
     const closeUplinkDialog = () => {
         setUplinkDialog(false)
+    }
+
+    if (gatesLoading || activitiesLoading) {
+        return (
+            <div className="gate-status-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (gatesError || activitiesError) {
+        return (
+            <div className="gate-status-container" style={{ padding: '2rem' }}>
+                <Alert severity="error">
+                    {gatesError ? 'Failed to load gates data. ' : ''}
+                    {activitiesError ? 'Failed to load activities data. ' : ''}
+                </Alert>
+            </div>
+        );
     }
 
     return (

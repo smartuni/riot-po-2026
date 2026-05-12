@@ -1,11 +1,10 @@
 import React from "react";
 import { useGetGatesQuery } from "../../../app/store/api/api";
-import { useAppSelector } from "../../../app/store";
+import { CircularProgress, Alert } from "@mui/material";
 
 function totalGates(gates) {
     let total = 0;
-    let gate;
-    for (gate in gates){
+    for (const gate of gates) {
         total++;
     }
     return total;
@@ -52,10 +51,27 @@ function enumToJson(inString) {
     } else if (inString === "UNKNOWN") {
         return "unknown"
     }
+    return "unknown"
 }
 
 function InfoBoxes() {
-    const gates = useAppSelector((state) => state.gates.gates);
+    const { data: gates = [], isLoading, error } = useGetGatesQuery();
+
+    if (isLoading) {
+        return (
+            <div className="info-boxes" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="info-boxes" style={{ padding: '2rem' }}>
+                <Alert severity="error">Failed to load gates data: {error.toString()}</Alert>
+            </div>
+        );
+    }
 
     return (
         <div className="info-boxes">
