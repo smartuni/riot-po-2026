@@ -1,12 +1,27 @@
 import React from 'react';
+import { CircularProgress, Alert } from '@mui/material';
 import '../styles/RecentActivity.css';
 import { useGetActivitiesQuery } from '../../../app/store/api/api';
-import { useAppSelector } from '../../../app/store';
 import { FiClock } from 'react-icons/fi';
 
 function RecentActivity() {
-    const { data: fetchedActivities } = useGetActivitiesQuery();
-    const activities = useAppSelector(state => state.activities.activities);
+    const { data: activities = [], isLoading, error } = useGetActivitiesQuery();
+
+    if (isLoading) {
+        return (
+            <div className="recent-activity" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="recent-activity" style={{ padding: '1rem' }}>
+                <Alert severity="error">Failed to load activities: {error.toString()}</Alert>
+            </div>
+        );
+    }
 
     const formatTime = (timestamp) => {
         const date = new Date(timestamp);
