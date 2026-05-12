@@ -1,10 +1,10 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polygon } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../styles/MapView.css";
 // import FloodGatePopup from "./FloodGatePopup";
-import { fetchGates } from "../../gates";
+import { useGetGatesQuery } from "../../../app/store/api/api";
 
 const getArrowIcon = (status) => {
     return L.divIcon({
@@ -23,21 +23,7 @@ const getArrowIcon = (status) => {
 };
 
 function MapView({ search, statusFilter }) {
-    const [gates, setGates] = useState([]);
-
-    useEffect(() => {
-        const loadGates = async () => {
-            try {
-                const data = await fetchGates();
-                setGates(data);
-            } catch (error) {
-                console.error('Fehler beim Laden der Gates', error);
-            }
-        };
-
-        loadGates();
-    }, []);
-
+    const { data: gates = [] } = useGetGatesQuery();
 
     const filteredGates = gates.filter(
         (gate) =>
