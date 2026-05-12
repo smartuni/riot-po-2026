@@ -1,10 +1,11 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polygon } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../styles/MapView.css";
+import { CircularProgress, Alert } from "@mui/material";
 // import FloodGatePopup from "./FloodGatePopup";
-import { fetchGates } from "../../gates";
+import { useGetGatesQuery } from "../../../app/store/api/api";
 
 const getArrowIcon = (status) => {
     return L.divIcon({
@@ -23,21 +24,23 @@ const getArrowIcon = (status) => {
 };
 
 function MapView({ search, statusFilter }) {
-    const [gates, setGates] = useState([]);
+    const { data: gates = [], isLoading, error } = useGetGatesQuery();
 
-    useEffect(() => {
-        const loadGates = async () => {
-            try {
-                const data = await fetchGates();
-                setGates(data);
-            } catch (error) {
-                console.error('Fehler beim Laden der Gates', error);
-            }
-        };
+    if (isLoading) {
+        return (
+            <div className="map-view" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '500px' }}>
+                <CircularProgress />
+            </div>
+        );
+    }
 
-        loadGates();
-    }, []);
-
+    if (error) {
+        return (
+            <div className="map-view" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '500px' }}>
+                <Alert severity="error">Failed to load gates data: {error.toString()}</Alert>
+            </div>
+        );
+    }
 
     const filteredGates = gates.filter(
         (gate) =>

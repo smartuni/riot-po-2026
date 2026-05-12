@@ -1,8 +1,74 @@
 import React from 'react';
-import { Typography, Paper, List, ListItemButton, ListItemText } from '@mui/material';
-import CheckIcon from '@mui/icons-material/Check'; // Optional: Icon für "gelesen"
+import { Typography, Paper, List, ListItemButton, ListItemText, CircularProgress, Alert } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
+import {
+    useGetUserDetailsQuery,
+    useGetNotificationsByWorkerIdQuery,
+    useMarkNotificationAsReadMutation,
+} from '../../../app/store/api/api';
 
-const NotificationPopup = ({ notifications, onNotificationClick }) => {
+const NotificationPopup = () => {
+    const { data: userDetails, isLoading: userLoading } = useGetUserDetailsQuery();
+    const workerId = userDetails?.workerId ?? null;
+    const { data: notificationsData, isLoading: notificationsLoading, error: notificationsError } = useGetNotificationsByWorkerIdQuery(workerId, {
+        skip: !workerId,
+    });
+    const [markAsRead] = useMarkNotificationAsReadMutation();
+
+    if (userLoading || notificationsLoading) {
+        return (
+            <Paper
+                elevation={6}
+                sx={{
+                    position: 'absolute',
+                    top: 60,
+                    right: 20,
+                    width: 300,
+                    zIndex: 2000,
+                    borderRadius: 2,
+                    p: 2,
+                    backgroundColor: 'background.paper',
+                }}
+            >
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+                    <CircularProgress size={24} />
+                </div>
+            </Paper>
+        );
+    }
+
+    if (notificationsError) {
+        return (
+            <Paper
+                elevation={6}
+                sx={{
+                    position: 'absolute',
+                    top: 60,
+                    right: 20,
+                    width: 300,
+                    zIndex: 2000,
+                    borderRadius: 2,
+                    p: 2,
+                    backgroundColor: 'background.paper',
+                }}
+            >
+                <Alert severity="error">Failed to load notifications</Alert>
+            </Paper>
+        );
+    }
+
+    const notifications = notificationsData ?? [];
+
+    const handleNotificationClick = async (notification) => {
+        if (!notification.read) {
+            try {
+                await markAsRead(notification.id).unwrap();
+            } catch (error) {
+                console.error("Fehler beim Aktualisieren der Benachrichtigung:", error);
+            }
+        }
+    };
+
     return (
         <Paper
             elevation={6}
@@ -25,9 +91,9 @@ const NotificationPopup = ({ notifications, onNotificationClick }) => {
                     notifications.map((note, index) => (
                         <ListItemButton
                             key={index}
-                            onClick={() => onNotificationClick(index)}
+                            onClick={() => handleNotificationClick(note)}
                             sx={{
-                                opacity: note.read ? 0.6 : 1, // Gelesene sind "blasser"
+                                opacity: note.read ? 0.6 : 1,
                                 alignItems: 'flex-start'
                             }}
                         >

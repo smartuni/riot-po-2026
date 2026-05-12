@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { fetchGates } from "../api/gateApi";
-import { fetchActivities } from "../../activities";
+import React, { useState, useMemo } from "react";
+import { useGetGatesQuery, useGetActivitiesQuery } from "../../../app/store/api/api";
 import {
     TextField,
     MenuItem,
     Tabs,
     Tab,
     Tooltip,
+    CircularProgress, Alert,
 } from "@mui/material";
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
@@ -16,46 +16,15 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 function StatusTablesView() {
     /**
-     * State-Variablen für die Gates, Suchanfrage, Filter, Ansicht und erweiterten Gate-ID.
+     * State-Variablen für die Suchanfrage, Filter, Ansicht und erweiterten Gate-ID.
      */
-    const [gates, setGates] = useState([]);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("");
     const [view, setView] = useState("list");
     const [expandedGateId, setExpandedGateId] = useState(null);
-    const [activities, setActivities] = useState([]);
 
-    /**
-     * Lädt die Gates beim ersten Rendern der Komponente.
-     */
-    useEffect(() => {
-        const loadGates = async () => {
-            try {
-                const data = await fetchGates();
-                setGates(data);
-            } catch (error) {
-                console.error('Fehler beim Laden der Gates', error);
-            }
-        };
-        loadGates();
-        const intervalId = setInterval(() => {
-            loadGates();
-        }, 300);
-
-        return () => clearInterval(intervalId);
-    }, []);
-
-    useEffect(() => {
-        const loadActivities = async () => {
-            try {
-                const data = await fetchActivities();
-                setActivities(data);
-            } catch (error) {
-                console.error('Fehler beim Laden der Aktivitäten', error);
-            }
-        };
-        loadActivities();
-    }, []);
+    const { data: gates = [], isLoading, error } = useGetGatesQuery();
+    const { data: activities = [] } = useGetActivitiesQuery();
 
     /**
      * Rendern des angeforderten Status für die Gates.
@@ -77,14 +46,30 @@ function StatusTablesView() {
      * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
      * @type {Array}
      */
-    const filteredGates = gates.filter(gate =>
+    const filteredGates = useMemo(() => gates.filter(gate =>
         (gate.id.toString().includes(search) || gate.location.toLowerCase().includes(search.toLowerCase())) &&
         (
             filter === "" ||
             gate.status === filter ||
             (gate.requestedStatus && gate.requestedStatus.toLowerCase().includes(filter.toLowerCase()))
         )
-    );
+    ), [gates, search, filter]);
+
+    if (isLoading) {
+        return (
+            <div className="gate-status-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="gate-status-container" style={{ padding: '2rem' }}>
+                <Alert severity="error">Failed to load gates data: {error.toString()}</Alert>
+            </div>
+        );
+    }
 
     return (
         <div className="gate-status-container">

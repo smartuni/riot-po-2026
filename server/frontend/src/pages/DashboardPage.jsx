@@ -2,34 +2,22 @@ import { InfoBoxes } from '../features/gates';
 import { StatusTables } from '../features/gates';
 import { RecentActivity } from '../features/activities';
 import { HeaderBar } from '../features/shell';
-import { apiClient, getCookie } from '../shared';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertDialogIllegal } from '../shared';
+import { useGetUserDetailsQuery } from '../app/store/api/api';
 
 const DashboardPage = () => {
     const [popupOpen, setPopupOpen] = useState(false);
     const navigate = useNavigate();
 
-    var jwt = getCookie("jwt");
-    if (jwt != null) {
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${jwt}`;
-    }
-
-    const loadDetails = async () => {
-        try {
-            const response = await apiClient.get('/auth/user-details');
-            if (response.status !== 200) {
-                throw new Error('Request failed with status code ' + response.status);
-            }
-        } catch (e) {
-            setPopupOpen(true);
-        }
-    };
+    const { error } = useGetUserDetailsQuery();
 
     useEffect(() => {
-        loadDetails();
-    }, []);
+        if (error) {
+            setPopupOpen(true);
+        }
+    }, [error]);
 
     const closeDialog = () => {
         navigate('/');

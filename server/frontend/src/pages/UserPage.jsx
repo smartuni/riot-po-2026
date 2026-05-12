@@ -1,7 +1,7 @@
 import { Button, Grid, Box, TextField } from "@mui/material";
 import { HeaderBar } from '../features/shell';
 import { LogoutButton } from "../features/auth";
-import { apiClient } from "../shared";
+import { useGetUserDetailsQuery, useUpdateUserDetailsMutation } from '../app/store/api/api';
 import { useNavigate } from "react-router-dom";
 import { FiRotateCcw, FiUser } from "react-icons/fi";
 import { useState, useEffect } from "react";
@@ -9,6 +9,8 @@ import { AlertDialog } from "../shared";
 
 const UserPage = () => {
     const navigate = useNavigate();
+    const { data: userDetails } = useGetUserDetailsQuery();
+    const [updateUserDetails, { isLoading: isUpdateLoading }] = useUpdateUserDetailsMutation();
     const [username, setUsername] = useState('');
     const [displayName, setDisplayName] = useState('');
     const [values, setValues] = useState({ name: '', password: '', newPassword: '' });
@@ -20,33 +22,22 @@ const UserPage = () => {
     };
 
     useEffect(() => {
-        const loadDetails = async () => {
-            try {
-                const response = await apiClient.get('/auth/user-details');
-                if (response.status !== 200) {
-                    throw new Error('Request failed with status code ' + response.status);
-                }
-                const user = response.data;
-                setUsername(user.email);
-                setDisplayName(user.name);
-                setRole(user.role);
-                setValues({ name: user.name, password: '', newPassword: '' });
-            } catch (e) {
-                console.error("Fehler beim Laden der User-Details:", e);
-            }
-        };
-        loadDetails();
-    }, []);
+        if (userDetails) {
+            setUsername(userDetails.email);
+            setDisplayName(userDetails.name);
+            setRole(userDetails.role);
+            setValues({ name: userDetails.name, password: '', newPassword: '' });
+        }
+    }, [userDetails]);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
-            const request = {
+            await updateUserDetails({
                 name: values.name,
                 password: values.password,
-                newPassword: values.newPassword
-            };
-            await apiClient.put('/auth/user-change', request);
+                newPassword: values.newPassword,
+            }).unwrap();
             setConfirmationOpen(true);
         }
         catch (e) {
@@ -136,7 +127,7 @@ const UserPage = () => {
                             fullWidth
                             variant="contained"
                             sx={{ mt: 3, mb: 2 }}
-                            disabled={!isFormValid()}
+                            disabled={!isFormValid() || isUpdateLoading}
                             onClick={handleSubmit}
                             noValidate
                         >
