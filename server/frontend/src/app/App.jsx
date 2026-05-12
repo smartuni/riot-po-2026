@@ -1,5 +1,7 @@
 import '../shared/styles/App.css';
+import { Provider } from 'react-redux';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { store } from './store';
 import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
@@ -10,7 +12,8 @@ import DashboardGuestPage from '../pages/DashboardGuestPage';
 
 function App() {
   return (
-    <BrowserRouter>
+    <Provider store={store}>
+      <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />}></Route>
         <Route path="/login" element={<LoginPage />}></Route>
@@ -21,6 +24,7 @@ function App() {
         <Route path='/dashboard-guest' element={<DashboardGuestPage />}></Route>
       </Routes>
     </BrowserRouter>
+    </Provider>
   );
 }
 
