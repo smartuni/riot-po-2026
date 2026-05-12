@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { useGetGatesQuery } from "../../../app/store/api/api";
+import React, { useState } from "react";
+import { useGetGatesQuery, useGetActivitiesQuery } from "../../../app/store/api/api";
 import { useAppSelector } from "../../../app/store";
-import { fetchActivities } from "../../activities";
 import {
     TextField,
     MenuItem,
@@ -23,7 +22,6 @@ function StatusTablesView() {
     const [filter, setFilter] = useState("");
     const [view, setView] = useState("list");
     const [expandedGateId, setExpandedGateId] = useState(null);
-    const [activities, setActivities] = useState([]);
 
     /**
      * RTK Query fetches initial gates data.
@@ -33,17 +31,7 @@ function StatusTablesView() {
 
     const gates = useAppSelector(state => state.gates.gates);
 
-    useEffect(() => {
-        const loadActivities = async () => {
-            try {
-                const data = await fetchActivities();
-                setActivities(data);
-            } catch (error) {
-                console.error('Fehler beim Laden der Aktivitäten', error);
-            }
-        };
-        loadActivities();
-    }, []);
+    const { data: activities = [] } = useGetActivitiesQuery();
 
     /**
      * Rendern des angeforderten Status für die Gates.
