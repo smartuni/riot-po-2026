@@ -16,7 +16,7 @@ const notificationsSlice = createSlice({
         (n) => n.id === action.payload
       );
       if (notification) {
-        notification.isRead = true;
+        notification.read = true;
       }
     },
   },
