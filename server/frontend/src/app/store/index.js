@@ -6,6 +6,7 @@ import gatesReducer from './slices/gatesSlice';
 import activitiesReducer from './slices/activitiesSlice';
 import notificationsReducer from './slices/notificationsSlice';
 import downlinkReducer from './slices/downlinkSlice';
+import wsMiddleware from './middleware/wsMiddleware';
 
 export const store = configureStore({
   reducer: {
@@ -17,7 +18,7 @@ export const store = configureStore({
     [api.reducerPath]: api.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(api.middleware),
+    getDefaultMiddleware().concat(api.middleware, wsMiddleware),
 });
 
 export const useAppDispatch = () => useDispatch();
