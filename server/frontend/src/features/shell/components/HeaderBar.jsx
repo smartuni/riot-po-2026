@@ -12,34 +12,44 @@ import {
     useGetNotificationsByWorkerIdQuery,
     useMarkNotificationAsReadMutation,
 } from '../../../app/store/api/api';
-import { useAppSelector, useAppDispatch } from '../../../app/store';
-import { notificationsLoaded, notificationMarkedRead } from '../../../app/store/slices/notificationsSlice';
+import { CircularProgress } from '@mui/material';
+import { useAppSelector } from '../../../app/store';
+import { api } from '../../../app/store/api/api';
 
 function HeaderBar() {
     const navigate = useNavigate();
-    const dispatch = useAppDispatch();
     const [popupVisible, setPopupVisible] = useState(false);
     const popupRef = useRef();
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
 
-    const { data: userDetails } = useGetUserDetailsQuery();
+    const { data: userDetails, isLoading: userLoading, error: userError } = useGetUserDetailsQuery();
     const workerId = userDetails?.workerId ?? null;
 
-    const { data: notificationsData } = useGetNotificationsByWorkerIdQuery(workerId, {
+    const { data: notificationsData, isLoading: notificationsLoading, error: notificationsError } = useGetNotificationsByWorkerIdQuery(workerId, {
         skip: !workerId,
     });
 
     const [markAsRead] = useMarkNotificationAsReadMutation();
 
-    useEffect(() => {
-        if (notificationsData) {
-            dispatch(notificationsLoaded(notificationsData));
-        }
-    }, [notificationsData, dispatch]);
+    if (userLoading || notificationsLoading) {
+        return (
+            <div className="header-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60px' }}>
+                <CircularProgress size={24} sx={{ color: 'white' }} />
+            </div>
+        );
+    }
 
-    const notifications = useAppSelector((state) => state.notifications.notifications);
+    if (userError || notificationsError) {
+        return (
+            <div className="header-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60px', backgroundColor: '#f44336' }}>
+                <span style={{ color: 'white' }}>Error loading user data</span>
+            </div>
+        );
+    }
+
+    const notifications = notificationsData ?? [];
     const numberOfUnreadNotifications = notifications.filter(n => !n.read).length;
 
     const togglePopup = () => {
@@ -52,7 +62,6 @@ function HeaderBar() {
         if (!clicked.read) {
             try {
                 await markAsRead(clicked.id).unwrap();
-                dispatch(notificationMarkedRead(clicked.id));
             } catch (error) {
                 console.error("Fehler beim Aktualisieren der Benachrichtigung:", error);
                 return;
@@ -124,10 +133,7 @@ function HeaderBar() {
 
             {popupVisible && (
                 <div ref={popupRef}>
-                    <NotificationPopup
-                        notifications={notifications}
-                        onNotificationClick={handleNotificationClick}
-                    />
+                    <NotificationPopup />
                 </div>
             )}
 

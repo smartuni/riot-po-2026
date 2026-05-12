@@ -9,11 +9,11 @@ const LogoutButton = () => {
   const handleLogout = async () => {
     try {
       await logout().unwrap();
+      navigate(`/`);
     }
-    catch (e) {
-      console.log(e);
+    catch (error) {
+      console.error('Logout failed:', error);
     }
-    navigate(`/`);
   }
 
   return (
