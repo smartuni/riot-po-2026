@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useGetGatesQuery, useGetActivitiesQuery } from "../../../app/store/api/api";
-import { useAppSelector } from "../../../app/store";
 import {
     TextField,
     MenuItem,
     Tabs,
     Tab,
     Tooltip,
+    CircularProgress, Alert,
 } from "@mui/material";
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
@@ -23,14 +23,7 @@ function StatusTablesView() {
     const [view, setView] = useState("list");
     const [expandedGateId, setExpandedGateId] = useState(null);
 
-    /**
-     * RTK Query fetches initial gates data.
-     * WS updates via gateAdded/gateDeleted/gateUpdated actions.
-     */
-    useGetGatesQuery();
-
-    const gates = useAppSelector(state => state.gates.gates);
-
+    const { data: gates = [], isLoading, error } = useGetGatesQuery();
     const { data: activities = [] } = useGetActivitiesQuery();
 
     /**
@@ -53,14 +46,30 @@ function StatusTablesView() {
      * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
      * @type {Array}
      */
-    const filteredGates = gates.filter(gate =>
+    const filteredGates = useMemo(() => gates.filter(gate =>
         (gate.id.toString().includes(search) || gate.location.toLowerCase().includes(search.toLowerCase())) &&
         (
             filter === "" ||
             gate.status === filter ||
             (gate.requestedStatus && gate.requestedStatus.toLowerCase().includes(filter.toLowerCase()))
         )
-    );
+    ), [gates, search, filter]);
+
+    if (isLoading) {
+        return (
+            <div className="gate-status-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="gate-status-container" style={{ padding: '2rem' }}>
+                <Alert severity="error">Failed to load gates data: {error.toString()}</Alert>
+            </div>
+        );
+    }
 
     return (
         <div className="gate-status-container">
