@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { fetchGates } from "../api/gateApi";
+import { useGetGatesQuery } from "../../../app/store/api/api";
+import { useAppSelector } from "../../../app/store";
 import { fetchActivities } from "../../activities";
 import {
     TextField,
@@ -16,9 +17,8 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 function StatusTablesView() {
     /**
-     * State-Variablen für die Gates, Suchanfrage, Filter, Ansicht und erweiterten Gate-ID.
+     * State-Variablen für die Suchanfrage, Filter, Ansicht und erweiterten Gate-ID.
      */
-    const [gates, setGates] = useState([]);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("");
     const [view, setView] = useState("list");
@@ -26,24 +26,12 @@ function StatusTablesView() {
     const [activities, setActivities] = useState([]);
 
     /**
-     * Lädt die Gates beim ersten Rendern der Komponente.
+     * RTK Query fetches initial gates data.
+     * WS updates via gateAdded/gateDeleted/gateUpdated actions.
      */
-    useEffect(() => {
-        const loadGates = async () => {
-            try {
-                const data = await fetchGates();
-                setGates(data);
-            } catch (error) {
-                console.error('Fehler beim Laden der Gates', error);
-            }
-        };
-        loadGates();
-        const intervalId = setInterval(() => {
-            loadGates();
-        }, 300);
+    useGetGatesQuery();
 
-        return () => clearInterval(intervalId);
-    }, []);
+    const gates = useAppSelector(state => state.gates.gates);
 
     useEffect(() => {
         const loadActivities = async () => {
