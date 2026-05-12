@@ -169,6 +169,7 @@ export const {
   useLoginMutation,
   useRegisterMutation,
   useGetUserDetailsQuery,
+  useLazyGetUserDetailsQuery,
   useUpdateUserDetailsMutation,
   useLogoutMutation,
   useGetGatesQuery,

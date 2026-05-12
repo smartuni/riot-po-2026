@@ -1,45 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import '../styles/RecentActivity.css';
-import { fetchActivities } from "../api/activityApi";
+import { useGetActivitiesQuery } from '../../../app/store/api/api';
+import { useAppSelector } from '../../../app/store';
 import { FiClock } from 'react-icons/fi';
-import SockJS from 'sockjs-client';
-import { Stomp } from '@stomp/stompjs';
 
 function RecentActivity() {
-    const [activities, setActivities] = useState([]);
-
-    useEffect(() => {
-        const loadActivities = async () => {
-            try {
-                const data = await fetchActivities();
-                setActivities(data);
-            } catch (error) {
-                console.error('Fehler beim Laden der Aktivitäten', error);
-            }
-        };
-        loadActivities();
-    }, []);
-
-    useEffect(() => {
-        const socket = new SockJS('http://localhost:8080/ws');
-        const stompClient = Stomp.over(socket);
-
-        stompClient.connect({}, () => {
-            stompClient.subscribe('/topic/gate-activities', (message) => {
-                const activity = JSON.parse(message.body);
-                setActivities(prev => [...prev, activity]);
-            });
-
-            stompClient.subscribe('/topic/gate-activities/delete', (message) => {
-                const id = parseInt(message.body);
-                setActivities(prev => prev.filter(a => a.id !== id));
-            });
-        });
-
-        return () => {
-            stompClient.disconnect();
-        };
-    }, []);
+    const { data: fetchedActivities } = useGetActivitiesQuery();
+    const activities = useAppSelector(state => state.activities.activities);
 
     const formatTime = (timestamp) => {
         const date = new Date(timestamp);

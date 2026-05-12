@@ -1,24 +1,14 @@
 import { Button } from "@mui/material";
-import { apiClient } from '../../../shared';
+import { useLogoutMutation } from '../../../app/store/api/api';
 import { useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 
-function eraseCookie(name) {
-    document.cookie = name + '=; Max-Age=0';
-}
-
 const LogoutButton = () => {
   const navigate = useNavigate();
+  const [logout] = useLogoutMutation();
   const handleLogout = async () => {
     try {
-      const response = await apiClient.post('/auth/logout');
-      if (response.status !== 200) {
-        throw new Error('Request failed with status code ' + response.status);
-      }
-      if (response.status === 200) {
-        delete apiClient.defaults.headers.common['Authorization'];
-        eraseCookie("jwt");
-      }
+      await logout().unwrap();
     }
     catch (e) {
       console.log(e);

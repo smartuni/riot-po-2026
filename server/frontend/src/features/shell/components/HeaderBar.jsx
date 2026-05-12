@@ -6,50 +6,41 @@ import {
     DialogContent, DialogContentText, DialogActions
 } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
-import { NotificationPopup, fetchNotificationByWorkerId, markNotificationAsRead } from '../../notifications';
-import { apiClient } from '../../../shared';
+import { NotificationPopup } from '../../notifications';
+import {
+    useGetUserDetailsQuery,
+    useGetNotificationsByWorkerIdQuery,
+    useMarkNotificationAsReadMutation,
+} from '../../../app/store/api/api';
+import { useAppSelector, useAppDispatch } from '../../../app/store';
+import { notificationsLoaded, notificationMarkedRead } from '../../../app/store/slices/notificationsSlice';
 
 function HeaderBar() {
     const navigate = useNavigate();
-    const [notifications, setNotifications] = useState([]);
+    const dispatch = useAppDispatch();
     const [popupVisible, setPopupVisible] = useState(false);
-    const [workerId, setWorkerId] = useState(null);
     const popupRef = useRef();
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
 
-    const numberOfUnreadNotifications = notifications.filter(n => !n.read).length;
+    const { data: userDetails } = useGetUserDetailsQuery();
+    const workerId = userDetails?.workerId ?? null;
+
+    const { data: notificationsData } = useGetNotificationsByWorkerIdQuery(workerId, {
+        skip: !workerId,
+    });
+
+    const [markAsRead] = useMarkNotificationAsReadMutation();
 
     useEffect(() => {
-        const loadDetails = async () => {
-            try {
-                const response = await apiClient.get('/auth/user-details');
-                if (response.status !== 200) {
-                    throw new Error('Request failed with status code ' + response.status);
-                }
-                setWorkerId(response.data.workerId);
-            } catch (e) {
-                console.error("Fehler beim Laden der User-Details:", e);
-            }
-        };
-
-        loadDetails();
-    }, []);
-
-    useEffect(() => {
-        if (workerId !== null) {
-            const loadNotifications = async () => {
-                try {
-                    const data = await fetchNotificationByWorkerId(workerId);
-                    setNotifications(data);
-                } catch (error) {
-                    console.error('Fehler beim Laden der Nachrichten:', error);
-                }
-            };
-            loadNotifications();
+        if (notificationsData) {
+            dispatch(notificationsLoaded(notificationsData));
         }
-    }, [workerId]);
+    }, [notificationsData, dispatch]);
+
+    const notifications = useAppSelector((state) => state.notifications.notifications);
+    const numberOfUnreadNotifications = notifications.filter(n => !n.read).length;
 
     const togglePopup = () => {
         setPopupVisible(prev => !prev);
@@ -58,22 +49,16 @@ function HeaderBar() {
     const handleNotificationClick = async (index) => {
         const clicked = notifications[index];
 
-        // Prüfen, ob die Nachricht bereits gelesen wurde
         if (!clicked.read) {
             try {
-                await markNotificationAsRead(clicked.id);
-
-                // UI-Update lokal
-                const updatedNotifications = [...notifications];
-                updatedNotifications[index] = { ...clicked, read: true };
-                setNotifications(updatedNotifications);
+                await markAsRead(clicked.id).unwrap();
+                dispatch(notificationMarkedRead(clicked.id));
             } catch (error) {
                 console.error("Fehler beim Aktualisieren der Benachrichtigung:", error);
                 return;
             }
         }
 
-        // In jedem Fall: Dialog öffnen
         setSelectedNotification(clicked);
         setDialogOpen(true);
     };
