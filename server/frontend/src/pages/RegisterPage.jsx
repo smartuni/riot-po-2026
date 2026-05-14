@@ -50,10 +50,13 @@ const RegisterPage = () => {
         setIsErrorDialogOpen(true);
       }
     } else {
-      Object.keys(fields).forEach(key => {
-        fields[key].touched = true;
+      setFields(prevFields => {
+        const updated = {};
+        Object.keys(prevFields).forEach(k => {
+          updated[k] = { ...prevFields[k], touched: true };
+        });
+        return updated;
       });
-      setFields({ ...fields });
     }
   };
 
