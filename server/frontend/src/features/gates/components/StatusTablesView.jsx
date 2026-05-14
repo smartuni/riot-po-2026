@@ -10,7 +10,6 @@ import {
 } from "@mui/material";
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
-import CircleIcon from '@mui/icons-material/Circle';
 import { MapView } from "../../map";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
@@ -31,17 +30,6 @@ function StatusTablesView() {
      * @param status
      * @returns {Element}
      */
-    const renderRequestedStatus = (status) => {
-        switch (status) {
-            case "REQUESTED_OPEN":
-                return <><LockOpenIcon fontSize="small" /> OPEN</>;
-            case "REQUESTED_CLOSE":
-                return <><LockIcon fontSize="small" /> CLOSE</>;
-            default:
-                return <><CircleIcon fontSize="small" /> NONE</>;
-        }
-    };
-
     /**
      * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
      * @type {Array}
@@ -172,7 +160,7 @@ function StatusTablesView() {
                                                     {activities
                                                         .filter(activity => activity.gateId === gate.id)
                                                         .slice(-4) // Optional: nur die letzten 4 zeigen
-                                                        .map((activity, index) => (
+                                                        .map((activity) => (
                                                             <p key={activity.id}>
                                                                 <strong>{activity.lastTimeStamp}:</strong> {activity.message}
                                                             </p>

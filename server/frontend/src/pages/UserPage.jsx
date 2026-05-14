@@ -4,7 +4,7 @@ import { LogoutButton } from "../features/auth";
 import { useGetUserDetailsQuery, useUpdateUserDetailsMutation } from '../app/store/api/api';
 import { useNavigate } from "react-router-dom";
 import { FiRotateCcw, FiUser } from "react-icons/fi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AlertDialog } from "../shared";
 
 const UserPage = () => {
@@ -16,17 +16,19 @@ const UserPage = () => {
     const [values, setValues] = useState({ name: '', password: '', newPassword: '' });
     const [role, setRole] = useState('');
     const [confirmationOpen, setConfirmationOpen] = useState(false);
+    const dataInitialized = useRef(false);
 
     const isFormValid = () => {
         return values.password.length > 6 && values.name.length > 0;
     };
 
     useEffect(() => {
-        if (userDetails) {
+        if (userDetails && !dataInitialized.current) {
             setUsername(userDetails.email);
             setDisplayName(userDetails.name);
             setRole(userDetails.role);
             setValues({ name: userDetails.name, password: '', newPassword: '' });
+            dataInitialized.current = true;
         }
     }, [userDetails]);
 

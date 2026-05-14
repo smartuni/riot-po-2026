@@ -1,23 +1,15 @@
-import { InfoBoxes } from '../features/gates';
+import { InfoBoxes, StatusTablesView } from '../features/gates';
 import { RecentActivity } from '../features/activities';
 import { HeaderBar } from '../features/shell';
-import { StatusTablesView } from '../features/gates';
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertDialogIllegal } from '../shared';
 import { useGetUserDetailsQuery } from '../app/store/api/api';
 
 const DashboardViewPage = () => {
-    const [popupOpen, setPopupOpen] = useState(false);
     const navigate = useNavigate();
 
     const { error } = useGetUserDetailsQuery();
-
-    useEffect(() => {
-        if (error) {
-            setPopupOpen(true);
-        }
-    }, [error]);
+    const popupOpen = !!error;
 
     const closeDialog = () => {
         navigate('/');

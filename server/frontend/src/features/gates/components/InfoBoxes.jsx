@@ -3,17 +3,12 @@ import { useGetGatesQuery } from "../../../app/store/api/api";
 import { CircularProgress, Alert } from "@mui/material";
 
 function totalGates(gates) {
-    let total = 0;
-    for (const gate of gates) {
-        total++;
-    }
-    return total;
+    return gates.length;
 }
 
 function opengates(gates) {
     let tmp = 0;
-    let gate;
-    for (gate of gates) {
+    for (const gate of gates) {
         if (enumToJson(gate.status) === "opened") {
             tmp++;
         }
@@ -23,8 +18,7 @@ function opengates(gates) {
 
 function closedGates(gates) {
     let tmp = 0;
-    let gate;
-    for (gate of gates) {
+    for (const gate of gates) {
         if (enumToJson(gate.status) === "closed") {
             tmp++;
         }
@@ -34,8 +28,7 @@ function closedGates(gates) {
 
 function gatesOutOfService(gates) {
     let tmp = 0;
-    let gate;
-    for (gate of gates) {
+    for (const gate of gates) {
         if (enumToJson(gate.status) === "unknown") {
             tmp++;
         }

@@ -12,7 +12,6 @@ import {
     useSendDownlinkMutation,
     useResetDownlinkCounterMutation,
 } from "../../../app/store/api/api";
-import { useAppSelector } from "../../../app/store";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import CloseIcon from "@mui/icons-material/Close";
@@ -48,8 +47,6 @@ function StatusTables() {
     const { data: downlinkCounterData } = useGetDownlinkCounterQuery();
     const { data: userDetails } = useGetUserDetailsQuery();
 
-    const uplinkString = useAppSelector(state => state.gates.uplinkString);
-
     const downlinkCount = downlinkCounterData ?? 0;
     const workerId = userDetails?.workerId ?? null;
 
@@ -69,12 +66,10 @@ function StatusTables() {
     const [expandedGateId, setExpandedGateId] = useState(null);
     const [gateToDelete, setGateToDelete] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [selectedPriorities, setSelectedPriorities] = useState({});
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
     const [resetPassword, setResetPassword] = useState("");
     const [resetError, setResetError] = useState("");
-    const [uplinkDialog, setUplinkDialog] = useState(false);
     const [newGateData, setNewGateData] = useState({
         location: "",
         latitude: "",
@@ -82,12 +77,6 @@ function StatusTables() {
         priority: 0,
         status: "CLOSED", // default value
     });
-
-    React.useEffect(() => {
-        if (uplinkString) {
-            setUplinkDialog(true);
-        }
-    }, [uplinkString]);
 
     /**
      * For deleting a gate.
@@ -259,10 +248,6 @@ function StatusTables() {
     const handlePriorityChange = async (gateId, newPriority) => {
         try {
             await updateGatePriority({ gateId, priority: newPriority }).unwrap();
-            setSelectedPriorities(prev => ({
-                ...prev,
-                [gateId]: newPriority
-            }));
         } catch (error) {
             console.error("Fehler beim Aktualisieren der Priorität:", error);
             alert("Fehler beim Aktualisieren der Priorität.");
@@ -298,10 +283,6 @@ function StatusTables() {
         if (days === 1) return "yesterday";
         if (days < 7) return `${days} days ago`;
         return date.toLocaleDateString(); // fallback to a readable date
-    }
-
-    const closeUplinkDialog = () => {
-        setUplinkDialog(false)
     }
 
     if (gatesLoading || activitiesLoading) {

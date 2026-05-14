@@ -2,26 +2,19 @@ import React, { useState, useEffect, useRef } from "react";
 import '../../../shared/styles/HeaderBar.css';
 import { FiHome, FiUser, FiBell } from 'react-icons/fi';
 import {
-    Button, Badge, Dialog, DialogTitle,
-    DialogContent, DialogContentText, DialogActions
+    Button, Badge, CircularProgress
 } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
 import { NotificationPopup } from '../../notifications';
 import {
     useGetUserDetailsQuery,
     useGetNotificationsByWorkerIdQuery,
-    useMarkNotificationAsReadMutation,
 } from '../../../app/store/api/api';
-import { CircularProgress } from '@mui/material';
-import { useAppSelector } from '../../../app/store';
 
 function HeaderBar() {
     const navigate = useNavigate();
     const [popupVisible, setPopupVisible] = useState(false);
     const popupRef = useRef();
-
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [selectedNotification, setSelectedNotification] = useState(null);
 
     const { data: userDetails, isLoading: userLoading, error: userError } = useGetUserDetailsQuery();
     const workerId = userDetails?.workerId ?? null;
@@ -30,7 +23,22 @@ function HeaderBar() {
         skip: !workerId,
     });
 
-    const [markAsRead] = useMarkNotificationAsReadMutation();
+    const handleClickOutside = (event) => {
+        if (popupRef.current && !popupRef.current.contains(event.target)) {
+            setPopupVisible(false);
+        }
+    };
+
+    useEffect(() => {
+        if (popupVisible) {
+            document.addEventListener("mousedown", handleClickOutside);
+        } else {
+            document.removeEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [popupVisible]);
 
     if (userLoading || notificationsLoading) {
         return (
@@ -54,40 +62,6 @@ function HeaderBar() {
     const togglePopup = () => {
         setPopupVisible(prev => !prev);
     };
-
-    const handleNotificationClick = async (index) => {
-        const clicked = notifications[index];
-
-        if (!clicked.read) {
-            try {
-                await markAsRead(clicked.id).unwrap();
-            } catch (error) {
-                console.error("Fehler beim Aktualisieren der Benachrichtigung:", error);
-                return;
-            }
-        }
-
-        setSelectedNotification(clicked);
-        setDialogOpen(true);
-    };
-
-
-    const handleClickOutside = (event) => {
-        if (popupRef.current && !popupRef.current.contains(event.target)) {
-            setPopupVisible(false);
-        }
-    };
-
-    useEffect(() => {
-        if (popupVisible) {
-            document.addEventListener("mousedown", handleClickOutside);
-        } else {
-            document.removeEventListener("mousedown", handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [popupVisible]);
 
     return (
         <div style={{ position: 'relative' }}>
@@ -135,26 +109,8 @@ function HeaderBar() {
                     <NotificationPopup />
                 </div>
             )}
-
-            <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-                <DialogTitle>Benachrichtigung</DialogTitle>
-                <DialogContent>
-                    <DialogContentText sx={{ fontSize: '1rem', color: 'black' }}>
-                        {selectedNotification?.message}
-                    </DialogContentText>
-                    <DialogContentText sx={{ fontSize: '0.8rem', mt: 2, color: 'grey' }}>
-                        {selectedNotification && new Date(selectedNotification.lastTimeStamp).toLocaleString()}
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDialogOpen(false)} variant="contained">
-                        Schließen
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </div>
     );
 }
 
 export default HeaderBar;
-
