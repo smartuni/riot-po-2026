@@ -14,7 +14,6 @@ import {
 } from '../../../app/store/api/api';
 import { CircularProgress } from '@mui/material';
 import { useAppSelector } from '../../../app/store';
-import { api } from '../../../app/store/api/api';
 
 function HeaderBar() {
     const navigate = useNavigate();

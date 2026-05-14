@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useGetGatesQuery, useGetActivitiesQuery } from "../../../app/store/api/api";
 import {
     TextField,
@@ -46,14 +46,14 @@ function StatusTablesView() {
      * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
      * @type {Array}
      */
-    const filteredGates = useMemo(() => gates.filter(gate =>
+    const filteredGates = gates.filter(gate =>
         (gate.id.toString().includes(search) || gate.location.toLowerCase().includes(search.toLowerCase())) &&
         (
             filter === "" ||
             gate.status === filter ||
             (gate.requestedStatus && gate.requestedStatus.toLowerCase().includes(filter.toLowerCase()))
         )
-    ), [gates, search, filter]);
+    );
 
     if (isLoading) {
         return (

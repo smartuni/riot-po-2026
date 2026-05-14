@@ -5,14 +5,13 @@ import {
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
-import { useRequestGateStatusChangeMutation } from "../../../app/store/api/api";
-import { useGetUserDetailsQuery } from "../../../app/store/api/api";
+import { useRequestGateStatusChangeMutation, useGetUserDetailsQuery } from "../../../app/store/api/api";
 
 function StatusChangeDialog({ open, gate, onClose }) {
     const [requestedStatus, setRequestedStatus] = useState("");
     const [requestGateStatusChange] = useRequestGateStatusChangeMutation();
     const { data: userDetails } = useGetUserDetailsQuery();
-    const workerId = userDetails?.id;
+    const workerId = userDetails?.workerId;
 
     if (!gate) return null;
 

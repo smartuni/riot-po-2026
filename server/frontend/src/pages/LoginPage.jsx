@@ -33,7 +33,7 @@ const LoginPage = () => {
       }).unwrap();
 
       const { data: userDetails } = await fetchUserDetails();
-      if (userDetails.role === 'controller') {
+      if (userDetails?.role === 'controller') {
         navigate('/dashboard');
       } else {
         navigate('/dashboard-view');

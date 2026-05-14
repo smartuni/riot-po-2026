@@ -29,7 +29,7 @@
     "build": "vite build",
     "serve": "vite preview",
     "test": "vitest",
-    "lint": "eslint ."
+    "lint": "eslint src/"
   },
   "browserslist": {
     "production": [
