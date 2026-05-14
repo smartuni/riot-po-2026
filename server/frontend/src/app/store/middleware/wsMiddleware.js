@@ -11,6 +11,7 @@ const MAX_RECONNECT_DELAY = 30000;
 
 function createWsMiddleware() {
   let stompClient = null;
+  let clientActive = false;
   let reconnectAttempts = 0;
   let reconnectTimer = null;
   let intentionalDisconnect = false;
@@ -45,6 +46,10 @@ function createWsMiddleware() {
   }
 
   function connect(store) {
+    if (stompClient) {
+      stompClient.deactivate();
+      stompClient = null;
+    }
     intentionalDisconnect = false;
     const wsUrl = import.meta.env.VITE_WS_URL;
 
@@ -52,6 +57,7 @@ function createWsMiddleware() {
       webSocketFactory: () => new SockJS(wsUrl),
       reconnectDelay: 0,
       onConnect: () => {
+        clientActive = true;
         resetReconnectState();
 
         stompClient.subscribe('/topic/gates/add', (message) => {
@@ -113,6 +119,7 @@ function createWsMiddleware() {
         scheduleReconnect(store);
       },
       onWebSocketClose: () => {
+        clientActive = false;
         scheduleReconnect(store);
       },
     });
@@ -135,7 +142,7 @@ function createWsMiddleware() {
   const middleware = (store) => (next) => (action) => {
     const result = next(action);
 
-    if (action.type === APP_START && !stompClient) {
+    if (action.type === APP_START && !clientActive) {
       connect(store);
     } else if (action.type === APP_STOP) {
       disconnect();
