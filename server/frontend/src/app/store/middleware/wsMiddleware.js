@@ -1,4 +1,3 @@
-import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { uplinkReceived } from '../slices/gatesSlice';
 import { api } from '../api/api';
@@ -54,7 +53,7 @@ function createWsMiddleware() {
     const wsUrl = import.meta.env.VITE_WS_URL;
 
     stompClient = new Client({
-      webSocketFactory: () => new SockJS(wsUrl),
+      webSocketFactory: () => new WebSocket(wsUrl),
       reconnectDelay: 0,
       onConnect: () => {
         clientActive = true;
