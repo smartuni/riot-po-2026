@@ -232,7 +232,7 @@ flowchart TB
     UI["User Interface<br/>(Pages + Feature Components)"]
     
     REST[("REST API<br/>(Axios)")]
-    WS[("WebSocket<br/>(STOMP/SockJS)")]
+    WS[("WebSocket<br/>(STOMP)")]
     
     State["Component State<br/>(useState)"]
     Render["React Re-render<br/>(Virtual DOM → DOM)"]

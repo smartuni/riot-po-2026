@@ -54,30 +54,34 @@ export const fetchGates = async () => {
 ## WebSocket Subscription
 
 ```javascript
-useEffect(() => {
-    const socket = new SockJS('http://localhost:8080/ws');
-    const stompClient = Stomp.over(socket);
+import { Client } from '@stomp/stompjs';
 
-    stompClient.connect({}, () => {
-        stompClient.subscribe('/topic/gates/updates', (message) => {
-            const updatedGate = JSON.parse(message.body);
-            setGates(prev => {
-                const i = prev.findIndex(g => g.id === updatedGate.id);
-                if (i !== -1) {
-                    const next = [...prev];
-                    next[i] = updatedGate;
-                    return next;
-                }
-                return prev;
+useEffect(() => {
+    const stompClient = new Client({
+        webSocketFactory: () => new WebSocket('ws://localhost:8080/ws'),
+        onConnect: () => {
+            stompClient.subscribe('/topic/gates/updates', (message) => {
+                const updatedGate = JSON.parse(message.body);
+                setGates(prev => {
+                    const i = prev.findIndex(g => g.id === updatedGate.id);
+                    if (i !== -1) {
+                        const next = [...prev];
+                        next[i] = updatedGate;
+                        return next;
+                    }
+                    return prev;
+                });
             });
-        });
+        },
     });
 
-    return () => { stompClient.disconnect(); };
+    stompClient.activate();
+
+    return () => { stompClient.deactivate(); };
 }, []);
 ```
 
-- Create SockJS + Stomp inside `useEffect`, disconnect on cleanup
+- Create STOMPJS Client inside `useEffect`, deactivate on cleanup
 - Use functional state updates (`prev =>`) for async message handling
 - Parse `message.body` with `JSON.parse()` for objects, `parseInt()` for IDs
 

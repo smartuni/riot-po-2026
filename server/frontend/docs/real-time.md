@@ -2,12 +2,12 @@
 
 ## Architecture
 
-The application uses **STOMP over SockJS** for real-time, push-based communication with the backend. This enables live updates without polling, providing immediate UI feedback when gate statuses change or new events occur.
+The application uses **STOMP over WebSocket** for real-time, push-based communication with the backend. This enables live updates without polling, providing immediate UI feedback when gate statuses change or new events occur.
 
 ```mermaid
 flowchart TB
     subgraph Browser["React App (Browser)"]
-        SockJS[SockJS Client]
+        WebSocket[WebSocket Client]
         STOMP[STOMP Client]
         Component[Component State]
     end
@@ -17,7 +17,7 @@ flowchart TB
         Handlers[Message Handlers]
     end
     
-    SockJS --> STOMP
+    WebSocket --> STOMP
     STOMP <-->|"STOMP/WS"| Broker
     Handlers --> Broker
     Broker --> Component
@@ -41,33 +41,37 @@ The frontend subscribes to the following STOMP topics:
 Each component manages its own WebSocket connection using `useEffect`:
 
 ```javascript
+import { Client } from '@stomp/stompjs';
+
 useEffect(() => {
-  // 1. Establish connection
-  const socket = new SockJS('http://localhost:8080/ws');
-  const stompClient = Stomp.over(socket);
-  
-  // 2. Connect and subscribe
-  stompClient.connect({}, () => {
-    stompClient.subscribe('/topic/gates/updates', (message) => {
-      const updatedGate = JSON.parse(message.body);
-      // 3. Update local state
-      setGates(prev => updateGateInList(prev, updatedGate));
-    });
-    
-    stompClient.subscribe('/topic/gates/add', (message) => {
-      const newGate = JSON.parse(message.body);
-      setGates(prev => [...prev, newGate]);
-    });
-    
-    stompClient.subscribe('/topic/gates/delete', (message) => {
-      const deletedId = JSON.parse(message.body);
-      setGates(prev => prev.filter(g => g.id !== deletedId));
-    });
+  // 1. Create STOMP client with native WebSocket
+  const stompClient = new Client({
+    webSocketFactory: () => new WebSocket('ws://localhost:8080/ws'),
+    onConnect: () => {
+      stompClient.subscribe('/topic/gates/updates', (message) => {
+        const updatedGate = JSON.parse(message.body);
+        // 2. Update local state
+        setGates(prev => updateGateInList(prev, updatedGate));
+      });
+      
+      stompClient.subscribe('/topic/gates/add', (message) => {
+        const newGate = JSON.parse(message.body);
+        setGates(prev => [...prev, newGate]);
+      });
+      
+      stompClient.subscribe('/topic/gates/delete', (message) => {
+        const deletedId = JSON.parse(message.body);
+        setGates(prev => prev.filter(g => g.id !== deletedId));
+      });
+    },
   });
+  
+  // 3. Activate the connection
+  stompClient.activate();
   
   // 4. Cleanup on unmount
   return () => {
-    stompClient.disconnect();
+    stompClient.deactivate();
   };
 }, []);
 ```
@@ -121,7 +125,7 @@ This ensures the read-only view stays reasonably up-to-date even if the WebSocke
 | Property | Value |
 |---|---|
 | WebSocket URL | `http://localhost:8080/ws` |
-| Protocol | STOMP over SockJS |
+| Protocol | STOMP over WebSocket |
 | Transport | WebSocket primary, XHR/XDR polling fallback |
 | Reconnection | Not implemented — component unmount/remount re-establishes |
 
@@ -129,6 +133,6 @@ This ensures the read-only view stays reasonably up-to-date even if the WebSocke
 
 1. **No reconnection logic** — if the WebSocket disconnects, components must be remounted (e.g., by navigating away and back) to re-establish the connection.
 
-2. **No global connection manager** — each component creates its own SockJS/STOMP connection. This means multiple connections may exist simultaneously if multiple WebSocket-subscribing components are mounted at the same time.
+2. **No global connection manager** — each component creates its own WebSocket/STOMP connection. This means multiple connections may exist simultaneously if multiple WebSocket-subscribing components are mounted at the same time.
 
 3. **No heartbeat/stale detection** — there is no keepalive mechanism to detect silently dropped connections.

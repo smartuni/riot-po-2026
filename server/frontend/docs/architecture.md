@@ -32,7 +32,7 @@ flowchart TB
         end
         
         HTTP[("HTTP<br/>(Axios)")]
-        WS[("STOMP/WS<br/>(SockJS)")]
+        WS[("STOMP/WS")]
         
         ReactApp --> HTTP
         ReactApp --> WS
