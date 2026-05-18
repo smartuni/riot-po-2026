@@ -28,8 +28,8 @@ INSERT INTO notifications (status, worker_id, message, read, created_at, updated
 INSERT INTO gate_activities (last_time_stamp, local_time_stamp, gate_time_stamp, gate_id, requested_status, message, worker_id, activity_type, created_at) VALUES
 (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 'OPEN', 'Gate 1 reported status OPEN', NULL, 'SENSOR_VALUE_KEEPALIVE'::activity_type_enum, CURRENT_TIMESTAMP),
 (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2, 'OPEN', 'Gate 2 reported status OPEN', NULL, 'SENSOR_VALUE_KEEPALIVE'::activity_type_enum, CURRENT_TIMESTAMP),
-(CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3, 'CLOSED', 'Gate 3 has been closed by Worker 5', 5, 'SENSEMATE_WORKER_REPORT'::activity_type_enum, CURRENT_TIMESTAMP),
-(CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4, 'CLOSED', 'Worker 2 requested status CLOSED for Gate 4', 2, 'TARGET_STATE_REQUEST'::activity_type_enum, CURRENT_TIMESTAMP);
+(CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3, 'CLOSED', 'Gate 3 has been closed', NULL, 'SENSEMATE_WORKER_REPORT'::activity_type_enum, CURRENT_TIMESTAMP),
+(CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4, 'CLOSED', 'Worker requested status CLOSED for Gate 4', NULL, 'TARGET_STATE_REQUEST'::activity_type_enum, CURRENT_TIMESTAMP);
 
 -- Note: CommandLineRunner in Application.java is now conditional:
 -- - @Profile("dev") ensures it only runs when spring.profiles.active=dev
