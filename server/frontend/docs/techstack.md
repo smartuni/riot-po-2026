@@ -37,7 +37,7 @@ MUI provides the design system foundation. Feature-specific and shared component
 |---|---|---|
 | **Axios** | ^1.9.0 | HTTP client for REST API calls |
 | **STOMP.js** | ^7.1.1 | STOMP protocol client for WebSocket messaging |
-| **SockJS** | ^1.6.1 | WebSocket fallback transport |
+
 
 The API layer is a single Axios instance configured with `baseURL: 'http://localhost:8080'` and JSON headers. Authorization tokens are injected imperatively after login. WebSocket connections are managed per-component via `useEffect` lifecycle hooks.
 
@@ -81,11 +81,11 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(() => ({
   build: { outDir: 'build' },
   plugins: [react()],
-  define: { global: 'window' }, // SockJS compatibility
+  define: { global: 'window' },
 }));
 ```
 
-The `global: 'window'` define polyfill ensures libraries like SockJS that reference the Node.js `global` object work correctly in the browser.
+The `global: 'window'` define polyfill ensures libraries that reference the Node.js `global` object work correctly in the browser.
 
 ## Dependency Graph
 
@@ -103,8 +103,7 @@ The `global: 'window'` define polyfill ensures libraries like SockJS that refere
 │  @emotion/styled (^11.14.0)            │
 ├─────────────────────────────────────────┤
 │  axios (^1.9.0)     │   stompjs (^7.1.1)      │
-│  (REST API)         │   sockjs (^1.6.1)       │
-│                     │   (WebSocket)           │
+│  (REST API)         │   (WebSocket)           │
 ├─────────────────────────────────────────┤
 │  leaflet (^1.9.4)                       │
 │  (Map rendering)                        │

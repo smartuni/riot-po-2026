@@ -13,7 +13,7 @@ The SenseMate frontend is a **floodgate monitoring and control dashboard** devel
 | Gate control (open/close/OOS) | REST API calls from UI dialogs |
 | Downlink command dispatch | REST API with rate limiting (10-command cap) |
 | Activity tracking | Chronological event log with real-time updates |
-| Push notifications | STOMP over SockJS WebSocket |
+| Push notifications | STOMP over WebSocket |
 | Guest access | Unauthenticated read-only dashboard |
 
 ## User Roles
@@ -29,6 +29,6 @@ The SenseMate frontend is a **floodgate monitoring and control dashboard** devel
 1. **Feature-based folder structure** — organized by domain (auth, gates, map, activities, notifications, shell) rather than by technical layer
 2. **React Context for auth, local state for everything else** — no Redux/Zustand; the app is flat enough that this suffices
 3. **WebSocket for controllers, polling for viewers** — controllers get real-time STOMP updates; viewer and guest dashboards use 300ms polling
-4. **Per-component WebSocket lifecycle** — each component manages its own SockJS/STOMP connection in `useEffect` with cleanup
+4. **Per-component WebSocket lifecycle** — each component manages its own WebSocket/STOMP connection in `useEffect` with cleanup
 5. **Imperative auth guards** — each protected page checks `isAuthenticated` on mount and shows `AlertDialogIllegal`, not a route wrapper HOC
 6. **Downlink rate limiting** — server-side 10-command counter with admin-password reset prevents excessive IoT commands

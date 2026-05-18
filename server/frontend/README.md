@@ -97,7 +97,7 @@ server/frontend/
 | @emotion/react + styled | ^11.14.0 | CSS-in-JS (MUI dependency) |
 | react-icons | ^5.5.0 | Supplementary icons |
 | Axios | ^1.9.0 | HTTP client |
-| @stomp/stompjs + sockjs-client | ^7.1.1 / ^1.6.1 | WebSocket real-time updates |
+| @stomp/stompjs | ^7.1.1 | WebSocket real-time updates |
 | Leaflet + react-leaflet | ^1.9.4 / ^5.0.0 | Map visualization |
 | Vitest | ^4.1.5 | Testing framework |
 
