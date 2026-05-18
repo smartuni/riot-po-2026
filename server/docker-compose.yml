@@ -36,6 +36,8 @@ services:
     build:
       context: ./frontend
       target: production
+      args:
+        VITE_API_BASE_URL: ''
     ports:
       - "3000:80"
     environment:

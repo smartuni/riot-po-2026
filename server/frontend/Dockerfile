@@ -12,6 +12,9 @@ RUN npm ci
 # Copy the rest of the application
 COPY . .
 
+# API base URL — empty = same-origin (nginx proxies /api)
+ARG VITE_API_BASE_URL=''
+
 # Build the Vite application for production
 RUN npm run build
 

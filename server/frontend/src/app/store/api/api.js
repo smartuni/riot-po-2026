@@ -4,7 +4,7 @@ import { setCookie, eraseCookie } from '../../../shared/utils/cookie';
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+    baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
     prepareHeaders: (headers, { getState }) => {
       const token = getState()?.auth?.token;
       if (token) {
