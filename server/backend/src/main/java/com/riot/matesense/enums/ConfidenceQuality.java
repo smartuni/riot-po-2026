@@ -2,5 +2,5 @@ package com.riot.matesense.enums;
 
 
 public enum ConfidenceQuality{
-   HIGH, MEDIUM, LOW;
+   HIGH, MED_HIGH, MED, MED_LOW, LOW;
 }

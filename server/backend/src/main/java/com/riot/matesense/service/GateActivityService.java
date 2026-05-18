@@ -73,11 +73,17 @@ public class GateActivityService {
                     System.out.println("worker " + g.getWorkerId() + "reported gate " + g.getGateId() + " as " + g.getRequestedStatus());
                     if (!g.getRequestedStatus().equals(gateState.toString())) {
                         conflicts++;
-                        gateService.changeGateStateConfirmation(gate.getId(), StateConfirmation.UNCONFIRMED);
+                        gateService.changeGateStateConfirmation(gate.getId(), StateConfirmation.WORKER_CONFLICT);
                     }
                 }
-                if (conflicts == 0 && !gas.isEmpty()) {
-                    gateService.changeGateStateConfirmation(gate.getId(), StateConfirmation.CONFIRMED);
+                if (conflicts == 0) {
+                    if (gas.size() == 0) {
+                        gateService.changeGateStateConfirmation(gate.getId(), StateConfirmation.UNCONFIRMED);
+                    } else if (gas.size() == 1) {
+                        gateService.changeGateStateConfirmation(gate.getId(), StateConfirmation.WORKER_CONFIRMED_SINGLE);
+                    } else if (gas.size() > 1) {
+                        gateService.changeGateStateConfirmation(gate.getId(), StateConfirmation.WORKER_CONFIRMED_MULTI);
+                    } // TODO: add check for "all active SenseMates confirmed"
                 }
             } catch (GateNotFoundException e) {
                 System.err.println(e.getMessage());
