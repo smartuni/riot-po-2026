@@ -1,39 +1,32 @@
 # ==========================================
-# 1. Development Stage
+# 1. Build Stage
 # ==========================================
-FROM node:24-alpine AS development
+FROM node:24-alpine AS build
 
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Copy package files and install all dependencies (devDeps needed for build)
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copy the rest of the application
 COPY . .
 
-EXPOSE 3000
-
-CMD ["npm", "start"]
-
-# ==========================================
-# 2. Build Stage
-# ==========================================
-FROM development AS build
-
-# Build the React application for production
+# Build the Vite application for production
 RUN npm run build
 
 # ==========================================
-# 3. Production Stage
+# 2. Production Stage
 # ==========================================
 FROM nginx:alpine AS production
 
-# Copy the built assets from the build stage to Nginx
+# Install envsubst for runtime env variable injection
+RUN apk add --no-cache gettext
+
+# Copy nginx configuration template (processed by nginx entrypoint)
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+
+# Copy built assets from build stage
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Expose port 80 for Nginx
 EXPOSE 80
-
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]

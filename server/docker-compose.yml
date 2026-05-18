@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-<<<<<<< HEAD
   postgres:
     image: postgres:15
     container_name: matesense-db
@@ -19,54 +16,30 @@ services:
       timeout: 5s
       retries: 5
 
-=======
->>>>>>> origin/dev
   backend:
     build:
       context: ./backend
     ports:
       - "8080:8080"
-<<<<<<< HEAD
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=${POSTGRES_DB:-matesense}
       - DB_USERNAME=${POSTGRES_USER:-postgres}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-    # Optional: You can map backend volumes here if you want live-reloading for the backend as well
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
     depends_on:
       postgres:
         condition: service_healthy
-=======
-    # Optional: You can map backend volumes here if you want live-reloading for the backend as well
->>>>>>> origin/dev
 
   frontend:
     build:
       context: ./frontend
-      target: development
+      target: production
     ports:
-      - "3000:3000"
-    volumes:
-      # Mount the frontend directory to the container for hot reloading
-      - ./frontend:/app
-      # Anonymous volume for node_modules to avoid overwriting them with the host's directory
-      - /app/node_modules
+      - "3000:80"
     environment:
-      # Enables hot reloading on some OS/filesystem combinations within Docker
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
-      # Force bind to all network interfaces
-      - HOST=0.0.0.0
-<<<<<<< HEAD
-      # Provide the backend URL to the frontend
-      - REACT_APP_BACKEND_URL=http://localhost:8080
-    # Required for Create React App (react-scripts start) to keep the dev server running in a container
-=======
->>>>>>> origin/dev
-    stdin_open: true
-    tty: true
+      - BACKEND_URL=http://backend:8080
     depends_on:
       - backend
 
