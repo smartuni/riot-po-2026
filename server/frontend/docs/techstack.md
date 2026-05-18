@@ -61,6 +61,16 @@ The map is centered on Hamburg (53.546, 9.99) with diamond-shaped markers colore
 
 Test configuration uses Vitest with the jsdom environment. A setup file polyfills `Buffer` and `process` for browser test compatibility and automatically cleans up DOM after each test.
 
+## Build Optimizations
+
+| Technology | Version | Purpose |
+|---|---|---|
+| **React Compiler** | ^1.0.0 | Automatic compile-time memoization of React components |
+| **babel-plugin-react-compiler** | ^1.0.00 | Babel plugin that transforms components for automatic memoization |
+| **eslint-plugin-react-hooks** | ^7.1.1 | ESLint rules including React Compiler diagnostics (at error severity) |
+
+React Compiler automatically memoizes component renders and computed values at compile time, eliminating the need for manual `useMemo`, `useCallback`, or `React.memo`. The compiler is enabled via the `reactCompiler: true` option in `vite.config.js`. ESLint compiler rules are configured at "error" severity to catch violations early.
+
 ## Build Configuration
 
 ```javascript
