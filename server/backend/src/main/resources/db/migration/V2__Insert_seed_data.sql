@@ -17,14 +17,17 @@ INSERT INTO gates (id, status, state_confirmation, last_time_stamp, device_id, l
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample notifications for testing
+-- NOTE: Only use worker_ids that exist in users table (1 and 2)
+-- or NULL for system-generated notifications
 INSERT INTO notifications (status, worker_id, message, read, created_at, updated_at) VALUES
 ('OPEN'::status_enum, 1, 'Worker with ID: 1 shall close the Gate with ID: 1', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('OPEN'::status_enum, 2, 'Worker with ID: 2 shall close the Gate with ID: 1', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('CLOSED'::status_enum, 3, 'Gate 3 has been closed successfully', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('OPEN'::status_enum, 4, 'Worker with ID: 4 shall verify Gate with ID: 4', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('CLOSED'::status_enum, 5, 'All gates secured', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('CLOSED'::status_enum, NULL, 'Gate 3 has been closed successfully', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('OPEN'::status_enum, NULL, 'System notification: verify Gate with ID: 4', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('CLOSED'::status_enum, NULL, 'All gates secured', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Insert sample gate activities (audit log)
+-- NOTE: These are sensor-initiated events, so worker_id is NULL
 INSERT INTO gate_activities (last_time_stamp, local_time_stamp, gate_time_stamp, gate_id, requested_status, message, worker_id, activity_type, created_at) VALUES
 (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 'OPEN', 'Gate 1 reported status OPEN', NULL, 'SENSOR_VALUE_KEEPALIVE'::activity_type_enum, CURRENT_TIMESTAMP),
 (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2, 'OPEN', 'Gate 2 reported status OPEN', NULL, 'SENSOR_VALUE_KEEPALIVE'::activity_type_enum, CURRENT_TIMESTAMP),
