@@ -1,78 +1,35 @@
-import React, { useEffect, useState } from "react";
-import { fetchGates } from "../api/gateApi";
-import { fetchActivities } from "../../activities";
+import React, { useState } from "react";
+import { useGetGatesQuery, useGetActivitiesQuery } from "../../../app/store/api/api";
 import {
     TextField,
     MenuItem,
     Tabs,
     Tab,
     Tooltip,
+    CircularProgress, Alert,
 } from "@mui/material";
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
-import CircleIcon from '@mui/icons-material/Circle';
 import { MapView } from "../../map";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 function StatusTablesView() {
     /**
-     * State-Variablen für die Gates, Suchanfrage, Filter, Ansicht und erweiterten Gate-ID.
+     * State-Variablen für die Suchanfrage, Filter, Ansicht und erweiterten Gate-ID.
      */
-    const [gates, setGates] = useState([]);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("");
     const [view, setView] = useState("list");
     const [expandedGateId, setExpandedGateId] = useState(null);
-    const [activities, setActivities] = useState([]);
 
-    /**
-     * Lädt die Gates beim ersten Rendern der Komponente.
-     */
-    useEffect(() => {
-        const loadGates = async () => {
-            try {
-                const data = await fetchGates();
-                setGates(data);
-            } catch (error) {
-                console.error('Fehler beim Laden der Gates', error);
-            }
-        };
-        loadGates();
-        const intervalId = setInterval(() => {
-            loadGates();
-        }, 300);
-
-        return () => clearInterval(intervalId);
-    }, []);
-
-    useEffect(() => {
-        const loadActivities = async () => {
-            try {
-                const data = await fetchActivities();
-                setActivities(data);
-            } catch (error) {
-                console.error('Fehler beim Laden der Aktivitäten', error);
-            }
-        };
-        loadActivities();
-    }, []);
+    const { data: gates = [], isLoading, error } = useGetGatesQuery();
+    const { data: activities = [] } = useGetActivitiesQuery();
 
     /**
      * Rendern des angeforderten Status für die Gates.
      * @param status
      * @returns {Element}
      */
-    const renderRequestedStatus = (status) => {
-        switch (status) {
-            case "REQUESTED_OPEN":
-                return <><LockOpenIcon fontSize="small" /> OPEN</>;
-            case "REQUESTED_CLOSE":
-                return <><LockIcon fontSize="small" /> CLOSE</>;
-            default:
-                return <><CircleIcon fontSize="small" /> NONE</>;
-        }
-    };
-
     /**
      * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
      * @type {Array}
@@ -85,6 +42,22 @@ function StatusTablesView() {
             (gate.requestedStatus && gate.requestedStatus.toLowerCase().includes(filter.toLowerCase()))
         )
     );
+
+    if (isLoading) {
+        return (
+            <div className="gate-status-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="gate-status-container" style={{ padding: '2rem' }}>
+                <Alert severity="error">Failed to load gates data: {error.toString()}</Alert>
+            </div>
+        );
+    }
 
     return (
         <div className="gate-status-container">
@@ -187,7 +160,7 @@ function StatusTablesView() {
                                                     {activities
                                                         .filter(activity => activity.gateId === gate.id)
                                                         .slice(-4) // Optional: nur die letzten 4 zeigen
-                                                        .map((activity, index) => (
+                                                        .map((activity) => (
                                                             <p key={activity.id}>
                                                                 <strong>{activity.lastTimeStamp}:</strong> {activity.message}
                                                             </p>

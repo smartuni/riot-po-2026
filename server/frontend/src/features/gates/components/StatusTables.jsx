@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
-    fetchGates,
-    fetchDownlinkCounter,
-    requestGateStatusChange,
-    tryIncrementDownlinkCounter,
-    updateGatePriority,
-    deleteGate as deleteGateApi,
-    createGate,
-    sendDownlink,
-    resetDownlinkCounter,
-} from "../api/gateApi";
-import { fetchActivities } from "../../activities";
+    useGetGatesQuery,
+    useGetActivitiesQuery,
+    useGetDownlinkCounterQuery,
+    useGetUserDetailsQuery,
+    useRequestGateStatusChangeMutation,
+    useTryIncrementDownlinkCounterMutation,
+    useUpdateGatePriorityMutation,
+    useDeleteGateMutation,
+    useCreateGateMutation,
+    useSendDownlinkMutation,
+    useResetDownlinkCounterMutation,
+} from "../../../app/store/api/api";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import CloseIcon from "@mui/icons-material/Close";
@@ -25,6 +26,7 @@ import {
     FormControl,
     InputLabel,
     Box, Tooltip, DialogActions, DialogContent, DialogTitle, Dialog,
+    CircularProgress, Alert,
 } from "@mui/material";
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
@@ -37,15 +39,24 @@ import DoneAllIcon from '@mui/icons-material/DoneAll';
 import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import { MapView } from "../../map";
 import StatusChangedDialog from "./StatusChangedDialog";
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import { AlertDialogUplink } from "../../../shared";
-import { loadWorkerId } from "../../auth";
-import SockJS from 'sockjs-client';
-import { Stomp } from '@stomp/stompjs';
 
 
 function StatusTables() {
-    const [gates, setGates] = useState([]);
+    const { data: gates = [], isLoading: gatesLoading, error: gatesError } = useGetGatesQuery();
+    const { data: activities = [], isLoading: activitiesLoading, error: activitiesError } = useGetActivitiesQuery();
+    const { data: downlinkCounterData } = useGetDownlinkCounterQuery();
+    const { data: userDetails } = useGetUserDetailsQuery();
+
+    const downlinkCount = downlinkCounterData ?? 0;
+    const workerId = userDetails?.workerId ?? null;
+
+    const [requestGateStatusChange] = useRequestGateStatusChangeMutation();
+    const [tryIncrementDownlinkCounter] = useTryIncrementDownlinkCounterMutation();
+    const [updateGatePriority] = useUpdateGatePriorityMutation();
+    const [deleteGate] = useDeleteGateMutation();
+    const [createGate] = useCreateGateMutation();
+    const [sendDownlink] = useSendDownlinkMutation();
+    const [resetDownlinkCounter] = useResetDownlinkCounterMutation();
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("");
     const [view, setView] = useState("list");
@@ -53,18 +64,12 @@ function StatusTables() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [bulkRequestedStatus, setBulkRequestedStatus] = useState("");
     const [expandedGateId, setExpandedGateId] = useState(null);
-    const [activities, setActivities] = useState([]);
-    const [workerId, setWorkerId] = useState(null);
     const [gateToDelete, setGateToDelete] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [selectedPriorities, setSelectedPriorities] = useState({});
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
-    const [downlinkCount, setDownlinkCount] = useState(0);
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
     const [resetPassword, setResetPassword] = useState("");
     const [resetError, setResetError] = useState("");
-    const [uplinkString, setUplinkString] = useState("");
-    const [uplinkDialog, setUplinkDialog] = useState(false);
     const [newGateData, setNewGateData] = useState({
         location: "",
         latitude: "",
@@ -73,99 +78,13 @@ function StatusTables() {
         status: "CLOSED", // default value
     });
 
-    useEffect(() => {
-        loadWorkerId().then(id => setWorkerId(id)).catch(e => console.error(e));
-    }, []);
-
-    useEffect(() => {
-        const loadInitialData = async () => {
-            try {
-                const count = await fetchDownlinkCounter();
-                setDownlinkCount(count);
-            } catch (e) {
-                console.error("Fehler beim Laden des Downlink-Counters:", e);
-            }
-        };
-        loadInitialData();
-    }, []);
-
-
-
-    /**
-     * Lädt die Gates beim ersten Rendern der Komponente.
-     */
-    useEffect(() => {
-        const loadGates = async () => {
-            try {
-                const data = await fetchGates();
-                setGates(data);
-            } catch (error) {
-                console.error('Fehler beim Laden der Gates', error);
-            }
-        };
-        loadGates();
-    }, []);
-
-    /**
-     * Initialisiert die WebSocket-Verbindung und abonniert die relevanten Topics.
-     */
-    useEffect(() => {
-        const socket = new SockJS('http://localhost:8080/ws');
-        const stompClient = Stomp.over(socket);
-
-        stompClient.connect({}, () => {
-
-            stompClient.subscribe('/topic/gates/add', (message) => {
-                const activity = JSON.parse(message.body);
-                setGates(prev => [...prev, activity]);
-            });
-
-            stompClient.subscribe('/topic/gates/delete', (message) => {
-                const id = parseInt(message.body);
-                setGates(prev => prev.filter(a => a.id !== id));
-            });
-
-            stompClient.subscribe('/topic/gates/updates', (message) => {
-                const updatedGate = JSON.parse(message.body);
-                setGates(prevGates => {
-                    const index = prevGates.findIndex(gate => gate.id === updatedGate.id);
-                    if (index !== -1) {
-                        // Gate exists: replace it
-                        const newGates = [...prevGates];
-                        newGates[index] = updatedGate;
-                        return newGates;
-                    }
-                });
-            });
-            stompClient.subscribe('/topic/gate-activities', (message) => {
-                const activity = JSON.parse(message.body);
-                setActivities(prev => [...prev, activity]);
-            });
-
-            stompClient.subscribe('/topic/gate-activities/delete', (message) => {
-                const id = parseInt(message.body);
-                setActivities(prev => prev.filter(a => a.id !== id));
-            });
-
-            stompClient.subscribe('/topic/uplinks', (message) => {
-                const messageString = message.body;
-                setUplinkString(messageString);
-                setUplinkDialog(true);
-            });
-        });
-
-        return () => {
-            stompClient.disconnect();
-        };
-    }, []);
-
     /**
      * For deleting a gate.
      * @returns {Promise<void>}
      */
     const handleDeleteGate = async () => {
         try {
-            await deleteGateApi(gateToDelete.id);
+            await deleteGate(gateToDelete.id).unwrap();
             setDeleteDialogOpen(false);
             setGateToDelete(null);
         } catch (error) {
@@ -182,9 +101,8 @@ function StatusTables() {
         }
 
         try {
-            await resetDownlinkCounter();
+            await resetDownlinkCounter().unwrap();
             alert("Counter reset successfully.");
-            setDownlinkCount(0);
             setResetDialogOpen(false);
             setResetPassword("");
             setResetError("");
@@ -195,34 +113,11 @@ function StatusTables() {
     };
 
     /**
-     * Just for the Last Updatet Time of the Gates.
-     */
-    useEffect(() => {
-        const loadActivities = async () => {
-            try {
-                const data = await fetchActivities();
-                setActivities(data);
-            } catch (error) {
-                console.error('Fehler beim Laden der Aktivitäten', error);
-            }
-        };
-        loadActivities();
-        // const intervalId = setInterval(() => {
-        //     loadActivities();
-        // }, 300);
-
-        // return () => clearInterval(intervalId);
-    }, []);
-
-
-    /**
      * Schließt den Dialog und aktualisiert die Gates.
      * @returns {Promise<void>}
      */
     const handleClose = async () => {
         setDialogOpen(false);
-        const updated = await fetchGates();
-        setGates(updated);
     };
 
     /**
@@ -232,19 +127,15 @@ function StatusTables() {
     const handleBulkRequestedStatusChange = async () => {
         if (!bulkRequestedStatus) return;
 
-        const statusToSend = bulkRequestedStatus === "NONE" ? null : bulkRequestedStatus;
-
         const promises = filteredGates.map(async (gate) => {
             try {
-                await requestGateStatusChange(gate.id, workerId, bulkRequestedStatus);
+                await requestGateStatusChange({ gateId: gate.id, workerId, requestedStatus: bulkRequestedStatus }).unwrap();
             } catch (error) {
                 console.error(`Fehler beim Aktualisieren von Gate ${gate.id}`, error);
             }
         });
 
         await Promise.all(promises);
-        const updated = await fetchGates();
-        setGates(updated);
     };
 
 
@@ -344,13 +235,9 @@ function StatusTables() {
         }
 
         try {
-            await tryIncrementDownlinkCounter();
-            await sendDownlink(payload);
+            await tryIncrementDownlinkCounter().unwrap();
+            await sendDownlink(payload).unwrap();
             alert("Downlink sent.");
-
-            // 👇 Hol den neuen Stand aus der DB
-            const newCount = await fetchDownlinkCounter();
-            setDownlinkCount(newCount);
         } catch (error) {
             console.error("Error sending downlink:", error);
             alert("Failed to send downlink.");
@@ -360,20 +247,7 @@ function StatusTables() {
 
     const handlePriorityChange = async (gateId, newPriority) => {
         try {
-            await updateGatePriority(gateId, newPriority);
-
-            // Update die Anzeige sofort im Frontend
-            setGates(prevGates =>
-                prevGates.map(g =>
-                    g.id === gateId ? { ...g, priority: newPriority } : g
-                )
-            );
-
-            // Optional: selectedPriorities mitziehen, falls du das brauchst
-            setSelectedPriorities(prev => ({
-                ...prev,
-                [gateId]: newPriority
-            }));
+            await updateGatePriority({ gateId, priority: newPriority }).unwrap();
         } catch (error) {
             console.error("Fehler beim Aktualisieren der Priorität:", error);
             alert("Fehler beim Aktualisieren der Priorität.");
@@ -411,8 +285,23 @@ function StatusTables() {
         return date.toLocaleDateString(); // fallback to a readable date
     }
 
-    const closeUplinkDialog = () => {
-        setUplinkDialog(false)
+    if (gatesLoading || activitiesLoading) {
+        return (
+            <div className="gate-status-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (gatesError || activitiesError) {
+        return (
+            <div className="gate-status-container" style={{ padding: '2rem' }}>
+                <Alert severity="error">
+                    {gatesError ? 'Failed to load gates data. ' : ''}
+                    {activitiesError ? 'Failed to load activities data. ' : ''}
+                </Alert>
+            </div>
+        );
     }
 
     return (
@@ -737,7 +626,7 @@ function StatusTables() {
                         disabled={!isFormValid()}
                         onClick={async () => {
                             try {
-                                await createGate(newGateData);
+                                await createGate(newGateData).unwrap();
                                 setCreateDialogOpen(false);
                                 setNewGateData({ location: "", latitude: "", longitude: "", priority: 0, status: "CLOSED" });
                             } catch (error) {
@@ -776,9 +665,5 @@ function StatusTables() {
         </div>
     );
 }
-
-/*
- * Test for Websockets
- */
 
 export default StatusTables;

@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Avatar, Button, CssBaseline, TextField, Box, Typography, Container, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Switch, FormControlLabel } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { apiClient, setCookie } from '../shared';
+import { useRegisterMutation } from '../app/store/api/api';
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
   const [fields, setFields] = useState({
     name: { value: '', touched: false },
     email: { value: '', touched: false },
@@ -32,15 +33,12 @@ const RegisterPage = () => {
     if (isValidEmail(email.value) && isValidPassword(password.value, confirmPassword.value)) {
       const role = checked ? 'controller' : 'viewer';
       try {
-        const registerResponse = await apiClient.post('/auth/register', {
+        await register({
           name: name.value.toString(),
           email: email.value.toString(),
           password: password.value.toString(),
           role,
-        });
-        const { token } = registerResponse.data;
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        setCookie('jwt', token);
+        }).unwrap();
 
         if (role === 'controller') {
           navigate('/dashboard');
@@ -48,15 +46,17 @@ const RegisterPage = () => {
           navigate('/dashboard-view');
         }
       } catch (error) {
-        setErrorMessage(error.response?.data?.error || 'Sorry, an unexpected error occurred');
-        console.log(error);
+        setErrorMessage(error?.data?.error || 'Sorry, an unexpected error occurred');
         setIsErrorDialogOpen(true);
       }
     } else {
-      Object.keys(fields).forEach(key => {
-        fields[key].touched = true;
+      setFields(prevFields => {
+        const updated = {};
+        Object.keys(prevFields).forEach(k => {
+          updated[k] = { ...prevFields[k], touched: true };
+        });
+        return updated;
       });
-      setFields({ ...fields });
     }
   };
 
@@ -127,7 +127,7 @@ const RegisterPage = () => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={!isFormValid()}
+            disabled={!isFormValid() || isRegisterLoading}
           >
             Sign Up
           </Button>

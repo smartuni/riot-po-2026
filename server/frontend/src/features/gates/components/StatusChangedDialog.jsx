@@ -1,26 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     Button, MenuItem, TextField, Typography
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
-import { requestGateStatusChange } from "../api/gateApi";
-import { loadWorkerId } from "../../auth";
+import { useRequestGateStatusChangeMutation, useGetUserDetailsQuery } from "../../../app/store/api/api";
 
 function StatusChangeDialog({ open, gate, onClose }) {
     const [requestedStatus, setRequestedStatus] = useState("");
-    const [workerId, setWorkerId] = useState(null);
-
-    useEffect(() => {
-        loadWorkerId().then(id => setWorkerId(id)).catch(e => console.error(e));
-    }, []);
+    const [requestGateStatusChange] = useRequestGateStatusChangeMutation();
+    const { data: userDetails } = useGetUserDetailsQuery();
+    const workerId = userDetails?.workerId;
 
     if (!gate) return null;
 
     const handleSubmit = async () => {
         try {
-            await requestGateStatusChange(gate.id, workerId, requestedStatus);
+            await requestGateStatusChange({
+                gateId: gate.id,
+                workerId,
+                requestedStatus
+            }).unwrap();
         } catch (err) {
             console.error("Fehler beim Update:", err);
         }
@@ -78,7 +79,7 @@ function StatusChangeDialog({ open, gate, onClose }) {
                     onClick={handleSubmit}
                     variant="contained"
                     color="warning"
-                    disabled={!requestedStatus}
+                    disabled={!requestedStatus || !workerId}
                 >
                     Request Change
                 </Button>
@@ -88,4 +89,3 @@ function StatusChangeDialog({ open, gate, onClose }) {
 }
 
 export default StatusChangeDialog;
-

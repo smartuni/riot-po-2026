@@ -9,7 +9,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
-import { apiClient, setCookie } from '../shared';
+import { useLoginMutation, useLazyGetUserDetailsQuery } from '../app/store/api/api';
 const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
 const isValidPassword = (password) => password.length >= 6;
 
@@ -19,28 +19,27 @@ const LoginPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [login, { isLoading: isLoginLoading }] = useLoginMutation();
+  const [fetchUserDetails] = useLazyGetUserDetailsQuery();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
 
     try {
-      const loginResponse = await apiClient.post('/auth/login', {
+      await login({
         email: data.get('email'),
         password: data.get('password'),
-      });
-      const { token } = loginResponse.data;
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setCookie('jwt', token);
+      }).unwrap();
 
-      const userResponse = await apiClient.get('/auth/user-details');
-      if (userResponse.data.role === 'controller') {
+      const { data: userDetails } = await fetchUserDetails();
+      if (userDetails?.role === 'controller') {
         navigate('/dashboard');
       } else {
         navigate('/dashboard-view');
       }
     } catch (error) {
-      setErrorMessage(error.response?.data?.error || 'Sorry, an unexpected error occurred');
+      setErrorMessage(error?.data?.error || 'Sorry, an unexpected error occurred');
       setIsErrorDialogOpen(true);
     }
   };
@@ -93,7 +92,7 @@ const LoginPage = () => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={!isFormValid}
+            disabled={!isFormValid || isLoginLoading}
           >
             Sign In
           </Button>

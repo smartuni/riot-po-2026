@@ -3,6 +3,7 @@ import globals from 'globals';
 import react from 'eslint-plugin-react';
 import importX from 'eslint-plugin-import-x';
 import reactHooks from 'eslint-plugin-react-hooks';
+import reactRedux from 'eslint-plugin-react-redux';
 import babelParser from '@babel/eslint-parser';
 
 export default [
@@ -11,9 +12,11 @@ export default [
     importX.configs['flat/recommended'],
     {
         files: ['src/**/*.{js,jsx}'],
+        ignores: ['build/**', 'node_modules/**', 'dist/**'],
         plugins: {
             'react': react,
             'react-hooks': reactHooks,
+            'react-redux': reactRedux,
         },
         rules: {
             'react/jsx-uses-vars': 'error',
@@ -22,6 +25,7 @@ export default [
             'react/prop-types': 'off',
             'import-x/no-duplicates': 'error',
             ...reactHooks.configs.flat['recommended-latest'].rules,
+            ...reactRedux.configs.recommended.rules,
         },
         languageOptions: {
             parser: babelParser,
