@@ -23,7 +23,9 @@ public class GateEntity {
     @Id
     //@GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Enumerated(EnumType.STRING)
     private Status status;
+    @Enumerated(EnumType.STRING)
     private StateConfirmation stateConfirmation;
     private Timestamp lastTimeStamp;
     private Timestamp lastTransitionGateTimeStamp;
@@ -33,6 +35,7 @@ public class GateEntity {
     private Double longitude;
     private Boolean workerConfidence;
     private Boolean sensorConfidence;
+    @Enumerated(EnumType.STRING)
     private ConfidenceQuality quality;
     private boolean ignoreGate;
     private boolean gateDetector;

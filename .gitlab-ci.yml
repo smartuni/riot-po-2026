@@ -26,13 +26,16 @@ generate_tests:
   before_script:
     - chmod +x ./ci/generate_tests_pipeline.sh
     - chmod +x ./ci/generate_compile_tests_pipeline.sh
+    - chmod +x ./ci/generate_web_pipeline.sh
   script:
     - ./ci/generate_tests_pipeline.sh tests-pipeline.yml
     - ./ci/generate_compile_tests_pipeline.sh compile-tests-pipeline.yml
+    - ./ci/generate_web_pipeline.sh web-pipeline.yml
   artifacts:
     paths:
       - tests-pipeline.yml
       - compile-tests-pipeline.yml
+      - web-pipeline.yml
     expire_in: 1h
   cache:
     key: "$CI_PROJECT_PATH-$CI_COMMIT_REF_SLUG-submodules"
@@ -60,6 +63,19 @@ run_compilations:
   trigger:
     include:
       - artifact: compile-tests-pipeline.yml
+        job: generate_tests
+    strategy: depend
+  rules:
+    - when: always
+
+run_backend:
+  stage: test
+  needs:
+    - job: generate_tests
+      artifacts: true
+  trigger:
+    include:
+      - artifact: web-pipeline.yml
         job: generate_tests
     strategy: depend
   rules:

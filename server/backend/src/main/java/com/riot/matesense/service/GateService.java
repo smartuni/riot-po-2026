@@ -113,7 +113,7 @@ public class GateService {
      * @return true if it exists
      */
     public boolean existsGateById(Long id) {
-        return gateRepository.existsById(Math.toIntExact(id));
+        return gateRepository.existsById(id);
     }
 
     /**
@@ -123,7 +123,7 @@ public class GateService {
      * @throws GateNotFoundException
      */
     public GateEntity getGateEntityById(Long id) throws GateNotFoundException {
-        return gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
+        return gateRepository.findById(id).orElseThrow(() -> new GateNotFoundException(id));
     }
 
     /**
@@ -133,7 +133,7 @@ public class GateService {
      * @throws GateNotFoundException
      */
     public Gate getGateById(Long id) throws GateNotFoundException {
-        GateEntity gate = gateRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new GateNotFoundException(id));
+        GateEntity gate = gateRepository.findById(id).orElseThrow(() -> new GateNotFoundException(id));
         return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(), gate.getStateConfirmation(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
                 gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality(), gate.getPendingJob(), gate.getPriority());
@@ -153,7 +153,7 @@ public class GateService {
         // Ziel-Status aus requestedStatus ableiten
         String tmp;
         switch (targetStatus) {
-            case "REQUESTED_OPEN" -> tmp = "OPENED";
+            case "REQUESTED_OPEN" -> tmp = "OPEN";
             case "REQUESTED_CLOSE" -> tmp = "CLOSED";
             case "REQUESTED_NONE" -> tmp = "NONE";
             default -> tmp = targetStatus;

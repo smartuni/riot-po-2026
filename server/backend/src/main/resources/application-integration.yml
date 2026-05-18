@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: ${POSTGRES_TEST_URL:jdbc:postgresql://localhost:5432/riot_test}
+    username: ${POSTGRES_TEST_USERNAME:riot_user}
+    password: ${POSTGRES_TEST_PASSWORD:riot_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
