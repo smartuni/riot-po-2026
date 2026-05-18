@@ -18,6 +18,7 @@ public class NotificationEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Enumerated(EnumType.STRING)
     private Status status;
     private Timestamp lastTimeStamp;
     private Long workerId;

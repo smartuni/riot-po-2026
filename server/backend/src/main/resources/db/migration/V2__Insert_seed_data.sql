@@ -2,16 +2,9 @@
 -- Description: Insert seed/test data for development and testing
 -- Author: Backend Team
 -- Date: 2026-04-27
--- Profile: Only loaded in dev environment
 
--- This script is optional and only for development/testing
--- Production should NOT include test data
--- Activate with: --spring.profiles.active=dev
-
-INSERT INTO users (email, password, name, role, created_at, updated_at) VALUES
-('test@example.com', '$2a$10$slYQmyNdGzin7olVN3p5Be7DYC0tgO7XdClpKnJmH8E7DvN3hTfVe', 'Test User', 'controller', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('viewer@example.com', '$2a$10$slYQmyNdGzin7olVN3p5Be7DYC0tgO7XdClpKnJmH8E7DvN3hTfVe', 'Viewer User', 'viewer', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (email) DO NOTHING;
+-- Users are managed by AuthService startup logic and application properties.
+-- DO NOT insert them here.
 
 -- Insert sample gates for testing
 INSERT INTO gates (id, status, state_confirmation, last_time_stamp, device_id, location, latitude, longitude, requested_status, confidence, priority, created_at, updated_at) VALUES

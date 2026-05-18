@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface GateRepository extends JpaRepository<GateEntity, Integer> {
+public interface GateRepository extends JpaRepository<GateEntity, Long> {
 	GateEntity getById(Long id);
 }

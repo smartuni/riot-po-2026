@@ -35,13 +35,22 @@ public class AuthService {
         this.userRepository = userRepository;
         this.secretKey = jwtSecretProperties.getKey();
         for (TestAccountProperties.Account a : testAccountProperties.getAccounts()) {
-            System.out.println("WARNING! enabling test user account " + a.getEmail() + " -> disable this before deployment!");
-            RegisterRequest rr = new RegisterRequest();
-            rr.setEmail(a.getEmail());
-            rr.setName(a.getUsername());
-            rr.setPassword(a.getPassword());
-            rr.setRole(a.getRole());
-            this.handleRegister(rr);
+            try {
+                System.out.println("WARNING! enabling test user account " + a.getEmail() + " -> disable this before deployment!");
+                // Check if user already exists (from Flyway migration)
+                if (userRepository.findByEmail(a.getEmail()) == null) {
+                    RegisterRequest rr = new RegisterRequest();
+                    rr.setEmail(a.getEmail());
+                    rr.setName(a.getUsername());
+                    rr.setPassword(a.getPassword());
+                    rr.setRole(a.getRole());
+                    this.handleRegisterWithoutDuplicate(rr);
+                } else {
+                    System.out.println("Test account " + a.getEmail() + " already exists, skipping creation");
+                }
+            } catch (RuntimeException e) {
+                System.out.println("Could not create test account " + a.getEmail() + ": " + e.getMessage());
+            }
         }
     }
 
@@ -70,6 +79,25 @@ public class AuthService {
         String token = generateToken(user.getId());
         tokenStore.put(token, user.getId());
         // System.out.println("Created Register Token " + token);
+        return new AuthResponse(token);
+    }
+
+    // Helper method for test account initialization - silently skips if email exists
+    private AuthResponse handleRegisterWithoutDuplicate(RegisterRequest request) {
+        UserEntity existingUser = userRepository.findByEmail(request.getEmail());
+        if (existingUser != null) {
+            // User already exists, skip creation
+            String token = generateToken(existingUser.getId());
+            tokenStore.put(token, existingUser.getId());
+            return new AuthResponse(token);
+        }
+        
+        String hashedPassword = new BCryptPasswordEncoder().encode(request.getPassword());
+        UserEntity user = new UserEntity(request.getEmail(), hashedPassword, request.getName(), request.getRole());
+        userRepository.save(user);
+
+        String token = generateToken(user.getId());
+        tokenStore.put(token, user.getId());
         return new AuthResponse(token);
     }
 
