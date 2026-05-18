@@ -27,6 +27,7 @@ public class GateActivityEntity implements Comparable<GateActivityEntity> {
     private String requestedStatus;
     private String message;
     private Long workerId;
+    @Enumerated(EnumType.STRING)
     private ActivityType activityType;
 
     public GateActivityEntity(Timestamp localTimeStamp, Timestamp gateTimeStamp, Long gateId,
