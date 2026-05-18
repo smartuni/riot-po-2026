@@ -20,4 +20,7 @@ test-credentials:
       role: viewer
 
 jwt-secrets:
-  sharedSecret: "12345678901234567890123456789012"
+  # Use environment variable JWT_SECRET for production
+  # Fallback to default (32 chars) for development only
+  # Min. 64 chars recommended for HMAC-SHA256
+  sharedSecret: "${JWT_SECRET:12345678901234567890123456789012}"

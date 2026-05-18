@@ -12,11 +12,11 @@ import com.riot.matesense.repository.UserRepository;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 
 import java.security.Key;
 import java.util.Date;
@@ -28,12 +28,14 @@ public class AuthService {
     private UserRepository userRepository;
     private HashMap<String, Long> tokenStore = new HashMap<>();
     private final Key secretKey; // shared secret with JwtService
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
     public AuthService(TestAccountProperties testAccountProperties, UserRepository userRepository,
-                       JWTSecretProperties jwtSecretProperties) {
+                       JWTSecretProperties jwtSecretProperties, BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.secretKey = jwtSecretProperties.getKey();
+        this.passwordEncoder = passwordEncoder;
         for (TestAccountProperties.Account a : testAccountProperties.getAccounts()) {
             try {
                 System.out.println("WARNING! enabling test user account " + a.getEmail() + " -> disable this before deployment!");
@@ -57,7 +59,7 @@ public class AuthService {
     public AuthResponse handleLogin(AuthRequest request) {
         UserEntity user = userRepository.findByEmail(request.getEmail());
 
-        if (user == null || !(new BCryptPasswordEncoder().matches(request.getPassword(), user.getPassword()))) {
+        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid credentials");
         }
 
@@ -71,7 +73,7 @@ public class AuthService {
         if (userRepository.findByEmail(request.getEmail()) != null) {
             throw new RuntimeException("Email already in use");
         }
-        String hashedPassword = new BCryptPasswordEncoder().encode(request.getPassword());
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
 
         UserEntity user = new UserEntity(request.getEmail(), hashedPassword, request.getName(), request.getRole());
         userRepository.save(user);
@@ -92,7 +94,7 @@ public class AuthService {
             return new AuthResponse(token);
         }
         
-        String hashedPassword = new BCryptPasswordEncoder().encode(request.getPassword());
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
         UserEntity user = new UserEntity(request.getEmail(), hashedPassword, request.getName(), request.getRole());
         userRepository.save(user);
 
@@ -102,10 +104,17 @@ public class AuthService {
     }
 
     public void handleLogout(String token) {
-        String splitTok = token.split(" ")[1];
-        tokenStore.remove(splitTok);
-        // System.out.println(tokenStore);
-        // System.out.println("Logged out token: " + token);
+        if (token == null || !token.contains(" ")) {
+            throw new RuntimeException("Invalid token format");
+        }
+        try {
+            String splitTok = token.split(" ")[1];
+            tokenStore.remove(splitTok);
+            // System.out.println(tokenStore);
+            // System.out.println("Logged out token: " + token);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new RuntimeException("Invalid token format");
+        }
     }
 
     public Long getUserIdFromToken(String token) {
@@ -118,31 +127,48 @@ public class AuthService {
     }
 
     public UserDetailsResponse getUserDetails(String token) {
-        String splitTok = token.split(" ")[1];
-        Long uId = getUserIdFromToken(splitTok);
-        UserEntity user = userRepository.getById(uId);
-        // System.out.println(user.getEmail());
-        return new UserDetailsResponse(user.getName(), user.getEmail(), user.getRole(), user.getId());
+        if (token == null || !token.contains(" ")) {
+            throw new RuntimeException("Invalid token format");
+        }
+        try {
+            String splitTok = token.split(" ")[1];
+            Long uId = getUserIdFromToken(splitTok);
+            UserEntity user = userRepository.getById(uId);
+            if (user == null) {
+                throw new RuntimeException("User not found");
+            }
+            // System.out.println(user.getEmail());
+            return new UserDetailsResponse(user.getName(), user.getEmail(), user.getRole(), user.getId());
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new RuntimeException("Invalid token format");
+        }
     }
 
     public void changeUserDetails(UserChangeRequest request, String token) {
-        String splitTok = token.split(" ")[1];
-        Long uId = getUserIdFromToken(splitTok);
-        UserEntity user = userRepository.getById(uId);
-        if (user == null || !(new BCryptPasswordEncoder().matches(request.getPassword(), user.getPassword()))) {
-            throw new RuntimeException("Invalid credentials");
+        if (token == null || !token.contains(" ")) {
+            throw new RuntimeException("Invalid token format");
         }
-        if (!user.getName().equals(request.getName())) {
-            user.setName(request.getName());
-        }
-        if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
-            if (!(new BCryptPasswordEncoder().matches(request.getNewPassword(), user.getPassword()))) {
-                String hashedNewPassword = new BCryptPasswordEncoder().encode(request.getNewPassword());
-                user.setPassword(hashedNewPassword);
+        try {
+            String splitTok = token.split(" ")[1];
+            Long uId = getUserIdFromToken(splitTok);
+            UserEntity user = userRepository.getById(uId);
+            if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new RuntimeException("Invalid credentials");
             }
-        }
+            if (!user.getName().equals(request.getName())) {
+                user.setName(request.getName());
+            }
+            if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+                if (!passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+                    String hashedNewPassword = passwordEncoder.encode(request.getNewPassword());
+                    user.setPassword(hashedNewPassword);
+                }
+            }
 
-        userRepository.save(user);
+            userRepository.save(user);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new RuntimeException("Invalid token format");
+        }
     }
 
     public String generateToken(Long userId) {
