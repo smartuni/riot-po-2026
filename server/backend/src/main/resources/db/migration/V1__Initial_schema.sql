@@ -140,12 +140,8 @@ CREATE TABLE downlink_counter (
 -- Insert a default downlink counter
 INSERT INTO downlink_counter (counter) VALUES (0);
 
--- Insert test users (optional - remove in production)
-INSERT INTO users (email, password, name, role)
-VALUES
-    ('test@example.com', '$2a$10$slYQmyNdGzin7olVN3p5Be7DYC0tgO7XdClpKnJmH8E7DvN3hTfVe', 'Test User', 'controller'),
-    ('viewer@example.com', '$2a$10$slYQmyNdGzin7olVN3p5Be7DYC0tgO7XdClpKnJmH8E7DvN3hTfVe', 'Viewer User', 'viewer')
-ON CONFLICT (email) DO NOTHING;
+-- Test users are now created by AuthService from application.yml test-credentials
+-- No hardcoded password hashes in migrations
 
 -- ============================================================================
 -- Create views (optional - for common queries)
