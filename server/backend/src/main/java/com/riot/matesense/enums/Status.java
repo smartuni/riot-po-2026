@@ -4,7 +4,7 @@ package com.riot.matesense.enums;
  * A Status for the Gate
  */
 public enum Status {
-    OPEN, CLOSED, OUT_OF_SERVICE, NONE;
+    OPEN, CLOSED, OUT_OF_SERVICE, NONE, UNKNOWN, OPENED;
 
     public static Status fromCode(int statusCode)
     {
