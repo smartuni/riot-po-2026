@@ -4,7 +4,7 @@ import { setCookie, eraseCookie } from '../../../shared/utils/cookie';
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+    baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
     prepareHeaders: (headers, { getState }) => {
       const token = getState()?.auth?.token;
       if (token) {
@@ -19,7 +19,7 @@ export const api = createApi({
     // ── Auth ──────────────────────────────────────────────
     login: builder.mutation({
       query: (credentials) => ({
-        url: '/auth/login',
+        url: '/api/auth/login',
         method: 'POST',
         body: credentials,
       }),
@@ -31,7 +31,7 @@ export const api = createApi({
     }),
     register: builder.mutation({
       query: (registrationData) => ({
-        url: '/auth/register',
+        url: '/api/auth/register',
         method: 'POST',
         body: registrationData,
       }),
@@ -42,12 +42,12 @@ export const api = createApi({
       },
     }),
     getUserDetails: builder.query({
-      query: () => '/auth/user-details',
+      query: () => '/api/auth/user-details',
       providesTags: ['Auth'],
     }),
     updateUserDetails: builder.mutation({
       query: (body) => ({
-        url: '/auth/user-change',
+        url: '/api/auth/user-change',
         method: 'PUT',
         body,
       }),
@@ -55,7 +55,7 @@ export const api = createApi({
     }),
     logout: builder.mutation({
       query: () => ({
-        url: '/auth/logout',
+        url: '/api/auth/logout',
         method: 'POST',
       }),
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
@@ -67,12 +67,12 @@ export const api = createApi({
 
     // ── Gates ─────────────────────────────────────────────
     getGates: builder.query({
-      query: () => '/gates',
+      query: () => '/api/gates',
       providesTags: (result) => result ? result.map((gate) => ({ type: 'Gate', id: gate.id })) : [{ type: 'Gate' }],
     }),
     createGate: builder.mutation({
       query: (newGateData) => ({
-        url: '/add-gate-ui',
+        url: '/api/add-gate-ui',
         method: 'POST',
         body: newGateData,
       }),
@@ -80,7 +80,7 @@ export const api = createApi({
     }),
     updateGate: builder.mutation({
       query: (gate) => ({
-        url: '/update-gate',
+        url: '/api/update-gate',
         method: 'PUT',
         body: gate,
       }),
@@ -88,14 +88,14 @@ export const api = createApi({
     }),
     deleteGate: builder.mutation({
       query: (gateId) => ({
-        url: `/gates/${gateId}`,
+        url: `/api/gates/${gateId}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['Gate'],
     }),
     requestGateStatusChange: builder.mutation({
       query: ({ gateId, workerId, requestedStatus }) => ({
-        url: `/${gateId}/${workerId}/request-status-change/`,
+        url: `/api/${gateId}/${workerId}/request-status-change/`,
         method: 'POST',
         body: { requestedStatus },
       }),
@@ -103,24 +103,24 @@ export const api = createApi({
     }),
     updateGatePriority: builder.mutation({
       query: ({ gateId, priority }) => ({
-        url: `/update-priority/${gateId}`,
+        url: `/api/update-priority/${gateId}`,
         method: 'PUT',
         body: { priority },
       }),
       invalidatesTags: ['Gate'],
     }),
     getDownlinkCounter: builder.query({
-      query: () => '/downlinkcounter/counter',
+        query: () => '/api/downlinkcounter/counter',
     }),
     tryIncrementDownlinkCounter: builder.mutation({
       query: () => ({
-        url: '/downlinkcounter/try-increment',
+        url: '/api/downlinkcounter/try-increment',
         method: 'POST',
       }),
     }),
     resetDownlinkCounter: builder.mutation({
       query: () => ({
-        url: '/downlinkcounter/reset',
+        url: '/api/downlinkcounter/reset',
         method: 'POST',
       }),
     }),
@@ -135,12 +135,12 @@ export const api = createApi({
 
     // ── Activities ────────────────────────────────────────
     getActivities: builder.query({
-      query: () => '/gate-activities',
+        query: () => '/api/gate-activities',
       providesTags: (result) => result ? result.map((activity) => ({ type: 'Activity', id: activity.id })) : [{ type: 'Activity' }],
     }),
     addActivities: builder.mutation({
       query: (newActivities) => ({
-        url: '/add-activities/',
+        url: '/api/add-activities/',
         method: 'POST',
         body: newActivities,
       }),
@@ -149,16 +149,16 @@ export const api = createApi({
 
     // ── Notifications ─────────────────────────────────────
     getNotifications: builder.query({
-      query: () => '/notifications',
+        query: () => '/api/notifications',
       providesTags: (result) => result ? result.map((notification) => ({ type: 'Notification', id: notification.id })) : [{ type: 'Notification' }],
     }),
     getNotificationsByWorkerId: builder.query({
-      query: (workerId) => `/notifications/${workerId}`,
+        query: (workerId) => `/api/notifications/${workerId}`,
       providesTags: (result) => result ? result.map((notification) => ({ type: 'Notification', id: notification.id })) : [{ type: 'Notification' }],
     }),
     markNotificationAsRead: builder.mutation({
       query: (notificationId) => ({
-        url: `/notifications/${notificationId}/request-read-change`,
+        url: `/api/notifications/${notificationId}/request-read-change`,
         method: 'POST',
       }),
       invalidatesTags: ['Notification'],

@@ -1,6 +1,7 @@
 package com.riot.matesense.enums;
 
 public enum StateConfirmation {
+    CONFIRMED(-1),              // legacy: remains from simplified enum (ddaf3e3), retained for DB compatibility
     WORKER_CONFLICT(0),         // at least one worker reported state that is in conflict with the sensor-reported value
     UNCONFIRMED(1),             // state is based only on the sensor reading (but no conflict)
     WORKER_CONFIRMED_SINGLE(2), // the state was confirmed by one SenseMate user

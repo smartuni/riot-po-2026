@@ -37,8 +37,15 @@ stages:
 backend_tests:
   stage: test
   image: maven:3.9-eclipse-temurin-17
+  services:
+    - name: postgres:15
+      alias: postgres
   variables:
     MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+    POSTGRES_DB: riot_test
+    POSTGRES_USER: riot_user
+    POSTGRES_PASSWORD: riot_password
+    POSTGRES_TEST_URL: jdbc:postgresql://postgres:5432/riot_test
   cache:
     key: "$CI_PROJECT_PATH-backend-maven"
     paths:

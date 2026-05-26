@@ -50,7 +50,7 @@ function createWsMiddleware() {
       stompClient = null;
     }
     intentionalDisconnect = false;
-    const wsUrl = import.meta.env.VITE_WS_URL;
+    const wsUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws';
 
     stompClient = new Client({
       webSocketFactory: () => new WebSocket(wsUrl),
