@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "mqtt")
 public class MqttProperties {
+    private boolean enabled = true;
     private String broker;
     private String clientId;
     private String username;
@@ -16,6 +17,14 @@ public class MqttProperties {
 
     public String getBroker() {
         return broker;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public void setBroker(String broker) {

@@ -1,4 +1,3 @@
-
 # Server Team Back-End
 This is the readme for the back-end of the Server side team. It will describe the structure of the directory and where to find important files and functions.
 
@@ -190,4 +189,40 @@ We recommend using **IntelliJ IDEA** for this project, as it was used during dev
 
 > Other IDEs can be used, but may require additional manual configuration.
 
+---
 
+## E2E Backend (Deterministischer Zustand)
+
+Für reproduzierbare E2E-Tests gibt es ein separates Profil und Seed-Daten. Dieses Setup startet Postgres und das Backend mit einem festen Datenzustand.
+
+### Profil
+
+- Profil: `e2e`
+- Seed-Daten: `src/main/resources/db/migration-e2e/V100__e2e_seed.sql`
+- MQTT ist im E2E-Profil deaktiviert (`mqtt.enabled=false`), damit Tests stabil laufen.
+
+### Start & Reset
+
+Ein Reset entfernt das Datenbank-Volume und startet neu, sodass die Seeds immer wieder identisch eingespielt werden.
+
+```bash
+server/backend/scripts/e2e-reset.sh
+```
+
+Manuell:
+
+```bash
+docker compose -f server/docker-compose.yml -f server/docker-compose.e2e.yml down -v
+docker compose -f server/docker-compose.yml -f server/docker-compose.e2e.yml up -d postgres backend
+```
+
+### Ports
+
+- Postgres (E2E): `localhost:5433`
+- Backend: `localhost:8080`
+
+### Test-Accounts
+
+Die Test-Accounts kommen aus `application.yml` (`test-credentials`). Beispiel:
+- `test@example.com` / `test123`
+- `test2@example.com` / `test234`
