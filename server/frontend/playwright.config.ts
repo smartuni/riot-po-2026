@@ -84,8 +84,8 @@ export default defineConfig({
       // Reuse whatever is already healthy (local e2e-reset.sh or a CI-managed backend)
       // instead of tearing it down and rebuilding.
       reuseExistingServer: true,
-      // Cold start = image build + Spring boot + Flyway migration.
-      timeout: 240_000,
+      // Cold start = image build (no maven cache in CI) + Spring boot + Flyway.
+      timeout: 360_000,
       stdout: 'pipe',
       stderr: 'pipe',
     },
