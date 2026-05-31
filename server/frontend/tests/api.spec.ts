@@ -18,11 +18,12 @@ test.describe('Backend API', () => {
     }
   });
 
-  test('login rejects invalid credentials', async ({ request }) => {
+  test('login rejects invalid credentials with 401 and a message', async ({ request }) => {
     const response = await request.post(`${BACKEND_URL}/auth/login`, {
       data: { email: CONTROLLER.email, password: 'wrong-password' },
     });
-    expect(response.ok()).toBeFalsy();
+    expect(response.status()).toBe(401);
+    expect((await response.json()).error).toBe('Invalid email or password');
   });
 
   test('user-details reflects the seeded controller', async ({ request }) => {
