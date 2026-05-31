@@ -24,9 +24,16 @@ export const api = createApi({
         body: credentials,
       }),
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        const { data } = await queryFulfilled;
-        dispatch({ type: 'auth/setToken', payload: data.token });
-        setCookie('jwt', data.token);
+        // Catch the rejection on failed login: the component handles the error
+        // via the hook, and an unhandled queryFulfilled rejection here surfaces
+        // as an uncaught "Object" error on the page.
+        try {
+          const { data } = await queryFulfilled;
+          dispatch({ type: 'auth/setToken', payload: data.token });
+          setCookie('jwt', data.token);
+        } catch {
+          // Login failed — nothing to persist; the UI shows the error dialog.
+        }
       },
     }),
     register: builder.mutation({
@@ -36,9 +43,13 @@ export const api = createApi({
         body: registrationData,
       }),
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        const { data } = await queryFulfilled;
-        dispatch({ type: 'auth/setToken', payload: data.token });
-        setCookie('jwt', data.token);
+        try {
+          const { data } = await queryFulfilled;
+          dispatch({ type: 'auth/setToken', payload: data.token });
+          setCookie('jwt', data.token);
+        } catch {
+          // Registration failed — nothing to persist; the UI shows the error.
+        }
       },
     }),
     getUserDetails: builder.query({
@@ -59,9 +70,15 @@ export const api = createApi({
         method: 'POST',
       }),
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        await queryFulfilled;
-        dispatch({ type: 'auth/clearToken' });
-        eraseCookie('jwt');
+        // Clear client auth state regardless of whether the server call
+        // succeeds — a failed logout request must still log the user out
+        // locally, otherwise the stale token keeps protected pages rendering.
+        try {
+          await queryFulfilled;
+        } finally {
+          dispatch({ type: 'auth/clearToken' });
+          eraseCookie('jwt');
+        }
       },
     }),
 
@@ -75,6 +92,11 @@ export const api = createApi({
         url: '/api/add-gate-ui',
         method: 'POST',
         body: newGateData,
+        // The endpoint replies 200 with a plain-text body (not JSON); without
+        // this the default JSON parser raises PARSING_ERROR and the mutation
+        // rejects even though the gate was created. The body is unused — the
+        // table refreshes via invalidatesTags.
+        responseHandler: 'text',
       }),
       invalidatesTags: ['Gate'],
     }),

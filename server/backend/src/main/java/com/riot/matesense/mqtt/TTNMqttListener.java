@@ -7,11 +7,13 @@ import com.riot.matesense.service.Base64ToList;
 import com.riot.matesense.service.JsonFormatter;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.*;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(prefix = "mqtt", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class TTNMqttListener {
 
     private final MqttProperties mqttProperties;

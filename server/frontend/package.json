@@ -28,6 +28,8 @@
     "build": "vite build",
     "serve": "vite preview",
     "test": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "lint": "eslint src/"
   },
   "browserslist": {
@@ -47,7 +49,9 @@
     "@babel/eslint-parser": "^7.28.6",
     "@babel/preset-react": "^7.28.5",
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.60.0",
     "@rolldown/plugin-babel": "^0.2.3",
+    "@types/node": "^25.9.1",
     "@vitejs/plugin-react": "^6.0.1",
     "babel-plugin-react-compiler": "^1.0.0",
     "docsify-cli": "^4.4.4",
