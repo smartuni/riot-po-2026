@@ -24,9 +24,16 @@ export const api = createApi({
         body: credentials,
       }),
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        const { data } = await queryFulfilled;
-        dispatch({ type: 'auth/setToken', payload: data.token });
-        setCookie('jwt', data.token);
+        // Catch the rejection on failed login: the component handles the error
+        // via the hook, and an unhandled queryFulfilled rejection here surfaces
+        // as an uncaught "Object" error on the page.
+        try {
+          const { data } = await queryFulfilled;
+          dispatch({ type: 'auth/setToken', payload: data.token });
+          setCookie('jwt', data.token);
+        } catch {
+          // Login failed — nothing to persist; the UI shows the error dialog.
+        }
       },
     }),
     register: builder.mutation({
@@ -36,9 +43,13 @@ export const api = createApi({
         body: registrationData,
       }),
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        const { data } = await queryFulfilled;
-        dispatch({ type: 'auth/setToken', payload: data.token });
-        setCookie('jwt', data.token);
+        try {
+          const { data } = await queryFulfilled;
+          dispatch({ type: 'auth/setToken', payload: data.token });
+          setCookie('jwt', data.token);
+        } catch {
+          // Registration failed — nothing to persist; the UI shows the error.
+        }
       },
     }),
     getUserDetails: builder.query({
