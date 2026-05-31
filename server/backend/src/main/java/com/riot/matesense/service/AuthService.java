@@ -3,6 +3,7 @@ package com.riot.matesense.service;
 import com.riot.matesense.config.JWTSecretProperties;
 import com.riot.matesense.config.TestAccountProperties;
 import com.riot.matesense.entity.UserEntity;
+import com.riot.matesense.exceptions.InvalidCredentialsException;
 import com.riot.matesense.model.AuthRequest;
 import com.riot.matesense.model.RegisterRequest;
 import com.riot.matesense.model.UserChangeRequest;
@@ -60,7 +61,7 @@ public class AuthService {
         UserEntity user = userRepository.findByEmail(request.getEmail());
 
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new InvalidCredentialsException("Invalid email or password");
         }
 
         String token = generateToken(user.getId());
