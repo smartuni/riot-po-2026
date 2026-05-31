@@ -3821,7 +3821,7 @@
 	)
 	(text "Wie verbinden?"
 		(exclude_from_sim no)
-		(at 66.04 146.304 0)
+		(at 67.818 146.304 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3841,7 +3841,7 @@
 	)
 	(text "Geht das?"
 		(exclude_from_sim no)
-		(at 49.276 98.298 0)
+		(at 46.482 98.298 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3859,7 +3859,7 @@
 		)
 		(uuid "fe50b0c4-ce01-4e10-816d-2f9f0a47d664")
 	)
-	(text_box "Note:\n-----\nMoved from Adafruite Feather nRF52840 Sense \nLoRa_RST - PIN9 - D9 (P0.26 | HS)\n\nTo -> P0.03_A1_D1\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO1 - PIN5 - D5 (P1.08 | HS)\n\nTo -> P0.28_A2_D2\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO2 - PIN6 - D6 (P0.07 | HS)\n\nTo -> P0.29_A3_D3\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_CS - PIN10 - D10 (P0.27 | HS) (New Name: NSS)\n\nTo -> P1.11_D6_TX\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_IRQ - PIN11 - D11 (P0.06 | HS) (New Name: DIO0)\n\nTo -> P015_D11_I2S_SD\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nBuzzer - PIN12 - D12 (P0.08 | HS)\n\nTo -> P1.12_D7_RX\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nVibration - PIN13 - D13 (P1.09 | HS)\n\nTo -> P1.03_D17_SCK1\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nTHUMBSTICK\n\nTMB2 - PINA0 - A0 (P0.04 | HS) To -> P1.01_D13_I2S_WS\nTMBT1 - PINA1 - A1 (P0.30 | HS) To -> P0.10_D15_NFC_TX1\nTMB1 - PINA3 - A3 (P0.28 | HS) To -> P0.19_D12_I2S_SCK\n----"
+	(text_box "Note:\n-----\nMoved from Adafruite Feather nRF52840 Sense \nLoRa_RST - PIN9 - D9 (P0.26 | HS)\n\nTo -> P0.03_A1_D1\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO1 - PIN5 - D5 (P1.08 | HS)\n\nTo -> P0.28_A2_D2\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO2 - PIN6 - D6 (P0.07 | HS)\n\nTo -> P0.29_A3_D3\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_CS - PIN10 - D10 (P0.27 | HS) (New Name: NSS)\n\nTo -> P1.11_D6_TX\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_IRQ - PIN11 - D11 (P0.06 | HS) (New Name: DIO0)\n\nTo -> P015_D11_I2S_SD\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nBuzzer - PIN12 - D12 (P0.08 | HS)\n\nTo -> P1.12_D7_RX\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nVibration - PIN13 - D13 (P1.09 | HS)\n\nTo -> P1.03_D17_SCK1\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nTHUMBSTICK\n\nTMB2 - PINA0 - A0 (P0.04 | HS) To -> P0.10_D15_NFC_TX1\nTMBT1 - PINA1 - A1 (P0.30 | HS) To -> P1.01_D13_I2S_WS\nTMB1 - PINA3 - A3 (P0.28 | HS) To -> P0.19_D12_I2S_SCK\n----"
 		(exclude_from_sim no)
 		(at -34.29 11.4082 0)
 		(size 41.91 124.5814)
@@ -4023,16 +4023,6 @@
 	)
 	(wire
 		(pts
-			(xy 62.23 97.79) (xy 64.77 97.79)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "0daa3786-db47-470c-aeec-ad343df3bf2a")
-	)
-	(wire
-		(pts
 			(xy 118.11 154.94) (xy 124.46 154.94)
 		)
 		(stroke
@@ -4150,6 +4140,16 @@
 			(type default)
 		)
 		(uuid "33bd1fb0-9737-4384-b6d0-dcbfc5012065")
+	)
+	(wire
+		(pts
+			(xy 62.23 97.79) (xy 64.77 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "342e3998-e2e1-4569-bd5e-2c4d53bfdbfe")
 	)
 	(wire
 		(pts
@@ -4353,16 +4353,6 @@
 	)
 	(wire
 		(pts
-			(xy 62.23 102.87) (xy 64.77 102.87)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7255c459-322b-453b-9058-4314ebe6ab7c")
-	)
-	(wire
-		(pts
 			(xy 191.77 151.13) (xy 186.69 151.13)
 		)
 		(stroke
@@ -4490,6 +4480,16 @@
 			(type default)
 		)
 		(uuid "a90ba971-f489-4bdc-92ba-517781130b80")
+	)
+	(wire
+		(pts
+			(xy 62.23 102.87) (xy 64.77 102.87)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ae2d36ea-de82-4887-86f7-5cc79c3a9945")
 	)
 	(wire
 		(pts
@@ -5069,7 +5069,7 @@
 	)
 	(global_label "TMBT1"
 		(shape input)
-		(at 62.23 102.87 180)
+		(at 62.23 97.79 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -5079,7 +5079,7 @@
 		)
 		(uuid "6ca1cd8c-76a5-4096-bb9a-9c1ab0cf3f7b")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 53.3787 102.87 0)
+			(at 53.3787 97.79 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5141,7 +5141,7 @@
 	)
 	(global_label "TMB2"
 		(shape input)
-		(at 62.23 97.79 180)
+		(at 62.23 102.87 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -5151,7 +5151,7 @@
 		)
 		(uuid "7ceed379-38bf-4a67-87dd-ff6ab6e5f658")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 54.3463 97.79 0)
+			(at 54.3463 102.87 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
