@@ -59,9 +59,15 @@ export const api = createApi({
         method: 'POST',
       }),
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        await queryFulfilled;
-        dispatch({ type: 'auth/clearToken' });
-        eraseCookie('jwt');
+        // Clear client auth state regardless of whether the server call
+        // succeeds — a failed logout request must still log the user out
+        // locally, otherwise the stale token keeps protected pages rendering.
+        try {
+          await queryFulfilled;
+        } finally {
+          dispatch({ type: 'auth/clearToken' });
+          eraseCookie('jwt');
+        }
       },
     }),
 
@@ -75,6 +81,11 @@ export const api = createApi({
         url: '/api/add-gate-ui',
         method: 'POST',
         body: newGateData,
+        // The endpoint replies 200 with a plain-text body (not JSON); without
+        // this the default JSON parser raises PARSING_ERROR and the mutation
+        // rejects even though the gate was created. The body is unused — the
+        // table refreshes via invalidatesTags.
+        responseHandler: 'text',
       }),
       invalidatesTags: ['Gate'],
     }),
