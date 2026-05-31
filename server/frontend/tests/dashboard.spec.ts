@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, expectLoaded } from './fixtures';
 import { BACKEND_URL, CONTROLLER, SEEDED_GATES, apiToken, login } from './utils';
 
 /**
@@ -12,6 +12,8 @@ test.describe('Controller dashboard', () => {
   test.beforeEach(async ({ page }) => {
     await login(page, CONTROLLER);
     await expect(page.getByRole('heading', { name: 'Flood Gates' })).toBeVisible();
+    // The dashboard must finish loading — no spinners left hanging.
+    await expectLoaded(page);
   });
 
   // Remove any gate created by the mutating create-gate test so the seed stays
@@ -130,6 +132,7 @@ test.describe('Guest dashboard', () => {
     await page.goto('/dashboard-guest');
 
     await expect(page.getByText('E2E Gate Alpha')).toBeVisible();
+    await expectLoaded(page);
     // The guest uses the read-only StatusTablesView; no gate-creation control.
     await expect(page.getByRole('button', { name: 'Create Gate' })).toHaveCount(0);
   });

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, expectLoaded } from './fixtures';
 import { CONTROLLER, VIEWER, login } from './utils';
 
 test.describe('Authentication', () => {
@@ -20,14 +20,19 @@ test.describe('Authentication', () => {
     await expect(submitButton).toBeEnabled();
   });
 
-  test('controller is routed to the controller dashboard', async ({ page }) => {
+  test('controller is routed to a fully loaded controller dashboard', async ({ page }) => {
     await login(page, CONTROLLER);
     await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByRole('heading', { name: 'Flood Gates' })).toBeVisible();
+    await expectLoaded(page);
   });
 
-  test('viewer is routed to the read-only dashboard', async ({ page }) => {
+  test('viewer is routed to a fully loaded read-only dashboard', async ({ page }) => {
     await login(page, VIEWER);
     await expect(page).toHaveURL(/\/dashboard-view$/);
+    // Seeded data must actually render — not just the URL change.
+    await expect(page.getByText('E2E Gate Alpha')).toBeVisible();
+    await expectLoaded(page);
   });
 
   test('wrong password shows a clear error message and stays on /login', async ({ page }) => {
