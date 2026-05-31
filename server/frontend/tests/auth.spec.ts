@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CONTROLLER, VIEWER, login } from './utils';
 
 test.describe('Authentication', () => {
   test('should enable submit only for valid credentials', async ({ page }) => {
@@ -17,5 +18,25 @@ test.describe('Authentication', () => {
 
     await page.locator('input[name="password"]').fill('password123');
     await expect(submitButton).toBeEnabled();
+  });
+
+  test('controller is routed to the controller dashboard', async ({ page }) => {
+    await login(page, CONTROLLER);
+    await expect(page).toHaveURL(/\/dashboard$/);
+  });
+
+  test('viewer is routed to the read-only dashboard', async ({ page }) => {
+    await login(page, VIEWER);
+    await expect(page).toHaveURL(/\/dashboard-view$/);
+  });
+
+  test('wrong password shows the login error dialog and stays on /login', async ({ page }) => {
+    await page.goto('/login');
+    await page.locator('input[name="email"]').fill(CONTROLLER.email);
+    await page.locator('input[name="password"]').fill('wrong-password');
+    await page.locator('button[type="submit"]').click();
+
+    await expect(page.getByText('Login Error')).toBeVisible();
+    await expect(page).toHaveURL(/\/login$/);
   });
 });

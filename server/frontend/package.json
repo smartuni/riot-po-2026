@@ -28,6 +28,8 @@
     "build": "vite build",
     "serve": "vite preview",
     "test": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "lint": "eslint src/"
   },
   "browserslist": {

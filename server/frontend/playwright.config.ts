@@ -70,10 +70,29 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-  },
+  /* Spin up the dockerised backend + the Vite dev server before the tests.
+     Playwright starts each server, waits for its url to respond, then runs. */
+  webServer: [
+    {
+      // Bring up postgres + backend (e2e profile, deterministic seed). The down -v
+      // gives a clean volume so Flyway re-seeds; --build picks up source changes.
+      // Foreground `up` lets Playwright own the lifecycle and tear it down on exit.
+      command:
+        'docker compose -f ../docker-compose.yml -f ../docker-compose.e2e.yml down -v && ' +
+        'docker compose -f ../docker-compose.yml -f ../docker-compose.e2e.yml up --build postgres backend',
+      url: 'http://localhost:8080/actuator/health',
+      // Reuse whatever is already healthy (local e2e-reset.sh or a CI-managed backend)
+      // instead of tearing it down and rebuilding.
+      reuseExistingServer: true,
+      // Cold start = image build + Spring boot + Flyway migration.
+      timeout: 240_000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+    {
+      command: 'npm run start',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+    },
+  ],
 });
