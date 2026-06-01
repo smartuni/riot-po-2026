@@ -7,7 +7,6 @@ import com.riot.matesense.exceptions.InvalidCredentialsException;
 import com.riot.matesense.model.AuthRequest;
 import com.riot.matesense.model.RegisterRequest;
 import com.riot.matesense.model.UserChangeRequest;
-import com.riot.matesense.model.AuthResponse;
 import com.riot.matesense.model.UserDetailsResponse;
 import com.riot.matesense.repository.UserRepository;
 
@@ -57,7 +56,7 @@ public class AuthService {
         }
     }
 
-    public AuthResponse handleLogin(AuthRequest request) {
+    public String handleLogin(AuthRequest request) {
         UserEntity user = userRepository.findByEmail(request.getEmail());
 
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -67,10 +66,10 @@ public class AuthService {
         String token = generateToken(user.getId());
         tokenStore.put(token, user.getId());
         // System.out.println("Created Login Token " + token);
-        return new AuthResponse(token);
+        return token;
     }
 
-    public AuthResponse handleRegister(RegisterRequest request) {
+    public String handleRegister(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()) != null) {
             throw new RuntimeException("Email already in use");
         }
@@ -82,17 +81,17 @@ public class AuthService {
         String token = generateToken(user.getId());
         tokenStore.put(token, user.getId());
         // System.out.println("Created Register Token " + token);
-        return new AuthResponse(token);
+        return token;
     }
 
     // Helper method for test account initialization - silently skips if email exists
-    private AuthResponse handleRegisterWithoutDuplicate(RegisterRequest request) {
+    private String handleRegisterWithoutDuplicate(RegisterRequest request) {
         UserEntity existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser != null) {
             // User already exists, skip creation
             String token = generateToken(existingUser.getId());
             tokenStore.put(token, existingUser.getId());
-            return new AuthResponse(token);
+            return token;
         }
         
         String hashedPassword = passwordEncoder.encode(request.getPassword());
@@ -101,21 +100,14 @@ public class AuthService {
 
         String token = generateToken(user.getId());
         tokenStore.put(token, user.getId());
-        return new AuthResponse(token);
+        return token;
     }
 
     public void handleLogout(String token) {
-        if (token == null || !token.contains(" ")) {
-            throw new RuntimeException("Invalid token format");
+        if (token == null) {
+            throw new RuntimeException("No token provided");
         }
-        try {
-            String splitTok = token.split(" ")[1];
-            tokenStore.remove(splitTok);
-            // System.out.println(tokenStore);
-            // System.out.println("Logged out token: " + token);
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new RuntimeException("Invalid token format");
-        }
+        tokenStore.remove(token);
     }
 
     public Long getUserIdFromToken(String token) {
@@ -128,48 +120,37 @@ public class AuthService {
     }
 
     public UserDetailsResponse getUserDetails(String token) {
-        if (token == null || !token.contains(" ")) {
-            throw new RuntimeException("Invalid token format");
+        if (token == null) {
+            throw new RuntimeException("No token provided");
         }
-        try {
-            String splitTok = token.split(" ")[1];
-            Long uId = getUserIdFromToken(splitTok);
-            UserEntity user = userRepository.getById(uId);
-            if (user == null) {
-                throw new RuntimeException("User not found");
-            }
-            // System.out.println(user.getEmail());
-            return new UserDetailsResponse(user.getName(), user.getEmail(), user.getRole(), user.getId());
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new RuntimeException("Invalid token format");
+        Long uId = getUserIdFromToken(token);
+        UserEntity user = userRepository.getById(uId);
+        if (user == null) {
+            throw new RuntimeException("User not found");
         }
+        return new UserDetailsResponse(user.getName(), user.getEmail(), user.getRole(), user.getId());
     }
 
     public void changeUserDetails(UserChangeRequest request, String token) {
-        if (token == null || !token.contains(" ")) {
-            throw new RuntimeException("Invalid token format");
+        if (token == null) {
+            throw new RuntimeException("No token provided");
         }
-        try {
-            String splitTok = token.split(" ")[1];
-            Long uId = getUserIdFromToken(splitTok);
-            UserEntity user = userRepository.getById(uId);
-            if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                throw new RuntimeException("Invalid credentials");
+        Long uId = getUserIdFromToken(token);
+        UserEntity user = userRepository.getById(uId);
+        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
+        }
+        if (!user.getName().equals(request.getName())) {
+            user.setName(request.getName());
+        }
+        if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+            if (!passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+                String hashedNewPassword = passwordEncoder.encode(request.getNewPassword());
+                user.setPassword(hashedNewPassword);
             }
-            if (!user.getName().equals(request.getName())) {
-                user.setName(request.getName());
-            }
-            if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
-                if (!passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
-                    String hashedNewPassword = passwordEncoder.encode(request.getNewPassword());
-                    user.setPassword(hashedNewPassword);
-                }
-            }
+        }
 
-            userRepository.save(user);
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new RuntimeException("Invalid token format");
-        }
+        userRepository.save(user);
     }
 
     public String generateToken(Long userId) {

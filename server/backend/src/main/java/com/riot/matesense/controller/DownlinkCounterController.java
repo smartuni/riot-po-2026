@@ -48,7 +48,12 @@ public class DownlinkCounterController {
      */
     @PostMapping("/reset")
     public void resetCounter(HttpServletResponse response) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        String email = auth.getName();
         UserEntity user = userRepository.findByEmail(email);
         if (user == null || !"controller".equals(user.getRole())) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);

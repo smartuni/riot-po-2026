@@ -4,7 +4,6 @@ import com.riot.matesense.model.AuthRequest;
 import com.riot.matesense.model.RegisterRequest;
 import com.riot.matesense.model.UserDetailsResponse;
 import com.riot.matesense.model.UserChangeRequest;
-import com.riot.matesense.model.AuthResponse;
 import com.riot.matesense.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,9 +25,9 @@ public class AuthController {
     private boolean cookieSecure;
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody AuthRequest request, HttpServletResponse response) {
-        AuthResponse authResponse = authService.handleLogin(request);
-        ResponseCookie cookie = ResponseCookie.from("jwt", authResponse.getToken())
+    public UserDetailsResponse login(@RequestBody AuthRequest request, HttpServletResponse response) {
+        String token = authService.handleLogin(request);
+        ResponseCookie cookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite("Lax")
@@ -36,13 +35,13 @@ public class AuthController {
                 .maxAge(36000)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return authResponse;
+        return authService.getUserDetails(token);
     }
 
     @PostMapping("/register")
-    public AuthResponse register(@RequestBody RegisterRequest request, HttpServletResponse response) {
-        AuthResponse authResponse = authService.handleRegister(request);
-        ResponseCookie cookie = ResponseCookie.from("jwt", authResponse.getToken())
+    public UserDetailsResponse register(@RequestBody RegisterRequest request, HttpServletResponse response) {
+        String token = authService.handleRegister(request);
+        ResponseCookie cookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite("Lax")
@@ -50,13 +49,13 @@ public class AuthController {
                 .maxAge(36000)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return authResponse;
+        return authService.getUserDetails(token);
     }
 
     @PostMapping("/logout")
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         try {
-            String token = extractBearerToken(request);
+            String token = extractJwt(request);
             authService.handleLogout(token);
         } catch (RuntimeException e) {
             // ignore — we clear cookie anyway
@@ -73,22 +72,22 @@ public class AuthController {
 
     @GetMapping("/user-details")
     public UserDetailsResponse userDetails(HttpServletRequest request) {
-        return authService.getUserDetails(extractBearerToken(request));
+        return authService.getUserDetails(extractJwt(request));
     }
 
     @PutMapping("/user-change")
     public void changeUserDetails(@RequestBody UserChangeRequest changeRequest, HttpServletRequest request) {
-        authService.changeUserDetails(changeRequest, extractBearerToken(request));
+        authService.changeUserDetails(changeRequest, extractJwt(request));
     }
 
-    private String extractBearerToken(HttpServletRequest request) {
+    private String extractJwt(HttpServletRequest request) {
         String token = extractJwtFromCookie(request);
         if (token != null) {
-            return "Bearer " + token;
+            return token;
         }
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader;
+            return authHeader.substring(7);
         }
         throw new RuntimeException("No authentication token found");
     }
