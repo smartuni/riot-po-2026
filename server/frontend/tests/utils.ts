@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page, type APIRequestContext } from '@playwright/test';
 
 /**
  * Shared fixtures for the E2E suite.
@@ -44,11 +44,25 @@ export async function login(
   await expect(page).toHaveURL(/\/dashboard(-view)?$/);
 }
 
-/** POST /auth/login against the backend and return the JWT. */
+/** Extract XSRF-TOKEN from Set-Cookie header. */
+function extractXSRFToken(setCookieHeader: string | null): string | null {
+  if (!setCookieHeader) return null;
+  for (const cookie of setCookieHeader.split('\n')) {
+    const match = cookie.match(/XSRF-TOKEN=([^;]+)/);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+/** POST /auth/login against the backend and return the JWT + CSRF token. */
 export async function apiToken(
-  request: { post: (url: string, opts: object) => Promise<{ json: () => Promise<{ token: string }> }> },
+  request: APIRequestContext,
   credentials: { email: string; password: string },
-): Promise<string> {
+): Promise<{ jwt: string; csrfToken: string | null }> {
   const response = await request.post(`${BACKEND_URL}/auth/login`, { data: credentials });
-  return (await response.json()).token;
+  const setCookie = response.headers()['set-cookie'];
+  return {
+    jwt: (await response.json()).token,
+    csrfToken: extractXSRFToken(setCookie),
+  };
 }

@@ -10,11 +10,15 @@ import { BACKEND_URL, CONTROLLER, VIEWER, SEEDED_GATES, apiToken } from './utils
  * that breaks the contract fails here.
  */
 test.describe('Backend API', () => {
-  test('login returns a token for seeded accounts', async ({ request }) => {
+  test('login returns a token and sets cookies for seeded accounts', async ({ request }) => {
     for (const account of [CONTROLLER, VIEWER]) {
       const response = await request.post(`${BACKEND_URL}/auth/login`, { data: account });
       expect(response.status()).toBe(200);
       expect((await response.json()).token).toBeTruthy();
+      // Cookie-based auth: login must set HttpOnly jwt + XSRF-TOKEN
+      const setCookie = response.headers()['set-cookie'];
+      expect(setCookie).toContain('jwt=');
+      expect(setCookie).toContain('XSRF-TOKEN=');
     }
   });
 
@@ -27,9 +31,9 @@ test.describe('Backend API', () => {
   });
 
   test('user-details reflects the seeded controller', async ({ request }) => {
-    const token = await apiToken(request, CONTROLLER);
+    const { jwt } = await apiToken(request, CONTROLLER);
     const response = await request.get(`${BACKEND_URL}/auth/user-details`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${jwt}` },
     });
 
     expect(response.status()).toBe(200);
@@ -59,9 +63,9 @@ test.describe('Backend API', () => {
     const unauthorized = await request.get(`${BACKEND_URL}/notifications`);
     expect(unauthorized.status()).toBe(401);
 
-    const token = await apiToken(request, CONTROLLER);
+    const { jwt } = await apiToken(request, CONTROLLER);
     const response = await request.get(`${BACKEND_URL}/notifications`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${jwt}` },
     });
     expect(response.status()).toBe(200);
 
