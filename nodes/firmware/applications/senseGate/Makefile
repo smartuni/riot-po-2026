@@ -89,6 +89,9 @@ USEMODULE += tables_shell
 USEMODULE += cose_crypto_service
 USEMODULE += hlc_ztimer
 
+# for shock-detection
+USEMODULE += saul_default
+
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
@@ -107,6 +110,7 @@ USEMODULE += shell_cmds_default
 QUIET ?= 1
 CFLAGS += -DDEBUG_ASSERT_VERBOSE
 CFLAGS += -I$(APPDIR)/include
+CFLAGS += -gz=none # without this, the linker would throw a huge chunk of warnings
 
 # If you want to modify this code, be sure to make some adjustments in
 # nodes/firmware/custom-modules/key-distro/Makefile.include as well! (include $(CONFIG_FILE)

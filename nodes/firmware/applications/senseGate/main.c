@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "shock_detector.h"
 #include "od.h"
 #include "board.h"
 #include "ztimer.h"
@@ -13,6 +14,7 @@
 #include "inductive_sensor.h"
 #include "include/gate_observer.h"
 #include "mtd.h"
+
 #define LOG_LEVEL   LOG_DEBUG
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[main]: " __VA_ARGS__)
@@ -218,6 +220,11 @@ int main(void){
     int timeToUpdateTable = 0; // var to update table periodically
     int put_cnt = 0;
     int put_err_cnt = 0;
+
+    float shock_threshold = 25.0; // TODO adjust this later
+    shock_detector* detector = shock_detector_new(shock_threshold);
+    shock_detector_start(detector);
+
     while(1){
         ztimer_sleep(ZTIMER_MSEC,1000);
 
