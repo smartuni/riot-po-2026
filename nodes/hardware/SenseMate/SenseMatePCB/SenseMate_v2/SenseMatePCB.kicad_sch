@@ -5,6 +5,192 @@
 	(uuid "70e40189-008f-4f72-8f4c-fe289f3548a4")
 	(paper "A4")
 	(lib_symbols
+		(symbol "Connector:Conn_Coaxial"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0.254 3.048 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_Coaxial"
+				(at 2.921 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "BNC SMA SMB SMC LEMO coaxial connector CINCH RCA MCX MMCX U.FL UMRF"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "*BNC* *SMA* *SMB* *SMC* *Cinch* *LEMO* *UMRF* *MCX* *U.FL*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Conn_Coaxial_0_1"
+				(polyline
+					(pts
+						(xy -2.54 0) (xy -0.508 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 1.778 0)
+					(mid 0.222 -1.8079)
+					(end -1.778 -0.508)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -1.778 0.508)
+					(mid 0.2221 1.8084)
+					(end 1.778 0)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 0 0)
+					(radius 0.508)
+					(stroke
+						(width 0.2032)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -2.54) (xy 0 -1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "Conn_Coaxial_1_1"
+				(pin passive line
+					(at -5.08 0 0)
+					(length 2.54)
+					(name "In"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -5.08 90)
+					(length 2.54)
+					(name "Ext"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Connector_Generic:Conn_01x04"
 			(pin_names
 				(offset 1.016)
@@ -3751,7 +3937,7 @@
 	)
 	(text "Geht das?"
 		(exclude_from_sim no)
-		(at 131.064 93.472 0)
+		(at 132.842 93.218 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3859,7 +4045,7 @@
 		)
 		(uuid "fe50b0c4-ce01-4e10-816d-2f9f0a47d664")
 	)
-	(text_box "Note:\n-----\nMoved from Adafruite Feather nRF52840 Sense \nLoRa_RST - PIN9 - D9 (P0.26 | HS)\n\nTo -> P0.03_A1_D1\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO1 - PIN5 - D5 (P1.08 | HS)\n\nTo -> P0.28_A2_D2\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO2 - PIN6 - D6 (P0.07 | HS)\n\nTo -> P0.29_A3_D3\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_CS - PIN10 - D10 (P0.27 | HS) (New Name: NSS)\n\nTo -> P1.11_D6_TX\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_IRQ - PIN11 - D11 (P0.06 | HS) (New Name: DIO0)\n\nTo -> P015_D11_I2S_SD\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nBuzzer - PIN12 - D12 (P0.08 | HS)\n\nTo -> P1.12_D7_RX\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nVibration - PIN13 - D13 (P1.09 | HS)\n\nTo -> P1.03_D17_SCK1\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nTHUMBSTICK\n\nTMB2 - PINA0 - A0 (P0.04 | HS) To -> P0.10_D15_NFC_TX1\nTMBT1 - PINA1 - A1 (P0.30 | HS) To -> P1.01_D13_I2S_WS\nTMB1 - PINA3 - A3 (P0.28 | HS) To -> P0.19_D12_I2S_SCK\n----"
+	(text_box "Note:\n-----\nMoved from Adafruite Feather nRF52840 Sense \nLoRa_RST - PIN9 - D9 (P0.26 | HS)\n\nTo -> P0.03_A1_D1\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO1 - PIN5 - D5 (P1.08 | HS)\n\nTo -> P0.28_A2_D2\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO2 - PIN6 - D6 (P0.07 | HS)\n\nTo -> P0.29_A3_D3\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_CS - PIN10 - D10 (P0.27 | HS) (New Name: NSS)\n\nTo ->  P1.03_D17_SCK1\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_IRQ - PIN11 - D11 (P0.06 | HS) (New Name: DIO0)\n\nTo -> P015_D11_I2S_SD\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nBuzzer - PIN12 - D12 (P0.08 | HS)\n\nTo -> P1.12_D7_RX\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nVibration - PIN13 - D13 (P1.09 | HS)\n\nTo -> P1.11_D6_TX\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nTHUMBSTICK\n\nTMB2 - PINA0 - A0 (P0.04 | HS) To -> P0.10_D15_NFC_TX1\nTMBT1 - PINA1 - A1 (P0.30 | HS) To -> P1.01_D13_I2S_WS\nTMB1 - PINA3 - A3 (P0.28 | HS) To -> P0.19_D12_I2S_SCK\n----"
 		(exclude_from_sim no)
 		(at -34.29 11.4082 0)
 		(size 41.91 124.5814)
@@ -4073,16 +4259,6 @@
 	)
 	(wire
 		(pts
-			(xy 115.57 92.71) (xy 113.03 92.71)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2594c367-709c-406f-a114-d0a4bc77b6df")
-	)
-	(wire
-		(pts
 			(xy 165.1 52.07) (xy 165.1 55.88)
 		)
 		(stroke
@@ -4150,6 +4326,16 @@
 			(type default)
 		)
 		(uuid "342e3998-e2e1-4569-bd5e-2c4d53bfdbfe")
+	)
+	(wire
+		(pts
+			(xy 113.03 92.71) (xy 115.57 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "399bb6dd-fee2-47a7-8f05-eda98a303ae6")
 	)
 	(wire
 		(pts
@@ -4403,16 +4589,6 @@
 	)
 	(wire
 		(pts
-			(xy 62.23 87.63) (xy 64.77 87.63)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "8a0bc4a5-8f58-40ab-881b-951c60ac32ad")
-	)
-	(wire
-		(pts
 			(xy 158.75 144.78) (xy 162.56 144.78)
 		)
 		(stroke
@@ -4560,6 +4736,16 @@
 			(type default)
 		)
 		(uuid "d0154d94-b88a-4cdc-a482-92dd2070e8d1")
+	)
+	(wire
+		(pts
+			(xy 62.23 87.63) (xy 64.77 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d08ba357-2356-4132-a88f-159835bce936")
 	)
 	(wire
 		(pts
@@ -4720,6 +4906,16 @@
 			(type default)
 		)
 		(uuid "fb136916-7752-417d-9f8c-c07c1cb19836")
+	)
+	(wire
+		(pts
+			(xy 180.34 29.21) (xy 191.77 29.21)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fc7e162d-c9dc-473a-a91f-4712df1eabca")
 	)
 	(wire
 		(pts
@@ -5357,17 +5553,17 @@
 	)
 	(global_label "VIB_EN"
 		(shape input)
-		(at 115.57 92.71 0)
+		(at 62.23 87.63 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify left)
+			(justify right)
 		)
 		(uuid "c78fb648-73f4-4ee0-ab26-02807482df82")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 124.9657 92.71 0)
+			(at 52.8343 87.63 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5375,7 +5571,7 @@
 				(font
 					(size 1.27 1.27)
 				)
-				(justify left)
+				(justify right)
 			)
 		)
 	)
@@ -5429,17 +5625,17 @@
 	)
 	(global_label "LoRa_NSS"
 		(shape input)
-		(at 62.23 87.63 180)
+		(at 115.57 92.71 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right)
+			(justify left)
 		)
 		(uuid "d02dd0a9-ef80-4d8d-b674-2903164326ad")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 49.9316 87.63 0)
+			(at 127.8684 92.71 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5447,7 +5643,7 @@
 				(font
 					(size 1.27 1.27)
 				)
-				(justify right)
+				(justify left)
 			)
 		)
 	)
@@ -6200,6 +6396,88 @@
 			(project "SenseMatePCB"
 				(path "/70e40189-008f-4f72-8f4c-fe289f3548a4"
 					(reference "#FLG04")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:Conn_Coaxial")
+		(at 196.85 29.21 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "507ade23-aca2-45c5-8096-7d4c5e6fe3a7")
+		(property "Reference" "J3"
+			(at 200.66 27.6224 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_Coaxial"
+			(at 200.66 30.1624 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Connector_Coaxial:U.FL_Molex_MCRF_73412-0110_Vertical"
+			(at 196.85 29.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 196.85 29.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)"
+			(at 196.85 29.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "9a340c96-2ce3-4756-8b63-00382f1ef819")
+		)
+		(pin "2"
+			(uuid "398e0411-f30f-4baf-b630-8bcd4bb37d26")
+		)
+		(instances
+			(project "SenseMatePCB"
+				(path "/70e40189-008f-4f72-8f4c-fe289f3548a4"
+					(reference "J3")
 					(unit 1)
 				)
 			)
