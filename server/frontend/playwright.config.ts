@@ -74,17 +74,17 @@ export default defineConfig({
      Playwright starts each server, waits for its url to respond, then runs. */
   webServer: [
     {
-      // Bring up postgres + backend (e2e profile, deterministic seed). The down -v
-      // gives a clean volume so Flyway re-seeds; --build picks up source changes.
-      // Foreground `up` lets Playwright own the lifecycle and tear it down on exit.
+      // Bring up backend (e2e profile with H2 in-memory DB, deterministic seed).
+      // --build picks up source changes. Foreground `up` lets Playwright own the
+      // lifecycle and tear it down on exit. No PostgreSQL needed — H2 is embedded.
       command:
-        'docker compose -f ../docker-compose.yml -f ../docker-compose.e2e.yml down -v && ' +
-        'docker compose -f ../docker-compose.yml -f ../docker-compose.e2e.yml up --build postgres backend',
+        'docker compose -f ../docker-compose.e2e.yml down && ' +
+        'docker compose -f ../docker-compose.e2e.yml up --build backend',
       url: 'http://localhost:8080/actuator/health',
       // Reuse whatever is already healthy (local e2e-reset.sh or a CI-managed backend)
       // instead of tearing it down and rebuilding.
       reuseExistingServer: true,
-      // Cold start = image build (no maven cache in CI) + Spring boot + Flyway.
+      // Cold start = image build (no maven cache in CI) + Spring Boot + H2 init.
       timeout: 360_000,
       stdout: 'pipe',
       stderr: 'pipe',
