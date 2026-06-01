@@ -110,7 +110,6 @@ USEMODULE += shell_cmds_default
 QUIET ?= 1
 CFLAGS += -DDEBUG_ASSERT_VERBOSE
 CFLAGS += -I$(APPDIR)/include
-CFLAGS += -gz=none # without this, the linker would throw a huge chunk of warnings
 
 # If you want to modify this code, be sure to make some adjustments in
 # nodes/firmware/custom-modules/key-distro/Makefile.include as well! (include $(CONFIG_FILE)
