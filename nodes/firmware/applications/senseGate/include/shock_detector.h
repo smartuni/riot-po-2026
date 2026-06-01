@@ -19,11 +19,10 @@
 #include "phydat.h"
 #include "saul_reg.h"
 #include "ztimer.h"
-#include "log.h"
-
 
 #include <math.h>
 #include <sched.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #define TEMPERATURE_THRESHOLD 2400 /* factor of 10^-2 */

@@ -12,15 +12,12 @@
  */
 #include "shock_detector.h"
 
-
-
-
 static float calculate_magnitude(float x, float y, float z) {
 	return sqrt(x * x + y * y + z * z);
 }
 
 static void acceleration_callback(void) {
-	LOG_DEBUG("Shock!! - %s:%d\n",__FILE__,__LINE__);
+	printf("Shock!! - %s:%d\n",__FILE__,__LINE__);
 }
 
 static void* acceleration_thread(void* detector_void) {
@@ -30,7 +27,7 @@ static void* acceleration_thread(void* detector_void) {
 		/* read an acceleration value from the sensor */
 		int acc_dim = saul_reg_read(detector->accel_sensor, &acceleration);
 		if (acc_dim < 1) {
-			LOG_DEBUG("Error reading a value "
+			printf("Error reading a value "
 				 "from the device - %s:%d\n",__FILE__,__LINE__);
 			return NULL;
 		}
@@ -50,7 +47,7 @@ static void* acceleration_thread(void* detector_void) {
 			LED0_OFF;
 			LED1_OFF;
 		}
-		//LOG_DEBUG("x: %.2f, y: %.2f, z: %.2f, magnitude: %.2f\n", x, y, z, magnitude);
+		//printf("x: %.2f, y: %.2f, z: %.2f, magnitude: %.2f\n", x, y, z, magnitude);
 		ztimer_sleep(ZTIMER_MSEC, 100);
 	}
 	return NULL;
@@ -66,12 +63,12 @@ shock_detector* shock_detector_new(float threshold) {
 	/* [TASK 3: find your device here] */
 	new_detector->accel_sensor = saul_reg_find_type(SAUL_SENSE_ACCEL);
 	if (!new_detector->accel_sensor) {
-		LOG_DEBUG("No accelerometer sensor "
+		printf("No accelerometer sensor "
 			   "present - %s:%d\n",__FILE__,__LINE__);
 		return NULL;
 	} else {
 		//commented out for now to reduce console output, but can be useful for debugging
-		LOG_DEBUG("Accelerometer sensor found: %s\n", new_detector->accel_sensor->name);
+		//printf("Accelerometer sensor found: %s\n", new_detector->accel_sensor->name);
 	}
 
 	return new_detector;
@@ -88,11 +85,11 @@ int shock_detector_start(shock_detector* detector) {
 									  (void*) detector,
 									  "Acceleration Thread");
 	if (*accel_thread_pid == EOVERFLOW) {
-		LOG_DEBUG("Error creating acceleration thread - %s:%d\n",__FILE__,__LINE__);
+		printf("Error creating acceleration thread - %s:%d\n",__FILE__,__LINE__);
 		return -1;
 	}
 	// ... and also commented out
-	LOG_DEBUG("Acceleration thread created with PID %d\n", *accel_thread_pid);
+	//printf("Acceleration thread created with PID %d\n", *accel_thread_pid);
 	return 0;
 }
 
