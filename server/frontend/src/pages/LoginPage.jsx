@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { useLoginMutation, useLazyGetUserDetailsQuery } from '../app/store/api/api';
+import { useAppDispatch } from '../app/store';
 const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
 const isValidPassword = (password) => password.length >= 6;
 
@@ -21,6 +22,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
   const [fetchUserDetails] = useLazyGetUserDetailsQuery();
+  const appDispatch = useAppDispatch();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -33,6 +35,7 @@ const LoginPage = () => {
       }).unwrap();
 
       const { data: userDetails } = await fetchUserDetails();
+      appDispatch({ type: 'auth/setUser', payload: userDetails });
       if (userDetails?.role === 'controller') {
         navigate('/dashboard');
       } else {

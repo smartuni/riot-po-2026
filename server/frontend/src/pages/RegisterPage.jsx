@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Avatar, Button, CssBaseline, TextField, Box, Typography, Container, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Switch, FormControlLabel } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { useRegisterMutation } from '../app/store/api/api';
+import { useAppDispatch } from '../app/store';
+import { useLazyGetUserDetailsQuery } from '../app/store/api/api';
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
@@ -15,6 +17,8 @@ const RegisterPage = () => {
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [checked, setChecked] = useState(false);
+  const appDispatch = useAppDispatch();
+  const [fetchUserDetails] = useLazyGetUserDetailsQuery();
 
   const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
   const isValidPassword = (password, confirmPassword) => password.length >= 6 && password === confirmPassword;
@@ -39,6 +43,9 @@ const RegisterPage = () => {
           password: password.value.toString(),
           role,
         }).unwrap();
+
+        const { data: userDetails } = await fetchUserDetails();
+        appDispatch({ type: 'auth/setUser', payload: userDetails });
 
         if (role === 'controller') {
           navigate('/dashboard');

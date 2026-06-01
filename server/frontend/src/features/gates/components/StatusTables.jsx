@@ -1,9 +1,9 @@
 import React, { useState } from "react";
+import { useAppSelector } from "../../../app/store";
 import {
     useGetGatesQuery,
     useGetActivitiesQuery,
     useGetDownlinkCounterQuery,
-    useGetUserDetailsQuery,
     useRequestGateStatusChangeMutation,
     useTryIncrementDownlinkCounterMutation,
     useUpdateGatePriorityMutation,
@@ -45,7 +45,7 @@ function StatusTables() {
     const { data: gates = [], isLoading: gatesLoading, error: gatesError } = useGetGatesQuery();
     const { data: activities = [], isLoading: activitiesLoading, error: activitiesError } = useGetActivitiesQuery();
     const { data: downlinkCounterData } = useGetDownlinkCounterQuery();
-    const { data: userDetails } = useGetUserDetailsQuery();
+    const userDetails = useAppSelector((state) => state.auth.user);
 
     const downlinkCount = downlinkCounterData ?? 0;
     const workerId = userDetails?.workerId ?? null;
@@ -68,8 +68,6 @@ function StatusTables() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
-    const [resetPassword, setResetPassword] = useState("");
-    const [resetError, setResetError] = useState("");
     const [newGateData, setNewGateData] = useState({
         location: "",
         latitude: "",
@@ -93,22 +91,14 @@ function StatusTables() {
         }
     };
 
-    const ADMIN_PASSWORD = "secret123";
     const handleResetCounter = async () => {
-        if (resetPassword !== ADMIN_PASSWORD) {
-            setResetError("Incorrect password");
-            return;
-        }
-
         try {
             await resetDownlinkCounter().unwrap();
             alert("Counter reset successfully.");
             setResetDialogOpen(false);
-            setResetPassword("");
-            setResetError("");
         } catch (error) {
             console.error("Failed to reset counter:", error);
-            alert("Reset failed.");
+            alert("Reset failed. You may not have permission.");
         }
     };
 
@@ -390,6 +380,7 @@ function StatusTables() {
                         <Button
                             variant="outlined"
                             color="error"
+                            disabled={userDetails?.role !== 'controller'}
                             onClick={() => setResetDialogOpen(true)}
                         >
                             Reset Downlink Counter
@@ -642,18 +633,7 @@ function StatusTables() {
             <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
                 <DialogTitle>Reset Downlink Counter</DialogTitle>
                 <DialogContent>
-                    <TextField
-                        type="password"
-                        label="Admin Password"
-                        fullWidth
-                        value={resetPassword}
-                        onChange={(e) => {
-                            setResetPassword(e.target.value);
-                            setResetError("");
-                        }}
-                        error={!!resetError}
-                        helperText={resetError}
-                    />
+                    <p>Are you sure you want to reset the downlink counter?</p>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setResetDialogOpen(false)}>Cancel</Button>
