@@ -4,7 +4,6 @@ import { Avatar, Button, CssBaseline, TextField, Box, Typography, Container, Dia
 import Grid from '@mui/material/Grid';
 import { useRegisterMutation } from '../app/store/api/api';
 import { useAppDispatch } from '../app/store';
-import { useLazyGetUserDetailsQuery } from '../app/store/api/api';
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
@@ -18,7 +17,6 @@ const RegisterPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [checked, setChecked] = useState(false);
   const appDispatch = useAppDispatch();
-  const [fetchUserDetails] = useLazyGetUserDetailsQuery();
 
   const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
   const isValidPassword = (password, confirmPassword) => password.length >= 6 && password === confirmPassword;
@@ -37,14 +35,13 @@ const RegisterPage = () => {
     if (isValidEmail(email.value) && isValidPassword(password.value, confirmPassword.value)) {
       const role = checked ? 'controller' : 'viewer';
       try {
-        await register({
+        const userDetails = await register({
           name: name.value.toString(),
           email: email.value.toString(),
           password: password.value.toString(),
           role,
         }).unwrap();
 
-        const { data: userDetails } = await fetchUserDetails();
         appDispatch({ type: 'auth/setUser', payload: userDetails });
 
         if (role === 'controller') {

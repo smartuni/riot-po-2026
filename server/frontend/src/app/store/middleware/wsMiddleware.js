@@ -141,7 +141,11 @@ function createWsMiddleware() {
   const middleware = (store) => (next) => (action) => {
     const result = next(action);
 
-    if (action.type === 'auth/setUser' && !clientActive) {
+    if (
+      (action.type === 'auth/setUser' ||
+        action.type === 'auth/initialize/fulfilled') &&
+      !clientActive
+    ) {
       connect(store);
     } else if (action.type === 'auth/clearAuth') {
       disconnect();
