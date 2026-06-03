@@ -6148,6 +6148,83 @@
 		)
 	)
 	(symbol
+		(lib_id "power:GND")
+		(at 196.85 34.29 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "2f948272-c07a-4212-8575-730e7034e690")
+		(property "Reference" "#PWR018"
+			(at 196.85 40.64 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 200.152 36.322 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 196.85 34.29 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 196.85 34.29 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 196.85 34.29 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "c34de301-e9c9-492a-a9af-09932e1e93bc")
+		)
+		(instances
+			(project "SenseMatePCB"
+				(path "/70e40189-008f-4f72-8f4c-fe289f3548a4"
+					(reference "#PWR018")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Switch:SW_DPDT_x2")
 		(at 168.91 81.28 270)
 		(unit 1)
@@ -6403,7 +6480,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_Coaxial")
-		(at 196.85 29.21 270)
+		(at 196.85 29.21 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -6414,7 +6491,7 @@
 		(fields_autoplaced yes)
 		(uuid "507ade23-aca2-45c5-8096-7d4c5e6fe3a7")
 		(property "Reference" "J3"
-			(at 200.66 27.6224 90)
+			(at 200.66 28.2331 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6425,7 +6502,7 @@
 			)
 		)
 		(property "Value" "Conn_Coaxial"
-			(at 200.66 30.1624 90)
+			(at 200.66 30.7731 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
