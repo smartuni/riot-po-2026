@@ -29,6 +29,30 @@ public class DeviceRegistry {
         System.out.println("Gerät registriert: " + deviceName + " (" + type + ")");
     }
 
+    public void registerDeviceWithKey(String deviceName, byte[] appMacKey) {
+        registerDevice(deviceName);
+        DeviceInfo info = devices.get(deviceName);
+        if (info != null) {
+            info.setAppMacKey(appMacKey);
+        }
+    }
+
+    public void updateSeqTx(String deviceName, int seqTx) {
+        DeviceInfo info = devices.get(deviceName);
+        if (info != null) {
+            info.setLastSeqTx(seqTx);
+        }
+    }
+
+    public DeviceInfo getDeviceInfo(String deviceName) {
+        return devices.get(deviceName);
+    }
+
+    public byte[] getAppMacKey(String deviceName) {
+        DeviceInfo info = devices.get(deviceName);
+        return info != null ? info.getAppMacKey() : null;
+    }
+
     public boolean removeDevice(String deviceName) {
         return devices.remove(deviceName) != null;
     }

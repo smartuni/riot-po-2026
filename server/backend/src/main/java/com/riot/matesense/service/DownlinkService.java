@@ -14,16 +14,27 @@ import static com.riot.matesense.enums.RecordType.GATE_COMMAND;
 @Service
 public class DownlinkService {
 
+    private static final int MAX_COMMAND_DATA_SIZE = 30;
+    private static final int CMAC_TAG_SIZE = 16;
+    private static final int HEADER_SIZE = 5;
+    private static final int TOTAL_PAYLOAD_SIZE = HEADER_SIZE + MAX_COMMAND_DATA_SIZE + CMAC_TAG_SIZE;
+
     private final TTNMqttPublisher mqttPublisher;
     private final CborConverter cborConverter;
     private final MqttProperties mqttProperties;
-
     private final DeviceRegistry deviceRegistry;
-    public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter, MqttProperties mqttProperties, DeviceRegistry deviceRegistry) {
+    private final CmacService cmacService;
+    private final SequenceCounterService seqCounterService;
+
+    public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter,
+                           MqttProperties mqttProperties, DeviceRegistry deviceRegistry,
+                           CmacService cmacService, SequenceCounterService seqCounterService) {
         this.mqttPublisher = mqttPublisher;
         this.cborConverter = cborConverter;
         this.mqttProperties = mqttProperties;
         this.deviceRegistry = deviceRegistry;
+        this.cmacService = cmacService;
+        this.seqCounterService = seqCounterService;
     }
 
     public void sendDownlinkToDevice(DownPayload payloadData) {
@@ -32,33 +43,26 @@ public class DownlinkService {
             allDevices.addAll(deviceRegistry.getAllGateDevices());
             allDevices.addAll(deviceRegistry.getAllMateDevices());
 
-            // === Soll-Status vorbereiten ===
             List<List<Integer>> sollStatusList = payloadData.getStatuses().stream()
                     .map(statusEntry -> Arrays.asList(statusEntry.get(0), statusEntry.get(1)))
                     .toList();
             for (List<Integer> gateStatePair: sollStatusList){
-                //===== HEADER vvvv
-                byte version = 0x01; // fixed for now
-                byte message_type = 0x01; // message type single report (fixed for now)
+                byte version = 0x01;
+                byte message_type = 0x01;
                 byte record_type = (byte)GATE_COMMAND.getCode();
                 byte[] writerId = { 0x12, 0x12, 0x12, 0x12 };
-                //byte[] sequence = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, (byte)0x88};
                 Long sequence = 12345678L;
                 long msSinceEpoch = System.currentTimeMillis();
                 int hlc_phy =  (int)(msSinceEpoch / 1000);
                 int hlc_log =  (int)(msSinceEpoch % 1000);
-                //===== HEADER ^^^^
 
                 byte device_type_gate = 0x00;
                 int gate_num = gateStatePair.get(0);
 
-                //===== Gate Command vvvv
                 byte[] target_gate_id = { 0x00, 0x00, device_type_gate, (byte)gate_num};
                 int target_state = gateStatePair.get(1);
-                //===== Gate Command ^^^^
 
                 List<Object> sollStatusPayload = Arrays.asList(
-                        //0, payloadData.getTimestamp(), 2, 0, sollStatusList
                         version,
                         message_type,
                         record_type, writerId, sequence, hlc_phy,
@@ -66,27 +70,88 @@ public class DownlinkService {
                 );
 
                 String sollJson = encodePayloadToBase64Json(sollStatusPayload);
-                System.out.println("Soll-Status JSON: " + sollJson);
 
                 for (String gateDevice : deviceRegistry.getAllGateDevices()) {
                     String topic = mqttProperties.buildDeviceDownlinkTopic(gateDevice);
                     mqttPublisher.publishDownlink(sollJson.getBytes(), topic);
-                    System.out.println("Soll-Status gesendet an: " + topic);
                 }
             }
-            //List<Object> sollStatusPayload = Arrays.asList(
-            //        0, payloadData.getTimestamp(), 2, 0, sollStatusList
-            //);
-
         } catch (Exception e) {
             System.err.println("Fehler beim Downlink-Senden: " + e.getMessage());
         }
     }
 
+    public byte[] buildSignedDownlink(byte[] appMacKey, int seqCounter, int commandId, byte[] commandData) {
+        if (commandData == null) {
+            commandData = new byte[0];
+        }
+        if (commandData.length > MAX_COMMAND_DATA_SIZE) {
+            throw new IllegalArgumentException(
+                    "Command data exceeds " + MAX_COMMAND_DATA_SIZE + " byte limit: " + commandData.length);
+        }
+
+        byte[] payload = new byte[TOTAL_PAYLOAD_SIZE];
+        int offset = 0;
+
+        payload[offset++] = (byte) 0x01;
+
+        payload[offset++] = (byte) ((seqCounter >> 8) & 0xFF);
+        payload[offset++] = (byte) (seqCounter & 0xFF);
+
+        payload[offset++] = (byte) ((commandId >> 8) & 0xFF);
+        payload[offset++] = (byte) (commandId & 0xFF);
+
+        System.arraycopy(commandData, 0, payload, offset, commandData.length);
+        offset += MAX_COMMAND_DATA_SIZE;
+
+        byte[] dataForMac = Arrays.copyOfRange(payload, 0, HEADER_SIZE + MAX_COMMAND_DATA_SIZE);
+        byte[] cmacTag = cmacService.computeCmac(appMacKey, dataForMac);
+
+        System.arraycopy(cmacTag, 0, payload, offset, CMAC_TAG_SIZE);
+
+        return payload;
+    }
+
+    public String sendSignedDownlink(String deviceId, Long gateId, int commandId, byte[] commandData) {
+        byte[] appMacKey = deviceRegistry.getAppMacKey(deviceId);
+        if (appMacKey == null) {
+            throw new IllegalStateException("No AppMACKey provisioned for device: " + deviceId);
+        }
+
+        int seqCounter = seqCounterService.getNextSeq(gateId);
+        deviceRegistry.updateSeqTx(deviceId, seqCounter);
+
+        byte[] signedPayload = buildSignedDownlink(appMacKey, seqCounter, commandId, commandData);
+
+        if (signedPayload.length > 51) {
+            throw new IllegalStateException("Signed payload exceeds 51 byte limit: " + signedPayload.length);
+        }
+
+        String base64Payload = Base64.getEncoder().encodeToString(signedPayload);
+        String ttnJson = buildTtnJsonPayload(base64Payload);
+
+        String topic = mqttProperties.buildDeviceDownlinkTopic(deviceId);
+        mqttPublisher.publishDownlink(ttnJson.getBytes(), topic);
+
+        return base64Payload;
+    }
+
+    private String buildTtnJsonPayload(String base64Payload) {
+        return String.format("""
+                {
+                  "downlinks": [
+                    {
+                      "f_port": 15,
+                      "frm_payload": "%s",
+                      "priority": "NORMAL"
+                    }
+                  ]
+                }
+                """, base64Payload);
+    }
+
     private String encodePayloadToBase64Json(List<Object> payload) throws Exception {
         byte[] cbor = cborConverter.toCbor(payload);
-        System.out.println("CBOR-Payload lenght: " + cbor.length);
-        //need to be send to the frontend and need to be handle
         if (cbor.length > 255) {
             throw new IllegalArgumentException("CBOR-Payload überschreitet 255-Byte-Limit: " + cbor.length + " Bytes");
         }
@@ -104,8 +169,4 @@ public class DownlinkService {
     }
     """, base64);
     }
-
-
-
-
 }
