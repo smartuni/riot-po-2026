@@ -31,7 +31,18 @@
 #include <stdlib.h>
 
 
-	
+enum voltage_trend{
+	INCREASING,
+	DECREASING,
+	STABLE,
+	UNKNOWN
+};
+
+enum battery_status{
+	CHARGING,
+	DISCHARGING,
+	DISCHARGING_LOW_BATTERY,
+};
 typedef struct {
 	//Structure for memory alignment and to avoid padding
 	//1. classes, structs, STL containers, arrays
@@ -40,10 +51,14 @@ typedef struct {
 	//2. pointers
 	void (*callback)(void);
 	//3. primitive types (int, double)
-	int threshold;
+	int threshold_mv;
+	int prev_voltage_mv;
+	//enum battery_status battery_status;
+	enum voltage_trend last_voltage_trend;
 	//4. bool and char
 	volatile bool running;
 } battery_voltage_monitor_t;
+
 
 
 /**
