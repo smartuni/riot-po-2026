@@ -11,6 +11,7 @@
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
 #include "shock_detector.h"
+#include "board.h"
 
 static int calculate_magnitude(int x, int y, int z) {
 	return sqrt(x * x + y * y + z * z);
@@ -23,6 +24,7 @@ static void acceleration_callback(void) {
 static void collect_samples(shock_detector_t* detector, int sampling_rate_hz) {
 	phydat_t acceleration;
 	int nsamples = detector->sample_size;
+	LED0_ON;
 	for (int i = 0; i < nsamples; i++) {
 		int acc_dim = saul_reg_read(detector->accel_sensor, &acceleration);
 		if (acc_dim < 1) {
@@ -39,6 +41,7 @@ static void collect_samples(shock_detector_t* detector, int sampling_rate_hz) {
 		detector->input[i].i = 0;
 		ztimer_sleep(ZTIMER_MSEC, 1000 / sampling_rate_hz);
 	}
+	LED0_OFF;
 }
 
 static void process_fft(shock_detector_t* detector) {
