@@ -16,6 +16,9 @@
 
 #include "saul_reg.h"
 #include "ztimer.h"
+#include "thread.h"
+#include "board.h"
+#include "phydat.h"
 
 #define LOG_LEVEL   LOG_DEBUG
 #include "log.h"
@@ -24,9 +27,10 @@
 #include <math.h>
 #include <sched.h>
 
+
 // Restructures for memory alignment and to avoid padding
 typedef struct {
-	kernel_pid_t accel_thread_pid;
+	kernel_pid_t thread_pid;
 	saul_reg_t* accel_sensor;
 	void (*callback)(void);
 	float threshold;

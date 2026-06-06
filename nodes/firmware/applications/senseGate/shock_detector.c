@@ -74,7 +74,7 @@ shock_detector_t* shock_detector_new(float threshold) {
 }
 
 int shock_detector_start(shock_detector_t* detector) {
-	kernel_pid_t* accel_thread_pid = &detector->accel_thread_pid;
+	kernel_pid_t* accel_thread_pid = &detector->thread_pid;
 	detector->running = true;
 	*accel_thread_pid = thread_create(detector->accel_thread_stack,
 									  sizeof(detector->accel_thread_stack),
