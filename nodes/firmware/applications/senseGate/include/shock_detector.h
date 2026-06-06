@@ -14,9 +14,6 @@
 #ifndef SHOCK_DETECTOR_H
 #define SHOCK_DETECTOR_H
 
-#include "thread.h"
-#include "board.h"
-#include "phydat.h"
 #include "saul_reg.h"
 #include "ztimer.h"
 
@@ -24,13 +21,8 @@
 #include "log.h"
 #define LOG_SHOCK_DETECTOR(...) LOG_DEBUG("[shock_detector]: " __VA_ARGS__)
 
-
 #include <math.h>
 #include <sched.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#define TEMPERATURE_THRESHOLD 2400 /* factor of 10^-2 */
 
 // Restructures for memory alignment and to avoid padding
 typedef struct {
@@ -40,27 +32,27 @@ typedef struct {
 	float threshold;
 	volatile bool running;
 	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
-} shock_detector;
+} shock_detector_t;
 
 
 /**
  * @brief Creates a new shock detector to the heap
  * @return Pointer to the new shock detector, or NULL if memory allocation failed
  */
-shock_detector* shock_detector_new(float threshold);
+shock_detector_t* shock_detector_new(float threshold);
 
 /**
  * @brief Starts the shock detector
  * @param detector Pointer to the shock detector
  * @return 0 on success, EOVERFLOW on failure
  */
-int shock_detector_start(shock_detector* detector);
+int shock_detector_start(shock_detector_t* detector);
 
 /**
  * @brief Deletes the shock detector
  * @param detector Pointer to the shock detector
  * @return always return 0
  */
-int shock_detector_delete(shock_detector* detector);
+int shock_detector_delete(shock_detector_t* detector);
 
 #endif

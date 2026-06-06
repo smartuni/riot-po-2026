@@ -21,7 +21,7 @@ static void acceleration_callback(void) {
 }
 
 static void* acceleration_thread(void* detector_void) {
-	shock_detector* detector = (shock_detector*)detector_void;
+	shock_detector_t* detector = (shock_detector_t*)detector_void;
 	phydat_t acceleration;
 	while (detector->running) {
 		/* read an acceleration value from the sensor */
@@ -53,8 +53,8 @@ static void* acceleration_thread(void* detector_void) {
 	return NULL;
 }
 
-shock_detector* shock_detector_new(float threshold) {
-	shock_detector* new_detector = (shock_detector*)malloc(sizeof(shock_detector));
+shock_detector_t* shock_detector_new(float threshold) {
+	shock_detector_t* new_detector = (shock_detector_t*)malloc(sizeof(shock_detector_t));
 	new_detector->running = false;
 	new_detector->threshold = threshold;
 	// sensor_data_t* accel_sensor = &new_detector->accel_sensor;
@@ -73,7 +73,7 @@ shock_detector* shock_detector_new(float threshold) {
 	return new_detector;
 }
 
-int shock_detector_start(shock_detector* detector) {
+int shock_detector_start(shock_detector_t* detector) {
 	kernel_pid_t* accel_thread_pid = &detector->accel_thread_pid;
 	detector->running = true;
 	*accel_thread_pid = thread_create(detector->accel_thread_stack,
@@ -92,7 +92,7 @@ int shock_detector_start(shock_detector* detector) {
 	return 0;
 }
 
-int shock_detector_delete(shock_detector* detector) {
+int shock_detector_delete(shock_detector_t* detector) {
 	detector->running = false;
 	free(detector);
 	return 0;

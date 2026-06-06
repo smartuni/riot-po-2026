@@ -222,7 +222,7 @@ int main(void){
     int put_err_cnt = 0;
 
     float shock_threshold = 25.0; // TODO adjust this later
-    shock_detector* detector = shock_detector_new(shock_threshold);
+    shock_detector_t* detector = shock_detector_new(shock_threshold);
     shock_detector_start(detector);
 
     while(1){
