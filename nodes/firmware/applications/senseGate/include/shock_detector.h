@@ -19,6 +19,7 @@
 #include "thread.h"
 #include "board.h"
 #include "phydat.h"
+#include "kiss_fft.h"
 
 #define LOG_LEVEL   LOG_DEBUG
 #include "log.h"
@@ -29,14 +30,20 @@
 #include <stdlib.h>
 
 
+
 // Restructures for memory alignment and to avoid padding
 typedef struct {
 	kernel_pid_t thread_pid;
 	saul_reg_t* accel_sensor;
+	kiss_fft_cpx* input;
+	kiss_fft_cpx* output;
 	void (*callback)(void);
 	int threshold;
+	int sample_size;
+	int sampling_rate_hz;
 	volatile bool running;
 	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
+	int* sample_array;
 } shock_detector_t;
 
 
@@ -44,7 +51,7 @@ typedef struct {
  * @brief Creates a new shock detector to the heap
  * @return Pointer to the new shock detector, or NULL if memory allocation failed
  */
-shock_detector_t* shock_detector_new(int threshold);
+shock_detector_t* shock_detector_new(int threshold, int sample_size, int sampling_rate_hz);
 
 /**
  * @brief Starts the shock detector
