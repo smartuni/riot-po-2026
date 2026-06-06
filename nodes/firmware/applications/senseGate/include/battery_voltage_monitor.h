@@ -30,26 +30,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define TEMPERATURE_THRESHOLD 2400 /* factor of 10^-2 */
 
-// Restructures for memory alignment and to avoid padding
+	
 typedef struct {
-	kernel_pid_t accel_thread_pid;
-	saul_reg_t* accel_sensor;
+	//Structure for memory alignment and to avoid padding
+	//1. classes, structs, STL containers, arrays
+	char thread_stack[THREAD_STACKSIZE_DEFAULT];
+	kernel_pid_t thread_pid;
+	//2. pointers
 	void (*callback)(void);
-	float threshold;
+	//3. primitive types (int, double)
+	int threshold;
+	//4. bool and char
 	volatile bool running;
-	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
 } battery_voltage_monitor_t;
 
 
 /**
  * @brief Creates a new battery voltage monitor to the heap
+ * @param threshold_mv Voltage threshold in millivolts to recognize the battery as low
  * @return Pointer to the new battery voltage monitor, or NULL if memory allocation failed
  */
-battery_voltage_monitor_t* battery_voltage_monitor_new(float threshold);
+battery_voltage_monitor_t* battery_voltage_monitor_new(int threshold_mv);
 
-
+/**
+ * @brief Starts the battery voltage monitoring
+ * @param monitor Pointer to the battery voltage monitor
+ * @return 0 on success, -1 on failure
+ */
+int battery_voltage_monitor_start(battery_voltage_monitor_t* monitor);
 
 /**
  * @brief Deletes the battery voltage monitor
