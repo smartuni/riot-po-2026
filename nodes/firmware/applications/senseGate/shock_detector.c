@@ -12,7 +12,7 @@
  */
 #include "shock_detector.h"
 
-static float calculate_magnitude(float x, float y, float z) {
+static int calculate_magnitude(int x, int y, int z) {
 	return sqrt(x * x + y * y + z * z);
 }
 
@@ -31,11 +31,13 @@ static void* acceleration_thread(void* detector_void) {
 				 "from the device - %s:%d\n",__FILE__,__LINE__);
 			return NULL;
 		}
-		float x = acceleration.val[0] / 100.0;
-		float y = acceleration.val[1] / 100.0;
-		float z = acceleration.val[2] / 100.0;
 
-		float magnitude = calculate_magnitude(x, y, z);
+		//convert to milli-g
+		int x = acceleration.val[0] * 10;
+		int y = acceleration.val[1] * 10;
+		int z = acceleration.val[2] * 10;
+
+		int magnitude = calculate_magnitude(x, y, z);
 
 		
 		if (magnitude > detector->threshold) {
@@ -47,13 +49,13 @@ static void* acceleration_thread(void* detector_void) {
 			LED0_OFF;
 			LED1_OFF;
 		}
-		//LOG_DEBUG("[shock_detector:%d] x: %.2f, y: %.2f, z: %.2f, magnitude: %.2f\n", __LINE__, x, y, z, magnitude);
+		LOG_DEBUG("[shock_detector:%d] x: %5d, y: %5d, z: %5d, magnitude: %5d\n", __LINE__, x, y, z, magnitude);
 		ztimer_sleep(ZTIMER_MSEC, 100);
 	}
 	return NULL;
 }
 
-shock_detector_t* shock_detector_new(float threshold) {
+shock_detector_t* shock_detector_new(int threshold) {
 	shock_detector_t* new_detector = (shock_detector_t*)malloc(sizeof(shock_detector_t));
 	new_detector->running = false;
 	new_detector->threshold = threshold;

@@ -26,6 +26,7 @@
 
 #include <math.h>
 #include <sched.h>
+#include <stdlib.h>
 
 
 // Restructures for memory alignment and to avoid padding
@@ -33,7 +34,7 @@ typedef struct {
 	kernel_pid_t thread_pid;
 	saul_reg_t* accel_sensor;
 	void (*callback)(void);
-	float threshold;
+	int threshold;
 	volatile bool running;
 	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
 } shock_detector_t;
@@ -43,7 +44,7 @@ typedef struct {
  * @brief Creates a new shock detector to the heap
  * @return Pointer to the new shock detector, or NULL if memory allocation failed
  */
-shock_detector_t* shock_detector_new(float threshold);
+shock_detector_t* shock_detector_new(int threshold);
 
 /**
  * @brief Starts the shock detector
