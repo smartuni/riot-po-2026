@@ -45,9 +45,9 @@ static void collect_samples(shock_detector_t* detector, int sampling_rate_hz) {
 }
 
 static void process_fft(shock_detector_t* detector) {
-	kiss_fft_cfg cfg = kiss_fft_alloc(detector->sample_size, 0, NULL, NULL);
+	kiss_fft_cfg cfg = kiss_fft_alloc(detector->sample_size, 0, 0, 0);
 	kiss_fft(cfg, detector->input, detector->output);
-	free(cfg);
+	kiss_fft_free(cfg);
 }
 
 static void display_fft_results(shock_detector_t* detector) {
@@ -62,17 +62,17 @@ static void display_fft_results(shock_detector_t* detector) {
 
 	for (int k = 0; k <= nyquist_bin; k++) {
 		// Calculate magnitude: sqrt(real^2 + imag^2)
-		double magnitude = sqrt(detector->output[k].r * detector->output[k].r +
+		int magnitude = sqrt(detector->output[k].r * detector->output[k].r +
 								detector->output[k].i * detector->output[k].i);
 
 		// Calculate frequency for this bin
-		double frequency = k * ((double)detector->sampling_rate_hz / detector->sample_size);
+		int frequency = k * ((double)detector->sampling_rate_hz / detector->sample_size);
 
 		// Only print bins with significant magnitude (above noise floor)
 		// For demonstration, print everything but you'd typically filter
 		if (magnitude > 0.1) {
-			printf("%-10d %-15.2f %-15.4f (%6.2f + %6.2fi)\n",
-				   k, frequency, magnitude, detector->output[k].r, detector->output[k].i);
+			printf("%10d %10d %10d (%6d + %6di)\n",
+				   k, frequency, magnitude, (int) detector->output[k].r, (int) detector->output[k].i);
 		}
 	}
 }
