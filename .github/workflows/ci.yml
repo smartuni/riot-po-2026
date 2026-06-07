@@ -1,6 +1,13 @@
 name: CI
 
 on:
+  workflow_dispatch:
+    inputs:
+      run_hardware_tests:
+        description: Run firmware hardware tests on the self-hosted HIL runner
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - main
@@ -62,8 +69,9 @@ jobs:
       - discover-firmware-hardware-tests
     if: >-
       ${{
-        needs.discover-firmware-hardware-tests.outputs.tests != '[]' &&
-        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        github.event_name == 'workflow_dispatch' &&
+        inputs.run_hardware_tests == true &&
+        needs.discover-firmware-hardware-tests.outputs.tests != '[]'
       }}
     runs-on:
       - self-hosted
