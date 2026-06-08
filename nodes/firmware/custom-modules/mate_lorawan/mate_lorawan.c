@@ -462,65 +462,11 @@ bool mate_lorawan_joined(void)
     return _joined;
 }
 
-void send_tables(table_query_t* q) {
-    //mate_lorawan_send_query_matches((table_query_t*)q);
-
-    // msg_t msg;
-    // /* initialize the message queue] */
-    // msg_init_queue(_rx_msg_queue, QUEUE_SIZE);
-
-    // while (_join_lorawan_network(netif) == -1) {
-    //     _LOGINF("Join failed.\n");
-    //     ztimer_sleep(ZTIMER_MSEC, 1000);
-    //     _LOGINF("Join retry...\n");
-    // }
-
-    // _joined = true;
-    // _LOGINF("Joined.\n");
-
-    // /* registration entry for incoming packets */
-    // static gnrc_netreg_entry_t netreg_entry;
-
-    // /* register for receiving  LoRaWAN packets in our rx thread */
-    // gnrc_netreg_entry_init_pid(&netreg_entry,
-    //                            GNRC_NETREG_DEMUX_CTX_ALL,
-    //                            thread_getpid());
-
-    // gnrc_netreg_register(GNRC_NETTYPE_UNDEF, &netreg_entry);
-
-    // /* update the pid with valid value once it is ready to receive messages */
-    // mate_lorawan_pid = thread_getpid();
-
-    /* TODO: merge record/observation query into ingle query once is supports ORed record types */
-    // table_query_t report_query;
-    // /* TODO: for now this only sends updates about this node, also propagate other nodes data
-    //  *        once the related node-timing and backend logical issues are resolved. */
-    // const node_id_t *writer_id = &self_node_id;
-    //tables_init_query(&report_query, RECORD_GATE_REPORT, writer_id, NULL);
-    tables_init_query(q, RECORD_GATE_REPORT, &self_node_id, NULL);
-    // table_query_t observation_query;
-    // tables_init_query(&observation_query, RECORD_GATE_REPORT, writer_id, NULL);
-
-    // while (1) {
-        // uint32_t periodic_tx_delay = MATE_LORAWAN_PERIODIC_SEND_INTERVAL_MS +
-        //              random_uint32_range(0, MATE_LORAWAN_PERIODIC_SEND_INTERVAL_MS / 10);
-        /* wait until we get a message or a timeout.
-         * in case of a timeout we repeat periodic uplinks */
-        // int res = ztimer_msg_receive_timeout(ZTIMER_MSEC, &msg, periodic_tx_delay);
-        // if (res >= 0) { /* received a message */
-        //     if (msg.type == GNRC_NETAPI_MSG_TYPE_RCV) {
-        //         gnrc_pktsnip_t *pkt = msg.content.ptr;
-        //         _handle_received_packet(pkt);
-        //     } else if(msg.type == MATE_LORAWAN_TX_QUERY_MATCHES_MSG_TYPE) {
-                //table_query_t *q = (table_query_t*)msg.content.ptr;
-                mate_lorawan_send_query_matches(q);
-                //free(q);
-          //  }
-        // } else { /* timeout */
-        //     mate_lorawan_send_query_matches(&report_query);
-        //     mate_lorawan_send_query_matches(&observation_query);
-        // }
-    //}
-    /* never reached */
-    //return NULL;
+int send_table_record(const table_record_t *record)
+{
+    if (!mate_lorawan_joined()) {
+        _LOGDBG("Not joined yet, cannot send record.\n");
+        return -1;
+    }
+    return _send_record(record);
 }
