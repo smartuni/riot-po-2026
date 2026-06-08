@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.riot.matesense.config.MqttProperties;
 import com.riot.matesense.service.Base64ToList;
 import com.riot.matesense.service.JsonFormatter;
-import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.*;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +34,7 @@ public class TTNMqttListener {
         this.mqttMessageHandler = mqttMessageHandler;
     }
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         try {
             MqttClient client = new MqttClient(mqttProperties.getBroker(), mqttProperties.getClientId());
