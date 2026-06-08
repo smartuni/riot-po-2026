@@ -2,7 +2,8 @@
 APPLICATION = SenseGate
 
 # If no BOARD is found in the environment, use this default:
-BOARD ?= adafruit-feather-nrf52840-sense
+#BOARD ?= adafruit-feather-nrf52840-sense
+BOARD ?= seeedstudio-xiao-nrf52840-sense
 
 PROJECT_BASE ?= $(CURDIR)/../..
 RIOTBASE ?= $(PROJECT_BASE)/RIOT
@@ -38,6 +39,7 @@ USEMODULE += event_timeout
 USEMODULE += mate_lorawan
 USEMODULE += mate_ble
 USEMODULE += inductive_sensor
+USEMODULE += battery_voltage_monitor
 
 CFLAGS += -DRIOT_CONFIG_DEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
 CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=$(RIOT_CONFIG_DEVICE_TYPE)
