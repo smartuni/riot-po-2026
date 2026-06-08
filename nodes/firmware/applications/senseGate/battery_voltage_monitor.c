@@ -30,7 +30,7 @@ static int get_battery_voltage(void) {
 	return 3700; //TODO replace this with actual batt voltage reading from Colin's code
 }
 
-static enum voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const int current_voltage_mv, const int threshold_mv) {
+static enum voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const int current_voltage_mv) {
 	if (current_voltage_mv > prev_voltage_mv) {
 		return INCREASING;
 	} else if (current_voltage_mv < prev_voltage_mv) {
@@ -55,7 +55,7 @@ static void* battery_voltage_thread(void* monitor_void) {
 			// TODO report low battery to LoRaWAN
 		} else {
             LOG_BATTERY_VOLTAGE("Battery voltage is nominal: %d mV\n", voltage_mv);
-			enum voltage_trend trend = analyze_voltage_trend(monitor->prev_voltage_mv, voltage_mv, monitor->threshold_mv);
+			enum voltage_trend trend = analyze_voltage_trend(monitor->prev_voltage_mv, voltage_mv);
 			switch (trend) {
 			case INCREASING:
 				LOG_BATTERY_VOLTAGE("Battery voltage is increasing\n");
