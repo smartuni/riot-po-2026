@@ -133,9 +133,9 @@ jobs:
 
           BOARD_HELPER_PATH="$GITHUB_WORKSPACE/tools/board_helper"
 
-            make BUILD_IN_DOCKER=0 all && \
-            make BUILD_IN_DOCKER=0 BOARD_HELPER=$BOARD_HELPER_PATH flash && \
-            make BUILD_IN_DOCKER=0 test
+            make BUILD_IN_DOCKER=1 all && \
+            make BUILD_IN_DOCKER=1 BOARD_HELPER=$BOARD_HELPER_PATH flash && \
+            make BUILD_IN_DOCKER=1 test
 
   backend-tests:
     runs-on: ubuntu-latest
