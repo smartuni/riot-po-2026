@@ -133,9 +133,10 @@ jobs:
 
           BOARD_HELPER_PATH="$GITHUB_WORKSPACE/tools/board_helper"
 
-            make BUILD_IN_DOCKER=1 all && \
-            make BUILD_IN_DOCKER=1 BOARD_HELPER=$BOARD_HELPER_PATH flash && \
-            make BUILD_IN_DOCKER=1 test
+          docker run "${docker_args[@]}" riot/riotbuild:latest bash -c "
+            make all && \
+            make BOARD_HELPER=$BOARD_HELPER_PATH flash && \
+            make test
 
   backend-tests:
     runs-on: ubuntu-latest
