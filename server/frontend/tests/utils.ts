@@ -1,4 +1,4 @@
-import { expect, type Page, type APIRequestContext } from '@playwright/test';
+import { expect, request, type Page, type APIRequestContext } from '@playwright/test';
 
 /**
  * Shared fixtures for the E2E suite.
@@ -58,7 +58,6 @@ function extractXSRFToken(response: import('@playwright/test').APIResponse): str
 
 /** POST /auth/login against the backend. Returns authenticated context + CSRF token. */
 export async function apiToken(
-  request: import('@playwright/test').APIRequest,
   credentials: { email: string; password: string },
 ): Promise<{ requestContext: APIRequestContext; csrfToken: string | null }> {
   const requestContext = await request.newContext();

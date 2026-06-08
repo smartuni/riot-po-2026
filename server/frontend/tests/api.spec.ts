@@ -34,8 +34,8 @@ test.describe('Backend API', () => {
     expect((await response.json()).error).toBe('Invalid email or password');
   });
 
-  test('user-details reflects the seeded controller', async ({ request }) => {
-    const { requestContext } = await apiToken(request, CONTROLLER);
+  test('user-details reflects the seeded controller', async () => {
+    const { requestContext } = await apiToken(CONTROLLER);
     const response = await requestContext.get(`${BACKEND_URL}/auth/user-details`);
 
     expect(response.status()).toBe(200);
@@ -65,7 +65,7 @@ test.describe('Backend API', () => {
     const unauthorized = await request.get(`${BACKEND_URL}/notifications`);
     expect(unauthorized.status()).toBe(401);
 
-    const { requestContext } = await apiToken(request, CONTROLLER);
+    const { requestContext } = await apiToken(CONTROLLER);
     const response = await requestContext.get(`${BACKEND_URL}/notifications`);
     expect(response.status()).toBe(200);
 
