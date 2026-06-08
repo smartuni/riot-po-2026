@@ -123,12 +123,14 @@ jobs:
             --workdir "$GITHUB_WORKSPACE/$TEST_PATH"
             --env CI=true
             --env HOME="$RUNNER_TEMP/riot-home"
-            --user "$(id -u):$(id -g)"
+            # ÄNDERUNG 1: Als root ausführen, damit /run.sh die User-ID mappen kann
+            --user root
             --group-add "$(stat -c '%g' /var/run/docker.sock)"
             --group-add "$(stat -c '%g' /dev/ttyUSB0)"
           )
 
-          docker run "${docker_args[@]}" "$RIOTBUILD_IMAGE" bash -lc 'make clean && make all flash && make test'
+          # ÄNDERUNG 2: BUILD_IN_DOCKER=0 an den make-Befehl übergeben
+          docker run "${docker_args[@]}" "$RIOTBUILD_IMAGE" bash -lc 'make clean && make BUILD_IN_DOCKER=0 all flash && make BUILD_IN_DOCKER=0 test'
 
   backend-tests:
     runs-on: ubuntu-latest
