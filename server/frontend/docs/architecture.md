@@ -86,7 +86,7 @@ Cross-cutting code:
 | `api/apiClient.js` | Axios singleton (`http://localhost:8080`, JSON headers) |
 | `components/` | Three alert dialogs: `AlertDialog`, `AlertDialogIllegal`, `AlertDialogUplink` |
 | `styles/` | `App.css` (layout, badges), `HeaderBar.css`, `Sidebar.css` |
-| `utils/cookie.js` | `getCookie`, `setCookie`, `eraseCookie` |
+| `utils/cookie.js` | `getCookie` |
 | `index.js` | Barrel re-exports of all shared modules |
 
 ## State Management

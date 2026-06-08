@@ -56,14 +56,15 @@ function extractXSRFToken(response: import('@playwright/test').APIResponse): str
   return null;
 }
 
-/** POST /auth/login against the backend and return the JWT + CSRF token. */
+/** POST /auth/login against the backend. Returns authenticated context + CSRF token. */
 export async function apiToken(
-  request: APIRequestContext,
+  request: import('@playwright/test').APIRequest,
   credentials: { email: string; password: string },
-): Promise<{ jwt: string; csrfToken: string | null }> {
-  const response = await request.post(`${BACKEND_URL}/auth/login`, { data: credentials });
+): Promise<{ requestContext: APIRequestContext; csrfToken: string | null }> {
+  const requestContext = await request.newContext();
+  const response = await requestContext.post(`${BACKEND_URL}/auth/login`, { data: credentials });
   return {
-    jwt: (await response.json()).token,
+    requestContext,
     csrfToken: extractXSRFToken(response),
   };
 }

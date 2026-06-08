@@ -4,6 +4,7 @@ import com.riot.matesense.model.AuthRequest;
 import com.riot.matesense.model.RegisterRequest;
 import com.riot.matesense.model.UserDetailsResponse;
 import com.riot.matesense.model.UserChangeRequest;
+import com.riot.matesense.security.CookieJwtExtractor;
 import com.riot.matesense.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,7 +36,7 @@ public class AuthController {
                 .maxAge(36000)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return authService.getUserDetailsWithToken(token);
+        return authService.getUserDetails(token);
     }
 
     @PostMapping("/register")
@@ -49,7 +50,7 @@ public class AuthController {
                 .maxAge(36000)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return authService.getUserDetailsWithToken(token);
+        return authService.getUserDetails(token);
     }
 
     @PostMapping("/logout")
@@ -85,24 +86,12 @@ public class AuthController {
         if (token != null) {
             return token;
         }
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
         throw new RuntimeException("No authentication token found");
     }
 
     private String extractJwtFromCookie(HttpServletRequest request) {
         String cookieHeader = request.getHeader("Cookie");
-        if (cookieHeader != null) {
-            for (String cookie : cookieHeader.split(";")) {
-                String trimmed = cookie.trim();
-                if (trimmed.startsWith("jwt=")) {
-                    return trimmed.substring(4);
-                }
-            }
-        }
-        return null;
+        return CookieJwtExtractor.extractJwtFromCookie(cookieHeader);
     }
 
 }

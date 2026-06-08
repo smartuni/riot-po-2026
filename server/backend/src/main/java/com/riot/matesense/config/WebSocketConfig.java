@@ -1,7 +1,12 @@
 package com.riot.matesense.config;
 
+import com.riot.matesense.entity.UserEntity;
+import com.riot.matesense.repository.UserRepository;
+import com.riot.matesense.security.CookieJwtExtractor;
 import com.riot.matesense.security.JwtService;
+import com.riot.matesense.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.Message;
@@ -13,20 +18,27 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    @Value("${app.cors.allowed-origins:http://localhost:3000}")
+    private String[] allowedOrigins;
+
     @Autowired
     @Lazy
     private JwtService jwtService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private AuthService authService;
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
@@ -55,23 +67,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         }
                     }
 
-                    String token = null;
-                    if (cookieHeader != null) {
-                        for (String cookie : cookieHeader.split(";")) {
-                            String trimmed = cookie.trim();
-                            if (trimmed.startsWith("jwt=")) {
-                                token = trimmed.substring(4);
-                                break;
-                            }
-                        }
-                    }
+                    String token = CookieJwtExtractor.extractJwtFromCookie(cookieHeader);
 
-                    if (token != null && jwtService.isTokenValid(token)) {
-                        String userEmail = jwtService.extractUsername(token);
+                    if (token != null && jwtService.isTokenValid(token) && authService.isTokenInStore(token)) {
+                        String userIdStr = jwtService.extractUsername(token);
+                        UserEntity user = userRepository.findById(Long.parseLong(userIdStr)).orElse(null);
+                        if (user == null) {
+                            throw new org.springframework.security.core.AuthenticationException("User not found") {};
+                        }
                         UsernamePasswordAuthenticationToken authToken =
-                                new UsernamePasswordAuthenticationToken(userEmail, null, List.of());
+                                new UsernamePasswordAuthenticationToken(user.getEmail(), null,
+                                        AuthorityUtils.createAuthorityList("ROLE_" + user.getRole()));
                         accessor.setUser(authToken);
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
                     } else {
                         throw new org.springframework.security.core.AuthenticationException("Invalid or missing JWT") {};
                     }
@@ -90,6 +97,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*");
+        registry.addEndpoint("/ws").setAllowedOrigins(allowedOrigins);
     }
 }

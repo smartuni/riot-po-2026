@@ -20,13 +20,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.scheduling.annotation.Scheduled;
 
 @Service
 public class AuthService {
 
     private UserRepository userRepository;
-    private HashMap<String, Long> tokenStore = new HashMap<>();
+    private final Map<String, Long> tokenStore = new ConcurrentHashMap<>();
     private final Key secretKey; // shared secret with JwtService
     private final BCryptPasswordEncoder passwordEncoder;
 
@@ -75,7 +78,7 @@ public class AuthService {
         }
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
-        UserEntity user = new UserEntity(request.getEmail(), hashedPassword, request.getName(), request.getRole());
+        UserEntity user = new UserEntity(request.getEmail(), hashedPassword, request.getName(), "viewer");
         userRepository.save(user);
 
         String token = generateToken(user.getId());
@@ -119,6 +122,10 @@ public class AuthService {
         return Long.parseLong(claims.getSubject());
     }
 
+    public boolean isTokenInStore(String token) {
+        return tokenStore.containsKey(token);
+    }
+
     public UserDetailsResponse getUserDetails(String token) {
         if (token == null) {
             throw new RuntimeException("No token provided");
@@ -129,18 +136,6 @@ public class AuthService {
             throw new RuntimeException("User not found");
         }
         return new UserDetailsResponse(user.getName(), user.getEmail(), user.getRole(), user.getId());
-    }
-
-    public UserDetailsResponse getUserDetailsWithToken(String token) {
-        if (token == null) {
-            throw new RuntimeException("No token provided");
-        }
-        Long uId = getUserIdFromToken(token);
-        UserEntity user = userRepository.getById(uId);
-        if (user == null) {
-            throw new RuntimeException("User not found");
-        }
-        return new UserDetailsResponse(user.getName(), user.getEmail(), user.getRole(), user.getId(), token);
     }
 
     public void changeUserDetails(UserChangeRequest request, String token) {
@@ -166,7 +161,7 @@ public class AuthService {
     }
 
     public String generateToken(Long userId) {
-        long expirationMillis = 1000 * 60 * 60 * 24; // 24 hours
+        long expirationMillis = 1000 * 60 * 60 * 10; // 10 hours
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMillis);
 
@@ -176,5 +171,29 @@ public class AuthService {
                 .setExpiration(expiryDate)
                 .signWith(secretKey)
                 .compact();
+    }
+
+    // Evict expired tokens every 60 seconds
+    @Scheduled(fixedRate = 60_000)
+    public void evictExpiredTokens() {
+        Date now = new Date();
+        int before = tokenStore.size();
+        tokenStore.entrySet().removeIf(entry -> {
+            try {
+                Claims claims = Jwts.parserBuilder()
+                        .setSigningKey(secretKey)
+                        .build()
+                        .parseClaimsJws(entry.getKey())
+                        .getBody();
+                return claims.getExpiration().before(now);
+            } catch (Exception e) {
+                // Malformed or invalid token — evict
+                return true;
+            }
+        });
+        int removed = before - tokenStore.size();
+        if (removed > 0) {
+            System.out.println("Token cleanup: removed " + removed + " expired tokens, " + tokenStore.size() + " remain");
+        }
     }
 }

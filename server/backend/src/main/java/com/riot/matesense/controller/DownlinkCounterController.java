@@ -1,11 +1,8 @@
 package com.riot.matesense.controller;
 
-import com.riot.matesense.entity.UserEntity;
-import com.riot.matesense.repository.UserRepository;
 import com.riot.matesense.service.DownlinkCounterService;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -17,9 +14,6 @@ import org.springframework.web.bind.annotation.*;
 public class DownlinkCounterController {
     @Autowired
     DownlinkCounterService counterService;
-
-    @Autowired
-    UserRepository userRepository;
 
     /**
      * A API call to get the counter off the Downlink-Counter
@@ -47,18 +41,8 @@ public class DownlinkCounterController {
      * Only users with the "controller" role are authorized.
      */
     @PostMapping("/reset")
-    public void resetCounter(HttpServletResponse response) {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
-        String email = auth.getName();
-        UserEntity user = userRepository.findByEmail(email);
-        if (user == null || !"controller".equals(user.getRole())) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
+    @PreAuthorize("hasRole('controller')")
+    public void resetCounter() {
         counterService.resetCounter();
     }
 }

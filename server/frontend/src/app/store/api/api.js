@@ -4,16 +4,12 @@ import { getCookie } from '../../../shared/utils/cookie';
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
   credentials: 'include',
-  prepareHeaders: (headers, { getState }) => {
+  prepareHeaders: (headers) => {
     const csrfToken = getCookie('XSRF-TOKEN');
     if (csrfToken) {
       headers.set('X-XSRF-TOKEN', csrfToken);
     }
     headers.set('Content-Type', 'application/json');
-    const token = getState()?.auth?.token;
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
     return headers;
   },
 });

@@ -78,7 +78,7 @@ server/frontend/
 │       ├── api/apiClient.js         # Axios singleton (baseURL: http://localhost:8080)
 │       ├── components/             # AlertDialog variants, HeaderBar, HeaderBarGuest
 │       ├── styles/                  # Global CSS (App.css, HeaderBar.css, Sidebar.css)
-│       └── utils/cookie.js          # getCookie, setCookie, eraseCookie helpers
+│       └── utils/cookie.js          # getCookie helper
 ├── docs/                            # Docsify documentation site
 ├── index.html                       # HTML entry point
 ├── vite.config.js                   # Vite config (outDir: build/, global: window polyfill)

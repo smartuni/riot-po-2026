@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.riot.matesense.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -14,6 +15,7 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
@@ -32,11 +34,11 @@ public class SecurityConfig {
                     requestHandler.setCsrfRequestAttributeName(null);
                     csrf.csrfTokenRepository(tokenRepository)
                         .csrfTokenRequestHandler(requestHandler)
-                        .ignoringRequestMatchers("/auth/login", "/auth/register", "/auth/logout");
+                        .ignoringRequestMatchers("/auth/login", "/auth/logout");
                 })
                 .authorizeHttpRequests(auth -> auth
                     // .anyRequest().permitAll()
-                    .requestMatchers("/auth/**").permitAll()
+                    .requestMatchers("/auth/login", "/auth/register", "/auth/logout").permitAll()
                     .requestMatchers("/gates").permitAll()
                     .requestMatchers("/gate-activities").permitAll()
                     .requestMatchers("/ws/**").permitAll()

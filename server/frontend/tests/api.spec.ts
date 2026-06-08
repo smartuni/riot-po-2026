@@ -10,13 +10,12 @@ import { BACKEND_URL, CONTROLLER, VIEWER, SEEDED_GATES, apiToken } from './utils
  * that breaks the contract fails here.
  */
 test.describe('Backend API', () => {
-  test('login returns a token and sets cookies for seeded accounts', async () => {
+  test('login sets HttpOnly jwt and XSRF-TOKEN cookies for seeded accounts', async () => {
     for (const account of [CONTROLLER, VIEWER]) {
       // Use a fresh request context per account so cookie state is independent.
       const ctx = await apiRequest.newContext();
       const response = await ctx.post(`${BACKEND_URL}/auth/login`, { data: account });
       expect(response.status()).toBe(200);
-      expect((await response.json()).token).toBeTruthy();
       // Cookie-based auth: login must set HttpOnly jwt + XSRF-TOKEN cookies.
       const setCookies = response.headersArray()
         .filter(h => h.name.toLowerCase() === 'set-cookie')
@@ -36,10 +35,8 @@ test.describe('Backend API', () => {
   });
 
   test('user-details reflects the seeded controller', async ({ request }) => {
-    const { jwt } = await apiToken(request, CONTROLLER);
-    const response = await request.get(`${BACKEND_URL}/auth/user-details`, {
-      headers: { Authorization: `Bearer ${jwt}` },
-    });
+    const { requestContext } = await apiToken(request, CONTROLLER);
+    const response = await requestContext.get(`${BACKEND_URL}/auth/user-details`);
 
     expect(response.status()).toBe(200);
     expect(await response.json()).toMatchObject({
@@ -68,10 +65,8 @@ test.describe('Backend API', () => {
     const unauthorized = await request.get(`${BACKEND_URL}/notifications`);
     expect(unauthorized.status()).toBe(401);
 
-    const { jwt } = await apiToken(request, CONTROLLER);
-    const response = await request.get(`${BACKEND_URL}/notifications`, {
-      headers: { Authorization: `Bearer ${jwt}` },
-    });
+    const { requestContext } = await apiToken(request, CONTROLLER);
+    const response = await requestContext.get(`${BACKEND_URL}/notifications`);
     expect(response.status()).toBe(200);
 
     const notifications = await response.json();

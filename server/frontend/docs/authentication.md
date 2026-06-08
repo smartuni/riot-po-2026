@@ -111,8 +111,7 @@ Located in `src/shared/utils/cookie.js`:
 | Function | Description |
 |---|---|
 | `getCookie(name)` | Reads a cookie value by name from `document.cookie` |
-| `setCookie(name, value, days)` | Sets a cookie with expiry in days |
-| `eraseCookie(name)` | Removes a cookie by setting `Max-Age=0` |
+| `getCookie(name)` | Reads a cookie value by name |
 
 ## API Client Configuration
 

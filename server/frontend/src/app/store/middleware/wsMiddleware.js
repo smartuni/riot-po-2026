@@ -2,9 +2,6 @@ import { Client } from '@stomp/stompjs';
 import { uplinkReceived } from '../slices/gatesSlice';
 import { api } from '../api/api';
 
-export const APP_START = 'ws/APP_START';
-export const APP_STOP = 'ws/APP_STOP';
-
 const INITIAL_RECONNECT_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30000;
 
