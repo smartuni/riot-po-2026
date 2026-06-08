@@ -57,7 +57,7 @@ public class GateEntity {
     private byte[] appMacKey;
 
     @Column(name = "last_seq_tx")
-    private int lastSeqTx = 0;
+    private Integer lastSeqTx = 0;
 
 
     public GateEntity(Long gateID, Status status, Timestamp lastTimeStamp,
