@@ -104,40 +104,31 @@ jobs:
           test -S /var/run/docker.sock
           docker version
 
-      - name: Run hardware test
+      - name: Run hardware test (Native)
         shell: bash
         env:
           TEST_PATH: ${{ matrix.test.path }}
+          # Wir übergeben den absoluten Pfad zum Board-Helper direkt als Umgebungsvariable
+          BOARD_HELPER: ${{ github.workspace }}/tools/board_helper
         run: |
           set -euo pipefail
-
+      
+          # Verzeichnis für RIOT-Konfigurationen erstellen
           mkdir -p "$RUNNER_TEMP/riot-home"
-          
-          chmod +x tools/board_helper
-
-          docker_args=(
-            --rm
-            --privileged
-            --device /dev/ttyUSB0:/dev/ttyUSB0
-            --volume /var/run/docker.sock:/var/run/docker.sock
-            --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
-            --volume "$RUNNER_TEMP:$RUNNER_TEMP"
-            --workdir "$GITHUB_WORKSPACE/$TEST_PATH"
-            --env CI=true
-            --env HOME="$RUNNER_TEMP/riot-home"
-            --env USER=root
-            --user root
-            --group-add "$(stat -c '%g' /var/run/docker.sock)"
-            --group-add "$(stat -c '%g' /dev/ttyUSB0)"
-          )
-
-          BOARD_HELPER_PATH="$GITHUB_WORKSPACE/tools/board_helper"
-
-          docker run "${docker_args[@]}" riot/riotbuild:latest bash -c "
-            make all && \
-            make BOARD_HELPER=$BOARD_HELPER_PATH flash && \
-            make test
-          "
+          export HOME="$RUNNER_TEMP/riot-home"
+          export CI=true
+      
+          # Board-Helper ausführbar machen
+          chmod +x "$BOARD_HELPER"
+      
+          # In das Zielverzeichnis wechseln
+          cd "$GITHUB_WORKSPACE/$TEST_PATH"
+      
+          # Build-Prozess direkt über Make ausführen
+          make clean
+          make all
+          make flash
+          make test
 
   backend-tests:
     runs-on: ubuntu-latest
