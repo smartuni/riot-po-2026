@@ -95,6 +95,15 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Verify HIL runner prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -e /dev/ttyUSB0
+          test -S /var/run/docker.sock
+          docker version
+
       - name: Run hardware test
         shell: bash
         env:
