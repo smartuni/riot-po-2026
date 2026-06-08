@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, request as apiRequest } from '@playwright/test';
 import { BACKEND_URL, CONTROLLER, VIEWER, SEEDED_GATES, apiToken } from './utils';
 
 /**
@@ -10,15 +10,20 @@ import { BACKEND_URL, CONTROLLER, VIEWER, SEEDED_GATES, apiToken } from './utils
  * that breaks the contract fails here.
  */
 test.describe('Backend API', () => {
-  test('login returns a token and sets cookies for seeded accounts', async ({ request }) => {
+  test('login returns a token and sets cookies for seeded accounts', async () => {
     for (const account of [CONTROLLER, VIEWER]) {
-      const response = await request.post(`${BACKEND_URL}/auth/login`, { data: account });
+      // Use a fresh request context per account so cookie state is independent.
+      const ctx = await apiRequest.newContext();
+      const response = await ctx.post(`${BACKEND_URL}/auth/login`, { data: account });
       expect(response.status()).toBe(200);
       expect((await response.json()).token).toBeTruthy();
-      // Cookie-based auth: login must set HttpOnly jwt + XSRF-TOKEN
-      const setCookie = response.headers()['set-cookie'];
-      expect(setCookie).toContain('jwt=');
-      expect(setCookie).toContain('XSRF-TOKEN=');
+      // Cookie-based auth: login must set HttpOnly jwt + XSRF-TOKEN cookies.
+      const setCookies = response.headersArray()
+        .filter(h => h.name.toLowerCase() === 'set-cookie')
+        .map(h => h.value);
+      expect(setCookies.some(c => c.includes('jwt='))).toBeTruthy();
+      expect(setCookies.some(c => c.includes('XSRF-TOKEN='))).toBeTruthy();
+      await ctx.dispose();
     }
   });
 

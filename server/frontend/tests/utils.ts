@@ -44,10 +44,12 @@ export async function login(
   await expect(page).toHaveURL(/\/dashboard(-view)?$/);
 }
 
-/** Extract XSRF-TOKEN from Set-Cookie header. */
-function extractXSRFToken(setCookieHeader: string | null): string | null {
-  if (!setCookieHeader) return null;
-  for (const cookie of setCookieHeader.split('\n')) {
+/** Extract XSRF-TOKEN from all Set-Cookie headers in a response. */
+function extractXSRFToken(response: import('@playwright/test').APIResponse): string | null {
+  const setCookies = response.headersArray()
+    .filter(h => h.name.toLowerCase() === 'set-cookie')
+    .map(h => h.value);
+  for (const cookie of setCookies) {
     const match = cookie.match(/XSRF-TOKEN=([^;]+)/);
     if (match) return match[1];
   }
@@ -60,9 +62,8 @@ export async function apiToken(
   credentials: { email: string; password: string },
 ): Promise<{ jwt: string; csrfToken: string | null }> {
   const response = await request.post(`${BACKEND_URL}/auth/login`, { data: credentials });
-  const setCookie = response.headers()['set-cookie'];
   return {
     jwt: (await response.json()).token,
-    csrfToken: extractXSRFToken(setCookie),
+    csrfToken: extractXSRFToken(response),
   };
 }

@@ -192,7 +192,7 @@ function StatusTables() {
      * @type {*[]}
      */
     const filteredGates = gates.filter(gate =>
-        (gate.id.toString().includes(search) || gate.location.toLowerCase().includes(search.toLowerCase())) &&
+        (gate.id.toString().includes(search) || (gate.location?.toLowerCase() || '').includes(search.toLowerCase())) &&
         (
             filter === "" ||
             gate.status === filter ||
@@ -425,7 +425,7 @@ function StatusTables() {
                                                 anchorOrigin={{ vertical: 'top', horizontal: 'right', }}
                                                 variant="standard"
                                                 badgeContent={confirmationBadgeContent(gate.stateConfirmation)} >
-                                                <span className={`badge ${gate.status.toLowerCase()}`}>
+                                                <span className={`badge ${gate.status?.toLowerCase()}`}>
                                                     {
                                                         gate.status === "OPENED"
                                                             ? <LockOpenIcon fontSize="small" /> :

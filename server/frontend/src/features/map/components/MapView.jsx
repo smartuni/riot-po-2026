@@ -45,7 +45,7 @@ function MapView({ search, statusFilter }) {
     const filteredGates = gates.filter(
         (gate) =>
             (gate.id.toString().toLowerCase().includes(search.toLowerCase()) ||
-                gate.location.toLowerCase().includes(search.toLowerCase())) &&
+                (gate.location?.toLowerCase() || '').includes(search.toLowerCase())) &&
             (statusFilter === "" || gate.requestedStatus === statusFilter || gate.status === statusFilter)
     );
 
