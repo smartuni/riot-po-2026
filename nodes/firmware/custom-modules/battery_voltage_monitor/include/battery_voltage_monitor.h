@@ -23,7 +23,6 @@
 
 #include "periph/gpio.h"
 #include "periph/adc.h"
-#include "battery_voltage_monitor.h"
 
 #define AIN7_BAT 7
 

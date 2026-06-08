@@ -123,6 +123,8 @@ typedef enum {
 
     /**< A job to set a gate's state assigned to a specific mate */
     RECORD_GATE_JOB         = 5,
+
+    RECORD_BATTERY_MONITOR  = 6,
 } table_record_type_t;
 
 

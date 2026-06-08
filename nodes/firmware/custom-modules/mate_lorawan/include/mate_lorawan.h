@@ -43,6 +43,8 @@ int mate_lorawan_start(tables_context_t *tables);
  */
 bool mate_lorawan_joined(void);
 
+void send_tables(table_query_t* q);
+
 #endif /* MATE_LORAWAN_H */
 /** @} */
 
