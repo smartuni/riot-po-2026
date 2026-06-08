@@ -8,11 +8,6 @@ on:
         required: false
         type: boolean
         default: false
-      hil_device:
-        description: Host serial device for the attached HIL board
-        required: false
-        type: string
-        default: /dev/ttyACM0
   push:
     branches:
       - main
@@ -91,8 +86,6 @@ jobs:
 
     env:
       RIOTBUILD_IMAGE: riot/riotbuild:2025.07
-      HIL_HOST_DEVICE: ${{ inputs.hil_device || '/dev/ttyACM0' }}
-      HIL_CONTAINER_DEVICE: /dev/ttyUSB0
 
     steps:
       - name: Checkout repository
@@ -105,7 +98,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          test -e "$HIL_HOST_DEVICE"
+          test -e /dev/ttyUSB0
           test -S /var/run/docker.sock
           docker version
 
@@ -121,7 +114,7 @@ jobs:
           docker_args=(
             --rm
             --privileged
-            --device "$HIL_HOST_DEVICE:$HIL_CONTAINER_DEVICE"
+            --device /dev/ttyUSB0:/dev/ttyUSB0
             --volume /var/run/docker.sock:/var/run/docker.sock
             --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
             --volume "$RUNNER_TEMP:$RUNNER_TEMP"
@@ -130,7 +123,7 @@ jobs:
             --env HOME="$RUNNER_TEMP/riot-home"
             --user "$(id -u):$(id -g)"
             --group-add "$(stat -c '%g' /var/run/docker.sock)"
-            --group-add "$(stat -c '%g' "$HIL_HOST_DEVICE")"
+            --group-add "$(stat -c '%g' /dev/ttyUSB0)"
           )
 
           docker run "${docker_args[@]}" "$RIOTBUILD_IMAGE" bash -lc 'make clean && make all flash && make test'
