@@ -133,7 +133,6 @@ jobs:
 
           BOARD_HELPER_PATH="$GITHUB_WORKSPACE/tools/board_helper"
 
-            make clean && \
             make BUILD_IN_DOCKER=0 all && \
             make BUILD_IN_DOCKER=0 BOARD_HELPER=$BOARD_HELPER_PATH flash && \
             make BUILD_IN_DOCKER=0 test
