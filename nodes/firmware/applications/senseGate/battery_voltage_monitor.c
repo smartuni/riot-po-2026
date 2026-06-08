@@ -22,7 +22,7 @@ battery_voltage_monitor_t* battery_voltage_monitor_new(int threshold_mv) {
 	monitor->prev_voltage_mv = -1;
 	monitor->running = false;
 	//monitor->battery_status = UNKNOWN;
-	monitor->last_voltage_trend = UNKNOWN;
+	//monitor->last_voltage_trend = UNKNOWN;
 	return monitor;
 }
 
@@ -41,6 +41,12 @@ static enum voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const
 	return UNKNOWN;
 }
 
+static void publish_payload(battery_info_payload_t* payload) {
+	// TODO report low battery to LoRaWAN
+	printf("Publishing battery info: status=%d, voltage=%d mV\n", payload->status, payload->voltage_mv);
+	return;
+}
+
 static void* battery_voltage_thread(void* monitor_void) {
 	battery_voltage_monitor_t* monitor = (battery_voltage_monitor_t*)monitor_void;
 	int voltage_mv = get_battery_voltage();
@@ -56,39 +62,37 @@ static void* battery_voltage_thread(void* monitor_void) {
 				.status = DISCHARGING_LOW_BATTERY,
 				.voltage_mv = voltage_mv
 			};
-			// TODO report low battery to LoRaWAN
+			publish_payload(&battery_info);
 		} else {
 			LOG_BATTERY_VOLTAGE("Battery voltage is nominal: %d mV\n", voltage_mv);
 			enum voltage_trend trend = analyze_voltage_trend(monitor->prev_voltage_mv, voltage_mv);
 			switch (trend) {
-			case INCREASING:as
-				LOG_BATTERY_VOLTAGE("Battery voltage is increasing\n");
-				if (monitor->last_voltage_trend != INCREASING) {
+				case INCREASING: {
+					LOG_BATTERY_VOLTAGE("Battery voltage is increasing\n");
 					battery_info_payload_t battery_info = {
 						.status = CHARGING,
 						.voltage_mv = voltage_mv
 					};
-					// TODO report CHARGING to LoRaWAN
-					monitor->last_voltage_trend = INCREASING;
+					publish_payload(&battery_info);
+					break;
 				}
-				break;
-			case DECREASING:
-				LOG_BATTERY_VOLTAGE("Battery voltage is decreasing\n");
-				if (monitor->last_voltage_trend != DECREASING) {
+				case DECREASING: {
+					LOG_BATTERY_VOLTAGE("Battery voltage is decreasing\n");
 					battery_info_payload_t battery_info = {
 						.status = DISCHARGING,
 						.voltage_mv = voltage_mv
 					};
-					// TODO report DISCHARGING to LoRaWAN
-					monitor->last_voltage_trend = DECREASING;
+					publish_payload(&battery_info);
+					break;
 				}
-				break;
-			case STABLE:
-				LOG_BATTERY_VOLTAGE("Battery voltage is stable\n");
-				break;
-			default:
-				LOG_BATTERY_VOLTAGE("Battery status is unknown\n");
-				break;
+				case STABLE: {
+					LOG_BATTERY_VOLTAGE("Battery voltage is stable\n");
+					break;
+				}
+				default: {
+					LOG_BATTERY_VOLTAGE("Battery status is unknown\n");
+					break;
+				}
 			}
 		}
 		ztimer_sleep(ZTIMER_MSEC, 5000); // Check every 5 seconds

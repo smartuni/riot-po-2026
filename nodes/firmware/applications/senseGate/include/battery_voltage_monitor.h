@@ -60,7 +60,7 @@ typedef struct {
 	int threshold_mv;
 	int prev_voltage_mv;
 	//enum battery_status battery_status;
-	enum voltage_trend last_voltage_trend;
+	//enum voltage_trend last_voltage_trend;
 	//4. bool and char
 	volatile bool running;
 } battery_voltage_monitor_t;
