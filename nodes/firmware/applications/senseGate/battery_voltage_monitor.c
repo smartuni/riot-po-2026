@@ -52,14 +52,22 @@ static void* battery_voltage_thread(void* monitor_void) {
 		LOG_BATTERY_VOLTAGE("Current battery voltage: %d mV\n", voltage_mv);
 		if (voltage_mv < monitor->threshold_mv) {
 			LOG_BATTERY_VOLTAGE("Battery voltage is below threshold! (%d mV < %d mV)\n", voltage_mv, monitor->threshold_mv);
+			battery_info_payload_t battery_info = {
+				.status = DISCHARGING_LOW_BATTERY,
+				.voltage_mv = voltage_mv
+			};
 			// TODO report low battery to LoRaWAN
 		} else {
-            LOG_BATTERY_VOLTAGE("Battery voltage is nominal: %d mV\n", voltage_mv);
+			LOG_BATTERY_VOLTAGE("Battery voltage is nominal: %d mV\n", voltage_mv);
 			enum voltage_trend trend = analyze_voltage_trend(monitor->prev_voltage_mv, voltage_mv);
 			switch (trend) {
-			case INCREASING:
+			case INCREASING:as
 				LOG_BATTERY_VOLTAGE("Battery voltage is increasing\n");
 				if (monitor->last_voltage_trend != INCREASING) {
+					battery_info_payload_t battery_info = {
+						.status = CHARGING,
+						.voltage_mv = voltage_mv
+					};
 					// TODO report CHARGING to LoRaWAN
 					monitor->last_voltage_trend = INCREASING;
 				}
@@ -67,6 +75,10 @@ static void* battery_voltage_thread(void* monitor_void) {
 			case DECREASING:
 				LOG_BATTERY_VOLTAGE("Battery voltage is decreasing\n");
 				if (monitor->last_voltage_trend != DECREASING) {
+					battery_info_payload_t battery_info = {
+						.status = DISCHARGING,
+						.voltage_mv = voltage_mv
+					};
 					// TODO report DISCHARGING to LoRaWAN
 					monitor->last_voltage_trend = DECREASING;
 				}

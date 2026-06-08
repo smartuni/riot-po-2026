@@ -31,18 +31,24 @@
 #include <stdlib.h>
 
 
+
 enum voltage_trend{
-	INCREASING,
+	INCREASING = 0,
 	DECREASING,
 	STABLE,
 	UNKNOWN
 };
 
 enum battery_status{
-	CHARGING,
+	CHARGING = 0,
 	DISCHARGING,
-	DISCHARGING_LOW_BATTERY,
+	DISCHARGING_LOW_BATTERY
 };
+
+typedef struct {
+	enum battery_status status;
+	int voltage_mv;
+} battery_info_payload_t;
 typedef struct {
 	//Structure for memory alignment and to avoid padding
 	//1. classes, structs, STL containers, arrays
