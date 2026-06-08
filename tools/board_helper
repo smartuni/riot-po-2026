@@ -1,0 +1,43 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "pyserial",
+#     "typer",
+# ]
+# ///
+
+import typer
+import serial
+from time import sleep
+
+app = typer.Typer(no_args_is_help=True)
+
+def port_option(option_name: str = "--port"):
+    return typer.Option(
+        ...,
+        help="Serial port of the hardware (e.g., /dev/ttyUSB0)",
+        prompt=False,
+        show_default=False,
+    )
+
+@app.command()
+def preflash(port: str = port_option()):
+    """
+    Preflash should put the board into bootloader mode
+    """
+    typer.echo(f"⚙️\t Setting bootloader mode on port: {port}")
+    device: Serial = serial.Serial(port=port, baudrate=115200)
+
+    device.dtr = True
+    sleep(0.2)
+    device.dtr = False
+    sleep(0.2)
+    device.dtr = True
+    sleep(0.2)
+    device.dtr = False
+    sleep(0.2)
+
+
+if __name__ == "__main__":
+    app()

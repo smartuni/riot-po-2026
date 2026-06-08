@@ -111,13 +111,34 @@ jobs:
         run: |
           set -euo pipefail
 
-          # 1. In den richtigen Test-Ordner wechseln
-          cd "$GITHUB_WORKSPACE/$TEST_PATH"
+          mkdir -p "$RUNNER_TEMP/riot-home"
+          
+          chmod +x tools/board_helper.py
 
-          # 2. Befehle direkt auf dem Host ausführen
-          make clean
-          make BUILD_IN_DOCKER=0 all flash
-          make BUILD_IN_DOCKER=0 test
+          docker_args=(
+            --rm
+            --privileged
+            --device /dev/ttyUSB0:/dev/ttyUSB0
+            --volume /var/run/docker.sock:/var/run/docker.sock
+            --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
+            --volume "$RUNNER_TEMP:$RUNNER_TEMP"
+            --workdir "$GITHUB_WORKSPACE/$TEST_PATH"
+            --env CI=true
+            --env HOME="$RUNNER_TEMP/riot-home"
+            --env USER=root
+            --user root
+            --group-add "$(stat -c '%g' /var/run/docker.sock)"
+            --group-add "$(stat -c '%g' /dev/ttyUSB0)"
+          )
+
+          BOARD_HELPER_PATH="$GITHUB_WORKSPACE/tools/board_helper.py"
+
+          docker run "${docker_args[@]}" "$RIOTBUILD_IMAGE" bash -lc "
+            make clean && \
+            make BUILD_IN_DOCKER=0 all && \
+            make BUILD_IN_DOCKER=0 BOARD_HELPER=$BOARD_HELPER_PATH flash && \
+            make BUILD_IN_DOCKER=0 test
+          "
 
   backend-tests:
     runs-on: ubuntu-latest
