@@ -32,7 +32,7 @@ static uint32_t battery_voltage_sample(adc_t line) {
 
 static uint32_t battery_voltage_sample2adc_voltage(uint32_t sample) {
 	uint32_t max_val = ((1 << 12) - 1);
-	return sample * 3300 / max_val;
+	return (sample * 3300 / max_val) / (51/151);	//3300 is voltage, 51/151 is the ratio of resistors in voltage divider of seeed xiao n5f52840 battery charge circuit
 }
 
 static int get_battery_voltage(void) {
