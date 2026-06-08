@@ -36,61 +36,64 @@ public class TTNMqttListener {
 
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        try {
-            MqttClient client = new MqttClient(mqttProperties.getBroker(), mqttProperties.getClientId());
-            MqttConnectOptions options = new MqttConnectOptions();
-            options.setUserName(mqttProperties.getUsername());
-            options.setPassword(mqttProperties.getPassword().toCharArray());
+        new Thread(() -> {
+            try {
+                MqttClient client = new MqttClient(mqttProperties.getBroker(), mqttProperties.getClientId());
+                MqttConnectOptions options = new MqttConnectOptions();
+                options.setUserName(mqttProperties.getUsername());
+                options.setPassword(mqttProperties.getPassword().toCharArray());
+                options.setConnectionTimeout(5);
 
-            client.setCallback(new MqttCallback() {
-                @Override
-                public void connectionLost(Throwable cause) {
-                    System.out.println("Verbindung verloren: " + cause.getMessage());
-                }
+                client.setCallback(new MqttCallback() {
+                    @Override
+                    public void connectionLost(Throwable cause) {
+                        System.out.println("Verbindung verloren: " + cause.getMessage());
+                    }
 
-                @Override
-                public void messageArrived(String topic, MqttMessage message) {
-                    try {
-                        String payloadStr = new String(message.getPayload());
-                        JsonNode root = mapper.readTree(payloadStr);
-                        JsonNode devicePath = root.path("end_device_ids");
-                        JsonNode uplink = root.path("uplink_message");
+                    @Override
+                    public void messageArrived(String topic, MqttMessage message) {
+                        try {
+                            String payloadStr = new String(message.getPayload());
+                            JsonNode root = mapper.readTree(payloadStr);
+                            JsonNode devicePath = root.path("end_device_ids");
+                            JsonNode uplink = root.path("uplink_message");
 
-                        if (!uplink.isMissingNode()) {
-                            JsonNode frmPayloadNode = uplink.path("frm_payload");
-                            if (!devicePath.isMissingNode()) {
-                                JsonNode device_id = devicePath.path("device_id");
-                                String device_name = device_id.asText();
-                                System.out.println("Das ist mein device: " + device_id);
+                            if (!uplink.isMissingNode()) {
+                                JsonNode frmPayloadNode = uplink.path("frm_payload");
+                                if (!devicePath.isMissingNode()) {
+                                    JsonNode device_id = devicePath.path("device_id");
+                                    String device_name = device_id.asText();
+                                    System.out.println("Das ist mein device: " + device_id);
 
-                                if (!frmPayloadNode.isMissingNode()) {
-                                    String frmPayloadBase64 = frmPayloadNode.asText();
-                                    System.out.println("frm_payload erkannt: " + frmPayloadBase64);
+                                    if (!frmPayloadNode.isMissingNode()) {
+                                        String frmPayloadBase64 = frmPayloadNode.asText();
+                                        System.out.println("frm_payload erkannt: " + frmPayloadBase64);
 
-                                    List<Object> decodedList = converter.decodeBase64ToList(frmPayloadBase64);
-                                    System.out.println(decodedList);
-                                    String formattedJson = jsonFormatter.toJsonFormat(decodedList);
+                                        List<Object> decodedList = converter.decodeBase64ToList(frmPayloadBase64);
+                                        System.out.println(decodedList);
+                                        String formattedJson = jsonFormatter.toJsonFormat(decodedList);
 
-                                    System.out.println("Dekodiertes JSON: " + formattedJson);
+                                        System.out.println("Dekodiertes JSON: " + formattedJson);
 
-                                    mqttMessageHandler.msgHandlerUplinks(formattedJson, device_name);
+                                        mqttMessageHandler.msgHandlerUplinks(formattedJson, device_name);
+                                    }
                                 }
                             }
+                        } catch (Exception e) {
+                            System.err.println("Fehler beim Verarbeiten der Nachricht: " + e.getMessage());
                         }
-                    } catch (Exception e) {
-                        System.err.println("Fehler beim Verarbeiten der Nachricht: " + e.getMessage());
                     }
-                }
 
-                @Override
-                public void deliveryComplete(IMqttDeliveryToken token) {}
-            });
+                    @Override
+                    public void deliveryComplete(IMqttDeliveryToken token) {}
+                });
 
-            client.connect(options);
-            client.subscribe(mqttProperties.getSubscribeTopic());
-            System.out.println("MQTT-Client gestartet, warte auf Nachrichten...");
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
+                client.connect(options);
+                client.subscribe(mqttProperties.getSubscribeTopic());
+                System.out.println("MQTT-Client gestartet, warte auf Nachrichten...");
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
+        }, "mqtt-connector").start();
     }
 }
