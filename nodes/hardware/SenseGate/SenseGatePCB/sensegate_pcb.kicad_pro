@@ -632,7 +632,7 @@
         "uuid": "cab49cbb-a41f-4356-a83b-79a7aa8374de"
       }
     ],
-    "used_designators": "J1-3,SW1-4",
+    "used_designators": "J1-3,SW1-4,BT1,SC1,U1",
     "variants": []
   },
   "sheets": [
