@@ -131,6 +131,18 @@ public class AuthService {
         return new UserDetailsResponse(user.getName(), user.getEmail(), user.getRole(), user.getId());
     }
 
+    public UserDetailsResponse getUserDetailsWithToken(String token) {
+        if (token == null) {
+            throw new RuntimeException("No token provided");
+        }
+        Long uId = getUserIdFromToken(token);
+        UserEntity user = userRepository.getById(uId);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+        return new UserDetailsResponse(user.getName(), user.getEmail(), user.getRole(), user.getId(), token);
+    }
+
     public void changeUserDetails(UserChangeRequest request, String token) {
         if (token == null) {
             throw new RuntimeException("No token provided");

@@ -15,6 +15,7 @@ export const initializeAuth = createAsyncThunk(
 
 const initialState = {
   user: null,
+  token: null,
   status: 'loading',    // 'loading' | 'authenticated' | 'unauthenticated'
   error: null,
 };
@@ -25,16 +26,19 @@ const authSlice = createSlice({
   reducers: {
     setUser(state, action) {
       state.user = action.payload;
+      state.token = action.payload?.token ?? null;
       state.status = 'authenticated';
       state.error = null;
     },
     clearAuth(state) {
       state.user = null;
+      state.token = null;
       state.status = 'unauthenticated';
       state.error = null;
     },
     setAuthError(state, action) {
       state.user = null;
+      state.token = null;
       state.status = 'unauthenticated';
       state.error = action.payload;
     },

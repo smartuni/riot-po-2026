@@ -35,7 +35,7 @@ public class AuthController {
                 .maxAge(36000)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return authService.getUserDetails(token);
+        return authService.getUserDetailsWithToken(token);
     }
 
     @PostMapping("/register")
@@ -49,7 +49,7 @@ public class AuthController {
                 .maxAge(36000)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return authService.getUserDetails(token);
+        return authService.getUserDetailsWithToken(token);
     }
 
     @PostMapping("/logout")
