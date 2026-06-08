@@ -21,9 +21,10 @@ static void acceleration_callback(void) {
 	LOG_DEBUG("[shock_detector:%d] Shock!!\n", __LINE__);
 }
 
-static void collect_samples(shock_detector_t* detector, int sampling_rate_hz) {
+static void collect_magnitudes(shock_detector_t* detector) {
 	phydat_t acceleration;
 	int nsamples = detector->sample_size;
+	raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * nsamples);
 	LED0_ON;
 	for (int i = 0; i < nsamples; i++) {
 		int acc_dim = saul_reg_read(detector->accel_sensor, &acceleration);
@@ -33,21 +34,29 @@ static void collect_samples(shock_detector_t* detector, int sampling_rate_hz) {
 					 __FILE__, __LINE__);
 			return;
 		}
-		int x = acceleration.val[0] * 10;
-		int y = acceleration.val[1] * 10;
-		int z = acceleration.val[2] * 10;
-		//detector->sample_array[i] = calculate_magnitude(x, y, z);
-		detector->input[i].r = calculate_magnitude(x, y, z);
-		detector->input[i].i = 0;
-		ztimer_sleep(ZTIMER_MSEC, 1000 / sampling_rate_hz);
+		raw_accel_data[i].x = acceleration.val[0] * 10;
+		raw_accel_data[i].y = acceleration.val[1] * 10;
+		raw_accel_data[i].z = acceleration.val[2] * 10;
+		ztimer_sleep(ZTIMER_MSEC, detector->sampling_period_ms);
 	}
+
+	for (int i = 0; i < nsamples; i++) {
+		int* x = &raw_accel_data[i].x;
+		int* y = &raw_accel_data[i].y;
+		int* z = &raw_accel_data[i].z;
+		detector->input[i].r = calculate_magnitude(*x, *y, *z);
+		detector->input[i].i = 0;
+	}
+	free(raw_accel_data);
 	LED0_OFF;
 }
 
 static void process_fft(shock_detector_t* detector) {
+	LED1_ON;
 	kiss_fft_cfg cfg = kiss_fft_alloc(detector->sample_size, 0, 0, 0);
 	kiss_fft(cfg, detector->input, detector->output);
 	kiss_fft_free(cfg);
+	LED1_OFF;
 }
 
 static void display_fft_results(shock_detector_t* detector) {
@@ -56,23 +65,16 @@ static void display_fft_results(shock_detector_t* detector) {
 	printf("%-10s %-15s %-15s %-15s\n", "Bin", "Frequency(Hz)", "Magnitude", "Real/Imag");
 	printf("============================================================\n");
 
-	// Only need first N_SAMPLES/2 + 1 bins (Nyquist limit)
-	// For N=500, bins 0 to 250 represent 0 to 500 Hz
 	int nyquist_bin = detector->sample_size / 2;
-
 	for (int k = 0; k <= nyquist_bin; k++) {
-		// Calculate magnitude: sqrt(real^2 + imag^2)
 		int magnitude = sqrt(detector->output[k].r * detector->output[k].r +
-								detector->output[k].i * detector->output[k].i);
-
-		// Calculate frequency for this bin
-		int frequency = k * ((double)detector->sampling_rate_hz / detector->sample_size);
-
-		// Only print bins with significant magnitude (above noise floor)
-		// For demonstration, print everything but you'd typically filter
+							 detector->output[k].i * detector->output[k].i);
+		float sampling_rate_hz = 1000.0 / detector->sampling_period_ms;
+		int frequency = k * ((double)sampling_rate_hz / detector->sample_size);
+		//TODO perform avg so that there's only exactly one frequency
 		if (magnitude > 0.1) {
 			printf("%10d %10d %10d (%6d + %6di)\n",
-				   k, frequency, magnitude, (int) detector->output[k].r, (int) detector->output[k].i);
+				   k, frequency, magnitude, (int)detector->output[k].r, (int)detector->output[k].i);
 		}
 	}
 }
@@ -81,8 +83,7 @@ static void* acceleration_thread(void* detector_void) {
 	shock_detector_t* detector = (shock_detector_t*)detector_void;
 	//phydat_t acceleration;
 	while (detector->running) {
-		int sampling_rate_hz = 100; // 100 Hz sampling rate
-		collect_samples(detector, sampling_rate_hz); // collect samples at 100 Hz
+		collect_magnitudes(detector); // collect samples at 100 Hz
 		process_fft(detector); // process the collected samples with FFT
 
 		display_fft_results(detector); // display the FFT results
@@ -101,12 +102,12 @@ static void* acceleration_thread(void* detector_void) {
 	return NULL;
 }
 
-shock_detector_t* shock_detector_new(int threshold, int sample_size, int sampling_rate_hz) {
+shock_detector_t* shock_detector_new(int threshold, int sample_size, int sampling_period_ms) {
 	shock_detector_t* new_detector = (shock_detector_t*)malloc(sizeof(shock_detector_t));
 	new_detector->running = false;
 	new_detector->threshold = threshold;
 	new_detector->sample_size = sample_size;
-	new_detector->sampling_rate_hz = sampling_rate_hz;
+	new_detector->sampling_period_ms = sampling_period_ms;
 	// sensor_data_t* accel_sensor = &new_detector->accel_sensor;
 	// accel_sensor->callback = acceleration_callback;
 	new_detector->callback = acceleration_callback;
