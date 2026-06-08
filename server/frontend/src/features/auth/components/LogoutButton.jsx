@@ -16,7 +16,6 @@ const LogoutButton = () => {
     catch (error) {
       setErrorMsg('Logout failed. Please try again.');
       console.error('Logout failed:', error);
-      navigate(`/`);
     }
   }
 

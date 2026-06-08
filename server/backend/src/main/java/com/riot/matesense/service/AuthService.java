@@ -25,8 +25,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.scheduling.annotation.Scheduled;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private UserRepository userRepository;
     private final Map<String, Long> tokenStore = new ConcurrentHashMap<>();
@@ -41,7 +46,7 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         for (TestAccountProperties.Account a : testAccountProperties.getAccounts()) {
             try {
-                System.out.println("WARNING! enabling test user account " + a.getEmail() + " -> disable this before deployment!");
+                log.warn("Enabling test user account {} — disable before deployment", a.getEmail());
                 // Check if user already exists (from Flyway migration)
                 if (userRepository.findByEmail(a.getEmail()) == null) {
                     RegisterRequest rr = new RegisterRequest();
@@ -51,10 +56,10 @@ public class AuthService {
                     rr.setRole(a.getRole());
                     this.handleRegisterWithoutDuplicate(rr);
                 } else {
-                    System.out.println("Test account " + a.getEmail() + " already exists, skipping creation");
+                    log.info("Test account {} already exists, skipping creation", a.getEmail());
                 }
             } catch (RuntimeException e) {
-                System.out.println("Could not create test account " + a.getEmail() + ": " + e.getMessage());
+                log.error("Could not create test account {}: {}", a.getEmail(), e.getMessage());
             }
         }
     }
@@ -78,7 +83,7 @@ public class AuthService {
         }
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
-        UserEntity user = new UserEntity(request.getEmail(), hashedPassword, request.getName(), "viewer");
+        UserEntity user = new UserEntity(request.getEmail(), hashedPassword, request.getName(), request.getRole());
         userRepository.save(user);
 
         String token = generateToken(user.getId());
@@ -193,7 +198,7 @@ public class AuthService {
         });
         int removed = before - tokenStore.size();
         if (removed > 0) {
-            System.out.println("Token cleanup: removed " + removed + " expired tokens, " + tokenStore.size() + " remain");
+            log.info("Token cleanup: removed {} expired tokens, {} remain", removed, tokenStore.size());
         }
     }
 }

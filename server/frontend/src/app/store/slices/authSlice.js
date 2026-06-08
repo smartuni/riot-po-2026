@@ -1,15 +1,28 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { getCookie } from '../../../shared/utils/cookie';
+
+const baseQuery = fetchBaseQuery({
+  baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+  credentials: 'include',
+  prepareHeaders: (headers) => {
+    const csrfToken = getCookie('XSRF-TOKEN');
+    if (csrfToken) {
+      headers.set('X-XSRF-TOKEN', csrfToken);
+    }
+    headers.set('Content-Type', 'application/json');
+    return headers;
+  },
+});
 
 export const initializeAuth = createAsyncThunk(
   'auth/initialize',
   async () => {
-    const response = await fetch('/api/auth/user-details', {
-      credentials: 'include',
-    });
-    if (!response.ok) {
+    const result = await baseQuery('/api/auth/user-details', {}, {});
+    if (result.error) {
       throw new Error('Unauthorized');
     }
-    return await response.json();
+    return result.data;
   }
 );
 

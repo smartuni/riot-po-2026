@@ -62,8 +62,9 @@ export const api = createApi({
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
-        } finally {
           dispatch({ type: 'auth/clearAuth' });
+        } catch {
+          // Logout request failed — do not clear auth, user is still logged in
         }
       },
     }),
@@ -177,8 +178,6 @@ export const api = createApi({
 export const {
   useLoginMutation,
   useRegisterMutation,
-  useGetUserDetailsQuery,
-  useLazyGetUserDetailsQuery,
   useUpdateUserDetailsMutation,
   useLogoutMutation,
   useGetGatesQuery,
