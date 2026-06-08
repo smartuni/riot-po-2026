@@ -113,7 +113,7 @@ jobs:
 
           mkdir -p "$RUNNER_TEMP/riot-home"
           
-          chmod +x tools/board_helper.py
+          chmod +x tools/board_helper
 
           docker_args=(
             --rm
@@ -131,7 +131,7 @@ jobs:
             --group-add "$(stat -c '%g' /dev/ttyUSB0)"
           )
 
-          BOARD_HELPER_PATH="$GITHUB_WORKSPACE/tools/board_helper.py"
+          BOARD_HELPER_PATH="$GITHUB_WORKSPACE/tools/board_helper"
 
             make clean && \
             make BUILD_IN_DOCKER=0 all && \
