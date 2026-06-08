@@ -26,7 +26,7 @@ battery_voltage_monitor_t* battery_voltage_monitor_new(int threshold_mv) {
 	return monitor;
 }
 
-static int get_battery_voltage() {
+static int get_battery_voltage(void) {
 	return 3700; //TODO replace this with actual batt voltage reading from Colin's code
 }
 
