@@ -1,6 +1,13 @@
 name: CI
 
 on:
+  workflow_dispatch:
+    inputs:
+      run_hardware_tests:
+        description: Run firmware hardware tests on the self-hosted HIL runner
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - main
@@ -9,6 +16,118 @@ on:
   pull_request:
 
 jobs:
+  discover-firmware-hardware-tests:
+    runs-on: ubuntu-latest
+
+    outputs:
+      tests: ${{ steps.discover.outputs.tests }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Discover firmware hardware tests
+        id: discover
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import json
+          import os
+          import pathlib
+          import re
+
+          tests = []
+          for test_dir in sorted(pathlib.Path("nodes/firmware/tests").glob("test_*")):
+              if not test_dir.is_dir():
+                  continue
+
+              board = ""
+              makefile = test_dir / "Makefile"
+              if makefile.exists():
+                  for line in makefile.read_text(encoding="utf-8").splitlines():
+                      match = re.match(r"\s*BOARD\s*\?=\s*([^\s#]+)", line)
+                      if match:
+                          board = match.group(1)
+                          break
+
+              if board and board != "native":
+                  tests.append({
+                      "name": test_dir.name,
+                      "path": test_dir.as_posix(),
+                      "board": board,
+                  })
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"tests={json.dumps(tests, separators=(',', ':'))}\n")
+          PY
+
+  firmware-hardware-tests:
+    name: Firmware hardware test (${{ matrix.test.name }})
+    needs:
+      - discover-firmware-hardware-tests
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' &&
+        inputs.run_hardware_tests == true &&
+        needs.discover-firmware-hardware-tests.outputs.tests != '[]'
+      }}
+    runs-on:
+      - self-hosted
+      - linux
+      - hil
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        test: ${{ fromJSON(needs.discover-firmware-hardware-tests.outputs.tests) }}
+
+    env:
+      RIOTBUILD_IMAGE: riot/riotbuild:2025.07
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Verify HIL runner prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -e /dev/ttyUSB0
+          test -S /var/run/docker.sock
+          docker version
+
+      - name: Run hardware test
+        shell: bash
+        env:
+          TEST_PATH: ${{ matrix.test.path }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p "$RUNNER_TEMP/riot-home"
+
+          docker_args=(
+            --rm
+            --privileged
+            --device /dev/ttyUSB0:/dev/ttyUSB0
+            --volume /var/run/docker.sock:/var/run/docker.sock
+            --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
+            --volume "$RUNNER_TEMP:$RUNNER_TEMP"
+            --workdir "$GITHUB_WORKSPACE/$TEST_PATH"
+            --env CI=true
+            --env HOME="$RUNNER_TEMP/riot-home"
+            --user "$(id -u):$(id -g)"
+            --group-add "$(stat -c '%g' /var/run/docker.sock)"
+            --group-add "$(stat -c '%g' /dev/ttyUSB0)"
+          )
+
+          docker run "${docker_args[@]}" "$RIOTBUILD_IMAGE" bash -lc 'make clean && make all flash && make test'
+
   backend-tests:
     runs-on: ubuntu-latest
 
