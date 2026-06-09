@@ -7,6 +7,7 @@
 #include "vfs_default.h"
 #include "key_config.h"
 #include "secrets/public_keys.h"
+#include "certificate_store.h"
 
 #define LOG_LEVEL LOG_DEBUG
 #include "log.h"
@@ -16,31 +17,6 @@ static const char *ok(bool condition)
     return condition ? "[OK]" : "[ERROR]";
 }
 
-int write_key(char path[], const void *key_data, size_t key_length)
-{
-    int fd = vfs_open(path, O_RDWR | O_CREAT, 00777);
-    if(fd < 0) {
-        LOG_ERROR("creating file %s failed with result: %d [FAILED]\n", path, fd);
-        return fd;
-    }
-    else {
-        LOG_DEBUG("creating file %s [OK]\n", path);
-    }
-
-    int res = vfs_write(fd, key_data, key_length);
-    if(res < 0) {
-        LOG_ERROR("writing to file %s failed with result: %d [FAILED]\n", path, fd);
-        return res;
-    }
-    else {
-        LOG_DEBUG("written %d bytes to file %s [OK]\n", res, path);
-    }
-
-    vfs_close(fd);
-
-    return 0;
-}
-
 static int _print_key(int argc, char **argv)
 {
     if (argc < 2) {
@@ -48,16 +24,16 @@ static int _print_key(int argc, char **argv)
         return 1;
     }
 
-    int fd = vfs_open(argv[1], O_RDONLY, 00777);
-    if(fd < 0) return -1;
+    uint8_t buffer[MAX_CERTIFICATE_SIZE];
+    int res = read_certificate(argv[1], &buffer, MAX_CERTIFICATE_SIZE);
+    if(res != 0) return res;
 
-    uint8_t c;
-    while (read(fd, &c, 1) != 0) {
-        printf("0x%02x ", c);
+    for (size_t i = 0; i < MAX_CERTIFICATE_SIZE; i++)
+    {
+        if(buffer[i] == 0) break;
+        printf("0x%02x ", buffer[i]);
     }
     printf("\n");
-
-    vfs_close(fd);
 
     return 0;
 }
@@ -83,20 +59,21 @@ int main(void)
     res = vfs_mkdir(VFS_DEFAULT_NVM(0) "/cred", 00777);
     LOG_INFO("creating directory %s %s\n", VFS_DEFAULT_NVM(0) "/cred", ok(res == 0));
 
-    res = vfs_mkdir(VFS_DEFAULT_NVM(0) "/cred/public_keys", 00777);
-    LOG_INFO("creating directory %s %s\n", VFS_DEFAULT_NVM(0) "/cred/public_keys", ok(res == 0));
+    res = vfs_mkdir(VFS_DEFAULT_NVM(0) "/cred/public_certs", 00777);
+    LOG_INFO("creating directory %s %s\n", VFS_DEFAULT_NVM(0) "/cred/public_certs", ok(res == 0));
 
     // write private key
-    res = write_key(VFS_DEFAULT_NVM(0) "/cred/private_key", &ed25519_secret_key, sizeof(ed25519_secret_key));
+    res = write_private_key(&ed25519_secret_key, sizeof(ed25519_secret_key));
     LOG_INFO("writing private key %s\n", ok(res == 0));
 
     // write public keys
     for (size_t i = 0; i < ARRAY_SIZE(known_keys); i++)
     {
-        char path[] = VFS_DEFAULT_NVM(0) "/cred/public_keys/";
-        strcat(path, (char*) known_keys[i].kid);
-        res = write_key(path, &known_keys[i].public_key, sizeof(known_keys[i].public_key));
-        LOG_INFO("writing public key %s %s\n", (char*) known_keys[i].kid, ok(res == 0));
+        char filename[known_keys[i].kid_len + 1];
+        memcpy(filename, known_keys[i].kid, known_keys[i].kid_len);
+        filename[known_keys[i].kid_len] = 0;
+        res = write_certificate(filename, &known_keys[i].public_key, sizeof(known_keys[i].public_key));
+        LOG_INFO("writing certificate %s %s\n", filename, ok(res == 0));
     }
 
     // drop to shell for inspecting keys and debugging

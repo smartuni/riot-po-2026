@@ -8,7 +8,7 @@ PROJECT_BASE ?= $(CURDIR)/../..
 RIOTBASE ?= $(PROJECT_BASE)/RIOT
 EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
-RIOT_CONFIG_DEVICE_ID ?= 1
+RIOT_CONFIG_DEVICE_ID ?= 20
 RIOT_CONFIG_DEVICE_TYPE = DEVICE_TYPE_GATE
 
 # Enable the milliseconds timer.
@@ -23,13 +23,14 @@ USEMODULE += shell_cmds_default
 USEMODULE += ps
 
 USEMODULE += key-distro
+USEMODULE += certificate_store
 
 CFLAGS += -DRIOT_CONFIG_DEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
 CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=$(RIOT_CONFIG_DEVICE_TYPE)
 
 # For LittleFS on real devices, the main stack size has to be
 # increased:
-CFLAGS += -DTHREAD_STACKSIZE_MAIN=2048
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=4096
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
