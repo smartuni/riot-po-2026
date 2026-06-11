@@ -5,6 +5,187 @@
 	(uuid "70e40189-008f-4f72-8f4c-fe289f3548a4")
 	(paper "A4")
 	(lib_symbols
+		(symbol "Connector:Conn_01x02_Pin"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_01x02_Pin"
+				(at 0 -5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Generic connector, single row, 01x02, script generated"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_locked" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "connector"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Connector*:*_1x??_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Conn_01x02_Pin_1_1"
+				(rectangle
+					(start 0.8636 0.127)
+					(end 0 -0.127)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(rectangle
+					(start 0.8636 -2.413)
+					(end 0 -2.667)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy 0.8636 0)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -2.54) (xy 0.8636 -2.54)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at 5.08 0 180)
+					(length 3.81)
+					(name "Pin_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 5.08 -2.54 180)
+					(length 3.81)
+					(name "Pin_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Connector:Conn_01x06_Pin"
 			(pin_names
 				(offset 1.016)
@@ -4383,6 +4564,16 @@
 		)
 		(uuid "1c60d41f-3101-4c30-b524-3bf0c0b24efa")
 	)
+	(text "SPI Castellation"
+		(exclude_from_sim no)
+		(at 141.986 81.026 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "1da19d7c-f458-48cf-8830-ceaccb37ef91")
+	)
 	(text "USB Connector"
 		(exclude_from_sim no)
 		(at 175.26 101.854 0)
@@ -4395,7 +4586,7 @@
 	)
 	(text "SD-Karte"
 		(exclude_from_sim no)
-		(at 119.38 98.044 0)
+		(at 130.302 98.044 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -4433,9 +4624,19 @@
 		)
 		(uuid "8448e48d-b27e-4f1f-9be6-b439cd662549")
 	)
+	(text "PogoPins (Castellation)"
+		(exclude_from_sim no)
+		(at 78.232 125.73 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "852a0007-76fd-401b-904c-fca315bfc835")
+	)
 	(text "SD-Karte"
 		(exclude_from_sim no)
-		(at 119.38 95.504 0)
+		(at 130.556 95.758 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -5629,6 +5830,78 @@
 			)
 		)
 	)
+	(global_label "Pogo SWDIO"
+		(shape input)
+		(at 80.01 144.78 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "303150bf-35c4-410d-a105-74f6e9aaad07")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 94.546 144.78 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
+	(global_label "SPI_MOSI1"
+		(shape input)
+		(at 140.97 88.9 270)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "35faf9e2-8699-4639-9a33-ffaf8aa77603")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 140.97 101.7428 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "Pogo RX"
+		(shape input)
+		(at 80.01 137.16 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "38d796bf-1a32-4f36-bea2-57cd43a5c180")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 91.1593 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
 	(global_label "LoRa_DIO0"
 		(shape input)
 		(at 62.23 92.71 180)
@@ -5650,6 +5923,30 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
+			)
+		)
+	)
+	(global_label "SPI_MOSI1"
+		(shape input)
+		(at 113.03 97.79 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "41575807-c6b8-49a8-9928-cf826bc0ec59")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 125.8728 97.79 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
 			)
 		)
 	)
@@ -5917,6 +6214,30 @@
 			)
 		)
 	)
+	(global_label "SPI_MISO1"
+		(shape input)
+		(at 138.43 88.9 270)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "771daa0b-4e65-4959-bad0-0b42ae9a3477")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 138.43 101.7428 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
 	(global_label "LoRa_NSS"
 		(shape input)
 		(at 152.4 36.83 180)
@@ -6037,6 +6358,30 @@
 			)
 		)
 	)
+	(global_label "Pogo SWDCLK"
+		(shape input)
+		(at 80.01 147.32 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "88055048-22f7-4b8d-a5da-53105818f6b6")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 96.1788 147.32 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
 	(global_label "TMB2"
 		(shape input)
 		(at 30.48 95.25 0)
@@ -6106,6 +6451,30 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
+			)
+		)
+	)
+	(global_label "SPI_MISO1"
+		(shape input)
+		(at 113.03 95.25 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "91637543-ce5c-49d2-9a97-6521a2bd1cef")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 125.8728 95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
 			)
 		)
 	)
@@ -6218,6 +6587,30 @@
 		(uuid "a0e44fe5-97d5-425e-a1cd-3eb14c1c6b54")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
 			(at 50.4588 144.78 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
+	(global_label "Pogo VBUS"
+		(shape input)
+		(at 80.01 134.62 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "a2ff5ed3-5c20-4de2-8e4d-6bc9244b1b25")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 93.5784 134.62 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6682,6 +7075,30 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
+			)
+		)
+	)
+	(global_label "Pogo TX"
+		(shape input)
+		(at 80.01 139.7 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "f34b6f6b-f544-4a37-b8df-d48f26d2f53a")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 90.8569 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
 			)
 		)
 	)
@@ -7364,6 +7781,88 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:Conn_01x02_Pin")
+		(at 140.97 83.82 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "342aff8a-4605-48a5-a73c-c2e155a7d596")
+		(property "Reference" "J6"
+			(at 142.24 83.1849 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_01x02_Pin"
+			(at 142.24 85.7249 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "SenseMateLibrary:Castellated_1x2_2.00mm"
+			(at 140.97 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 140.97 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x02, script generated"
+			(at 140.97 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "712fe075-d9b1-4913-8f6a-64db0331eb12")
+		)
+		(pin "1"
+			(uuid "226a49c3-8bd8-411b-b600-5b04565a2db7")
+		)
+		(instances
+			(project "SenseMatePCB"
+				(path "/70e40189-008f-4f72-8f4c-fe289f3548a4"
+					(reference "J6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:R")
 		(at 110.49 165.1 0)
 		(unit 1)
@@ -7757,6 +8256,98 @@
 			(project "SenseMatePCB"
 				(path "/70e40189-008f-4f72-8f4c-fe289f3548a4"
 					(reference "#PWR017")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:Conn_01x06_Pin")
+		(at 74.93 139.7 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "63509702-8385-40d8-bb52-58ab26da16cc")
+		(property "Reference" "J4"
+			(at 75.565 129.54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "Conn_01x06_Pin"
+			(at 75.565 132.08 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "SenseMateLibrary:Castellated_1x6_2.00mm"
+			(at 74.93 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 74.93 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x06, script generated"
+			(at 74.93 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "48e10e3b-de6e-4b40-bf30-2f698c1fbb17")
+		)
+		(pin "4"
+			(uuid "6d47066c-64d6-4753-a901-736b08c9e14a")
+		)
+		(pin "2"
+			(uuid "573578cc-c628-45ab-bea6-16adfab98075")
+		)
+		(pin "3"
+			(uuid "9e49eb9e-97d9-4344-a37a-593ddb56b026")
+		)
+		(pin "5"
+			(uuid "856c5c45-e04e-403e-8867-5333479fbbc0")
+		)
+		(pin "6"
+			(uuid "76b9a88d-f678-46d5-8c34-48b5b407ddec")
+		)
+		(instances
+			(project "SenseMatePCB"
+				(path "/70e40189-008f-4f72-8f4c-fe289f3548a4"
+					(reference "J4")
 					(unit 1)
 				)
 			)
@@ -9632,6 +10223,85 @@
 			(project "SenseMatePCB"
 				(path "/70e40189-008f-4f72-8f4c-fe289f3548a4"
 					(reference "#FLG08")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 80.01 142.24 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "d160e21a-c014-4114-9a02-62b4b1cf810d")
+		(property "Reference" "#PWR020"
+			(at 86.36 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 83.82 142.2399 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" ""
+			(at 80.01 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 80.01 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 80.01 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "36304dea-ee5b-4773-99ef-3ccfb8082999")
+		)
+		(instances
+			(project "SenseMatePCB"
+				(path "/70e40189-008f-4f72-8f4c-fe289f3548a4"
+					(reference "#PWR020")
 					(unit 1)
 				)
 			)
