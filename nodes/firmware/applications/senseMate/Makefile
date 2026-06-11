@@ -86,6 +86,7 @@ USEMODULE += mtd_emulated
 # credential manager stuff
 USEMODULE += credential_manager
 USEMODULE += flashdb_store_service
+USEMODULE += key-distro
 
 # configure ram mtd to a size of 8 kByte
 CFLAGS += -DRAM_MTD_SECTOR_COUNT=\(16\)

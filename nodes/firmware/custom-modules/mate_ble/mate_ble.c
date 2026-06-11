@@ -22,7 +22,6 @@
 #include "timex.h"
 #include "ztimer.h"
 #include "cbor.h"
-#include "cose-service.h"
 #include "cbor_serialization.h"
 #include "personalization.h"
 #define LOG_LEVEL   LOG_INFO
