@@ -73,10 +73,7 @@ public class GateService {
      * @throws GateNotFoundException
      */
     public void removeGateById(Long gateId) throws GateNotFoundException {
-        GateEntity gate = gateRepository.getById(gateId);
-        if (gate == null) {
-            throw new GateNotFoundException(gateId);
-        }
+        GateEntity gate = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         gateRepository.delete(gate);
         messagingTemplate.convertAndSend("/topic/gates/delete", gateId);
     }
@@ -144,8 +141,8 @@ public class GateService {
      * @param gateId of the gate
      * @param targetStatus for the gate
      */
-    public void requestGateStatusChange(Long gateId, String targetStatus) {
-        GateEntity gate = gateRepository.getById(gateId);
+    public void requestGateStatusChange(Long gateId, String targetStatus) throws GateNotFoundException {
+        GateEntity gate = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         System.out.println("Current Status: " + gate.getStatus());
         System.out.println("Requested Status: " + targetStatus);
         System.out.println("ID: " + gate.getId());
@@ -179,8 +176,8 @@ public class GateService {
         gateRepository.save(gate);
     }
 
-    public void changeGateStatus(Long gateId, Status status, MsgType reportType, Timestamp gateTimestamp) {
-        GateEntity gate = gateRepository.getById(gateId);
+    public void changeGateStatus(Long gateId, Status status, MsgType reportType, Timestamp gateTimestamp) throws GateNotFoundException {
+        GateEntity gate = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         int confidence = gate.getConfidence();
 
         gate.setLastTransitionGateTimeStamp(gateTimestamp);
@@ -195,8 +192,8 @@ public class GateService {
         gateRepository.save(gate);
     }
 
-    public void changeGateStateConfirmation(Long gateId, StateConfirmation state) {
-        GateEntity gate = gateRepository.getById(gateId);
+    public void changeGateStateConfirmation(Long gateId, StateConfirmation state) throws GateNotFoundException {
+        GateEntity gate = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         gate.setStateConfirmation(state);
         messagingTemplate.convertAndSend("/topic/gates/updates", gate);
         gateRepository.save(gate);
@@ -235,8 +232,8 @@ public class GateService {
      * @param gateId of the gate that should be changed
      * @param newPriority for the gate
      */
-    public void updatePriority(Long gateId, int newPriority) {
-        GateEntity gateEntity = gateRepository.getById(gateId);
+    public void updatePriority(Long gateId, int newPriority) throws GateNotFoundException {
+        GateEntity gateEntity = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         gateEntity.setPriority(newPriority);
         gateRepository.save(gateEntity);
     }
