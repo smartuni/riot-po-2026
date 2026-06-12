@@ -33,9 +33,9 @@
 #define XSTR(s) #s
 #define STR(s) XSTR(s)
 
-#define THUMBWHEEL_PIN_DOWN   GPIO_PIN(0, 4)
-#define THUMBWHEEL_PIN_SELECT GPIO_PIN(0, 5)
-#define THUMBWHEEL_PIN_UP     GPIO_PIN(0, 28)
+#define THUMBWHEEL_PIN_DOWN   GPIO_PIN(0, 9)
+#define THUMBWHEEL_PIN_SELECT GPIO_PIN(1, 01)
+#define THUMBWHEEL_PIN_UP     GPIO_PIN(0, 19)
 #define INVALID_GATE_MARKER (0xFFFFFFFF)
 /* Stack for the ui thread */
 static char _ui_thread_stack[THREAD_STACKSIZE_UI];
