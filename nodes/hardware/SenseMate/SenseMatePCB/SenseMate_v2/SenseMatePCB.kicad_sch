@@ -4664,10 +4664,10 @@
 		)
 		(uuid "fe50b0c4-ce01-4e10-816d-2f9f0a47d664")
 	)
-	(text_box "Note:\n-----\nMoved from Adafruite Feather nRF52840 Sense \nLoRa_RST - PIN9 - D9 (P0.26 | HS)\n\nTo -> P0.03_A1_D1\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO1 - PIN5 - D5 (P1.08 | HS)\n\nTo -> P0.28_A2_D2\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO2 - PIN6 - D6 (P0.07 | HS)\n\nTo -> P0.29_A3_D3\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_CS - PIN10 - D10 (P0.27 | HS) (New Name: NSS)\n\nTo ->  P1.03_D17_SCK1\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_IRQ - PIN11 - D11 (P0.06 | HS) (New Name: DIO0)\n\nTo -> P015_D11_I2S_SD\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nBuzzer - PIN12 - D12 (P0.08 | HS)\n\nTo -> P1.12_D7_RX\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nVibration - PIN13 - D13 (P1.09 | HS)\n\nTo -> P1.11_D6_TX\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nTHUMBSTICK\n\nTMB2 - PINA0 - A0 (P0.04 | HS) To -> P0.10_D15_NFC_TX1\nTMBT1 - PINA1 - A1 (P0.30 | HS) To -> P1.01_D13_I2S_WS\nTMB1 - PINA3 - A3 (P0.28 | HS) To -> P0.19_D12_I2S_SCK\n----"
+	(text_box "Note:\n-----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_RST - PIN9 - D9 (P0.26 | HS)\n\nTo -> P0.03_A1_D1\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO1 - PIN5 - D5 (P1.08 | HS)\n\nTo -> P0.28_A2_D2\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_DIO2 - PIN6 - D6 (P0.07 | HS)\n\nTo -> P0.29_A3_D3\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_CS - PIN10 - D10 (P0.27 | HS) (New Name: NSS)\n\nTo ->  P1.03_D17_SCK1\n----\nMoved from Adafruite Feather nRF52840 Sense\nLoRa_IRQ - PIN11 - D11 (P0.06 | HS) (New Name: DIO0)\n\nTo -> P015_D11_I2S_SD\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nBuzzer - PIN12 - D12 (P0.08 | HS)\n\nTo -> P0.02_A0_D0 (Vorherige Iteration - Stand Mo., 8.6.: P1.12_D7_RX)\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nVibration - PIN13 - D13 (P1.09 | HS)\n\nTo -> P0.10_D15_NTX1 (Vorherige Iteration - Stand Mo., 8.6.: P1.11_D6_TX)\n----\n\nMoved from Adafruite Feather nRF52840 Sense\nTHUMBSTICK\n\nTMB2 - PINA0 - A0 (P0.04 | HS) To -> P0.09_D14_NFC1_RX1 (Vorherige Iteration: P0.10_D15_NFC_TX1)\nTMBT1 - PINA1 - A1 (P0.30 | HS) To -> P1.01_D13_I2S_WS\nTMB1 - PINA3 - A3 (P0.28 | HS) To -> P0.19_D12_I2S_SCK\n----"
 		(exclude_from_sim no)
 		(at -34.29 11.4082 0)
-		(size 41.91 124.5814)
+		(size 41.91 175.6971)
 		(margins 0.9525 0.9525 0.9525 0.9525)
 		(stroke
 			(width 0)
@@ -4685,7 +4685,7 @@
 		)
 		(uuid "63f686a4-6f8c-49e0-b896-e6a4c4788716")
 	)
-	(text_box "Note:\n-----\nSD-Karte\nMit MOSI1 & MISO1 verbinden. \n---\nSenseGate\r\nEin ADC frei lassen -> A0\n---\nPogo Pins\nUART - RX1\n---\nDisplay -> done\nI2C: SDA & SCL\n"
+	(text_box "Note:\n-----\nSD-Karte\nMit MOSI1 & MISO1 verbinden.\n---\nSenseGate\nEin ADC frei lassen -> A0\n---\nPogo Pins\nUART - RX1\n---\nDisplay -> done\nI2C: SDA & SCL"
 		(exclude_from_sim no)
 		(at 12.7 13.0838 0)
 		(size 41.91 42.7962)
