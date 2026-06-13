@@ -14,21 +14,4 @@ export function getCookie(name) {
   return null;
 }
 
-/**
- * Sets a cookie with a given name and value.
- * @param {string} name - The cookie name.
- * @param {string} value - The cookie value.
- * @param {number} [days=7] - Number of days until expiry.
- */
-export function setCookie(name, value, days = 7) {
-  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
-  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
-}
 
-/**
- * Erases a cookie by name (sets Max-Age=0).
- * @param {string} name - The cookie name.
- */
-export function eraseCookie(name) {
-  document.cookie = name + '=; Max-Age=0; path=/';
-}

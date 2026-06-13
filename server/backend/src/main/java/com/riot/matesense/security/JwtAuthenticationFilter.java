@@ -8,19 +8,29 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.riot.matesense.entity.UserEntity;
+import com.riot.matesense.repository.UserRepository;
+import com.riot.matesense.service.AuthService;
+
+import org.springframework.security.core.authority.AuthorityUtils;
+
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final AuthService authService;
+    private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, @Lazy AuthService authService, UserRepository userRepository) {
         this.jwtService = jwtService;
+        this.authService = authService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -29,32 +39,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
-        final String token;
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response); // let it pass to public routes
-            return;
-        }
+        String cookieHeader = request.getHeader("Cookie");
+        String token = CookieJwtExtractor.extractJwtFromCookie(cookieHeader);
 
-        token = authHeader.substring(7);
-        String userEmail = jwtService.extractUsername(token);
-        // System.out.println("Authorization Header: " + authHeader);
-        // System.out.println("Token: " + token);
-
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            if (jwtService.isTokenValid(token)) {
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(userEmail, null, List.of()); // no roles
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+        if (token != null) {
+            String userIdStr = jwtService.extractUsername(token);
+            if (userIdStr != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                if (jwtService.isTokenValid(token) && authService.isTokenInStore(token)) {
+                    UserEntity user = userRepository.findById(Long.parseLong(userIdStr)).orElse(null);
+                    if (user != null) {
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(user.getEmail(), null,
+                                        AuthorityUtils.createAuthorityList("ROLE_" + user.getRole()));
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
+                }
             }
         }
-
         filterChain.doFilter(request, response);
     }
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path.startsWith("/auth/");
+        return path.equals("/auth/login") || path.equals("/auth/register") || path.equals("/auth/logout");
     }
 }

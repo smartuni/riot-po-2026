@@ -18,13 +18,15 @@ test.describe('Controller dashboard', () => {
 
   // Remove any gate created by the mutating create-gate test so the seed stays
   // deterministic, even if that test failed before its inline cleanup.
-  test.afterEach(async ({ request }) => {
-    const token = await apiToken(request, CONTROLLER);
-    const gates = await (await request.get(`${BACKEND_URL}/gates`)).json();
+  test.afterEach(async () => {
+    const { requestContext, csrfToken } = await apiToken(CONTROLLER);
+    const headers: Record<string, string> = {};
+    if (csrfToken) {
+      headers['X-XSRF-TOKEN'] = csrfToken;
+    }
+    const gates = await (await requestContext.get(`${BACKEND_URL}/gates`)).json();
     for (const gate of gates.filter((g: { location?: string }) => g.location?.startsWith('E2E Temp'))) {
-      await request.delete(`${BACKEND_URL}/gates/${gate.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await requestContext.delete(`${BACKEND_URL}/gates/${gate.id}`, { headers });
     }
   });
 
