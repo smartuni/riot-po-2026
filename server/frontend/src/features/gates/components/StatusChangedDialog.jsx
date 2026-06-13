@@ -33,7 +33,7 @@ function StatusChangeDialog({ open, gate, onClose }) {
 
     const getStatusDisplay = (status) => {
         switch (status?.toUpperCase()) {
-            case "OPENED":
+            case "OPEN":
                 return <><LockOpenIcon fontSize="small" /> OPEN</>;
             case "CLOSED":
                 return <><LockIcon fontSize="small" /> CLOSED</>;

@@ -10,21 +10,19 @@ Patterns drawn from the actual codebase. Follow these when building new features
 src/features/{feature}/
   index.js           # Barrel exports
   components/         # React components
-  api/                # REST functions (if needed)
   styles/             # CSS (if needed)
 ```
 
 Barrel file (`index.js`):
 
 ```javascript
-export { default as RecentActivity } from './components/RecentActivity';
-export { fetchActivities, addActivities } from './api/activityApi';
+export { default as ActivityPanel } from './components/ActivityPanel';
 ```
 
 Import from barrels, not deep paths:
 
 ```javascript
-import { RecentActivity } from '../features/activities';
+import { ActivityPanel } from '../features/activities';
 ```
 
 ---
@@ -32,22 +30,16 @@ import { RecentActivity } from '../features/activities';
 ## REST API Function
 
 ```javascript
-import { apiClient } from '../../../shared';
+import { useGetGatesQuery, useAddGateMutation } from '../features/gates/api';
 
-export const fetchGates = async () => {
-    try {
-        const response = await apiClient.get('/gates');
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching gates:', error);
-        throw error;
-    }
-};
+// RTK Query auto-generates React hooks from endpoint definitions
+const { data: gates, isLoading } = useGetGatesQuery();
+const [addGate] = useAddGateMutation();
 ```
 
-- Use the shared `apiClient` — never create a new Axios instance
-- Named exports, verb-first: `fetch*`, `add*`, `update*`, `delete*`
-- Always re-throw after logging
+- Use RTK Query hooks — never create a new Axios instance or `fetch` calls
+- Auto-generated hooks: `useGet*Query`, `useAdd*Mutation`, `useUpdate*Mutation`, `useDelete*Mutation`
+- Caching, loading states, and error handling are built in
 
 ---
 
@@ -89,43 +81,29 @@ useEffect(() => {
 
 ## Auth Guard in Pages
 
-Protected pages validate auth inline by reading the JWT cookie and calling the backend:
+Protected routes use `ProtectedRoute` and `PublicOnlyRoute` wrappers defined in `features/auth/`. No inline auth checks are needed in page components.
 
 ```javascript
-import { apiClient, getCookie } from '../shared';
+import { ProtectedRoute, PublicOnlyRoute } from '../features/auth';
 
-const [popupOpen, setPopupOpen] = useState(false);
-const navigate = useNavigate();
+// In App.jsx — wrap routes:
+<Route path="/dashboard" element={
+  <ProtectedRoute roles={['controller', 'viewer']}>
+    <DashboardPage />
+  </ProtectedRoute>
+} />
 
-// Set auth header from cookie
-var jwt = getCookie("jwt");
-if (jwt != null) {
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${jwt}`;
-}
+<Route path="/login" element={
+  <PublicOnlyRoute>
+    <LoginPage />
+  </PublicOnlyRoute>
+} />
 
-// Validate with backend
-const loadDetails = async () => {
-    try {
-        const response = await apiClient.get('/auth/user-details');
-        if (response.status !== 200) {
-            throw new Error('Request failed');
-        }
-    } catch (e) {
-        setPopupOpen(true);
-    }
-};
-
-useEffect(() => { loadDetails(); }, []);
-
-return (
-    <div>
-        {/* ... page content ... */}
-        <AlertDialogIllegal open={popupOpen} onClose={() => navigate('/')} />
-    </div>
-);
+// Role gating — restrict to controllers only:
+<ProtectedRoute roles={['controller']}>
+  <AdminPage />
+</ProtectedRoute>
 ```
-
-Guest pages skip the guard and use `HeaderBarGuest` instead of `HeaderBar`.
 
 ---
 
@@ -142,8 +120,8 @@ const isFormValid = isValidEmail(email) && isValidPassword(password);
 const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-        const userData = await login(email, password);
-        navigate(userData.role === 'controller' ? '/dashboard' : '/dashboard-view');
+    const userData = await login(email, password);
+    navigate('/dashboard');
     } catch (error) {
         setErrorMessage(error.response?.data?.error || 'An error occurred');
     }
@@ -208,27 +186,21 @@ useEffect(() => {
 ## Worker ID Access
 
 ```javascript
-import { loadWorkerId } from '../features/auth';
+import { useAppSelector } from '../app/store';
 
-const [workerId, setWorkerId] = useState(null);
-
-useEffect(() => {
-    loadWorkerId().then(id => setWorkerId(id)).catch(e => console.error(e));
-}, []);
+const workerId = useAppSelector(state => state.auth.user?.workerId) ?? null;
 ```
 
-Always use `?? null` as fallback — workerId may be undefined during loading.
+Worker ID comes from Redux `authSlice` — no separate API call needed.
 
 ---
 
 ## Role-Based Redirect
 
 ```javascript
-if (userData.role === 'controller') {
-    navigate('/dashboard');
-} else {
-    navigate('/dashboard-view');
-}
+// After login, all authenticated users go to /dashboard
+// DashboardPage conditionally renders based on role
+navigate('/dashboard');
 ```
 
 ---
@@ -236,12 +208,12 @@ if (userData.role === 'controller') {
 ## Cookie Utilities
 
 ```javascript
-import { getCookie } from '../../shared';
+import { getCookie } from '../../shared/utils/cookie';
 
-const jwt = getCookie('jwt');       // string | null
+const csrfToken = getCookie('XSRF-TOKEN');  // string | null — used in RTK Query headers
 
-// Cookie management uses server-set HttpOnly cookies via login/refresh API
-// Login response includes Set-Cookie header for JWT + XSRF-TOKEN
+// JWT is HttpOnly — cannot be read via getCookie('jwt')
+// Auth state is managed by Redux (authSlice)
 ```
 
 ---
@@ -252,11 +224,11 @@ const jwt = getCookie('jwt');       // string | null
 
 | Topic | Event | Subscribers |
 |---|---|---|
-| `/topic/gates/add` | Gate created | StatusTables, InfoBoxes |
-| `/topic/gates/delete` | Gate removed | StatusTables, InfoBoxes |
-| `/topic/gates/updates` | Gate status changed | StatusTables, InfoBoxes |
-| `/topic/gate-activities` | Activity logged | RecentActivity, StatusTables |
-| `/topic/gate-activities/delete` | Activity removed | RecentActivity, StatusTables |
+| `/topic/gates/add` | Gate created | StatusTables, StatCards |
+| `/topic/gates/delete` | Gate removed | StatusTables, StatCards |
+| `/topic/gates/updates` | Gate status changed | StatusTables, StatCards |
+| `/topic/gate-activities` | Activity logged | ActivityPanel, StatusTables |
+| `/topic/gate-activities/delete` | Activity removed | ActivityPanel, StatusTables |
 | `/topic/uplinks` | Uplink from IoT device | StatusTables |
 
 ### REST Endpoints

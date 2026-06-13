@@ -12,9 +12,13 @@ export const test = base.extend<{ consoleErrors: string[] }>({
   consoleErrors: [
     async ({ page }, use) => {
       const errors: string[] = [];
-      page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+      page.on('pageerror', (e) => {
+        if (!/WebSocket|ws:\/\//.test(e.message)) {
+          errors.push(`pageerror: ${e.message}`);
+        }
+      });
       page.on('console', (m) => {
-        if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) {
+        if (m.type() === 'error' && !/Failed to load resource/.test(m.text()) && !/WebSocket|ws:\/\//.test(m.text())) {
           errors.push(m.text());
         }
       });

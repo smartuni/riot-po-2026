@@ -1,2 +1,3 @@
-export { default as HeaderBar } from './components/HeaderBar';
-export { default as HeaderBarGuest } from './components/HeaderBarGuest';
+export { default as AppLayout } from './components/AppLayout';
+export { default as Sidebar } from './components/Sidebar';
+export { default as Topbar } from './components/Topbar';

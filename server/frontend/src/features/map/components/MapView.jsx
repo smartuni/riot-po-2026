@@ -2,55 +2,62 @@ import React from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import "../styles/MapView.css";
-import { CircularProgress, Alert } from "@mui/material";
-// import FloodGatePopup from "./FloodGatePopup";
 import { useGetGatesQuery } from "../../../app/store/api/api";
 
 const getArrowIcon = (status) => {
+    const statusClass = status === "OPEN" ? "open" : status === "OUT_OF_SERVICE" ? "oos" : "";
     return L.divIcon({
-        className: "custom-arrow-marker",
-        html: `<div style="
-      transform: rotate(45deg);
-      width: 12px;
-      height: 12px;
-      background-color: ${status === "OPENED" ? "red" : "green" };
-      border-radius: 3px;
-      transform-origin: center;
-    "></div>`,
-        iconSize: [12, 12],
-        iconAnchor: [6, 6],
+        className: `map-pin ${statusClass}`.trim(),
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
     });
 };
 
-function MapView({ search, statusFilter }) {
+function MapView({ search = '', statusFilter = { Closed: true, Open: true, OOS: true } }) {
     const { data: gates = [], isLoading, error } = useGetGatesQuery();
 
     if (isLoading) {
         return (
             <div className="map-view" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '500px' }}>
-                <CircularProgress />
+                Loading map…
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="map-view" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '500px' }}>
-                <Alert severity="error">Failed to load gates data: {error.toString()}</Alert>
+            <div className="map-view" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '500px', backgroundColor: '#fef2f2', color: '#dc2626' }}>
+                Failed to load gates data: {error.toString()}
             </div>
         );
     }
 
-    const filteredGates = gates.filter(
-        (gate) =>
-            (gate.id.toString().toLowerCase().includes(search.toLowerCase()) ||
-                (gate.location?.toLowerCase() || '').includes(search.toLowerCase())) &&
-            (statusFilter === "" || gate.requestedStatus === statusFilter || gate.status === statusFilter)
-    );
+    const statusToKey = { OPEN: 'Open', CLOSED: 'Closed', OUT_OF_SERVICE: 'OOS' };
+
+    const filteredGates = gates.filter((gate) => {
+        let matchesStatus;
+        if (typeof statusFilter === 'string') {
+            // String filter: "" = show all, else exact match on status or requestedStatus
+            matchesStatus = statusFilter === '' || gate.status === statusFilter || gate.requestedStatus === statusFilter;
+        } else {
+            // Object filter: { Closed: bool, Open: bool, OOS: bool }
+            const key = statusToKey[gate.status];
+            matchesStatus = statusFilter[key] !== false;
+        }
+        const matchesSearch = search === '' ||
+            gate.id.toString().toLowerCase().includes(search.toLowerCase()) ||
+            (gate.location?.toLowerCase() || '').includes(search.toLowerCase());
+        return matchesStatus && matchesSearch;
+    });
+
+    const getStatusStyle = (status) => {
+        if (status === "OPEN") return { color: "#ef4444" };
+        if (status === "OUT_OF_SERVICE") return { color: "#f59e0b" };
+        return { color: "#16a34a" };
+    };
 
     return (
-        <div className="map-view" style={{ height: "500px", width: "100%" }}>
+        <div className="map-view" style={{ height: "100%", width: "100%" }}>
             <MapContainer
                 center={[53.546, 9.99]}
                 zoom={13}
@@ -70,8 +77,8 @@ function MapView({ search, statusFilter }) {
                     >
                         <Popup>
                             <strong>{gate.location}</strong><br />
-                            Status: {gate.status}<br />
-                            Gate-ID: {gate.id}<br />
+                            Status: <span style={getStatusStyle(gate.status)}>{gate.status}</span><br />
+                            Gate-ID: <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{gate.id}</span><br />
                             Last Update: {new Date(gate.lastTimeStamp).toLocaleString()}<br />
                             Confidence: {gate.confidence}
                         </Popup>

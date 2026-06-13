@@ -14,7 +14,7 @@ const PublicOnlyRoute = ({ children }) => {
   }
 
   if (status === 'authenticated') {
-    const target = user?.role === 'controller' ? '/dashboard' : '/dashboard-view';
+    const target = '/dashboard';
     return <Navigate to={target} replace />;
   }
 

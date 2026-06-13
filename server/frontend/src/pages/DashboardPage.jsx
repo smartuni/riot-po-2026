@@ -1,22 +1,23 @@
-import { InfoBoxes, StatusTables } from '../features/gates';
-import { RecentActivity } from '../features/activities';
-import { HeaderBar } from '../features/shell';
+import AppLayout from '../features/shell/components/AppLayout';
+import StatCards from '../features/gates/components/StatCards';
+import StatusTables from '../features/gates/components/StatusTables';
+import StatusTablesView from '../features/gates/components/StatusTablesView';
+import ActivityPanel from '../features/activities/components/ActivityPanel';
+import { useAppSelector } from '../app/store';
 
 const DashboardPage = () => {
-    return (
-        <div>
-            <HeaderBar />
-            <div className="container">
-                <div className="main">
-                    <InfoBoxes />
-                    <div className="content">
-                        <StatusTables />
-                        <RecentActivity />
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
+  const user = useAppSelector((state) => state.auth.user);
+  const isController = user?.role === 'controller';
 
-export default DashboardPage
+  return (
+    <AppLayout>
+      <StatCards />
+      <div className="dashboard-grid">
+        {isController ? <StatusTables /> : <StatusTablesView />}
+        <ActivityPanel />
+      </div>
+    </AppLayout>
+  );
+};
+
+export default DashboardPage;

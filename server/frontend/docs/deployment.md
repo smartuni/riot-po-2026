@@ -86,8 +86,8 @@ No `.env` files are committed. The following are git-ignored:
 
 | Value | Location |
 |---|---|
-| `API_BASE_URL = 'http://localhost:8080'` | `src/shared/api/apiClient.js` |
-| `WebSocket URL = 'http://localhost:8080/ws'` | Multiple components |
+| `API_BASE_URL = 'http://localhost:8080'` | `src/features/auth/api.js` (RTK Query `fetchBaseQuery`) |
+| `WebSocket URL = 'http://localhost:8080/ws'` | `src/app/wsMiddleware.js` |
 | `Admin password = "secret123"` | `src/features/gates/components/StatusTables.jsx` |
 
 > ⚠️ These values should ideally be moved to environment variables for different deployment targets.
@@ -96,7 +96,7 @@ No `.env` files are committed. The following are git-ignored:
 
 1. **Build**: Run `npm run build`
 2. **Serve**: Deploy the `build/` directory to any static file server
-3. **API URL**: Update `baseURL` in `apiClient.js` for production backend
+3. **API URL**: Update `baseUrl` in RTK Query's `fetchBaseQuery` config for production backend
 4. **WebSocket URL**: Update WS URL in components for production
 5. **Browser Support**: Configured via `browserslist` in `package.json`
    - Production: `>0.2%, not dead, not op_mini all`

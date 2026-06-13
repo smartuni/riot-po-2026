@@ -16,7 +16,7 @@ React 19 provides the latest concurrent features and automatic batching. Vite pr
 |---|---|---|
 | **react-router-dom** | ^7.6.0 | Client-side routing with `<BrowserRouter>` |
 
-Seven routes are defined declaratively in the root `App.jsx` component. No nested or lazy-loaded routes are used.
+Eleven routes are defined declaratively in the root `App.jsx` component with `ProtectedRoute` and `PublicOnlyRoute` guards. No nested or lazy-loaded routes are used.
 
 ## UI & Styling
 
@@ -35,11 +35,11 @@ MUI provides the design system foundation. Feature-specific and shared component
 
 | Technology | Version | Purpose |
 |---|---|---|
-| **Axios** | ^1.9.0 | HTTP client for REST API calls |
+| **RTK Query** | — | Data fetching & caching (via Redux Toolkit) |
 | **STOMP.js** | ^7.1.1 | STOMP protocol client for WebSocket messaging |
 
 
-The API layer is a single Axios instance configured with `baseURL: 'http://localhost:8080'` and JSON headers. Authorization tokens are injected imperatively after login. WebSocket connections are managed per-component via `useEffect` lifecycle hooks.
+RTK Query handles all REST API communication with automatic caching, loading states, and optimistic updates. Auth tokens are sent via HttpOnly cookies (no manual header injection). WebSocket connections are managed via Redux middleware (`wsMiddleware.js`).
 
 ## Maps
 
@@ -102,8 +102,8 @@ The `global: 'window'` define polyfill ensures libraries that reference the Node
 │  @emotion/react (^11.14.0)             │
 │  @emotion/styled (^11.14.0)            │
 ├─────────────────────────────────────────┤
-│  axios (^1.9.0)     │   stompjs (^7.1.1)      │
-│  (REST API)         │   (WebSocket)           │
+│  @reduxjs/toolkit    │   stompjs (^7.1.1)      │
+│  (RTK Query)        │   (WebSocket)           │
 ├─────────────────────────────────────────┤
 │  leaflet (^1.9.4)                       │
 │  (Map rendering)                        │
