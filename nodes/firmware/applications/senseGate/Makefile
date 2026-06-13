@@ -104,6 +104,7 @@ USEMODULE += shell_cmd_genfile
 USEMODULE += shell_cmds_default
 
 USEMODULE += vfs_default
+USEMODULE += identity_store
 USEMODULE += vfs_util
 
 # Change this to 0 show compiler invocation lines by default:
