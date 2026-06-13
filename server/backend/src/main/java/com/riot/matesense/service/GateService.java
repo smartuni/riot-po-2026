@@ -184,19 +184,18 @@ public class GateService {
         gate.setStatus(status);
         //dont be surprised if pending job didn't change after the first status change! It need to be 100% confidence
         calculator.changeConfidence(gate, confidence, reportType);
-        messagingTemplate.convertAndSend("/topic/gates/updates", gate);
-            // }
-        // }
 
         gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
         gateRepository.save(gate);
+        messagingTemplate.convertAndSend("/topic/gates/updates", gate);
     }
 
     public void changeGateStateConfirmation(Long gateId, StateConfirmation state) throws GateNotFoundException {
         GateEntity gate = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         gate.setStateConfirmation(state);
-        messagingTemplate.convertAndSend("/topic/gates/updates", gate);
+        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
         gateRepository.save(gate);
+        messagingTemplate.convertAndSend("/topic/gates/updates", gate);
     }
 
     /**
