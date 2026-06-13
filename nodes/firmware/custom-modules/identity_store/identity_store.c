@@ -361,7 +361,7 @@ int provide_public_keys(void) {
                 int res = read_identity(dirent.d_name, identity, MAX_IDENTITY_SIZE);
                 //res = verify_identity();
                 res = parse_identity(identity, MAX_IDENTITY_SIZE, ed25519_public_key, 32, kid, sizeof(kid));
-                
+              dirp  
                 for (size_t i = 0; i < 32; i++) {
                     printf("0x%02x ", ed25519_public_key[i]);
                 }
@@ -383,7 +383,7 @@ int provide_public_keys(void) {
 */
 
 char *directory_structure[] = {
-    IDENTITY_STORAGE_PATH,
+    "/nvm0/identities",
     IDENTITY_STORAGE_PATH "self",
     IDENTITY_STORAGE_PATH "valid",
     IDENTITY_STORAGE_PATH "revoked"
@@ -409,6 +409,12 @@ int setup_flash(void) {
 }
 
 int identity_store_setup(void) {
+    int res = vfs_unmount_by_path(VFS_DEFAULT_NVM(0), false);
+    LOG_INFO("unmounting %s %s\n", VFS_DEFAULT_NVM(0), ok(res == 0));
+
+    res = vfs_mount_by_path(VFS_DEFAULT_NVM(0));
+    LOG_INFO("mounting %s %s\n", VFS_DEFAULT_NVM(0), ok(res == 0));
+
     for (size_t i = 0; i < ARRAY_SIZE(directory_structure); i++)
     {
         vfs_DIR dirp;
