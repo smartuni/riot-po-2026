@@ -1,6 +1,7 @@
 package com.riot.matesense.controller;
 
 import com.riot.matesense.enums.StateConfirmation;
+import com.riot.matesense.exceptions.GateNotFoundException;
 import com.riot.matesense.mqtt.MqttMessageHandler;
 import com.riot.matesense.service.GateService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,7 +36,7 @@ public class E2eTestController {
     }
 
     @PostMapping("/simulate-state-confirmation")
-    public ResponseEntity<Void> simulateStateConfirmation(@RequestBody StateConfirmationRequest request) {
+    public ResponseEntity<Void> simulateStateConfirmation(@RequestBody StateConfirmationRequest request) throws GateNotFoundException {
         gateService.changeGateStateConfirmation(request.gateId, request.state);
         return ResponseEntity.ok().build();
     }
