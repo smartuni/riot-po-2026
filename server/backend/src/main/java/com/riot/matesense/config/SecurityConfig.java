@@ -51,6 +51,7 @@ public class SecurityConfig {
                     .requestMatchers("/gate-activities").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/actuator/health").permitAll()
+                    .requestMatchers("/e2e/**").permitAll()
                     .anyRequest().authenticated()
                 )
                 .addFilterAfter(jwtFilter, SecurityContextHolderFilter.class)
