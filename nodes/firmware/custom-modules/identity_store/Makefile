@@ -1,4 +1,4 @@
-MODULE := certificate_store
+MODULE := identity_store
 
 INCLUDES += -I$(CURDIR)/include
 

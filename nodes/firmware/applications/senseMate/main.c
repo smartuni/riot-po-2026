@@ -20,6 +20,8 @@
 #define _LOGDBG(...) LOG_DEBUG("[main]: " __VA_ARGS__)
 #define _LOGINF(...) LOG_INFO("[main]: " __VA_ARGS__)
 #include "ps.h"
+#include "identity_store.h"
+#include "personalization.h"
 
 static const char *ok(bool condition)
 {
@@ -191,14 +193,21 @@ void* shell_thread(void* arg)
 }
 
 int main(void) {
+    ztimer_sleep(ZTIMER_SEC, 10);
     printf("init menu...\n");
     sensemate_ui_init(&_ui_data_cbs);
     ui_data_t *ui_state = sensemate_ui_get_state();
     ui_state->ble_state = ESTABLISHING_CONNECTION;
     sensemate_ui_update();
 
+    int res = identity_store_setup();
+    printf("%d\n", res);
+
+    get_self_node_id(self_node_id, sizeof(self_node_id));
+    od_hex_dump(self_node_id, sizeof(self_node_id), 0);
+
     //ztimer_sleep(ZTIMER_MSEC, 3000);
-    int res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
+    res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
     _LOGDBG("storage_setup_ram_mtd: %s\n", ok(res == 0));
 
     res = credential_manager_setup(STORAGE_MOUNT_PATH "/cred");

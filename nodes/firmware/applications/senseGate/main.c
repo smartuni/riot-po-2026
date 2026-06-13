@@ -137,7 +137,7 @@ static void _table_update_cb(tables_context_t *ctx, const table_record_t *record
 
 int main(void){
     /* Sleep so that we do not miss this message while connecting */
-    ztimer_sleep(ZTIMER_SEC, 3);
+    ztimer_sleep(ZTIMER_SEC, 10);
     puts("[main]: starting");
 
     thread_create(

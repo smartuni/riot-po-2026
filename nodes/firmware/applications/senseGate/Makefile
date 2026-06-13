@@ -10,7 +10,7 @@ EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
 # Configrue device id and device type.
 # This will instruct the key-distro module to include required credentials.
-RIOT_CONFIG_DEVICE_ID ?= 1
+RIOT_CONFIG_DEVICE_ID ?= 20
 # Set the device type to 'Gate' to configure some device specific behaviors.
 # Dont allow overwrites here, as that would only cause trouble anyway.
 # (the corresponding values are defined in tables/types.h)
@@ -102,6 +102,9 @@ PREFLASH_DELAY=8
 USEMODULE += ps
 USEMODULE += shell_cmd_genfile
 USEMODULE += shell_cmds_default
+
+USEMODULE += vfs_default
+USEMODULE += vfs_util
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
