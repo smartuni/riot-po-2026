@@ -1,5 +1,6 @@
 package com.riot.matesense.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.riot.matesense.enums.ConfidenceQuality;
 import com.riot.matesense.enums.StateConfirmation;
 import com.riot.matesense.enums.Status;
@@ -17,6 +18,7 @@ import java.sql.Timestamp;
 @Setter
 @Table(name = "gates")
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class GateEntity {
     @Getter
     @Setter
@@ -83,6 +85,14 @@ public class GateEntity {
 
     public void shuffleReports(Status gateStatus, MsgType reportType) // orders reports based on how recent they were
     {
+        if (this.gateStatusArray == null) {
+            this.gateStatusArray = new Status[3];
+            for (int i = 0; i < 3; i++) this.gateStatusArray[i] = Status.NONE;
+        }
+        if (this.workerStatusArray == null) {
+            this.workerStatusArray = new Status[3];
+            for (int i = 0; i < 3; i++) this.workerStatusArray[i] = Status.NONE;
+        }
         if (reportType == MsgType.IST_STATE) // if the report is from the gate's sensor
         {
             this.gateStatusArray[2] = this.gateStatusArray[1];
