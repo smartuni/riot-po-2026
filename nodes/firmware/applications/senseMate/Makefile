@@ -2,6 +2,8 @@
 APPLICATION = SenseMate
 # If no BOARD is found in the environment, use this default:
 BOARD ?= adafruit-feather-nrf52840-sense
+# TODO: adjust PINs
+# BOARD ?= seeedstudio-xiao-nrf52840-sense
 
 PROJECT_BASE ?= $(CURDIR)/../..
 RIOTBASE ?= $(PROJECT_BASE)/RIOT
