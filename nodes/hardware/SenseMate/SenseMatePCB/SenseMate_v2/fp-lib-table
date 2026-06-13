@@ -3,4 +3,5 @@
 	(lib (name "SenseMateLibrary") (type "KiCad") (uri "${KIPRJMOD}/SenseMateLibrary.pretty") (options "") (descr ""))
 	(lib (name "XIAO") (type "KiCad") (uri "/home/nico/Downloads/New_XIAO_Series_Footprints") (options "") (descr ""))
 	(lib (name "RF_Module") (type "KiCad") (uri "${KIPRJMOD}/3dshapes/RF_Module") (options "") (descr ""))
+	(lib (name "SenseGateLibrary") (type "KiCad") (uri "${KIPRJMOD}/SenseGateLibrary.pretty") (options "") (descr ""))
 )
