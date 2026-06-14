@@ -462,3 +462,11 @@ bool mate_lorawan_joined(void)
     return _joined;
 }
 
+int send_table_record(const table_record_t *record)
+{
+    if (!mate_lorawan_joined()) {
+        _LOGDBG("Not joined yet, cannot send record.\n");
+        return -1;
+    }
+    return _send_record(record);
+}
