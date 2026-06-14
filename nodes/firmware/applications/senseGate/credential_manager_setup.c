@@ -96,6 +96,7 @@ int credential_manager_setup(const char *db_path) {
         return -4;
     }
 
+    /*
     vfs_DIR dirp;
     int res = vfs_opendir(&dirp, IDENTITY_STORAGE_PATH "/valid");
     _LOGDBG("opendir result %d\n", res);
@@ -132,6 +133,7 @@ int credential_manager_setup(const char *db_path) {
             }
         }
     }
+    */
 
     /*
     for (unsigned i = 0; i < ARRAY_SIZE(known_keys); i++) {

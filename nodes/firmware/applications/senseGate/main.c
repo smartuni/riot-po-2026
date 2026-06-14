@@ -141,6 +141,12 @@ int main(void){
     ztimer_sleep(ZTIMER_SEC, 10);
     puts("[main]: starting");
 
+    int res = identity_store_setup();
+    printf("%d\n", res);
+
+    get_self_node_id(self_node_id, sizeof(self_node_id));
+    od_hex_dump(self_node_id, sizeof(self_node_id), 0);
+
     thread_create(
         shell_stack,
         sizeof(shell_stack),
@@ -150,12 +156,6 @@ int main(void){
         NULL,
        "shell"
     );
-
-    int res = identity_store_setup();
-    printf("%d\n", res);
-
-    get_self_node_id(self_node_id, sizeof(self_node_id));
-    od_hex_dump(self_node_id, sizeof(self_node_id), 0);
 
     res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
     _LOGDBG("storage_setup_ram_mtd: %s\n", ok(res == 0));
