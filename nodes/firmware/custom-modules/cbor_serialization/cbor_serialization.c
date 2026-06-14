@@ -4,10 +4,11 @@
 #include "cbor.h"
 #include "tables/types.h"
 #include "tables/records.h"
+#include "identity_store.h"
 
 #include "cbor_serialization.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG (1)
 #include "debug.h"
 
 extern CborError cbor_deserialize_simple_or_u8(CborValue *value, uint8_t *val);
@@ -341,6 +342,105 @@ int cbor_serialize_record_no_sig(const table_record_t *record, uint8_t *out, siz
     return _cbor_serialize_record(record, out, out_len, false);
 }
 
+int _cbor_array_size_id_reqres(size_t *size)
+{
+    *size = ARRAY_SIZE_MESSAGE + ARRAY_SIZE_ID_PUBID + ARRAY_SIZE_ID_PUBID_SIGNATURE;
+
+    return 0;
+}
+
+int _cbor_encode_signed_pubid(CborEncoder *encoder, signed_identity_t *signed_identity)
+{
+    CborError error;
+
+    // signed pubid
+    error = cbor_encode_byte_string(encoder, signed_identity->cbor_payload, PUBID_LEN);
+    if (error != CborNoError) {
+        return -1;
+    }
+
+    // signature
+    error = cbor_encode_byte_string(encoder, signed_identity->signature, PUBID_SIGNATURE_LEN);
+    if (error != CborNoError) {
+        return -1;
+    }
+
+    return 0; 
+}
+
+int _cbor_encode_msgtype_id_reqres(CborEncoder *encoder, message_type_t msg_type) {
+    CborError error;
+
+    if (msg_type == MESSAGE_ID_REQUEST) {
+        error = cbor_encode_simple_value(encoder, MESSAGE_TYPE_ID_REQUEST);
+    } else if (msg_type == MESSAGE_ID_RESPONSE) {
+        error = cbor_encode_simple_value(encoder, MESSAGE_TYPE_ID_RESPONSE);
+    } else {
+        DEBUG("_cbor_encode_msgtype_id_reqres: expected message type %d or %d, got %d\n",
+              MESSAGE_ID_REQUEST, MESSAGE_ID_RESPONSE, msg_type);
+        return -1;
+    }
+    if (error != CborNoError) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
+int cbor_serialize_id_reqres(message_type_t msg_type, signed_identity_t *signed_identity,
+                             uint8_t *out, size_t *out_len)
+{
+    assert(out != NULL);
+    assert(out_len != NULL);
+
+    CborError error;
+    CborEncoder root_encoder;
+    cbor_encoder_init(&root_encoder, out, *out_len, 0);
+
+    CborEncoder main_array_encoder;
+    size_t main_array_size;
+    int res = _cbor_array_size_id_reqres(&main_array_size);
+    if (res != 0) {
+        DEBUG("cbor_serialize_id_request: error getting main array size\n");
+        return -1;
+    }
+
+    error = cbor_encoder_create_array(&root_encoder, &main_array_encoder,
+                                      main_array_size);
+    if (error != CborNoError) {
+        DEBUG("cbor_serialize_id_request: error creating main array (%d)\n", error);
+        return -1;
+    }
+
+    error = cbor_encode_simple_value(&main_array_encoder, ENCODING_V_1);
+    if (error != CborNoError) {
+        DEBUG("cbor_serialize_id_request: error adding version tag (%d)\n", error);
+        return -1;
+    }
+
+    res = _cbor_encode_msgtype_id_reqres(&main_array_encoder, msg_type);
+    if (res != 0) {
+        DEBUG("cbor_serialize_id_request: error encoding msg type\n");
+        return -1;
+    }
+
+    res = _cbor_encode_signed_pubid(&main_array_encoder, signed_identity);
+    if (res != 0) {
+        DEBUG("cbor_serialize_id_request: error encoding signed pubid\n");
+        return -1;
+    }
+
+    error = cbor_encoder_close_container(&root_encoder, &main_array_encoder);
+    if (error != CborNoError) {
+        DEBUG("cbor_serialize_id_request: error closing main array (%d)\n", error);
+        return -1;
+    }
+
+    *out_len = cbor_encoder_get_buffer_size(&root_encoder, out);
+    return 0;
+}
+
 int _cbor_decode_version(CborValue *value, uint8_t *version)
 {
     assert(value != NULL);
@@ -376,17 +476,11 @@ int _cbor_decode_message_type(CborValue *value, uint8_t *message_type)
     return 0;
 }
 
-int cbor_deserialize(const uint8_t *buffer, size_t buffer_len, table_record_t *record,
-                     table_record_data_buffer_t *record_data, uint8_t *signature,
-                     size_t *signature_len)
+int cbor_msg_version_info(const uint8_t *buffer, size_t buffer_len, uint8_t *msg_type)
 {
     assert(buffer != NULL);
-    assert(record != NULL);
-    assert(record_data != NULL);
-    assert(signature_len != NULL);
-    // signature CAN be NULL
 
-    DEBUG("cbor_deserialize: decoding buffer of %zu bytes\n", buffer_len);
+    DEBUG("cbor_msg_version_info: decoding buffer of %zu bytes\n", buffer_len);
 
     CborParser parser;
     CborValue main_array_iterator;
@@ -396,19 +490,19 @@ int cbor_deserialize(const uint8_t *buffer, size_t buffer_len, table_record_t *r
     error = cbor_parser_init(buffer, buffer_len, CborValidateStrictMode, &parser,
                              &main_array_iterator);
     if (error != CborNoError) {
-        DEBUG("cbor_deserialize: error initializing parser (%d)\n", error);
+        DEBUG("cbor_msg_version_info: error initializing parser (%d)\n", error);
         return -1;
     }
 
     if (!cbor_value_is_array(&main_array_iterator)) {
-        DEBUG("cbor_deserialize: expected main array\n");
+        DEBUG("cbor_msg_version_info: expected main array\n");
         return -1;
     }
 
     CborValue array_item;
     error = cbor_value_enter_container(&main_array_iterator, &array_item);
     if (error != CborNoError) {
-        DEBUG("cbor_deserialize: error entering main array (%d)\n", error);
+        DEBUG("cbor_msg_version_info: error entering main array (%d)\n", error);
         return -1;
     }
 
@@ -420,27 +514,84 @@ int cbor_deserialize(const uint8_t *buffer, size_t buffer_len, table_record_t *r
 
     error = cbor_value_advance(&array_item);
     if (error != CborNoError) {
-        DEBUG("cbor_deserialize: error advancing to message type (%d)\n", error);
+        DEBUG("cbor_msg_version_info: error advancing to message type (%d)\n", error);
+        return -1;
+    }
+
+    result = _cbor_decode_message_type(&array_item, msg_type);
+    if (result != 0) {
+        DEBUG("cbor_msg_version_info: error getting message type\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int cbor_deserialize_record(const uint8_t *buffer, size_t buffer_len, table_record_t *record,
+                            table_record_data_buffer_t *record_data, uint8_t *signature,
+                            size_t *signature_len)
+{
+    assert(buffer != NULL);
+    assert(record != NULL);
+    assert(record_data != NULL);
+    assert(signature_len != NULL);
+    // signature CAN be NULL
+
+    DEBUG("cbor_deserialize_record: decoding buffer of %zu bytes\n", buffer_len);
+
+    CborParser parser;
+    CborValue main_array_iterator;
+    CborError error;
+    int result;
+
+    error = cbor_parser_init(buffer, buffer_len, CborValidateStrictMode, &parser,
+                             &main_array_iterator);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_record: error initializing parser (%d)\n", error);
+        return -1;
+    }
+
+    if (!cbor_value_is_array(&main_array_iterator)) {
+        DEBUG("cbor_deserialize_record: expected main array\n");
+        return -1;
+    }
+
+    CborValue array_item;
+    error = cbor_value_enter_container(&main_array_iterator, &array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_record: error entering main array (%d)\n", error);
+        return -1;
+    }
+
+    uint8_t version;
+    result = _cbor_decode_version(&array_item, &version);
+    if (result != 0) {
+        return -1;
+    }
+
+    error = cbor_value_advance(&array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_record: error advancing to message type (%d)\n", error);
         return -1;
     }
 
     uint8_t message_type;
     result = _cbor_decode_message_type(&array_item, &message_type);
     if (result != 0) {
-        DEBUG("cbor_deserialize: error getting message type\n");
+        DEBUG("cbor_deserialize_record: error getting message type\n");
         return -1;
     }
 
     // For now, we only support single report message type
     if (message_type != MESSAGE_TYPE_SINGLE_REPORT) {
-        DEBUG("cbor_deserialize: expected message type %d, got %d\n",
+        DEBUG("cbor_deserialize_record: expected message type %d, got %d\n",
               MESSAGE_TYPE_SINGLE_REPORT, message_type);
         return -1;
     }
 
     error = cbor_value_advance(&array_item);
     if (error != CborNoError) {
-        DEBUG("cbor_deserialize: error advancing to record (%d)\n", error);
+        DEBUG("cbor_deserialize_record: error advancing to record (%d)\n", error);
         return -1;
     }
 
@@ -448,6 +599,157 @@ int cbor_deserialize(const uint8_t *buffer, size_t buffer_len, table_record_t *r
                                 signature_len);
     if (result != 0) {
         DEBUG("cbor_deserialize_record: error decoding record\n");
+        return -1;
+    }
+
+    error = cbor_value_leave_container(&main_array_iterator, &array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_record: error leaving container (%d)\n", error);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int _cbor_decode_signed_pubid(CborValue *value, signed_identity_t *signed_identity)
+{
+    assert(value != NULL);
+    assert(signed_identity != NULL);
+
+    CborError error;
+    size_t pubid_len;
+
+    if (!cbor_value_is_byte_string(value)) {
+        DEBUG("_cbor_decode_signed_pubid: expected byte string for signed pubid\n");
+        return -1;
+    }
+
+    error = cbor_value_get_string_length(value, &pubid_len);
+    if (error != CborNoError) {
+        DEBUG("_cbor_decode_signed_pubid: error getting signed pubid length (%d)\n", error);
+        return -1;
+    }
+
+    if (pubid_len != PUBID_LEN) {
+        DEBUG("_cbor_decode_signed_pubid: wrong signed pubid length."
+              " Got %zu, expected %d\n", pubid_len, PUBID_LEN);
+        return -1;
+    }
+
+    error = cbor_value_copy_byte_string(value, signed_identity->cbor_payload, &pubid_len, value);
+    if (error != CborNoError) {
+        DEBUG("_cbor_decode_signed_pubid: error getting signed pubid (%d)\n", error);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int _cbor_decode_signed_pubid_signature(CborValue *value, signed_identity_t *signed_identity)
+{
+    assert(value != NULL);
+    assert(signed_identity != NULL);
+
+    CborError error;
+    size_t pubid_signature_len;
+
+    if (!cbor_value_is_byte_string(value)) {
+        DEBUG("_cbor_decode_signed_pubid_signature: expected byte string for signed pubid signature\n");
+        return -1;
+    }
+
+    error = cbor_value_get_string_length(value, &pubid_signature_len);
+    if (error != CborNoError) {
+        DEBUG("_cbor_decode_signed_pubid_signature: error getting signed pubid signature length (%d)\n", error);
+        return -1;
+    }
+
+    if (pubid_signature_len != PUBID_SIGNATURE_LEN) {
+        DEBUG("_cbor_decode_signed_pubid_signature: wrong signed pubid signature length."
+              " Got %zu, expected %d\n", pubid_signature_len, PUBID_SIGNATURE_LEN);
+        return -1;
+    }
+
+    error = cbor_value_copy_byte_string(value, signed_identity->signature, &pubid_signature_len, value);
+    if (error != CborNoError) {
+        DEBUG("_cbor_decode_signed_pubid_signature: error getting signed pubid signature (%d)\n", error);
+        return -1;
+    }
+
+    return 0;
+}
+
+int cbor_deserialize_id_reqres(const uint8_t *buffer, size_t buffer_len,
+                               signed_identity_t *signed_identity, uint8_t *msg_type)
+{
+    assert(buffer != NULL);
+    assert(signed_identity != NULL);
+
+    DEBUG("cbor_deserialize_id_reqres: decoding buffer of %zu bytes\n", buffer_len);
+
+    CborParser parser;
+    CborValue main_array_iterator;
+    CborError error;
+    int result;
+
+    error = cbor_parser_init(buffer, buffer_len, CborValidateStrictMode, &parser,
+                             &main_array_iterator);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_id_reqres: error initializing parser (%d)\n", error);
+        return -1;
+    }
+
+    if (!cbor_value_is_array(&main_array_iterator)) {
+        DEBUG("cbor_deserialize_id_reqres: expected main array\n");
+        return -1;
+    }
+
+    CborValue array_item;
+    error = cbor_value_enter_container(&main_array_iterator, &array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_id_reqres: error entering main array (%d)\n", error);
+        return -1;
+    }
+
+    uint8_t version;
+    result = _cbor_decode_version(&array_item, &version);
+    if (result != 0) {
+        return -1;
+    }
+
+    error = cbor_value_advance(&array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_id_reqres: error advancing to message type (%d)\n", error);
+        return -1;
+    }
+
+    result = _cbor_decode_message_type(&array_item, msg_type);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_id_reqres: error getting message type\n");
+        return -1;
+    }
+
+    if (*msg_type != MESSAGE_ID_REQUEST && *msg_type != MESSAGE_ID_RESPONSE) {
+        DEBUG("cbor_deserialize_id_reqres: expected message type %d or %d, got %d\n",
+              MESSAGE_ID_REQUEST, MESSAGE_ID_RESPONSE, *msg_type);
+        return -1;
+    }
+
+    error = cbor_value_advance(&array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_id_reqres: error advancing to record (%d)\n", error);
+        return -1;
+    }
+
+    result = _cbor_decode_signed_pubid(&array_item, signed_identity);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_id_reqres: error decoding signed pubid\n");
+        return -1;
+    }
+
+    result = _cbor_decode_signed_pubid_signature(&array_item, signed_identity);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_id_reqres: error decoding signed pubid signature\n");
         return -1;
     }
 

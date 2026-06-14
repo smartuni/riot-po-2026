@@ -25,7 +25,10 @@
 #include "cose-service.h"
 #include "cbor_serialization.h"
 #include "personalization.h"
-#define LOG_LEVEL   LOG_INFO
+#include "identity_store.h"
+#include "crypto_service.h"
+#include "cose_crypto_service.h"
+#define LOG_LEVEL   LOG_DEBUG
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[mate_ble]: " __VA_ARGS__)
 #define _LOGINF(...) LOG_INFO("[mate_ble]: " __VA_ARGS__)
@@ -35,6 +38,13 @@
 #include "include/sound.h"
 #include "events_creation.h"
 #endif
+
+static cose_crypto_service_context_t crypto_ctx;
+
+static crypto_service_t crypto_service = {
+    .context = &crypto_ctx,
+    .interface = &cose_crypto_service_interface,
+};
 
 static const char *ok(bool condition)
 {
@@ -59,6 +69,8 @@ void* ble_rx_thread(void* args);
  * TODO: obtain from records/tables interface ? */
 #define MAX_SIGNATURE_SIZE 80
 #define MAX_SERIALIZED_RECORD_SIZE 128
+
+#define MAX_SERIALIZED_ID_REQRES_SIZE 256
 
 #define MATE_BLE_TX_POWER_UNDEF (127)
 
@@ -430,6 +442,27 @@ static int _send_record(const table_record_t *record)
     return _ble_send(out_buf, out_len);
 }
 
+static int _send_id_res(void)
+{
+    size_t out_len = MAX_SERIALIZED_ID_REQRES_SIZE;
+    uint8_t out_buf[out_len];
+    signed_identity_t signed_identity;
+    get_self_signed_pubid(&signed_identity);
+    
+    int res = cbor_serialize_id_reqres(MESSAGE_ID_RESPONSE, &signed_identity, out_buf, &out_len);
+    _LOGDBG("%s serialize:(%d) %s\n", __func__, res, ok(res == 0));
+    if (res) {
+        _LOGINF("_send_id_res serialize failed!\n");
+        return -1;
+    }
+
+    if (LOG_LEVEL == LOG_DEBUG) {
+        _LOGDBG("_send_id_res: \n");
+        od_hex_dump(out_buf, out_len, 0);
+    }
+    return _ble_send(out_buf, out_len);
+}
+
 static void mateble_send_query_matches(table_query_t *q)
 {
     _LOGDBG("%s\n", __func__);
@@ -486,6 +519,10 @@ void* ble_tx_thread(void* arg)
             q = &send_all_query;
         }
         mateble_send_query_matches(q);
+        
+        // For now just send identification responses here.
+        res = _send_id_res();
+        _LOGDBG("%s _send_id_res: %d\n", __func__, res);
 
         if (received_msg) {
             free(q);
@@ -545,18 +582,18 @@ void* ble_rx_thread(void* args)
         payload_descriptor_t *pd = (payload_descriptor_t*)msg.content.ptr;
         //TODO interpret pd->info to decide if we ignore low RSSI packet;
 
-        table_record_t record;
-        table_record_data_buffer_t record_data;
-        uint8_t signature[MAX_SIGNATURE_SIZE];
-        size_t signature_len = sizeof(signature);
-
         _LOGDBG("received %d bytes (RSSI %d):\n", pd->buf_len, pd->info.rssi);
         if (LOG_LEVEL >= LOG_DEBUG) {
             od_hex_dump(pd->buf, pd->buf_len, 0);
         }
 
-        int res = cbor_deserialize(pd->buf, pd->buf_len, &record,
-                                    &record_data, signature, &signature_len);
+        uint8_t msg_type;
+        int res = cbor_msg_version_info(pd->buf, pd->buf_len, &msg_type);
+        if (res) {
+            _LOGDBG("cbor_msg_version_info failed: %d\n", res);
+            continue;
+        }
+        _LOGDBG("got msg type: %d\n", msg_type);
 
 #if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
         /* this part is only needed on the SenseMate to populate the encounter table */
@@ -571,54 +608,86 @@ void* ble_rx_thread(void* args)
         node_id_t mate_id = { 0x00, 0x00, DEVICE_TYPE_SENSEMATE, matenum };
 #endif
 
-        free(pd->buf);
-        free(pd);
-        _LOGDBG("freed buffers\n");
+        if (msg_type == MESSAGE_SINGLE_REPORT) {
+            table_record_t record;
+            table_record_data_buffer_t record_data;
+            uint8_t signature[MAX_SIGNATURE_SIZE];
+            size_t signature_len = sizeof(signature);
 
-        if (res) {
-            _LOGDBG("cbor_deserialize failed: %d\n", res);
-            continue;
-        }
+            res = cbor_deserialize_record(pd->buf, pd->buf_len, &record,
+                                        &record_data, signature, &signature_len);
 
-        _LOGDBG("signature length: %d\n", signature_len);
+            free(pd->buf);
+            free(pd);
+            _LOGDBG("freed buffers\n");
 
-        record_tostr(&record, _recv_record_str_buf,
-                     sizeof(_recv_record_str_buf));
-        _LOGINF("RX %s\n", _recv_record_str_buf);
-
-        const node_id_t *writer_id;
-        get_record_writer_id(&record, &writer_id);
-        if (memcmp(writer_id, &self_node_id, sizeof(node_id_t)) == 0) {
-            _LOGDBG("ignoring received data about this device\n");
-            continue;
-        }
-
-        _LOGDBG("trying to merge record...\n");
-        table_merge_result_t result;
-        res = tables_merge_record(_tables, &record, &result);
-        if (res) {
-            _LOGDBG("tables_merge_record failed: %d\n", res);
-            //_print_table();
-        }
-
-        if (!res && (result.updated || result.new)) {
-#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
-            if (sent_by_mate) {
-                tables_put_mate_encounter(_tables, &mate_id, rssi);
+            if (res) {
+                _LOGDBG("cbor_deserialize_record failed: %d\n", res);
+                continue;
             }
-            event_post(EVENT_PRIO_MEDIUM, &eventBleNews);
-            _LOGINF("table updated.\n");
+
+            _LOGDBG("signature length: %d\n", signature_len);
+
+            record_tostr(&record, _recv_record_str_buf,
+                        sizeof(_recv_record_str_buf));
+            _LOGINF("RX %s\n", _recv_record_str_buf);
+
+            const node_id_t *writer_id;
+            get_record_writer_id(&record, &writer_id);
+            if (memcmp(writer_id, &self_node_id, sizeof(node_id_t)) == 0) {
+                _LOGDBG("ignoring received data about this device\n");
+                continue;
+            }
+
+            _LOGDBG("trying to merge record...\n");
+            table_merge_result_t result;
+            res = tables_merge_record(_tables, &record, &result);
+            if (res) {
+                _LOGDBG("tables_merge_record failed: %d\n", res);
+                //_print_table();
+            }
+
+            if (!res && (result.updated || result.new)) {
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+                if (sent_by_mate) {
+                    tables_put_mate_encounter(_tables, &mate_id, rssi);
+                }
+                event_post(EVENT_PRIO_MEDIUM, &eventBleNews);
+                _LOGINF("table updated.\n");
 #endif
-        } else if (result.rejected_sig || result.invalid_record){
-            _LOGINF("Error updating table.\n");
+            } else if (result.rejected_sig || result.invalid_record){
+                _LOGINF("Error updating table.\n");
+            } else {
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+                if (sent_by_mate) {
+                    tables_put_mate_encounter(_tables, &mate_id, rssi);
+                }
+                event_post(EVENT_PRIO_MEDIUM, &eventBleRx);
+#endif
+                _LOGINF("No updates.\n");
+            }
+        } else if (msg_type == MESSAGE_ID_RESPONSE) {
+            _LOGDBG("%d implemented\n", msg_type);
+            signed_identity_t signed_identity;
+            res = cbor_deserialize_id_reqres(pd->buf, pd->buf_len, &signed_identity, &msg_type);
+
+            if (res) {
+                _LOGDBG("cbor_deserialize_id_reqres failed: %d\n", res);
+                continue;
+            }
+
+            uint8_t root_kid[NODE_ID_SIZE] = { 0x00, 0x00, 0x03, 0x00 };
+            res = crypto_service_verify(&crypto_service,
+                                        root_kid, NODE_ID_SIZE,
+                                        signed_identity.cbor_payload, PUBID_LEN,
+                                        signed_identity.signature, PUBID_SIGNATURE_LEN);
+
+            if (res) {
+                _LOGDBG("crypto_service_verify failed: %d\n", res);
+                continue;
+            }
         } else {
-#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
-            if (sent_by_mate) {
-                tables_put_mate_encounter(_tables, &mate_id, rssi);
-            }
-            event_post(EVENT_PRIO_MEDIUM, &eventBleRx);
-#endif
-            _LOGINF("No updates.\n");
+            _LOGDBG("Can't handle message of type %d. Ignoring.\n", msg_type);
         }
     }
     /* never reached */

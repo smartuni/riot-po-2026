@@ -7,7 +7,7 @@
 #define IDENTITY_STORAGE_PATH VFS_DEFAULT_NVM(0) "/identities/"
 #define MAX_IDENTITY_SIZE 256
 
-#define ED25519_KEY_LEN 32
+#define ED25519_KEY_LEN (32)
 #define KID_LEN 4
 #define PUBID_LEN 40
 #define PUBID_SIGNATURE_LEN 80
