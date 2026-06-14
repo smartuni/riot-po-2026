@@ -35,6 +35,8 @@ static const char *ok(bool condition)
 #define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
 #endif
 
+#define MIN_VISIBLE_RSSI -80
+
 extern int credential_manager_setup(const char *db_path);
 extern int tables_setup(tables_context_t **t, const char *db_path);
 extern int storage_setup_ram_mtd(const char *mount_path);
@@ -272,7 +274,7 @@ int main(void) {
     while (1)
     {
         ui_state->visible_gate_cnt = _get_known_gate_count();
-        ui_state->visible_mate_cnt = _get_visible_mate_count(-80);
+        ui_state->visible_mate_cnt = _get_visible_mate_count(MIN_VISIBLE_RSSI);
         ui_state->pending_jobs_cnt = _get_known_gate_count_by_type(RECORD_GATE_JOB);
 
         bool updateui = false;
