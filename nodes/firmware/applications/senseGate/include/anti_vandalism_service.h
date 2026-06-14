@@ -1,15 +1,16 @@
 #pragma once
-#ifndef ANTI_VANDALISM_COM_H
-#define ANTI_VANDALISM_COM_H
+#ifndef ANTI_VANDALISM_SERVICE_H
+#define ANTI_VANDALISM_SERVICE_H
 
 #include "battery_voltage_monitor.h"
 #include "personalization.h"
 #include "mate_lorawan.h"
+
 #include <stdlib.h>
 
 
 
-void do_fun_things(void) {
+void inform_battery_state(void) {
 	//table_query_t* q = (table_query_t*)malloc(sizeof(table_query_t));
 	// q->type = RECORD_BATTERY_MONITOR;
 	// q->writer_id = &self_node_id;
