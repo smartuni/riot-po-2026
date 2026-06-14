@@ -2194,6 +2194,16 @@
 			(embedded_fonts no)
 		)
 	)
+	(text "Inductive Sensor"
+		(exclude_from_sim no)
+		(at 79.756 145.034 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "6bc7e5b3-e8b4-4e42-bf35-60095d0f2604")
+	)
 	(wire
 		(pts
 			(xy 76.2 106.68) (xy 50.8 106.68)
@@ -2435,7 +2445,7 @@
 		(uuid "f80118a4-a7c2-4160-b65e-36fed009616d")
 	)
 	(label "SenseGatePcbCastellations"
-		(at 248.92 63.5 0)
+		(at 154.94 95.25 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2701,6 +2711,91 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:Conn_01x04_Socket")
+		(at 78.74 153.67 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "85a7fcc6-66b1-4a6a-9c87-ed10455cba76")
+		(property "Reference" "J5"
+			(at 76.708 157.48 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "Conn_01x04_Socket"
+			(at 80.772 159.766 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_JST:JST_PH_B4B-PH-K_1x04_P2.00mm_Vertical"
+			(at 78.74 153.67 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 78.74 153.67 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x04, script generated"
+			(at 78.74 153.67 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "3"
+			(uuid "c00cb0d2-621e-4645-990f-281d881b1e05")
+		)
+		(pin "4"
+			(uuid "83d729b1-b7f0-46be-ab70-ff8d1272153f")
+		)
+		(pin "1"
+			(uuid "8c8fce1d-e42a-4845-aa33-a62203b12074")
+		)
+		(pin "2"
+			(uuid "ad7c532c-aa17-42ce-8204-00936b331ea4")
+		)
+		(instances
+			(project "sensegate_pcb"
+				(path "/cab49cbb-a41f-4356-a83b-79a7aa8374de"
+					(reference "J5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "custom_symbols:dd05cvsa_DCDC_Converter")
 		(at 167.64 53.34 0)
 		(unit 1)
@@ -2878,7 +2973,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x24_Pin")
-		(at 262.89 96.52 180)
+		(at 168.91 128.27 180)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -2889,7 +2984,7 @@
 		(fields_autoplaced yes)
 		(uuid "95db3c57-8f06-4f26-875e-0d6bca80ddde")
 		(property "Reference" "J4"
-			(at 264.16 93.9799 0)
+			(at 170.18 125.7299 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2900,7 +2995,7 @@
 			)
 		)
 		(property "Value" "Conn_01x24_Pin"
-			(at 264.16 96.5199 0)
+			(at 170.18 128.2699 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2911,7 +3006,7 @@
 			)
 		)
 		(property "Footprint" "SenseGateLib:SenseMateInterface"
-			(at 262.89 96.52 0)
+			(at 168.91 128.27 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2922,7 +3017,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 262.89 96.52 0)
+			(at 168.91 128.27 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2933,7 +3028,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x24, script generated"
-			(at 262.89 96.52 0)
+			(at 168.91 128.27 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
