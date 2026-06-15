@@ -221,8 +221,10 @@ int main(void){
     int put_cnt = 0;
     int put_err_cnt = 0;
 
-    float shock_threshold = 25.0; // TODO adjust this later
-    shock_detector_t* detector = shock_detector_new(shock_threshold);
+    int shock_threshold = 15000; // TODO adjust this later
+    int sample_size = 2048; // TODO adjust this later
+    int sampling_period_ms = 1;
+    shock_detector_t* detector = shock_detector_new(shock_threshold, sample_size, sampling_period_ms);
     shock_detector_start(detector);
 
     while(1){
