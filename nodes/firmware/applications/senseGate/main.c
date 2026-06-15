@@ -14,7 +14,6 @@
 #include "inductive_sensor.h"
 #include "include/gate_observer.h"
 #include "mtd.h"
-#include "health_monitor.h"
 
 #define LOG_LEVEL   LOG_DEBUG
 #include "log.h"
