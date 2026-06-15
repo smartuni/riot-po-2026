@@ -39,7 +39,7 @@ USEMODULE += event_timeout
 USEMODULE += mate_lorawan
 USEMODULE += mate_ble
 USEMODULE += inductive_sensor
-USEMODULE += battery_voltage_monitor
+USEMODULE += health_monitor
 
 CFLAGS += -DRIOT_CONFIG_DEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
 CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=$(RIOT_CONFIG_DEVICE_TYPE)

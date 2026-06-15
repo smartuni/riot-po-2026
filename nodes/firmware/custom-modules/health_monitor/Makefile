@@ -1,4 +1,4 @@
-MODULE := battery_voltage_monitor
+MODULE := health_monitor
 SRC := $(MODULE).c
 
 include $(RIOTBASE)/Makefile.base

@@ -35,26 +35,32 @@
 #include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 
-
-enum voltage_trend{
+typedef uint8_t voltage_trend;
+enum {
 	INCREASING = 0,
 	DECREASING,
 	STABLE,
 	UNKNOWN
 };
 
-enum battery_status{
+typedef uint8_t battery_status;
+enum {
 	CHARGING = 0,
 	DISCHARGING,
 	DISCHARGING_LOW_BATTERY
 };
 
-typedef struct {
-	enum battery_status status;
-	int voltage_mv;
-} battery_info_payload_t;
+typedef uint8_t shock_status;
+enum {
+	NO_SHOCK = 0,
+	SHOCK_DETECTED
+};
+
+
+
 typedef struct {
 	//Structure for memory alignment and to avoid padding
 	//1. classes, structs, STL containers, arrays
