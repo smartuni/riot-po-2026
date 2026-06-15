@@ -18,11 +18,11 @@ health_monitor_t* health_monitor_new(void) {
 
 int health_monitor_start(health_monitor_t* monitor) {
     //start battery monitoring
-	if (monitor->battery_monitor) {
-		battery_voltage_monitor_start(monitor->battery_monitor);
-	} else {
-		return -1;
-	}
+	// if (monitor->battery_monitor) {
+	// 	battery_voltage_monitor_start(monitor->battery_monitor);
+	// } else {
+	// 	return -1;
+	// }
 
     //start shock detection
 	if (monitor->shock_detector) {
