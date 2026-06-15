@@ -8,6 +8,11 @@ on:
         required: false
         type: boolean
         default: false
+      hil_device:
+        description: Host serial device for the attached HIL board
+        required: false
+        type: string
+        default: /dev/ttyACM0
   push:
     branches:
       - main
@@ -85,6 +90,8 @@ jobs:
 
     env:
       RIOTBUILD_IMAGE: riot/riotbuild:2025.07
+      HIL_HOST_DEVICE: ${{ inputs.hil_device || '/dev/ttyACM0' }}
+      HIL_CONTAINER_DEVICE: /dev/ttyUSB0
 
     steps:
       - name: Checkout repository
@@ -97,7 +104,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          test -e /dev/ttyUSB0
+          test -e "$HIL_HOST_DEVICE"
           test -S /var/run/docker.sock
           docker version
 

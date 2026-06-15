@@ -2,6 +2,7 @@ package com.riot.matesense.controller;
 
 import com.riot.matesense.service.DownlinkCounterService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -37,8 +38,10 @@ public class DownlinkCounterController {
 
     /**
      * A API Call to reset the counter of the Downlink-Counter Entity
+     * Only users with the "controller" role are authorized.
      */
     @PostMapping("/reset")
+    @PreAuthorize("hasRole('controller')")
     public void resetCounter() {
         counterService.resetCounter();
     }

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, request as apiRequest } from '@playwright/test';
 import { BACKEND_URL, CONTROLLER, VIEWER, SEEDED_GATES, apiToken } from './utils';
 
 /**
@@ -10,11 +10,19 @@ import { BACKEND_URL, CONTROLLER, VIEWER, SEEDED_GATES, apiToken } from './utils
  * that breaks the contract fails here.
  */
 test.describe('Backend API', () => {
-  test('login returns a token for seeded accounts', async ({ request }) => {
+  test('login sets HttpOnly jwt and XSRF-TOKEN cookies for seeded accounts', async () => {
     for (const account of [CONTROLLER, VIEWER]) {
-      const response = await request.post(`${BACKEND_URL}/auth/login`, { data: account });
+      // Use a fresh request context per account so cookie state is independent.
+      const ctx = await apiRequest.newContext();
+      const response = await ctx.post(`${BACKEND_URL}/auth/login`, { data: account });
       expect(response.status()).toBe(200);
-      expect((await response.json()).token).toBeTruthy();
+      // Cookie-based auth: login must set HttpOnly jwt + XSRF-TOKEN cookies.
+      const setCookies = response.headersArray()
+        .filter(h => h.name.toLowerCase() === 'set-cookie')
+        .map(h => h.value);
+      expect(setCookies.some(c => c.includes('jwt='))).toBeTruthy();
+      expect(setCookies.some(c => c.includes('XSRF-TOKEN='))).toBeTruthy();
+      await ctx.dispose();
     }
   });
 
@@ -26,11 +34,9 @@ test.describe('Backend API', () => {
     expect((await response.json()).error).toBe('Invalid email or password');
   });
 
-  test('user-details reflects the seeded controller', async ({ request }) => {
-    const token = await apiToken(request, CONTROLLER);
-    const response = await request.get(`${BACKEND_URL}/auth/user-details`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  test('user-details reflects the seeded controller', async () => {
+    const { requestContext } = await apiToken(CONTROLLER);
+    const response = await requestContext.get(`${BACKEND_URL}/auth/user-details`);
 
     expect(response.status()).toBe(200);
     expect(await response.json()).toMatchObject({
@@ -59,10 +65,8 @@ test.describe('Backend API', () => {
     const unauthorized = await request.get(`${BACKEND_URL}/notifications`);
     expect(unauthorized.status()).toBe(401);
 
-    const token = await apiToken(request, CONTROLLER);
-    const response = await request.get(`${BACKEND_URL}/notifications`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const { requestContext } = await apiToken(CONTROLLER);
+    const response = await requestContext.get(`${BACKEND_URL}/notifications`);
     expect(response.status()).toBe(200);
 
     const notifications = await response.json();
