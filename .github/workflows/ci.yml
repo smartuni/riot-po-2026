@@ -17,7 +17,7 @@ on:
     branches:
       - main
       - develop
-      - '**'
+
   pull_request:
 
 jobs:
