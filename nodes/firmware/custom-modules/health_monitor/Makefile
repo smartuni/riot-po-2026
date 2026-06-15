@@ -1,4 +1,4 @@
 MODULE := health_monitor
-SRC := $(MODULE).c
+SRC := $(wildcard $(CURDIR)/*.c)
 
 include $(RIOTBASE)/Makefile.base

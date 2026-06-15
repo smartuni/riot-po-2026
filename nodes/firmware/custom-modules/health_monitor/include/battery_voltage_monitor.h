@@ -59,6 +59,11 @@ enum {
 	SHOCK_DETECTED
 };
 
+typedef struct{
+	battery_status status;
+	int voltage_mv;
+} battery_status_payload_t;
+
 
 
 typedef struct {

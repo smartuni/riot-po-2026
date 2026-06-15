@@ -11,8 +11,7 @@
 
 
 typedef struct {
-	battery_status battery_status;
-	int voltage_mv;
+	battery_status_payload_t status;
 	shock_status shock_status;
 } health_monitor_payload_t;
 
