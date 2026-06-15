@@ -61,8 +61,8 @@ enum {
 
 typedef struct{
 	battery_status_t battery_status;
-	int voltage_mv;
-} battery_info_t;
+	int16_t voltage_mv; 
+} battery_info_t; //1+2 bytes
 
 
 
