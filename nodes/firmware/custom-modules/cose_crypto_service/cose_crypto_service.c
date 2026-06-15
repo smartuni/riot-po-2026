@@ -8,8 +8,9 @@
 
 #include "cose_crypto_service.h"
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
+#include "od.h"
 
 #define ED25519_KEY_LEN (32)
 
@@ -171,6 +172,10 @@ static int _cose_crypto_service_verify(const void *context, const uint8_t *kid,
     if ((size_t)kid_in_signature_len != kid_len ||
         memcmp(kid, kid_in_signature, kid_len) != 0) {
         DEBUG("_cose_crypto_service_verify: key ID does not match the expected ID\n");
+        DEBUG("KID");
+        od_hex_dump(kid, kid_len, 0);
+        DEBUG("KID in sig");
+        od_hex_dump(kid_in_signature, kid_in_signature_len, 0);
         result = -1;
         goto unlock_and_return;
     }

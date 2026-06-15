@@ -15,6 +15,7 @@
 #include "include/gate_observer.h"
 #include "mtd.h"
 
+#include "identity_store.h"
 #define LOG_LEVEL   LOG_DEBUG
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[main]: " __VA_ARGS__)
@@ -139,8 +140,14 @@ static void _table_update_cb(tables_context_t *ctx, const table_record_t *record
 
 int main(void){
     /* Sleep so that we do not miss this message while connecting */
-    ztimer_sleep(ZTIMER_SEC, 3);
+    ztimer_sleep(ZTIMER_SEC, 10);
     puts("[main]: starting");
+
+    int res = identity_store_setup();
+    printf("%d\n", res);
+
+    get_self_node_id(self_node_id, sizeof(self_node_id));
+    od_hex_dump(self_node_id, sizeof(self_node_id), 0);
 
     thread_create(
         shell_stack,
@@ -152,7 +159,7 @@ int main(void){
        "shell"
     );
 
-    int res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
+    res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
     _LOGDBG("storage_setup_ram_mtd: %s\n", ok(res == 0));
 
     res = credential_manager_setup(STORAGE_MOUNT_PATH "/cred");

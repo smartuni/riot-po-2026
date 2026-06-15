@@ -35,7 +35,7 @@ function StatusTablesView() {
      * @type {Array}
      */
     const filteredGates = gates.filter(gate =>
-        (gate.id.toString().includes(search) || gate.location.toLowerCase().includes(search.toLowerCase())) &&
+        (gate.id.toString().includes(search) || (gate.location?.toLowerCase() || '').includes(search.toLowerCase())) &&
         (
             filter === "" ||
             gate.status === filter ||
@@ -122,7 +122,7 @@ function StatusTablesView() {
                                             <span className="coords">{gate.latitude}, {gate.longitude}</span>
                                         </td>
                                         <td>
-                                            <span className={`badge ${gate.status.toLowerCase()}`}>
+                                            <span className={`badge ${gate.status?.toLowerCase()}`}>
                                                 {gate.status === "OPENED"
                                                     ? <LockOpenIcon fontSize="small" />
                                                     : <LockIcon fontSize="small" />

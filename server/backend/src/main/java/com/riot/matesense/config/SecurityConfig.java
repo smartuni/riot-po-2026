@@ -2,30 +2,27 @@ package com.riot.matesense.config;
 
 import jakarta.servlet.http.HttpServletResponse;
 import com.riot.matesense.security.JwtAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
 
-    // Allowed frontend origins. Overridable per profile (e.g. the e2e profile adds
-    // the Vite/Playwright dev server origin) via app.cors.allowed-origins.
-    @Value("${app.cors.allowed-origins:http://localhost:3000}")
-    private List<String> allowedOrigins;
+    @Value("${app.cors.enabled:true}")
+    private boolean corsEnabled;
 
     public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
@@ -34,11 +31,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
+                .cors(cors -> {
+                    if (!corsEnabled) {
+                        cors.disable();
+                    }
+                })
+                .csrf(csrf -> {
+                    CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+                    CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+                    requestHandler.setCsrfRequestAttributeName(null);
+                    csrf.csrfTokenRepository(tokenRepository)
+                        .csrfTokenRequestHandler(requestHandler)
+                        .ignoringRequestMatchers("/auth/login", "/auth/logout");
+                })
                 .authorizeHttpRequests(auth -> auth
                     // .anyRequest().permitAll()
-                    .requestMatchers("/auth/**").permitAll()
+                    .requestMatchers("/auth/login", "/auth/register", "/auth/logout").permitAll()
                     .requestMatchers("/gates").permitAll()
                     .requestMatchers("/gate-activities").permitAll()
                     .requestMatchers("/ws/**").permitAll()
@@ -53,19 +61,6 @@ public class SecurityConfig {
                         })
                 )
                 .build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(allowedOrigins);
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
     }
 
     @Bean

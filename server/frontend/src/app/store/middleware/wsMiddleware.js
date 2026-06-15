@@ -2,9 +2,6 @@ import { Client } from '@stomp/stompjs';
 import { uplinkReceived } from '../slices/gatesSlice';
 import { api } from '../api/api';
 
-export const APP_START = 'ws/APP_START';
-export const APP_STOP = 'ws/APP_STOP';
-
 const INITIAL_RECONNECT_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30000;
 
@@ -141,9 +138,13 @@ function createWsMiddleware() {
   const middleware = (store) => (next) => (action) => {
     const result = next(action);
 
-    if (action.type === APP_START && !clientActive) {
+    if (
+      (action.type === 'auth/setUser' ||
+        action.type === 'auth/initialize/fulfilled') &&
+      !clientActive
+    ) {
       connect(store);
-    } else if (action.type === APP_STOP) {
+    } else if (action.type === 'auth/clearAuth') {
       disconnect();
     }
 

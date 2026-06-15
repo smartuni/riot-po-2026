@@ -15,7 +15,7 @@ VERBOSE_ASSERT ?= 1
 
 # Configrue device id and device type.
 # This will instruct the key-distro module to include required credentials.
-RIOT_CONFIG_DEVICE_ID ?= 1
+RIOT_CONFIG_DEVICE_ID ?= 21
 # Set the device type to SenseMate to configure some device specific behaviors.
 # Dont allow overwrites here, as that would only cause trouble anyway.
 # (the corresponding values are defined in tables/types.h)
@@ -115,6 +115,12 @@ endif
 USEMODULE += tables
 USEMODULE += cose_crypto_service
 USEMODULE += hlc_ztimer
+
+USEMODULE += vfs_default
+USEMODULE += mtd
+USEMODULE += identity_store
+USEMODULE += vfs_util
+
 
 FEATURES_REQUIRED = periph_pwm
 # Change this to 0 show compiler invocation lines by default:

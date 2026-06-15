@@ -236,12 +236,12 @@ if (userData.role === 'controller') {
 ## Cookie Utilities
 
 ```javascript
-import { getCookie, setCookie, eraseCookie } from '../../shared';
+import { getCookie } from '../../shared';
 
 const jwt = getCookie('jwt');       // string | null
-setCookie('jwt', token);             // 7-day default
-setCookie('jwt', token, 14);         // custom days
-eraseCookie('jwt');
+
+// Cookie management uses server-set HttpOnly cookies via login/refresh API
+// Login response includes Set-Cookie header for JWT + XSRF-TOKEN
 ```
 
 ---
