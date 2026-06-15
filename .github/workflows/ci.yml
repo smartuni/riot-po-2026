@@ -17,7 +17,7 @@ on:
     branches:
       - main
       - develop
-      - '**'
+
   pull_request:
 
 jobs:
@@ -74,9 +74,8 @@ jobs:
       - discover-firmware-hardware-tests
     if: >-
       ${{
-        github.event_name == 'workflow_dispatch' &&
-        inputs.run_hardware_tests == true &&
-        needs.discover-firmware-hardware-tests.outputs.tests != '[]'
+              needs.discover-firmware-hardware-tests.outputs.tests != '[]' &&
+              github.event_name == 'workflow_dispatch'
       }}
     runs-on:
       - self-hosted
@@ -109,31 +108,31 @@ jobs:
           test -S /var/run/docker.sock
           docker version
 
-      - name: Run hardware test
+      - name: Run hardware test (Native)
         shell: bash
         env:
           TEST_PATH: ${{ matrix.test.path }}
+          # Wir übergeben den absoluten Pfad zum Board-Helper direkt als Umgebungsvariable
+          BOARD_HELPER: ${{ github.workspace }}/tools/board_helper
         run: |
           set -euo pipefail
-
+      
+          # Verzeichnis für RIOT-Konfigurationen erstellen
           mkdir -p "$RUNNER_TEMP/riot-home"
-
-          docker_args=(
-            --rm
-            --privileged
-            --device "$HIL_HOST_DEVICE:$HIL_CONTAINER_DEVICE"
-            --volume /var/run/docker.sock:/var/run/docker.sock
-            --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
-            --volume "$RUNNER_TEMP:$RUNNER_TEMP"
-            --workdir "$GITHUB_WORKSPACE/$TEST_PATH"
-            --env CI=true
-            --env HOME="$RUNNER_TEMP/riot-home"
-            --user "$(id -u):$(id -g)"
-            --group-add "$(stat -c '%g' /var/run/docker.sock)"
-            --group-add "$(stat -c '%g' "$HIL_HOST_DEVICE")"
-          )
-
-          docker run "${docker_args[@]}" "$RIOTBUILD_IMAGE" bash -lc 'make clean && make all flash && make test'
+          export HOME="$RUNNER_TEMP/riot-home"
+          export CI=true
+      
+          # Board-Helper ausführbar machen
+          chmod +x "$BOARD_HELPER"
+      
+          # In das Zielverzeichnis wechseln
+          cd "$GITHUB_WORKSPACE/$TEST_PATH"
+      
+          # Build-Prozess direkt über Make ausführen
+          make clean
+          make all
+          make flash
+          make test
 
   backend-tests:
     runs-on: ubuntu-latest
@@ -288,3 +287,4 @@ jobs:
       - name: Tear down
         if: always()
         run: docker compose -f server/docker-compose.yml down -v
+
