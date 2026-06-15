@@ -69,17 +69,17 @@ typedef struct{
 typedef struct {
 	//Structure for memory alignment and to avoid padding
 	//1. classes, structs, STL containers, arrays
-	char thread_stack[THREAD_STACKSIZE_DEFAULT];
-	kernel_pid_t thread_pid;
+	// char thread_stack[THREAD_STACKSIZE_DEFAULT];
+	// kernel_pid_t thread_pid;
 	//2. pointers
-	void (*callback)(void);
+	// void (*callback)(void);
 	//3. primitive types (int, double)
 	int threshold_mv;
 	int prev_voltage_mv;
 	//enum battery_status battery_status;
 	//enum voltage_trend last_voltage_trend;
 	//4. bool and char
-	volatile bool running;
+	//volatile bool running;
 } battery_voltage_monitor_t;
 
 
@@ -91,12 +91,8 @@ typedef struct {
  */
 battery_voltage_monitor_t* battery_voltage_monitor_new(int threshold_mv);
 
-/**
- * @brief Starts the battery voltage monitoring
- * @param monitor Pointer to the battery voltage monitor
- * @return 0 on success, -1 on failure
- */
-int battery_voltage_monitor_start(battery_voltage_monitor_t* monitor);
+
+void battery_voltage_monitor_get_info(battery_voltage_monitor_t* monitor, battery_info_t* info);
 
 /**
  * @brief Deletes the battery voltage monitor
