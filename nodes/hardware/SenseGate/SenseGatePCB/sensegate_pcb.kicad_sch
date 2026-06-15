@@ -2829,7 +2829,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "custom_dcdc_converters:DD05CVSA"
 			(at 167.64 53.34 0)
 			(hide yes)
 			(show_name no)
