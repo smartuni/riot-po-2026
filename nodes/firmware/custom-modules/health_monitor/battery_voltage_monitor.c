@@ -75,9 +75,9 @@ static voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const int 
 	return UNKNOWN;
 }
 
-static void publish_payload(battery_status_payload_t* payload) {
+static void publish_payload(battery_info_t* payload) {
 	// TODO report low battery to LoRaWAN
-	printf("Publishing battery info: status=%d, voltage=%d mV\n", payload->status, payload->voltage_mv);
+	printf("Publishing battery info: status=%d, voltage=%d mV\n", payload->battery_status, payload->voltage_mv);
 	return;
 }
 
@@ -92,8 +92,8 @@ static void* battery_voltage_thread(void* monitor_void) {
 		LOG_BATTERY_VOLTAGE("Current battery voltage: %d mV\n", voltage_mv);
 		if (voltage_mv < monitor->threshold_mv) {
 			LOG_BATTERY_VOLTAGE("Battery voltage is below threshold! (%d mV < %d mV)\n", voltage_mv, monitor->threshold_mv);
-			battery_status_payload_t battery_info = {
-				.status = DISCHARGING_LOW_BATTERY,
+			battery_info_t battery_info = {
+				.battery_status = DISCHARGING_LOW_BATTERY,
 				.voltage_mv = voltage_mv
 			};
 			publish_payload(&battery_info);
@@ -103,8 +103,8 @@ static void* battery_voltage_thread(void* monitor_void) {
 			switch (trend) {
 				case INCREASING: {
 					LOG_BATTERY_VOLTAGE("Battery voltage is increasing\n");
-					battery_status_payload_t battery_info = {
-						.status = CHARGING,
+					battery_info_t battery_info = {
+						.battery_status = CHARGING,
 						.voltage_mv = voltage_mv
 					};
 					publish_payload(&battery_info);
@@ -112,8 +112,8 @@ static void* battery_voltage_thread(void* monitor_void) {
 				}
 				case DECREASING: {
 					LOG_BATTERY_VOLTAGE("Battery voltage is decreasing\n");
-					battery_status_payload_t battery_info = {
-						.status = DISCHARGING,
+					battery_info_t battery_info = {
+						.battery_status = DISCHARGING,
 						.voltage_mv = voltage_mv
 					};
 					publish_payload(&battery_info);

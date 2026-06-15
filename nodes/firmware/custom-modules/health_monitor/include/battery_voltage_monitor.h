@@ -46,23 +46,23 @@ enum {
 	UNKNOWN
 };
 
-typedef uint8_t battery_status;
+typedef uint8_t battery_status_t;
 enum {
 	CHARGING = 0,
 	DISCHARGING,
 	DISCHARGING_LOW_BATTERY
 };
 
-typedef uint8_t shock_status;
+typedef uint8_t shock_status_t;
 enum {
 	NO_SHOCK = 0,
 	SHOCK_DETECTED
 };
 
 typedef struct{
-	battery_status status;
+	battery_status_t battery_status;
 	int voltage_mv;
-} battery_status_payload_t;
+} battery_info_t;
 
 
 
