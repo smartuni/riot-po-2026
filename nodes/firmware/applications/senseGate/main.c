@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "shock_detector.h"
+#include "health_monitor.h"
 #include "od.h"
 #include "board.h"
 #include "ztimer.h"
@@ -221,11 +221,12 @@ int main(void){
     int put_cnt = 0;
     int put_err_cnt = 0;
 
-    int shock_threshold = 15000; // TODO adjust this later
-    int sample_size = 2048; // TODO adjust this later
-    int sampling_period_ms = 1;
-    shock_detector_t* detector = shock_detector_new(shock_threshold, sample_size, sampling_period_ms);
-    shock_detector_start(detector);
+   health_monitor_t* monitor = health_monitor_new();
+   if (monitor) {
+       health_monitor_start(monitor);
+   } else {
+       _LOGDBG("Failed to initialize health monitor\n");
+   }
 
     while(1){
         ztimer_sleep(ZTIMER_MSEC,1000);

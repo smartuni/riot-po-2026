@@ -3,6 +3,7 @@
 #define HEALTH_MONITOR_H
 
 #include "battery_voltage_monitor.h"
+#include "shock_detector.h"
 #include "personalization.h"
 #include "mate_lorawan.h"
 
@@ -16,10 +17,11 @@ typedef struct {
 } health_monitor_payload_t;
 
 typedef struct {
-	int placeholder;
+	battery_voltage_monitor_t* battery_monitor;
+	shock_detector_t* shock_detector;
 } health_monitor_t;
 
-health_monitor_t* health_monitor_init(void);
+health_monitor_t* health_monitor_new(void);
 int health_monitor_start(health_monitor_t* monitor);
 int health_monitor_stop(health_monitor_t* monitor);
 
