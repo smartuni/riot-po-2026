@@ -69,11 +69,8 @@ jobs:
       - discover-firmware-hardware-tests
     if: >-
       ${{
-        needs.discover-firmware-hardware-tests.outputs.tests != '[]' &&
-        (
-          github.event_name == 'push' || 
-          (github.event_name == 'workflow_dispatch' && inputs.run_hardware_tests == true)
-        )
+              needs.discover-firmware-hardware-tests.outputs.tests != '[]' &&
+              github.event_name == 'workflow_dispatch'
       }}
     runs-on:
       - self-hosted
