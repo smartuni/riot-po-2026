@@ -4160,7 +4160,7 @@
 	)
 	(wire
 		(pts
-			(xy 146.05 62.23) (xy 154.94 62.23)
+			(xy 151.13 62.23) (xy 154.94 62.23)
 		)
 		(stroke
 			(width 0)
@@ -5098,7 +5098,7 @@
 	)
 	(global_label "VBAT"
 		(shape input)
-		(at 146.05 62.23 180)
+		(at 151.13 62.23 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -5108,7 +5108,7 @@
 		)
 		(uuid "68ba5c0e-e0cb-4d5e-b347-080246f1fc89")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 138.65 62.23 0)
+			(at 143.73 62.23 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6234,86 +6234,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:Conn_01x02_Pin")
-		(at 215.9 33.02 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "2e908e5f-5708-45e4-bb7c-518331a4c593")
-		(property "Reference" "J1"
-			(at 216.535 27.94 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "Conn_01x02_Pin"
-			(at 216.535 30.48 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 215.9 33.02 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 215.9 33.02 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x02, script generated"
-			(at 215.9 33.02 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "ed2fb8ec-7a2f-4347-b053-ccca6edc7ba9")
-		)
-		(pin "2"
-			(uuid "ee9776dc-6514-46da-affe-8d99e79e0e5b")
-		)
-		(instances
-			(project "sensegate_pcb"
-				(path "/cab49cbb-a41f-4356-a83b-79a7aa8374de"
-					(reference "J1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "custom_symbols:mt3608_dcdc_converter")
 		(at 91.44 170.18 0)
 		(unit 1)
@@ -7120,86 +7040,6 @@
 			(project "sensegate_pcb"
 				(path "/cab49cbb-a41f-4356-a83b-79a7aa8374de"
 					(reference "R7")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:Conn_01x02_Socket")
-		(at 234.95 35.56 180)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "8380ad98-7483-41e2-9892-33e501c645db")
-		(property "Reference" "J2"
-			(at 235.585 27.94 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "Conn_01x02_Socket"
-			(at 235.585 30.48 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 234.95 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 234.95 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x02, script generated"
-			(at 234.95 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "fbf1168c-94a9-4100-8efd-e13e666e44b5")
-		)
-		(pin "2"
-			(uuid "29c9292c-de81-4665-82d7-3c3114a03323")
-		)
-		(instances
-			(project "sensegate_pcb"
-				(path "/cab49cbb-a41f-4356-a83b-79a7aa8374de"
-					(reference "J2")
 					(unit 1)
 				)
 			)
