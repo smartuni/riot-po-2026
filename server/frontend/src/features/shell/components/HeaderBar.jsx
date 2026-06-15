@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import '../../../shared/styles/HeaderBar.css';
 import { FiHome, FiUser, FiBell } from 'react-icons/fi';
-import {
-    Button, Badge, CircularProgress
-} from "@mui/material";
+import { Button, Badge } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
 import { NotificationPopup } from '../../notifications';
+import { useAppSelector } from '../../../app/store';
 import {
-    useGetUserDetailsQuery,
     useGetNotificationsByWorkerIdQuery,
 } from '../../../app/store/api/api';
 
@@ -16,10 +14,10 @@ function HeaderBar() {
     const [popupVisible, setPopupVisible] = useState(false);
     const popupRef = useRef();
 
-    const { data: userDetails, isLoading: userLoading, error: userError } = useGetUserDetailsQuery();
+    const userDetails = useAppSelector((state) => state.auth.user);
     const workerId = userDetails?.workerId ?? null;
 
-    const { data: notificationsData, isLoading: notificationsLoading, error: notificationsError } = useGetNotificationsByWorkerIdQuery(workerId, {
+    const { data: notificationsData } = useGetNotificationsByWorkerIdQuery(workerId, {
         skip: !workerId,
     });
 
@@ -39,22 +37,6 @@ function HeaderBar() {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [popupVisible]);
-
-    if (userLoading || notificationsLoading) {
-        return (
-            <div className="header-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60px' }}>
-                <CircularProgress size={24} sx={{ color: 'white' }} />
-            </div>
-        );
-    }
-
-    if (userError || notificationsError) {
-        return (
-            <div className="header-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60px', backgroundColor: '#f44336' }}>
-                <span style={{ color: 'white' }}>Error loading user data</span>
-            </div>
-        );
-    }
 
     const notifications = notificationsData ?? [];
     const numberOfUnreadNotifications = notifications.filter(n => !n.read).length;

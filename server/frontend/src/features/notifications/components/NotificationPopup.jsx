@@ -1,21 +1,21 @@
 import React from 'react';
 import { Typography, Paper, List, ListItemButton, ListItemText, CircularProgress, Alert } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
+import { useAppSelector } from '../../../app/store';
 import {
-    useGetUserDetailsQuery,
     useGetNotificationsByWorkerIdQuery,
     useMarkNotificationAsReadMutation,
 } from '../../../app/store/api/api';
 
 const NotificationPopup = () => {
-    const { data: userDetails, isLoading: userLoading } = useGetUserDetailsQuery();
+    const userDetails = useAppSelector((state) => state.auth.user);
     const workerId = userDetails?.workerId ?? null;
     const { data: notificationsData, isLoading: notificationsLoading, error: notificationsError } = useGetNotificationsByWorkerIdQuery(workerId, {
         skip: !workerId,
     });
     const [markAsRead] = useMarkNotificationAsReadMutation();
 
-    if (userLoading || notificationsLoading) {
+    if (notificationsLoading) {
         return (
             <Paper
                 elevation={6}

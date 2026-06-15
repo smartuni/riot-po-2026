@@ -47,4 +47,18 @@ test.describe('Authentication', () => {
     await expect(page.getByText('Invalid email or password')).toBeVisible();
     await expect(page).toHaveURL(/\/login$/);
   });
+
+  test('page refresh with valid HttpOnly cookie restores session (auto-login)', async ({ page }) => {
+    // Log in first to establish the cookie
+    await login(page, CONTROLLER);
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expectLoaded(page);
+
+    // Reload the page — the HttpOnly jwt cookie should still be present,
+    // initializeAuth() should pick it up, and the user stays authenticated.
+    await page.reload();
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByRole('heading', { name: 'Flood Gates' })).toBeVisible();
+    await expectLoaded(page);
+  });
 });

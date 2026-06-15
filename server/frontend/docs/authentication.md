@@ -2,149 +2,117 @@
 
 ## Overview
 
-Authentication uses **JWT tokens** stored in browser cookies for session persistence. Each component manages its own auth state by reading the JWT cookie and calling the backend directly via the shared `apiClient`. There is no global auth context — this will be addressed in a future issue (#9).
+Authentication uses **JWT tokens** stored in **HttpOnly cookies** set by the Spring Boot backend. The frontend uses **RTK Query** for all API calls and **Redux** (`authSlice`) for centralized auth state. Route-level guards (`ProtectedRoute`, `PublicOnlyRoute`) enforce access control.
 
 ## Flow Diagram
 
 ```mermaid
 sequenceDiagram
-    participant Browser as Browser Cookies
-    participant Page as Page Component
+    participant Browser
+    participant Redux as Redux Store (authSlice)
+    participant RTK as RTK Query (api.js)
     participant Backend as Spring Boot
-    
-    Note over Browser,Page: Page mounts
-    Page->>Browser: Check for jwt cookie
-    
-    alt Cookie found
-        Page->>Page: Set Axios Authorization header
-        Page->>Backend: GET /auth/user-details
-        Backend-->>Page: User data + 200
-    else No cookie or invalid
-        Page->>Page: Show AlertDialogIllegal
+
+    Note over Browser,Redux: App mounts
+    Redux->>RTK: dispatch(initializeAuth())
+    RTK->>Backend: GET /api/auth/user-details (credentials: include, X-XSRF-TOKEN)
+    alt Valid session cookie
+        Backend-->>RTK: User data + 200
+        RTK-->>Redux: fulfilled → status: authenticated, user: {name, email, role, workerId}
+    else No cookie or expired
+        Backend-->>RTK: 401
+        RTK-->>Redux: rejected → status: unauthenticated
     end
-    
-    Note over Browser,Page: User logs in
-    Page->>Backend: POST /auth/login
-    Backend-->>Page: JWT token
-    Page->>Browser: Store jwt cookie (7 days)
-    Page->>Page: Set Axios Authorization header
-    Page->>Backend: GET /auth/user-details
-    Backend-->>Page: User data → redirect by role
+
+    Note over Browser,Backend: User logs in
+    Browser->>RTK: useLoginMutation({email, password})
+    RTK->>Backend: POST /api/auth/login
+    Backend-->>Browser: Set-Cookie: jwt=<token>; HttpOnly; SameSite=Lax; Max-Age=36000
+    Backend-->>RTK: UserDetailsResponse {name, email, role, workerId}
+    RTK-->>Redux: dispatch(auth/setUser)
+    Browser->>Browser: Navigate by role (controller → /dashboard, viewer → /dashboard-view)
+
+    Note over Browser,Backend: User logs out
+    Browser->>RTK: useLogoutMutation()
+    RTK->>Backend: POST /api/auth/logout
+    Backend-->>Browser: Set-Cookie: jwt=""; Max-Age=0
+    RTK-->>Redux: dispatch(auth/clearAuth)
+    Browser->>Browser: Navigate to /
 ```
 
 ## Session Persistence
 
-1. **On login**: The JWT token is stored in both:
-   - A browser cookie (`jwt`, 7-day expiry, `SameSite=Lax`, path=`/`)
-   - An Axios default header: `Authorization: Bearer <token>`
+1. **On login/register**: Backend sets an `HttpOnly` cookie (`jwt`, 10-hour expiry, `SameSite=Lax`, path=`/`). The response body contains a `UserDetailsResponse` which the frontend stores in Redux.
 
-2. **On page load**: Protected pages check for the `jwt` cookie:
-   - If found → sets Axios header → calls `GET /auth/user-details` to validate
-   - If valid → renders the page
-   - If invalid/expired → shows `AlertDialogIllegal` and redirects to `/`
+2. **On app load**: `App.jsx` dispatches `initializeAuth()`, which calls `GET /api/auth/user-details` via `fetchBaseQuery` (same CSRF + credentials setup as RTK Query). If the cookie is valid, the user is authenticated without re-entering credentials.
 
-3. **On logout**: 
-   - Calls `POST /auth/logout`
-   - Deletes the Axios Authorization header
-   - Erases the `jwt` cookie (inline, via `document.cookie`)
-   - Navigates to `/`
+3. **On logout**: `useLogoutMutation` calls `POST /api/auth/logout`. On success, the backend clears the cookie and the frontend dispatches `auth/clearAuth`. On failure, auth state is preserved so the user can retry.
 
-## Auth Guard in Protected Pages
+## Route Guards
 
-Protected pages (Dashboard, DashboardView) validate auth imperatively on mount:
+### ProtectedRoute
+Wraps routes that require authentication and optionally a specific role:
+- While `auth.status === 'loading'` → shows `CircularProgress`
+- If `unauthenticated` → redirects to `/login`
+- If role doesn't match → redirects to `/`
 
-```javascript
-const [popupOpen, setPopupOpen] = useState(false);
+### PublicOnlyRoute
+Wraps routes that should only be visible to unauthenticated users (login, register):
+- If `authenticated` → redirects to role-appropriate dashboard
+- If `unauthenticated` → renders the child route
 
-// Read JWT cookie and set header
-var jwt = getCookie("jwt");
-if (jwt != null) {
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${jwt}`;
-}
-
-// Validate session with backend
-const loadDetails = async () => {
-    try {
-        const response = await apiClient.get('/auth/user-details');
-        if (response.status !== 200) {
-            throw new Error('Request failed');
-        }
-    } catch (e) {
-        setPopupOpen(true); // Show AlertDialogIllegal
-    }
-};
-
-useEffect(() => { loadDetails(); }, []);
-```
-
-## Role-Based Authorization
-
-The backend returns a `role` field in the user details. Role routing is handled at login:
+## Redux State (authSlice)
 
 ```javascript
-// In LoginPage — determines redirect after successful login
-if (userResponse.data.role === 'controller') {
-    navigate('/dashboard');
-} else {
-    navigate('/dashboard-view');
+{
+  user: { name, email, role, workerId } | null,
+  status: 'loading' | 'authenticated' | 'unauthenticated',
+  error: string | null
 }
 ```
 
-## Worker ID Access
+Actions: `setUser`, `clearAuth`, `setAuthError`
+Thunk: `initializeAuth` (called on app mount)
 
-Components that need the `workerId` call the API directly:
+## RTK Query Auth Endpoints (api.js)
 
-```javascript
-import { loadWorkerId } from '../features/auth';
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `login` | POST `/api/auth/login` | Authenticates user, sets cookie |
+| `register` | POST `/api/auth/register` | Creates account, sets cookie |
+| `getUserDetails` | GET `/api/auth/user-details` | Returns current user (tag: `Auth`) |
+| `updateUserDetails` | PUT `/api/auth/user-change` | Updates name/password |
+| `logout` | POST `/api/auth/logout` | Clears session, expires cookie |
 
-const [workerId, setWorkerId] = useState(null);
+## CSRF Protection
 
-useEffect(() => {
-    loadWorkerId().then(id => setWorkerId(id)).catch(e => console.error(e));
-}, []);
-```
+CSRF tokens are handled by Spring's `CookieCsrfTokenRepository`:
+- Backend sets a JS-readable `XSRF-TOKEN` cookie
+- RTK Query's `prepareHeaders` reads it via `getCookie('XSRF-TOKEN')` and sets the `X-XSRF-TOKEN` header on every request
+- `initializeAuth` uses the same `fetchBaseQuery` config, so CSRF is included on app init too
 
-## Cookie Utilities
+## Cookie Configuration
 
-Located in `src/shared/utils/cookie.js`:
+All cookies are set by the backend with:
+- `HttpOnly=true` (JS cannot read `jwt` cookie)
+- `SameSite=Lax`
+- `Secure` = `${app.cookie.secure}` (true in production)
+- `Path=/`
 
-| Function | Description |
-|---|---|
-| `getCookie(name)` | Reads a cookie value by name from `document.cookie` |
-| `setCookie(name, value, days)` | Sets a cookie with expiry in days |
-| `eraseCookie(name)` | Removes a cookie by setting `Max-Age=0` |
-
-## API Client Configuration
-
-```javascript
-// src/shared/api/apiClient.js
-import axios from 'axios';
-
-const apiClient = axios.create({
-  baseURL: 'http://localhost:8080',
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-});
-```
-
-The Authorization header is set inline by pages after login or cookie restoration:
-
-```javascript
-apiClient.defaults.headers.common['Authorization'] = 'Bearer ' + token;
-```
+| Endpoint | Cookie | Max-Age |
+|----------|--------|---------|
+| `/auth/login` | `jwt=<token>` | 36000s (10h) |
+| `/auth/register` | `jwt=<token>` | 36000s (10h) |
+| `/auth/logout` | `jwt=""` | 0 (delete) |
 
 ## Security Considerations
 
-> ⚠️ **Known security notes in the codebase:**
+1. **JWT cookie is `HttpOnly`** — not accessible via JavaScript, mitigating XSS token theft. The `XSRF-TOKEN` cookie is intentionally `HttpOnly=false` so the frontend can read it for CSRF headers.
 
-1. **JWT cookie is not `HttpOnly`** — the frontend reads it via JavaScript (`document.cookie`), making it accessible to XSS attacks. `HttpOnly` would prevent JS access, requiring a different token management strategy.
+2. **CSRF protection enabled** — double-submit cookie pattern via `X-XSRF-TOKEN` header on all mutating requests.
 
-2. **No CSRF protection** — cookies use `SameSite=Lax`, which provides some CSRF protection but is not a complete solution.
+3. **In-memory token store** — the backend tracks issued tokens in a `ConcurrentHashMap`. Sessions are lost on server restart and this does not scale horizontally.
 
-3. **Hardcoded admin password** — the downlink counter reset password (`"secret123"`) is embedded in the frontend source code in `StatusTables.jsx`.
+4. **No token refresh** — when the 10-hour JWT expires, the user must log in again.
 
-4. **No token refresh mechanism** — when the JWT expires, the user must log in again. There is no silent token refresh.
-
-5. **No centralized auth state** — each page manages auth independently. A proper auth context with router-level guards is planned as issue #9.
+5. **Hardcoded downlink counter password** — `"secret123"` in `StatusTables.jsx` source code.

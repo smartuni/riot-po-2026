@@ -1,19 +1,30 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { setCookie, eraseCookie } from '../../../shared/utils/cookie';
+import { getCookie } from '../../../shared/utils/cookie';
+
+const rawBaseQuery = fetchBaseQuery({
+  baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+  credentials: 'include',
+  prepareHeaders: (headers) => {
+    const csrfToken = getCookie('XSRF-TOKEN');
+    if (csrfToken) {
+      headers.set('X-XSRF-TOKEN', csrfToken);
+    }
+    headers.set('Content-Type', 'application/json');
+    return headers;
+  },
+});
+
+const baseQueryWithReauth = async (args, api, extraOptions) => {
+  const result = await rawBaseQuery(args, api, extraOptions);
+  if (result.error?.status === 401) {
+    api.dispatch({ type: 'auth/clearAuth' });
+  }
+  return result;
+};
 
 export const api = createApi({
   reducerPath: 'api',
-  baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
-    prepareHeaders: (headers, { getState }) => {
-      const token = getState()?.auth?.token;
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      headers.set('Content-Type', 'application/json');
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: ['Gate', 'Activity', 'Notification', 'Auth'],
   endpoints: (builder) => ({
     // ── Auth ──────────────────────────────────────────────
@@ -23,18 +34,6 @@ export const api = createApi({
         method: 'POST',
         body: credentials,
       }),
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        // Catch the rejection on failed login: the component handles the error
-        // via the hook, and an unhandled queryFulfilled rejection here surfaces
-        // as an uncaught "Object" error on the page.
-        try {
-          const { data } = await queryFulfilled;
-          dispatch({ type: 'auth/setToken', payload: data.token });
-          setCookie('jwt', data.token);
-        } catch {
-          // Login failed — nothing to persist; the UI shows the error dialog.
-        }
-      },
     }),
     register: builder.mutation({
       query: (registrationData) => ({
@@ -42,15 +41,6 @@ export const api = createApi({
         method: 'POST',
         body: registrationData,
       }),
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        try {
-          const { data } = await queryFulfilled;
-          dispatch({ type: 'auth/setToken', payload: data.token });
-          setCookie('jwt', data.token);
-        } catch {
-          // Registration failed — nothing to persist; the UI shows the error.
-        }
-      },
     }),
     getUserDetails: builder.query({
       query: () => '/api/auth/user-details',
@@ -70,14 +60,11 @@ export const api = createApi({
         method: 'POST',
       }),
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        // Clear client auth state regardless of whether the server call
-        // succeeds — a failed logout request must still log the user out
-        // locally, otherwise the stale token keeps protected pages rendering.
         try {
           await queryFulfilled;
-        } finally {
-          dispatch({ type: 'auth/clearToken' });
-          eraseCookie('jwt');
+          dispatch({ type: 'auth/clearAuth' });
+        } catch {
+          // Logout request failed — do not clear auth, user is still logged in
         }
       },
     }),
@@ -191,8 +178,6 @@ export const api = createApi({
 export const {
   useLoginMutation,
   useRegisterMutation,
-  useGetUserDetailsQuery,
-  useLazyGetUserDetailsQuery,
   useUpdateUserDetailsMutation,
   useLogoutMutation,
   useGetGatesQuery,
