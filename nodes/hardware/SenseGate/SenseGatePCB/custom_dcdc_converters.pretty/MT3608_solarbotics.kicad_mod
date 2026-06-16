@@ -7,7 +7,7 @@
 		(at 0 -0.5 0)
 		(unlocked yes)
 		(layer "F.SilkS")
-		(uuid "62b3d5b5-97e9-4ea7-82f7-f43dce5e10ba")
+		(uuid "f4bc69ad-598d-4c8d-9aa5-79e103109073")
 		(effects
 			(font
 				(size 1 1)
@@ -19,7 +19,7 @@
 		(at 0 1 0)
 		(unlocked yes)
 		(layer "F.Fab")
-		(uuid "53f93e88-612a-4147-ab46-b5cdcddd8897")
+		(uuid "6824f6e0-8c98-4683-a53c-42376b27f07c")
 		(effects
 			(font
 				(size 1 1)
@@ -32,7 +32,7 @@
 		(unlocked yes)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "a36fbd3e-147f-4731-8f0f-c853ba4e12ee")
+		(uuid "45dd0594-8c8b-4afb-8435-1bc3d699bd61")
 		(effects
 			(font
 				(size 1 1)
@@ -45,7 +45,7 @@
 		(unlocked yes)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "818c3a51-3e7a-48fa-87ef-491f55b40c30")
+		(uuid "c6b3e645-b112-4cc5-b8b9-91bb551f4cdc")
 		(effects
 			(font
 				(size 1 1)
@@ -53,7 +53,7 @@
 			)
 		)
 	)
-	(attr smd)
+	(attr through_hole)
 	(duplicate_pad_numbers_are_jumpers no)
 	(fp_rect
 		(start -18.568647 -8.55958)
@@ -64,13 +64,13 @@
 		)
 		(fill no)
 		(layer "F.SilkS")
-		(uuid "fc8793cd-7e39-4c9c-a023-56ff6fd91d66")
+		(uuid "0b3ef739-32e7-4810-8955-76cb979460ff")
 	)
 	(fp_text user "${REFERENCE}"
 		(at 0 2.5 0)
 		(unlocked yes)
 		(layer "F.Fab")
-		(uuid "0fde69ec-354b-47a9-8342-20f021139711")
+		(uuid "25cc92b7-edee-42fa-8f87-c6e4d72fc9ad")
 		(effects
 			(font
 				(size 1 1)
@@ -84,7 +84,7 @@
 		(drill 2.25)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "a7cf7d9e-3326-4e52-a705-627100109d75")
+		(uuid "6c5d8416-feaf-4815-b184-0bccff17db22")
 	)
 	(pad "2" thru_hole rect
 		(at -15.925 3.95)
@@ -92,7 +92,7 @@
 		(drill 2.25)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "1bbf0355-232c-4e18-b802-0d5f9ed13f67")
+		(uuid "03497afc-0c5e-4dff-b00e-d9a5bbbc8323")
 	)
 	(pad "3" thru_hole rect
 		(at 16 -3.925)
@@ -100,7 +100,7 @@
 		(drill 2.25)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "62bbbeea-8119-4abf-97e4-4698838d85ef")
+		(uuid "f54bc63a-aa71-4882-95f2-eeb5cfeb5d51")
 	)
 	(pad "4" thru_hole rect
 		(at 16 3.95)
@@ -108,7 +108,7 @@
 		(drill 2.25)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "971bcd91-634d-4348-a8c9-162b9bc130ac")
+		(uuid "a92729dd-8744-485d-873f-3a705ea3720a")
 	)
 	(embedded_fonts no)
 )
