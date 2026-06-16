@@ -6534,7 +6534,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_THT:CP_Axial_L10.0mm_D6.0mm_P15.00mm_Horizontal"
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 168.6052 53.34 0)
 			(hide yes)
 			(show_name no)
@@ -8077,7 +8077,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_THT:CP_Axial_L10.0mm_D6.0mm_P15.00mm_Horizontal"
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 186.3852 104.14 0)
 			(hide yes)
 			(show_name no)
