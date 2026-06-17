@@ -1,0 +1,18 @@
+# Development Docker Compose override
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Differences from production compose:
+#   - CORS disabled (app.cors.enabled=false) for easy local frontend dev
+#   - Cookie Secure flag off (HTTP locally)
+#   - Backend runs with dev profile (debug logging, stack traces)
+
+services:
+  backend:
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB:-matesense}
+      - DB_USERNAME=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+

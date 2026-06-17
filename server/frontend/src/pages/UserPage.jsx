@@ -1,7 +1,8 @@
 import { Button, Grid, Box, TextField } from "@mui/material";
 import { HeaderBar } from '../features/shell';
 import { LogoutButton } from "../features/auth";
-import { useGetUserDetailsQuery, useUpdateUserDetailsMutation } from '../app/store/api/api';
+import { useAppSelector } from '../app/store';
+import { useUpdateUserDetailsMutation } from '../app/store/api/api';
 import { useNavigate } from "react-router-dom";
 import { FiRotateCcw, FiUser } from "react-icons/fi";
 import { useState, useEffect, useRef } from "react";
@@ -9,7 +10,7 @@ import { AlertDialog } from "../shared";
 
 const UserPage = () => {
     const navigate = useNavigate();
-    const { data: userDetails } = useGetUserDetailsQuery();
+    const userDetails = useAppSelector((state) => state.auth.user);
     const [updateUserDetails, { isLoading: isUpdateLoading }] = useUpdateUserDetailsMutation();
     const [username, setUsername] = useState('');
     const [displayName, setDisplayName] = useState('');
