@@ -115,8 +115,12 @@ int read_private_identity(uint8_t *buffer, size_t buffer_size) {
 int write_public_identity(const uint8_t *signed_id, size_t signed_id_len, const uint8_t *signature, size_t signature_len) {
     char path[] = IDENTITY_STORAGE_PATH "self/self.pubid";
 
-    od_hex_dump(signed_id, signed_id_len, 0);
-    od_hex_dump(signature, signature_len, 0);
+    if (LOG_LEVEL == LOG_DEBUG) {
+        LOG_DEBUG("write_public_identity: signed id\n");
+        od_hex_dump(signed_id, signed_id_len, 0);
+        LOG_DEBUG("write_public_identity: signed id signature\n");
+        od_hex_dump(signature, signature_len, 0);
+    }
 
     uint8_t buffer[256];
     CborEncoder encoder;
@@ -329,6 +333,11 @@ int get_self_signed_pubid(signed_identity_t *signed_identity) {
         printf("Not a byte string\n");
     }
     cbor_value_get_string_length(&it, &length);
+    if (length != PUBID_LEN) {
+        LOG_DEBUG("get_self_signed_pubid: wrong signed pubid length."
+              " Got %zu, expected %d\n", length, PUBID_LEN);
+        return -1;
+    }
     cbor_value_copy_byte_string(&it, signed_identity->cbor_payload, &length, &it);
 
     type = cbor_value_get_type(&it);
@@ -336,6 +345,11 @@ int get_self_signed_pubid(signed_identity_t *signed_identity) {
         printf("Not a byte string\n");
     }
     cbor_value_get_string_length(&it, &length);
+    if (length != PUBID_SIGNATURE_LEN) {
+        LOG_DEBUG("get_self_signed_pubid: wrong signed pubid signature length."
+              " Got %zu, expected %d\n", length, PUBID_SIGNATURE_LEN);
+        return -1;
+    }
     cbor_value_copy_byte_string(&it, signed_identity->signature, &length, &it);
 
     return 0;
@@ -434,12 +448,12 @@ int identity_store_setup(void) {
         || !vfs_file_exists(IDENTITY_STORAGE_PATH "self/self.pubid")
         || !vfs_file_exists(IDENTITY_STORAGE_PATH "self/self.prvid")
     ) {
-        char buffer[512];
         printf("paste provision base64 now\n");
-        fgets(buffer, 512, stdin);
+        char buffer[] = "hkQAAAMAWCAvWQIEcAaDWes2dNePTDraLnQ/mwwe5F4K/Rit5bwN3UQAAAACWCBuy/Dk4eFCbSZmGReqNdKYQd23jjSaU1uN9FwgaslpQVgogkQAAAACWCDko9ueo8FMa7rWVszWZg9dml43p8BmrbFhzLATL5u9CFhQ0oRJogEnBEQAAAMAoPZYQHR0P4dWcDU9LphEJ1ikh6kWfaBqtxNBZDNjZ0BtfjTpHH2JPl1Q8XP5N2d1M+K4ofO4IKTExa1aJQi6GAuH9g4=";
         size_t decoded_buffer_size = 2 * base64_estimate_decode_size(strlen(buffer));
         uint8_t decoded_buffer[decoded_buffer_size];
-        int res = base64_decode(buffer, sizeof(buffer), decoded_buffer, &decoded_buffer_size);
+        LOG_DEBUG("identity_store_setup: decoded_buffer_size set to %d\n", decoded_buffer_size);
+        int res = base64_decode(buffer, strlen(buffer), decoded_buffer, &decoded_buffer_size);
         if(res != BASE64_SUCCESS) {
             printf("base64 decode failed: %d\n", res);
         }
