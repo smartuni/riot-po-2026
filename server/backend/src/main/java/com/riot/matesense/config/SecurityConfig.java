@@ -42,7 +42,7 @@ public class SecurityConfig {
                     requestHandler.setCsrfRequestAttributeName(null);
                     csrf.csrfTokenRepository(tokenRepository)
                         .csrfTokenRequestHandler(requestHandler)
-                        .ignoringRequestMatchers("/auth/login", "/auth/logout");
+                        .ignoringRequestMatchers("/auth/login", "/auth/logout", "/e2e/**");
                 })
                 .authorizeHttpRequests(auth -> auth
                     // .anyRequest().permitAll()
