@@ -66,7 +66,7 @@ const confirmationIndicator = (stateConfirmation) => {
         case "WORKER_CONFIRMED_SINGLE": return { label: "✓", color: "var(--blue-600)" };
         case "WORKER_CONFIRMED_MULTI":
         case "WORKER_CONFIRMED_ALL": return { label: "✓✓", color: "var(--green-600)" };
-        default: return { label: "●", color: "var(--slate-400)" };
+        default: return null;  // unknown → no bubble (same as UNCONFIRMED)
     }
 };
 
