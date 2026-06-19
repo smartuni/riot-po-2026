@@ -35,15 +35,22 @@
 
   --bg: #ffffff;
   --bg-card: #ffffff;
-  --bg-sidebar: #0f172a;
-  --bg-sidebar-hover: rgba(59, 130, 246, 0.08);
-  --bg-sidebar-active: rgba(59, 130, 246, 0.12);
+  --bg-sidebar: #f1f5f9;
+  --bg-sidebar-hover: rgba(59, 130, 246, 0.06);
+  --bg-sidebar-active: rgba(59, 130, 246, 0.1);
+  --sidebar-divider: #e2e8f0;
+  --sidebar-logo-text: #0f172a;
+  --sidebar-user-text: #0f172a;
+  --sidebar-hover-text: #1e293b;
+  --sidebar-logout-border: var(--border);
+  --sidebar-logout-hover-bg: rgba(59, 130, 246, 0.08);
+  --sidebar-logout-hover-text: #1e293b;
   --border: #e2e8f0;
   --border-focus: #3b82f6;
   --text: #0f172a;
   --text-secondary: #64748b;
-  --text-sidebar: #94a3b8;
-  --text-sidebar-active: #ffffff;
+  --text-sidebar: #475569;
+  --text-sidebar-active: #1e293b;
   --accent: #3b82f6;
   --accent-hover: #2563eb;
   --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
@@ -56,6 +63,13 @@ body.dark {
   --bg-sidebar: #0c1425;
   --bg-sidebar-hover: rgba(59, 130, 246, 0.1);
   --bg-sidebar-active: rgba(59, 130, 246, 0.15);
+  --sidebar-divider: rgba(255,255,255,0.06);
+  --sidebar-logo-text: #ffffff;
+  --sidebar-user-text: #ffffff;
+  --sidebar-hover-text: #cbd5e1;
+  --sidebar-logout-border: rgba(255,255,255,0.1);
+  --sidebar-logout-hover-bg: rgba(255,255,255,0.08);
+  --sidebar-logout-hover-text: #ffffff;
   --border: #334155;
   --border-focus: #60a5fa;
   --text: #f1f5f9;
@@ -106,7 +120,7 @@ img { max-width: 100%; }
   align-items: center;
   gap: 12px;
   padding: 20px 20px 24px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--sidebar-divider);
 }
 .sidebar.collapsed .sidebar-logo { padding: 20px 0; justify-content: center; }
 .logo-icon {
@@ -117,7 +131,7 @@ img { max-width: 100%; }
   color: #fff; font-weight: 800; font-size: 14px; flex-shrink: 0;
 }
 .logo-text {
-  font-size: 16px; font-weight: 700; color: #fff;
+  font-size: 16px; font-weight: 700; color: var(--sidebar-logo-text);
   white-space: nowrap; overflow: hidden;
   transition: opacity 0.15s;
 }
@@ -134,7 +148,7 @@ img { max-width: 100%; }
   position: relative;
   white-space: nowrap;
 }
-.nav-item:hover { background: var(--bg-sidebar-hover); color: #cbd5e1; }
+.nav-item:hover { background: var(--bg-sidebar-hover); color: var(--sidebar-hover-text); }
 .nav-item.active {
   background: var(--bg-sidebar-active);
   color: var(--text-sidebar-active);
@@ -159,7 +173,7 @@ img { max-width: 100%; }
 
 .sidebar-user {
   padding: 16px 20px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--sidebar-divider);
   display: flex; align-items: center; gap: 12px;
 }
 .sidebar.collapsed .sidebar-user { justify-content: center; padding: 16px 0; }
@@ -170,7 +184,7 @@ img { max-width: 100%; }
   color: #fff; font-weight: 700; font-size: 13px; flex-shrink: 0;
 }
 .user-info { overflow: hidden; }
-.user-name { font-size: 14px; font-weight: 600; color: #fff; white-space: nowrap; }
+.user-name { font-size: 14px; font-weight: 600; color: var(--sidebar-user-text); white-space: nowrap; }
 .user-role {
   font-size: 11px; font-weight: 600; color: var(--blue-400);
   background: rgba(59,130,246,0.15); padding: 1px 6px;
@@ -178,8 +192,8 @@ img { max-width: 100%; }
 }
 .sidebar.collapsed .user-info { display: none; }
 .sidebar-logout { margin-left: auto; }
-.sidebar-logout .MuiButton-root { min-width: unset; width: auto; height: auto; padding: 6px 12px; font-size: 13px; color: var(--text-sidebar) !important; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; }
-.sidebar-logout .MuiButton-root:hover { background: rgba(255,255,255,0.08) !important; color: #fff !important; }
+.sidebar-logout .MuiButton-root { min-width: unset; width: auto; height: auto; padding: 6px 12px; font-size: 13px; color: var(--text-sidebar) !important; background: transparent; border: 1px solid var(--sidebar-logout-border); border-radius: 6px; }
+.sidebar-logout .MuiButton-root:hover { background: var(--sidebar-logout-hover-bg) !important; color: var(--sidebar-logout-hover-text) !important; }
 .sidebar.collapsed .sidebar-logout { display: none; }
 
 /* ===== Main Area ===== */
