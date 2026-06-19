@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import AppLayout from '../features/shell/components/AppLayout';
 import { useGetActivitiesQuery } from '../app/store/api/api';
-import '../shared/styles/theme.css';
 
 const getDotClass = (type) => {
   switch (type) {

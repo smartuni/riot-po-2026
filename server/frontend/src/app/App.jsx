@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { store, useAppDispatch } from './store';
+import { store, useAppDispatch, useAppSelector } from './store';
 import { initializeAuth } from './store/slices/authSlice';
 import { ProtectedRoute, PublicOnlyRoute } from '../features/auth';
 import LandingPage from '../pages/LandingPage';
@@ -19,14 +19,18 @@ import SettingsPage from '../pages/SettingsPage';
 function AppContent() {
   const dispatch = useAppDispatch();
 
+  const darkMode = useAppSelector((state) => state.ui.darkMode);
+
   useEffect(() => {
     dispatch(initializeAuth());
-    // Initialize dark mode from localStorage
-    const saved = localStorage.getItem('sensemante-dark');
-    if (saved === 'true' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.body.classList.add('dark');
-    }
   }, [dispatch]);
+
+  useEffect(() => {
+    document.body.classList.toggle('dark', darkMode);
+    try {
+      sessionStorage.setItem('sensemante-dark', darkMode);
+    } catch { /* ignore */ }
+  }, [darkMode]);
 
   return (
     <BrowserRouter>

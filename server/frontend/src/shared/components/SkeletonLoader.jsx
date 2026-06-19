@@ -1,5 +1,4 @@
 import React from 'react';
-import '../styles/theme.css';
 
 export function SkeletonLine({ width = '90%', className = '' }) {
   return <div className={`skeleton-line ${className}`.trim()} style={{ width }} />;

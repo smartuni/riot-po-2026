@@ -1,20 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../app/store';
+import { toggleDarkMode } from '../../app/store/slices/uiSlice';
 
 export default function DarkModeToggle() {
-  const [isDark, setIsDark] = useState(() => {
-    return document.body.classList.contains('dark');
-  });
-
-  useEffect(() => {
-    document.body.classList.toggle('dark', isDark);
-    localStorage.setItem('sensemante-dark', isDark);
-  }, [isDark]);
+  const isDark = useAppSelector((state) => state.ui.darkMode);
+  const dispatch = useAppDispatch();
 
   return (
     <button
       className="topbar-btn dark-toggle"
       title="Toggle dark mode"
-      onClick={() => setIsDark(!isDark)}
+      onClick={() => dispatch(toggleDarkMode())}
       type="button"
     >
       {isDark ? '☀️' : '🌙'}

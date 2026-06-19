@@ -6,10 +6,18 @@
   <link rel="icon" href="/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#000000" />
-  <meta name="description" content="Web site created using create-react-app" />
+  <meta name="description" content="SenseMate — Smart flood gate monitoring and control" />
   <link rel="apple-touch-icon" href="/logo192.png" />
   <link rel="manifest" href="/manifest.json" />
-  <title>React App</title>
+  <title>SenseMate</title>
+  <script>
+    (function () {
+      var saved = sessionStorage.getItem('sensemante-dark');
+      if (saved === 'true' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.body.classList.add('dark');
+      }
+    })();
+  </script>
 </head>
 
 <body>

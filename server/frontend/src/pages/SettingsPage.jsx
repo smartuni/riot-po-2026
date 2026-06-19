@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AppLayout from '../features/shell/components/AppLayout';
-import { useAppSelector } from '../app/store';
+import { useAppSelector, useAppDispatch } from '../app/store';
+import { setDarkMode } from '../app/store/slices/uiSlice';
 import {
   useUpdateUserDetailsMutation,
 } from '../app/store/api/api';
@@ -8,22 +9,19 @@ import {
 const SettingsPage = () => {
   const user = useAppSelector((state) => state.auth.user);
   const isLoading = useAppSelector((state) => state.auth.status === 'loading');
+  const darkMode = useAppSelector((state) => state.ui.darkMode);
+  const dispatch = useAppDispatch();
   const [updateUserDetails] = useUpdateUserDetailsMutation();
 
-  // ── Profile state ──────────────────────────────────────────
   // ── Password state ─────────────────────────────────────────
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'success' | 'error'
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sensemante-dark') === 'true');
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleDarkToggle = (e) => {
-    const checked = e.target.checked;
-    setDarkMode(checked);
-    document.body.classList.toggle('dark', checked);
-    localStorage.setItem('sensemante-dark', checked);
+    dispatch(setDarkMode(e.target.checked));
   };
 
   const handleSave = async () => {
