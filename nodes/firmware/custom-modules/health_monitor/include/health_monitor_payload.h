@@ -11,8 +11,8 @@
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
 #pragma once
-#ifndef BATTERY_MONITOR_PAYLOAD_H
-#define BATTERY_MONITOR_PAYLOAD_H
+#ifndef HEALTH_MONITOR_PAYLOAD_H
+#define HEALTH_MONITOR_PAYLOAD_H
 
 #include <stdint.h>
 
