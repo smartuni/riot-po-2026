@@ -484,6 +484,11 @@ body.dark .status-closed .status-dot { background: var(--green-500); }
 body.dark .status-oos { background: rgba(245,158,11,0.15); color: var(--amber-500); }
 body.dark .status-oos .status-dot { background: var(--amber-500); }
 
+.status-none { background: rgba(148,163,184,0.1); color: var(--slate-500); }
+.status-none .status-dot { background: var(--slate-500); }
+body.dark .status-none { background: rgba(148,163,184,0.12); color: var(--slate-400); }
+body.dark .status-none .status-dot { background: var(--slate-400); }
+
 .priority-dot {
   width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px;
 }

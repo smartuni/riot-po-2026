@@ -1,7 +1,6 @@
 import AppLayout from '../features/shell/components/AppLayout';
 import ComingSoonHero from '../shared/components/ComingSoonHero';
 import { SkeletonLine, SkeletonCircle } from '../shared/components/SkeletonLoader';
-import '../shared/styles/theme.css';
 
 const DEVICE_CARDS = 5;
 

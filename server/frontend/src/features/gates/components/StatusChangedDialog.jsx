@@ -50,13 +50,13 @@ function StatusChangeDialog({ open, gate, onClose }) {
                 <Typography><strong>Location:</strong> {gate.location}</Typography>
                 <Typography>
                     <strong>Current Status:</strong>{" "}
-                    <span className={`badge ${gate.status?.toLowerCase()}`}>
+                    <span className={`status-badge status-${gate.status?.toLowerCase()}`}>
                         {getStatusDisplay(gate.status)}
                     </span>
                 </Typography>
                 <Typography>
                     <strong>Requested Status:</strong>{" "}
-                    <span className={`badge ${gate.requestedStatus?.toLowerCase() || "none"}`}>
+                    <span className={`status-badge status-${(gate.requestedStatus || "none")?.toLowerCase().replace(/^requested_/, "")}`}>
                         {gate.requestedStatus || "none"}
                     </span>
                 </Typography>

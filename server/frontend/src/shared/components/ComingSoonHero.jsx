@@ -1,5 +1,4 @@
 import React from 'react';
-import '../styles/theme.css';
 
 export default function ComingSoonHero({ icon, title, subtitle }) {
   return (

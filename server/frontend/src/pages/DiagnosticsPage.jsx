@@ -2,7 +2,6 @@ import React from 'react';
 import AppLayout from '../features/shell/components/AppLayout';
 import ComingSoonHero from '../shared/components/ComingSoonHero';
 import { SkeletonLine, SkeletonCircle, SkeletonChart } from '../shared/components/SkeletonLoader';
-import '../shared/styles/theme.css';
 
 const DiagnosticsPage = () => {
   const healthCards = Array.from({ length: 4 });
