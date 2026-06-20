@@ -1,6 +1,8 @@
 #pragma once
 #include <stdint.h>
 
+#define HEALTH_MONITOR_PAYLOAD_SIZE 4
+
 typedef uint8_t shock_status_t;
 enum {
 	NO_SHOCK = 0,
