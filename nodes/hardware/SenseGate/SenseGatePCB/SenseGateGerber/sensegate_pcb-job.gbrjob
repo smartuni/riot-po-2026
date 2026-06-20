@@ -5,7 +5,7 @@
       "Application": "Pcbnew",
       "Version": "10.0.1"
     },
-    "CreationDate": "2026-06-16T19:36:10+02:00"
+    "CreationDate": "2026-06-20T20:49:17+02:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
@@ -41,6 +41,16 @@
     {
       "Path": "sensegate_pcb-B_Cu.gbr",
       "FileFunction": "Copper,L2,Bot",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "sensegate_pcb-F_Paste.gbr",
+      "FileFunction": "SolderPaste,Top",
+      "FilePolarity": "Positive"
+    },
+    {
+      "Path": "sensegate_pcb-B_Paste.gbr",
+      "FileFunction": "SolderPaste,Bot",
       "FilePolarity": "Positive"
     },
     {
