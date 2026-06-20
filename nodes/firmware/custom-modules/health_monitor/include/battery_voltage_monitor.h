@@ -15,6 +15,8 @@
 #ifndef BATTERY_VOLTAGE_MONITOR_H
 #define BATTERY_VOLTAGE_MONITOR_H
 
+#include "health_monitor_payload.h"
+
 #include "thread.h"
 #include "board.h"
 #include "phydat.h"
@@ -46,23 +48,7 @@ enum {
 	UNKNOWN
 };
 
-typedef uint8_t battery_status_t;
-enum {
-	CHARGING = 0,
-	DISCHARGING,
-	DISCHARGING_LOW_BATTERY
-};
 
-typedef uint8_t shock_status_t;
-enum {
-	NO_SHOCK = 0,
-	SHOCK_DETECTED
-};
-
-typedef struct{
-	battery_status_t battery_status;
-	int16_t voltage_mv; 
-} battery_info_t; //1+2 bytes
 
 
 
