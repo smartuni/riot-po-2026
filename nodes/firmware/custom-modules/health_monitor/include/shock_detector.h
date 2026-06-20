@@ -10,10 +10,9 @@
  * @brief       Shock detector for senseGate
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
-
+#pragma once
 #ifndef SHOCK_DETECTOR_H
 #define SHOCK_DETECTOR_H
-
 
 #define kiss_fft_scalar int
 
@@ -26,7 +25,7 @@
 #include "phydat.h"
 #include "kiss_fft.h"
 
-#define LOG_LEVEL   LOG_DEBUG
+#define LOG_LEVEL LOG_DEBUG
 #include "log.h"
 #define LOG_SHOCK_DETECTOR(...) LOG_DEBUG("[shock_detector]: " __VA_ARGS__)
 
@@ -54,7 +53,6 @@ typedef struct {
 	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
 	int* sample_array;
 } shock_detector_t;
-
 
 /**
  * @brief Creates a new shock detector to the heap

@@ -11,7 +11,7 @@
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  * @author      Colin Johnson <colinedward.johnson@haw-hamburg.de>
  */
-
+#pragma once
 #ifndef BATTERY_VOLTAGE_MONITOR_H
 #define BATTERY_VOLTAGE_MONITOR_H
 
@@ -28,17 +28,15 @@
 
 #define AIN7_BAT 7
 
-#define LOG_LEVEL   LOG_DEBUG
+#define LOG_LEVEL LOG_DEBUG
 #include "log.h"
 #define LOG_BATTERY_VOLTAGE(...) LOG_DEBUG("[battery_voltage]: " __VA_ARGS__)
-
 
 #include <math.h>
 #include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
 
 typedef uint8_t voltage_trend;
 enum {
@@ -47,10 +45,6 @@ enum {
 	STABLE,
 	UNKNOWN
 };
-
-
-
-
 
 typedef struct {
 	//Structure for memory alignment and to avoid padding
@@ -68,15 +62,12 @@ typedef struct {
 	//volatile bool running;
 } battery_voltage_monitor_t;
 
-
-
 /**
  * @brief Creates a new battery voltage monitor to the heap
  * @param threshold_mv Voltage threshold in millivolts to recognize the battery as low
  * @return Pointer to the new battery voltage monitor, or NULL if memory allocation failed
  */
 battery_voltage_monitor_t* battery_voltage_monitor_new(int threshold_mv);
-
 
 void battery_voltage_monitor_get_info(battery_voltage_monitor_t* monitor, battery_info_t* info);
 
