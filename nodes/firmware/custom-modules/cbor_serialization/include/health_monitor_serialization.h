@@ -1,10 +1,12 @@
 #pragma once
 
 #include "health_monitor_payload.h"
+#include "cbor_serialization.h"
 #include "cbor.h"
 #include <stdint.h>
 
 #define MESSAGE_TYPE_HEALTH_MONITOR 0x04
+
 
 
 /**
