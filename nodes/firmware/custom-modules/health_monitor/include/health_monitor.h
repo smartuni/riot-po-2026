@@ -11,8 +11,8 @@
 
 
 typedef struct {
-	battery_info_t battery_info; // 3 bytes
 	shock_status_t shock_status; // 1 byte
+	battery_info_t battery_info; // 3 bytes
 } health_monitor_payload_t; // total 4 bytes
 //#define HEALTH_MONITOR_PAYLOAD_SIZE sizeof(health_monitor_payload_t)
 typedef struct {
