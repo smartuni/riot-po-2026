@@ -1,6 +1,4 @@
 #include "health_monitor_serialization.h"
-#include "cbor.h"
-#include <stdint.h>
 
 
 static int _serialize_with_array_encoding(const health_monitor_payload_t* record, uint8_t* buf, size_t* out_len) {
@@ -9,6 +7,10 @@ static int _serialize_with_array_encoding(const health_monitor_payload_t* record
 	CborEncoder main_array_encoder;
 	cbor_encoder_create_array(&root_encoder, &main_array_encoder, HEALTH_MONITOR_PAYLOAD_SIZE);
 
+    cbor_encode_uint(&main_array_encoder, ENCODING_V_1);
+    cbor_encode_uint(&main_array_encoder, MESSAGE_TYPE_HEALTH_MONITOR);
+    int node_id = 0; // Placeholder for node_id, you can replace it with actual value if needed
+    cbor_encode_uint(&main_array_encoder, node_id);
 	cbor_encode_uint(&main_array_encoder, record->shock_status);
 	cbor_encode_uint(&main_array_encoder, record->battery_info.battery_status);
 	cbor_encode_uint(&main_array_encoder, record->battery_info.voltage_mv);
@@ -22,6 +24,10 @@ static int _serialize_without_array_encoding(const health_monitor_payload_t* rec
     CborEncoder encoder;
     cbor_encoder_init(&encoder, buf, *out_len, 0);
 
+    cbor_encode_uint(&encoder, ENCODING_V_1);
+    cbor_encode_uint(&encoder, MESSAGE_TYPE_HEALTH_MONITOR);
+    int node_id = 0; // Placeholder for node_id, you can replace it with actual value if needed
+    cbor_encode_uint(&encoder, node_id);
     cbor_encode_uint(&encoder, record->shock_status);
     cbor_encode_uint(&encoder, record->battery_info.battery_status);
     cbor_encode_uint(&encoder, record->battery_info.voltage_mv);
