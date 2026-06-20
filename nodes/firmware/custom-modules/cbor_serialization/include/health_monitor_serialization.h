@@ -1,49 +1,10 @@
 #pragma once
 
+#include "health_monitor_payload.h"
+#include "cbor.h"
 #include <stdint.h>
 
-#include "health_monitor.h"
-#include "cbor.h"
-
-
 #define MESSAGE_TYPE_HEALTH_MONITOR 0x04
-
-// #define RECORD_TYPE_GATE_REPORT 0x00
-// #define RECORD_TYPE_GATE_OBSERVATION 0x01
-// #define RECORD_TYPE_GATE_COMMAND 0x03
-// #define RECORD_TYPE_GATE_JOB 0x04
-
-// #define RECORD_GATE_REPORT_STATE_OPEN 0x00
-// #define RECORD_GATE_REPORT_STATE_CLOSED 0x01
-
-// #define ARRAY_SIZE_MESSAGE 2            // version + message type
-
-// #define ARRAY_SIZE_RECORD_HEADER 5      // record type + writer ID + seq + HLC phy. + HLC log.
-
-// #define ARRAY_SIZE_RECORD_SIGNATURE 1   // signature as byte string
-
-// #define ARRAY_SIZE_RECORD_DATA_GATE_REPORT 1
-// #define ARRAY_SIZE_RECORD_DATA_GATE_OBSERVATION 2
-// #define ARRAY_SIZE_RECORD_DATA_GATE_COMMAND 2
-// #define ARRAY_SIZE_RECORD_DATA_GATE_JOB 3
-
-// #define ARRAY_SIZE_ID_PUBID 1           // signed public identity as byte string
-// #define ARRAY_SIZE_ID_PUBID_SIGNATURE 1 // signed public identity as byte string
-// #define ARRAY_SIZE_ID_SIGNATURE 1       // signature as byte string
-
-// /**
-//  * @brief Types of messages.
-//  */
-// typedef enum {
-//     /**< Message containing a single report. */
-//     MESSAGE_SINGLE_REPORT = 1,
-
-//     /**< Message requesting an ID. */
-//     MESSAGE_ID_REQUEST    = 2,
-
-//     /**< Message responing with an ID. */
-//     MESSAGE_ID_RESPONSE   = 3
-// } message_type_t;
 
 
 /**

@@ -17,6 +17,8 @@
 
 #define kiss_fft_scalar int
 
+#include "health_monitor_payload.h"
+
 #include "saul_reg.h"
 #include "ztimer.h"
 #include "thread.h"
