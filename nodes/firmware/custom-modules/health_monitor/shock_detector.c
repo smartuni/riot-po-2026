@@ -42,6 +42,9 @@ static void collect_magnitudes(shock_detector_t* detector) {
 	}
 
 	for (int i = 0; i < *nsamples; i++) {
+		detector->input[i].r = 0;
+	}
+	for (int i = 0; i < *nsamples; i++) {
 		int* x = &raw_accel_data[i].x;
 		int* y = &raw_accel_data[i].y;
 		int* z = &raw_accel_data[i].z;
@@ -54,6 +57,10 @@ static void collect_magnitudes(shock_detector_t* detector) {
 
 static void process_fft(shock_detector_t* detector) {
 	LED1_ON;
+	for(int i = 0; i < detector->sample_size; i++) {
+		detector->output[i].r = 0;
+		detector->output[i].i = 0;
+	}
 	kiss_fft_cfg cfg = kiss_fft_alloc(detector->sample_size, 0, 0, 0);
 	kiss_fft(cfg, detector->input, detector->output);
 	kiss_fft_free(cfg);
@@ -85,7 +92,7 @@ static void* acceleration_thread(void* detector_void) {
 		collect_magnitudes(detector);
 		process_fft(detector); // process the collected samples with FFT
 		postprocess_fft(detector); // post-process the FFT results to find the average over frequency
-		for (int i = 0; i < detector->freq_avg->domain_size; i++) {
+		for (int i = 0; i < detector->freq_avg->domain_size; i += 100) {
 			printf("Frequency: %d Hz, Average Magnitude: %d\n", i, detector->freq_avg->frequency_domain[i].average);
 		}
 	}
