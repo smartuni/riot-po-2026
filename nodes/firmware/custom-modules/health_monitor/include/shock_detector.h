@@ -17,6 +17,7 @@
 #define kiss_fft_scalar int
 
 #include "health_monitor_payload.h"
+#include "moving_freq_avg.h"
 
 #include "saul_reg.h"
 #include "ztimer.h"
@@ -39,19 +40,21 @@ typedef struct {
 	int z;
 } raw_acceleration_t;
 
+
 // Restructures for memory alignment and to avoid padding
 typedef struct {
 	kernel_pid_t thread_pid;
 	saul_reg_t* accel_sensor;
 	kiss_fft_cpx* input;
 	kiss_fft_cpx* output;
+	moving_freq_avg_t* freq_avg; //rename to frequency domain later
 	void (*callback)(void);
 	int threshold;
 	int sample_size;
 	int sampling_period_ms;
+	int frequncy_domain_size;
 	volatile bool running;
 	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
-	int* sample_array;
 } shock_detector_t;
 
 /**

@@ -11,7 +11,6 @@
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
 #include "shock_detector.h"
-#include "include/shock_detector.h"
 
 static int calculate_magnitude(int x, int y, int z) {
 	return sqrt(x * x + y * y + z * z);
@@ -21,41 +20,12 @@ static void acceleration_callback(void) {
 	LOG_DEBUG("[shock_detector:%d] Shock!!\n", __LINE__);
 }
 
-static void measure_samples_collection_speed(shock_detector_t* detector){
-	{
-	phydat_t acceleration;
-	//int nsamples = detector->sample_size;
-	//raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * nsamples);
-	LED0_ON;
-	int i = 0;
-	while(detector->running) {
-		int acc_dim = saul_reg_read(detector->accel_sensor, &acceleration);
-		if (acc_dim < 1) {
-			LOG_INFO("Error reading a value "
-					 "from the device - %s:%d\n",
-					 __FILE__, __LINE__);
-			return;
-		}
-		// raw_accel_data[i].x = acceleration.val[0] * 10;
-		// raw_accel_data[i].y = acceleration.val[1] * 10;
-		// raw_accel_data[i].z = acceleration.val[2] * 10;
-		if(detector->sampling_period_ms > 0) {
-			ztimer_sleep(ZTIMER_MSEC, detector->sampling_period_ms);
-		}
-		i++;
-	}
-	LED0_OFF;
-	printf("Iterations: %d\n",i);
-}
-
-}
-
 static void collect_magnitudes(shock_detector_t* detector) {
 	phydat_t acceleration;
-	int nsamples = detector->sample_size;
-	raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * nsamples);
+	const int* nsamples = &detector->sample_size;
+	raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * (*nsamples));
 	LED0_ON;
-	for (int i = 0; i < nsamples; i++) {
+	for (int i = 0; i < *nsamples; i++) {
 		int acc_dim = saul_reg_read(detector->accel_sensor, &acceleration);
 		if (acc_dim < 1) {
 			LOG_INFO("Error reading a value "
@@ -66,12 +36,12 @@ static void collect_magnitudes(shock_detector_t* detector) {
 		raw_accel_data[i].x = acceleration.val[0] * 10;
 		raw_accel_data[i].y = acceleration.val[1] * 10;
 		raw_accel_data[i].z = acceleration.val[2] * 10;
-		if(detector->sampling_period_ms > 0) {
+		if (detector->sampling_period_ms > 0) {
 			ztimer_sleep(ZTIMER_MSEC, detector->sampling_period_ms);
 		}
 	}
 
-	for (int i = 0; i < nsamples; i++) {
+	for (int i = 0; i < *nsamples; i++) {
 		int* x = &raw_accel_data[i].x;
 		int* y = &raw_accel_data[i].y;
 		int* z = &raw_accel_data[i].z;
@@ -90,47 +60,36 @@ static void process_fft(shock_detector_t* detector) {
 	LED1_OFF;
 }
 
-static void display_fft_results(shock_detector_t* detector) {
+static void postprocess_fft(shock_detector_t* detector) {
 	printf("Frequency Spectrum (0 to %d Hz):\n", detector->sample_size / 2);
 	printf("============================================================\n");
 	printf("%-10s %-15s %-15s %-15s\n", "Bin", "Frequency(Hz)", "Magnitude", "Real/Imag");
 	printf("============================================================\n");
 
-	int nyquist_bin = detector->sample_size / 2;
-	for (int k = 0; k <= nyquist_bin; k++) {
-		int magnitude = sqrt(detector->output[k].r * detector->output[k].r +
-							 detector->output[k].i * detector->output[k].i);
+	moving_freq_avg_reset(detector->freq_avg);
+	for (int k = 0; k < detector->frequncy_domain_size; k++) {
+		int magnitude = calculate_magnitude(detector->output[k].r, detector->output[k].i, 0);
 		float sampling_rate_hz = 1000.0 / detector->sampling_period_ms;
-		int frequency = k * ((double)sampling_rate_hz / detector->sample_size);
+		int frequency = k * ((float)sampling_rate_hz / detector->sample_size);
 		//TODO perform avg so that there's only exactly one frequency
-		if (magnitude > 0.1) {
-			printf("%10d %10d %10d (%6d + %6di)\n",
-				   k, frequency, magnitude, (int)detector->output[k].r, (int)detector->output[k].i);
+		if (magnitude > 0) {
+			moving_freq_avg_add_sample(detector->freq_avg, frequency, magnitude);
 		}
 	}
+	moving_freq_avg_finalize(detector->freq_avg);
 }
 
 static void* acceleration_thread(void* detector_void) {
 	shock_detector_t* detector = (shock_detector_t*)detector_void;
-	collect_magnitudes(detector);
-	//phydat_t acceleration;
-	//while (detector->running) {
-	//	collect_magnitudes(detector); // collect samples at 100 Hz
-	//	process_fft(detector); // process the collected samples with FFT
+	while (detector->running) {
+		collect_magnitudes(detector);
+		process_fft(detector); // process the collected samples with FFT
+		postprocess_fft(detector); // post-process the FFT results to find the average over frequency
+		for (int i = 0; i < detector->freq_avg->domain_size; i++) {
+			printf("Frequency: %d Hz, Average Magnitude: %d\n", i, detector->freq_avg->frequency_domain[i].average);
+		}
+	}
 
-	//	display_fft_results(detector); // display the FFT results
-		// if (magnitude > detector->threshold) {
-		// 	//execute the callback here
-		// 	detector->callback();
-		// 	LED0_ON;
-		// 	LED1_ON;
-		// } else {
-		// 	LED0_OFF;
-		// 	LED1_OFF;
-		// }
-		//LOG_DEBUG("[shock_detector:%d] x: %5d, y: %5d, z: %5d, magnitude: %5d\n", __LINE__, x, y, z, magnitude);
-		//ztimer_sleep(ZTIMER_MSEC, 5000);
-	//}
 	return NULL;
 }
 
@@ -143,9 +102,12 @@ shock_detector_t* shock_detector_new(int threshold, int sample_size, int samplin
 	// sensor_data_t* accel_sensor = &new_detector->accel_sensor;
 	// accel_sensor->callback = acceleration_callback;
 	new_detector->callback = acceleration_callback;
-	new_detector->sample_array = (int*)malloc(sizeof(int) * sample_size);
+	int nyquist_bin = sample_size / 2 + 1;
+	new_detector->frequncy_domain_size = nyquist_bin + 1;
+	new_detector->freq_avg = moving_freq_avg_new(new_detector->frequncy_domain_size);
 	new_detector->input = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * sample_size);
 	new_detector->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * sample_size);
+
 	/* [TASK 3: find your device here] */
 	new_detector->accel_sensor = saul_reg_find_type(SAUL_SENSE_ACCEL);
 	if (!new_detector->accel_sensor) {
@@ -185,7 +147,7 @@ int shock_detector_delete(shock_detector_t* detector) {
 	ztimer_sleep(ZTIMER_MSEC, 100); // give some time for the thread to exit
 	free(detector->input);
 	free(detector->output);
-	free(detector->sample_array);
+	moving_freq_avg_delete(detector->freq_avg);
 	free(detector);
 	return 0;
 }
