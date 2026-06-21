@@ -9,8 +9,8 @@ health_monitor_t* health_monitor_new(void) {
 
     //init shock detection
 	int shock_threshold = 15000; // TODO adjust this later
-	int sample_size = 2048; // TODO adjust this later
-	int sampling_period_ms = 1;
+	int sample_size = 8192; // TODO adjust this later
+	int sampling_period_ms = 1; //to give other threads a chance to run
 	monitor->shock_detector = shock_detector_new(shock_threshold, sample_size, sampling_period_ms); // TODO adjust parameters later
 
 	return monitor;
