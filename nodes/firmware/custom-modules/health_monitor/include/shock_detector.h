@@ -70,6 +70,10 @@ shock_detector_t* shock_detector_new(int threshold, int sample_size, int samplin
  */
 int shock_detector_start(shock_detector_t* detector);
 
+int shock_detector_fetch_status(shock_detector_t* detector, shock_status_t* status);
+
+int shock_detector_reset_status(shock_detector_t* detector);
+
 /**
  * @brief Deletes the shock detector
  * @param detector Pointer to the shock detector

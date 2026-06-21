@@ -11,6 +11,7 @@
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
 #include "shock_detector.h"
+#include "include/shock_detector.h"
 
 static int calculate_magnitude(int x, int y, int z) {
 	return sqrt(x * x + y * y + z * z);
@@ -18,6 +19,35 @@ static int calculate_magnitude(int x, int y, int z) {
 
 static void acceleration_callback(void) {
 	LOG_DEBUG("[shock_detector:%d] Shock!!\n", __LINE__);
+}
+
+static void measure_samples_collection_speed(shock_detector_t* detector){
+	{
+	phydat_t acceleration;
+	//int nsamples = detector->sample_size;
+	//raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * nsamples);
+	LED0_ON;
+	int i = 0;
+	while(detector->running) {
+		int acc_dim = saul_reg_read(detector->accel_sensor, &acceleration);
+		if (acc_dim < 1) {
+			LOG_INFO("Error reading a value "
+					 "from the device - %s:%d\n",
+					 __FILE__, __LINE__);
+			return;
+		}
+		// raw_accel_data[i].x = acceleration.val[0] * 10;
+		// raw_accel_data[i].y = acceleration.val[1] * 10;
+		// raw_accel_data[i].z = acceleration.val[2] * 10;
+		if(detector->sampling_period_ms > 0) {
+			ztimer_sleep(ZTIMER_MSEC, detector->sampling_period_ms);
+		}
+		i++;
+	}
+	LED0_OFF;
+	printf("Iterations: %d\n",i);
+}
+
 }
 
 static void collect_magnitudes(shock_detector_t* detector) {
@@ -36,7 +66,9 @@ static void collect_magnitudes(shock_detector_t* detector) {
 		raw_accel_data[i].x = acceleration.val[0] * 10;
 		raw_accel_data[i].y = acceleration.val[1] * 10;
 		raw_accel_data[i].z = acceleration.val[2] * 10;
-		ztimer_sleep(ZTIMER_MSEC, detector->sampling_period_ms);
+		if(detector->sampling_period_ms > 0) {
+			ztimer_sleep(ZTIMER_MSEC, detector->sampling_period_ms);
+		}
 	}
 
 	for (int i = 0; i < nsamples; i++) {
@@ -80,12 +112,13 @@ static void display_fft_results(shock_detector_t* detector) {
 
 static void* acceleration_thread(void* detector_void) {
 	shock_detector_t* detector = (shock_detector_t*)detector_void;
+	collect_magnitudes(detector);
 	//phydat_t acceleration;
-	while (detector->running) {
-		collect_magnitudes(detector); // collect samples at 100 Hz
-		process_fft(detector); // process the collected samples with FFT
+	//while (detector->running) {
+	//	collect_magnitudes(detector); // collect samples at 100 Hz
+	//	process_fft(detector); // process the collected samples with FFT
 
-		display_fft_results(detector); // display the FFT results
+	//	display_fft_results(detector); // display the FFT results
 		// if (magnitude > detector->threshold) {
 		// 	//execute the callback here
 		// 	detector->callback();
@@ -96,8 +129,8 @@ static void* acceleration_thread(void* detector_void) {
 		// 	LED1_OFF;
 		// }
 		//LOG_DEBUG("[shock_detector:%d] x: %5d, y: %5d, z: %5d, magnitude: %5d\n", __LINE__, x, y, z, magnitude);
-		ztimer_sleep(ZTIMER_MSEC, 5000);
-	}
+		//ztimer_sleep(ZTIMER_MSEC, 5000);
+	//}
 	return NULL;
 }
 
@@ -142,6 +175,8 @@ int shock_detector_start(shock_detector_t* detector) {
 	}
 	// ... and also commented out
 	LOG_DEBUG("[shock_detector:%d] Acceleration thread started with PID %d\n", __LINE__, *accel_thread_pid);
+	ztimer_sleep(ZTIMER_MSEC, 1000); // give some time for the thread to start and collect samples
+	detector->running = false; // stop the thread after collecting samples
 	return 0;
 }
 
