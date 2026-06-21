@@ -43,6 +43,7 @@ void moving_freq_avg_add_sample(moving_freq_avg_t* avg, int frequency, int magni
  * @param avg   Pointer to the moving frequency average structure
 */
 void moving_freq_avg_finalize(moving_freq_avg_t* avg);
+void moving_freq_avg_reset(moving_freq_avg_t* avg);
 void moving_freq_avg_delete(moving_freq_avg_t* avg);
 
 #endif

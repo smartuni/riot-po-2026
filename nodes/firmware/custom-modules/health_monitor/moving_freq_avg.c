@@ -11,13 +11,6 @@ moving_freq_avg_t* moving_freq_avg_new(int domain_size) {
 		free(avg);
 		return NULL;
 	}
-
-	// Initialize all elements to zero
-	for (int i = 0; i < domain_size; i++) {
-		avg->frequency_domain[i].sum = 0;
-		avg->frequency_domain[i].count = 0;
-		avg->frequency_domain[i].average = 0;
-	}
 	return avg;
 }
 
@@ -53,5 +46,16 @@ void moving_freq_avg_delete(moving_freq_avg_t* avg) {
 	if (avg) {
 		free(avg->frequency_domain);
 		free(avg);
+	}
+}
+
+void moving_freq_avg_reset(moving_freq_avg_t* avg) {
+	if (!avg)
+		return;
+
+	for (int i = 0; i < avg->domain_size; i++) {
+		avg->frequency_domain[i].sum = 0;
+		avg->frequency_domain[i].count = 0;
+		avg->frequency_domain[i].average = 0;
 	}
 }
