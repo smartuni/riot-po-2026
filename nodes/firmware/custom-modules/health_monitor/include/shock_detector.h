@@ -28,7 +28,6 @@
 
 #define LOG_LEVEL LOG_DEBUG
 #include "log.h"
-#define LOG_SHOCK_DETECTOR(...) LOG_DEBUG("[shock_detector]: " __VA_ARGS__)
 
 #include <math.h>
 #include <sched.h>
