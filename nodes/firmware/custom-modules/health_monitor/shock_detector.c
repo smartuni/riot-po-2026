@@ -145,7 +145,7 @@ int shock_detector_start(shock_detector_t* detector) {
 
 int shock_detector_delete(shock_detector_t* detector) {
 	detector->running = false;
-	ztimer_sleep(ZTIMER_MSEC, 100); // give some time for the thread to exit
+	ztimer_sleep(ZTIMER_MSEC, 5000); // give some time for the thread to exit
 	free(detector->input);
 	free(detector->output);
 	moving_freq_avg_delete(detector->freq_avg);
