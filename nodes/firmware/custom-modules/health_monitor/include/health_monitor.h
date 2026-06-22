@@ -20,16 +20,25 @@
 #include "mate_lorawan.h"
 #include "health_monitor_serialization.h"
 
+
+
+#define LOG_LEVEL LOG_DEBUG
+#include "log.h"
+#include "thread.h"
 #include <stdlib.h>
 
 //#define HEALTH_MONITOR_PAYLOAD_SIZE sizeof(health_monitor_payload_t)
 typedef struct {
+	int update_period_sec;
+	kernel_pid_t thread_pid;
 	battery_voltage_monitor_t* battery_monitor;
 	shock_detector_t* shock_detector;
+	char thread_stack[THREAD_STACKSIZE_DEFAULT];
+	volatile bool running;
 } health_monitor_t;
 
-health_monitor_t* health_monitor_new(void);
+health_monitor_t* health_monitor_new(int update_period_sec);
 int health_monitor_start(health_monitor_t* monitor);
-int health_monitor_stop(health_monitor_t* monitor);
+int health_monitor_delete(health_monitor_t* monitor);
 
 #endif
