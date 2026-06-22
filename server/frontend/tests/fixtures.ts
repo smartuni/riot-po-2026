@@ -15,7 +15,15 @@ export const test = base.extend<{ consoleErrors: string[] }>({
       page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
       page.on('console', (m) => {
         if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) {
-          errors.push(m.text());
+          // Filter benign WebSocket transport-teardown noise emitted by Firefox
+          // and WebKit during reload/logout. These are browser-level connection
+          // close messages (same class as "Failed to load resource"), not app
+          // errors — the page renders correctly (verified via snapshots).
+          const text = m.text();
+          if (/WebSocket connection.*failed|can.t establish a connection to the server at ws:|connection to ws:.*was interrupted|WebSocket is closed before the connection is established/.test(text)) {
+            return;
+          }
+          errors.push(text);
         }
       });
       await use(errors);

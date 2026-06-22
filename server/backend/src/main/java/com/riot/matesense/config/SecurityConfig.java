@@ -42,7 +42,7 @@ public class SecurityConfig {
                     requestHandler.setCsrfRequestAttributeName(null);
                     csrf.csrfTokenRepository(tokenRepository)
                         .csrfTokenRequestHandler(requestHandler)
-                        .ignoringRequestMatchers("/auth/login", "/auth/logout");
+                        .ignoringRequestMatchers("/auth/login", "/auth/logout", "/e2e/**");
                 })
                 .authorizeHttpRequests(auth -> auth
                     // .anyRequest().permitAll()
@@ -51,6 +51,7 @@ public class SecurityConfig {
                     .requestMatchers("/gate-activities").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/actuator/health").permitAll()
+                    .requestMatchers("/e2e/**").permitAll()
                     .anyRequest().authenticated()
                 )
                 .addFilterAfter(jwtFilter, SecurityContextHolderFilter.class)
