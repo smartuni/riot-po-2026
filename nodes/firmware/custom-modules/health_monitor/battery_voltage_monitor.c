@@ -75,8 +75,7 @@ static voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const int 
 	return UNKNOWN;
 }
 
-
-void battery_voltage_monitor_get_info(battery_voltage_monitor_t* monitor, battery_info_t* info) {
+void battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* monitor, battery_info_t* info) {
 	int voltage_mv = get_battery_voltage();
 	if (monitor->prev_voltage_mv == -1) {
 		monitor->prev_voltage_mv = voltage_mv;
