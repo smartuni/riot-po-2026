@@ -228,7 +228,7 @@ int main(void){
     int put_cnt = 0;
     int put_err_cnt = 0;
 
-   health_monitor_t* monitor = health_monitor_new();
+   health_monitor_t* monitor = health_monitor_new(10);
    if (monitor) {
        health_monitor_start(monitor);
    } else {
