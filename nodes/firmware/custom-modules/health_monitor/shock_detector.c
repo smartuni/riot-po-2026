@@ -17,7 +17,7 @@ static int calculate_magnitude(int x, int y, int z) {
 }
 
 static void acceleration_callback(void) {
-	LOG_DEBUG("[shock_detector:%d] Shock!!\n", __LINE__);
+	LOG_DEBUG("[shock_detector.c:%d] Shock!!\n", __LINE__);
 }
 
 static void collect_magnitudes(shock_detector_t* detector) {
@@ -28,9 +28,9 @@ static void collect_magnitudes(shock_detector_t* detector) {
 	for (int i = 0; i < *nsamples; i++) {
 		int acc_dim = saul_reg_read(detector->accel_sensor, &acceleration);
 		if (acc_dim < 1) {
-			LOG_INFO("Error reading a value "
-					 "from the device - %s:%d\n",
-					 __FILE__, __LINE__);
+			LOG_INFO("[shock_detector.c:%d] Error reading a value "
+					 "from the device\n",
+					 __LINE__);
 			return;
 		}
 		raw_accel_data[i].x = acceleration.val[0] * 10;
@@ -57,7 +57,7 @@ static void collect_magnitudes(shock_detector_t* detector) {
 
 static void process_fft(shock_detector_t* detector) {
 	LED1_ON;
-	for(int i = 0; i < detector->sample_size; i++) {
+	for (int i = 0; i < detector->sample_size; i++) {
 		detector->output[i].r = 0;
 		detector->output[i].i = 0;
 	}
@@ -83,14 +83,14 @@ static void postprocess_fft(shock_detector_t* detector) {
 static void* acceleration_thread(void* detector_void) {
 	shock_detector_t* detector = (shock_detector_t*)detector_void;
 	while (detector->running) {
-		puts("Collecting acceleration data...");
+		LOG_DEBUG("[shock_detector.c:%d] Collecting magnitudes...\n", __LINE__);
 		collect_magnitudes(detector);
-		puts("Processing FFT...");
+		LOG_DEBUG("[shock_detector.c:%d] Processing FFT...\n", __LINE__);
 		process_fft(detector); // process the collected samples with FFT
-		puts("Post-processing FFT results...");
+		LOG_DEBUG("[shock_detector.c:%d] Post-processing FFT results...\n", __LINE__);
 		postprocess_fft(detector); // post-process the FFT results to find the average over frequency
 		for (int i = 0; i < 500; i += 2) {
-			printf("Frequency: %d Hz, Average Magnitude: %d\n", i, detector->freq_avg->frequency_domain[i].average);
+			LOG_DEBUG("[shock_detector.c:%d] Frequency: %d Hz, Average Magnitude: %d\n", __LINE__, i, detector->freq_avg->frequency_domain[i].average);
 		}
 	}
 	return NULL;
@@ -106,7 +106,7 @@ shock_detector_t* shock_detector_new(int threshold, int sample_size, int samplin
 	// accel_sensor->callback = acceleration_callback;
 	new_detector->callback = acceleration_callback;
 	int nyquist = sample_size / 2 + 1;
-	new_detector->nyquist_domain_size = nyquist;// + 1;
+	new_detector->nyquist_domain_size = nyquist; // + 1;
 	new_detector->freq_avg = moving_freq_avg_new(new_detector->nyquist_domain_size);
 	new_detector->input = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * sample_size);
 	new_detector->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * sample_size);
