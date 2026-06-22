@@ -92,6 +92,9 @@ static void* acceleration_thread(void* detector_void) {
 		for (int i = 0; i < 500; i += 2) {
 			LOG_DEBUG("[shock_detector.c:%d] Frequency: %d Hz, Average Magnitude: %d\n", __LINE__, i, detector->freq_avg->frequency_domain[i].average);
 		}
+		mutex_lock(&detector->shock_status_mutex);
+		detector->shock_status = NO_SHOCK; //TODO analyze the frequency domain average to determine if there is a shock or not, and set the shock status accordingly
+		mutex_unlock(&detector->shock_status_mutex);
 	}
 	return NULL;
 }
@@ -110,6 +113,8 @@ shock_detector_t* shock_detector_new(int threshold, int sample_size, int samplin
 	new_detector->freq_avg = moving_freq_avg_new(new_detector->nyquist_domain_size);
 	new_detector->input = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * sample_size);
 	new_detector->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * sample_size);
+	new_detector->shock_status = NO_SHOCK;
+	new_detector->shock_status_mutex = (mutex_t)MUTEX_INIT;
 
 	/* [TASK 3: find your device here] */
 	new_detector->accel_sensor = saul_reg_find_type(SAUL_SENSE_ACCEL);
@@ -150,5 +155,19 @@ int shock_detector_delete(shock_detector_t* detector) {
 	free(detector->output);
 	moving_freq_avg_delete(detector->freq_avg);
 	free(detector);
+	return 0;
+}
+
+int shock_detector_fetch_status(shock_detector_t* detector, shock_status_t* status) {
+	mutex_lock(&detector->shock_status_mutex);
+	*status = detector->shock_status;
+	mutex_unlock(&detector->shock_status_mutex);
+	return 0;
+}
+
+int shock_detector_reset_status(shock_detector_t *detector){
+	mutex_lock(&detector->shock_status_mutex);
+	detector->shock_status = NO_SHOCK;
+	mutex_unlock(&detector->shock_status_mutex);
 	return 0;
 }
