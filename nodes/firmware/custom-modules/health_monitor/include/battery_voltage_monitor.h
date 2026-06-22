@@ -68,7 +68,7 @@ typedef struct {
  */
 battery_voltage_monitor_t* battery_voltage_monitor_new(int threshold_mv);
 
-void battery_voltage_monitor_get_info(battery_voltage_monitor_t* monitor, battery_info_t* info);
+void battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* monitor, battery_info_t* info);
 
 /**
  * @brief Deletes the battery voltage monitor
