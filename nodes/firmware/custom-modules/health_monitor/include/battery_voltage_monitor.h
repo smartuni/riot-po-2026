@@ -30,7 +30,6 @@
 
 #define LOG_LEVEL LOG_DEBUG
 #include "log.h"
-#define LOG_BATTERY_VOLTAGE(...) LOG_DEBUG("[battery_voltage]: " __VA_ARGS__)
 
 #include <math.h>
 #include <sched.h>
