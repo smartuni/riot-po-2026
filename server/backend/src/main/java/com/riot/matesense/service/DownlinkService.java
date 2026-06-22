@@ -14,9 +14,9 @@ import static com.riot.matesense.enums.RecordType.GATE_COMMAND;
 @Service
 public class DownlinkService {
 
-    private static final int MAX_COMMAND_DATA_SIZE = 30;
+    private static final int MAX_COMMAND_DATA_SIZE = 28;
     private static final int CMAC_TAG_SIZE = 16;
-    private static final int HEADER_SIZE = 5;
+    private static final int HEADER_SIZE = 7;
     private static final int TOTAL_PAYLOAD_SIZE = HEADER_SIZE + MAX_COMMAND_DATA_SIZE + CMAC_TAG_SIZE;
 
     private final TTNMqttPublisher mqttPublisher;
@@ -24,17 +24,15 @@ public class DownlinkService {
     private final MqttProperties mqttProperties;
     private final DeviceRegistry deviceRegistry;
     private final CmacService cmacService;
-    private final SequenceCounterService seqCounterService;
 
     public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter,
                            MqttProperties mqttProperties, DeviceRegistry deviceRegistry,
-                           CmacService cmacService, SequenceCounterService seqCounterService) {
+                           CmacService cmacService) {
         this.mqttPublisher = mqttPublisher;
         this.cborConverter = cborConverter;
         this.mqttProperties = mqttProperties;
         this.deviceRegistry = deviceRegistry;
         this.cmacService = cmacService;
-        this.seqCounterService = seqCounterService;
     }
 
     public void sendDownlinkToDevice(DownPayload payloadData) {
@@ -81,7 +79,7 @@ public class DownlinkService {
         }
     }
 
-    public byte[] buildSignedDownlink(byte[] appMacKey, int seqCounter, int commandId, byte[] commandData) {
+    public byte[] buildSignedDownlink(byte[] appMacKey, long hlcTimestamp, int commandId, byte[] commandData) {
         if (commandData == null) {
             commandData = new byte[0];
         }
@@ -95,8 +93,10 @@ public class DownlinkService {
 
         payload[offset++] = (byte) 0x01;
 
-        payload[offset++] = (byte) ((seqCounter >> 8) & 0xFF);
-        payload[offset++] = (byte) (seqCounter & 0xFF);
+        payload[offset++] = (byte) ((hlcTimestamp >> 24) & 0xFF);
+        payload[offset++] = (byte) ((hlcTimestamp >> 16) & 0xFF);
+        payload[offset++] = (byte) ((hlcTimestamp >> 8) & 0xFF);
+        payload[offset++] = (byte) (hlcTimestamp & 0xFF);
 
         payload[offset++] = (byte) ((commandId >> 8) & 0xFF);
         payload[offset++] = (byte) (commandId & 0xFF);
@@ -118,10 +118,9 @@ public class DownlinkService {
             throw new IllegalStateException("No AppMACKey provisioned for device: " + deviceId);
         }
 
-        int seqCounter = seqCounterService.getNextSeq(gateId);
-        deviceRegistry.updateSeqTx(deviceId, seqCounter);
+        long hlcTimestamp = System.currentTimeMillis() / 1000;
 
-        byte[] signedPayload = buildSignedDownlink(appMacKey, seqCounter, commandId, commandData);
+        byte[] signedPayload = buildSignedDownlink(appMacKey, hlcTimestamp, commandId, commandData);
 
         if (signedPayload.length > 51) {
             throw new IllegalStateException("Signed payload exceeds 51 byte limit: " + signedPayload.length);

@@ -12,7 +12,6 @@ public class DeviceInfo {
     private final Type type;
 
     private byte[] appMacKey;
-    private int lastSeqTx;
 
     public DeviceInfo(String name, Type type) {
         this.name = name;

@@ -56,9 +56,6 @@ public class GateEntity {
     @Column(name = "app_mac_key")
     private byte[] appMacKey;
 
-    @Column(name = "last_seq_tx")
-    private Integer lastSeqTx = 0;
-
 
     public GateEntity(Long gateID, Status status, Timestamp lastTimeStamp,
                       Double latitude, Double longitude,

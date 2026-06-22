@@ -10,21 +10,21 @@ public class SignedDownlinkResponse {
     private String message;
     private String deviceId;
     private int commandId;
-    private int sequenceCounter;
+    private long hlcTimestamp;
     private int payloadSizeBytes;
     private String payloadHex;
     private String error;
 
     public SignedDownlinkResponse() {}
 
-    public static SignedDownlinkResponse ok(String deviceId, int commandId, int seqCounter,
+    public static SignedDownlinkResponse ok(String deviceId, int commandId, long hlcTimestamp,
                                              int payloadSize, String payloadHex) {
         SignedDownlinkResponse r = new SignedDownlinkResponse();
         r.success = true;
         r.message = "Signed downlink sent successfully";
         r.deviceId = deviceId;
         r.commandId = commandId;
-        r.sequenceCounter = seqCounter;
+        r.hlcTimestamp = hlcTimestamp;
         r.payloadSizeBytes = payloadSize;
         r.payloadHex = payloadHex;
         return r;

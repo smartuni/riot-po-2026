@@ -73,9 +73,12 @@ public class DownlinkController {
                     request.getCommandId(), commandData);
 
             byte[] rawPayload = Base64.getDecoder().decode(base64Payload);
-            int seqCounter = ((rawPayload[1] & 0xFF) << 8) | (rawPayload[2] & 0xFF);
+            long hlcTimestamp = ((long)(rawPayload[1] & 0xFF) << 24)
+                              | ((rawPayload[2] & 0xFF) << 16)
+                              | ((rawPayload[3] & 0xFF) << 8)
+                              |  (rawPayload[4] & 0xFF);
             SignedDownlinkResponse response = SignedDownlinkResponse.ok(
-                    deviceId, request.getCommandId(), seqCounter,
+                    deviceId, request.getCommandId(), hlcTimestamp,
                     rawPayload.length, HexFormat.of().formatHex(rawPayload));
 
             return ResponseEntity.ok(response);

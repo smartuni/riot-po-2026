@@ -37,13 +37,6 @@ public class DeviceRegistry {
         }
     }
 
-    public void updateSeqTx(String deviceName, int seqTx) {
-        DeviceInfo info = devices.get(deviceName);
-        if (info != null) {
-            info.setLastSeqTx(seqTx);
-        }
-    }
-
     public DeviceInfo getDeviceInfo(String deviceName) {
         return devices.get(deviceName);
     }
