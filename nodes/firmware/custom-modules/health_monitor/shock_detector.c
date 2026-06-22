@@ -41,9 +41,9 @@ static void collect_magnitudes(shock_detector_t* detector) {
 		}
 	}
 
-	for (int i = 0; i < *nsamples; i++) {
-		detector->input[i].r = 0;
-	}
+	// for (int i = 0; i < *nsamples; i++) {
+	// 	detector->input[i].r = 0;
+	// }
 	for (int i = 0; i < *nsamples; i++) {
 		int* x = &raw_accel_data[i].x;
 		int* y = &raw_accel_data[i].y;
@@ -57,10 +57,10 @@ static void collect_magnitudes(shock_detector_t* detector) {
 
 static void process_fft(shock_detector_t* detector) {
 	LED1_ON;
-	for(int i = 0; i < detector->sample_size; i++) {
-		detector->output[i].r = 0;
-		detector->output[i].i = 0;
-	}
+	// for(int i = 0; i < detector->sample_size; i++) {
+	// 	detector->output[i].r = 0;
+	// 	detector->output[i].i = 0;
+	// }
 	kiss_fft_cfg cfg = kiss_fft_alloc(detector->sample_size, 0, 0, 0);
 	kiss_fft(cfg, detector->input, detector->output);
 	kiss_fft_free(cfg);
@@ -68,17 +68,11 @@ static void process_fft(shock_detector_t* detector) {
 }
 
 static void postprocess_fft(shock_detector_t* detector) {
-	printf("Frequency Spectrum (0 to %d Hz):\n", detector->sample_size / 2);
-	printf("============================================================\n");
-	printf("%-10s %-15s %-15s %-15s\n", "Bin", "Frequency(Hz)", "Magnitude", "Real/Imag");
-	printf("============================================================\n");
-
 	moving_freq_avg_reset(detector->freq_avg);
 	for (int k = 0; k < detector->frequncy_domain_size; k++) {
 		int magnitude = calculate_magnitude(detector->output[k].r, detector->output[k].i, 0);
 		float sampling_rate_hz = 1000.0 / detector->sampling_period_ms;
 		int frequency = k * ((float)sampling_rate_hz / detector->sample_size);
-		//TODO perform avg so that there's only exactly one frequency
 		if (magnitude > 0) {
 			moving_freq_avg_add_sample(detector->freq_avg, frequency, magnitude);
 		}
@@ -89,14 +83,16 @@ static void postprocess_fft(shock_detector_t* detector) {
 static void* acceleration_thread(void* detector_void) {
 	shock_detector_t* detector = (shock_detector_t*)detector_void;
 	while (detector->running) {
+		puts("Collecting acceleration data...");
 		collect_magnitudes(detector);
+		puts("Processing FFT...");
 		process_fft(detector); // process the collected samples with FFT
+		puts("Post-processing FFT results...");
 		postprocess_fft(detector); // post-process the FFT results to find the average over frequency
 		for (int i = 0; i < detector->freq_avg->domain_size; i += 100) {
 			printf("Frequency: %d Hz, Average Magnitude: %d\n", i, detector->freq_avg->frequency_domain[i].average);
 		}
 	}
-
 	return NULL;
 }
 
@@ -144,8 +140,6 @@ int shock_detector_start(shock_detector_t* detector) {
 	}
 	// ... and also commented out
 	LOG_DEBUG("[shock_detector:%d] Acceleration thread started with PID %d\n", __LINE__, *accel_thread_pid);
-	ztimer_sleep(ZTIMER_MSEC, 1000); // give some time for the thread to start and collect samples
-	detector->running = false; // stop the thread after collecting samples
 	return 0;
 }
 
