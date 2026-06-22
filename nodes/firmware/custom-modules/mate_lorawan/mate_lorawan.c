@@ -464,9 +464,8 @@ bool mate_lorawan_joined(void)
 
 int send_lorawan_packet(const uint8_t *buf, size_t len)
 {
-    if(netif == NULL) {
-        _LOGDBG("No network interface available.\n");
-        return -1;
-    }
+    // if(netif == NULL) {
+    //     return -1;
+    // }
     return _send_lorawan_packet(netif, buf, len);
 }

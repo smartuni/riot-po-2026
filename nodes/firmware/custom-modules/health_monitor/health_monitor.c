@@ -41,7 +41,6 @@ static void* thread_function(void* monitor_void) {
 		} else {
 			LOG_DEBUG("[health_monitor.c:%d] Failed to send health monitor payload via LoRaWAN: lorawan is not initialized yet\n", __LINE__);
 		}
-		LOG_DEBUG("[health_monitor.c:%d] Sent health monitor payload via LoRaWAN\n", __LINE__);
 		ztimer_sleep(ZTIMER_SEC, monitor->update_period_sec);
 	}
 	return NULL;
