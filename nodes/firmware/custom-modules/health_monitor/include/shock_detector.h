@@ -54,7 +54,7 @@ typedef struct {
 	int sampling_period_ms;
 	int frequncy_domain_size;
 	volatile bool running;
-	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
+	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT*2];
 } shock_detector_t;
 
 /**
