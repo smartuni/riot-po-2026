@@ -27,7 +27,8 @@ public class GateEntity {
     private Status status;
     @Enumerated(EnumType.STRING)
     private StateConfirmation stateConfirmation;
-    private Timestamp lastTimeStamp;
+    private Timestamp gateTimeStamp;
+    private Long hlcLog;
     private Timestamp lastTransitionGateTimeStamp;
     private Long deviceId;
     private String location;
@@ -48,14 +49,19 @@ public class GateEntity {
     private int priority = 0;
 
 
-    public GateEntity(Long gateID, Status status, Timestamp lastTimeStamp,
+    public GateEntity(Long gateID, Status status, Timestamp hlcTimeStamp,
+                      Long hlcLogical,
                       Double latitude, Double longitude,
                       String location, String requestedStatus,
                       int confidence, String pendingJob, int priority) {
         this.id = gateID;
         this.status = status;
         this.stateConfirmation = StateConfirmation.UNCONFIRMED;
-        this.lastTimeStamp = lastTimeStamp;
+        this.confidence = confidence;
+
+        this.gateTimeStamp = hlcTimeStamp;
+        this.hlcLog = hlcLogical;
+
         this.lastTransitionGateTimeStamp = new Timestamp(0);
         // this.deviceId = deviceId;
         this.location = location;
@@ -100,19 +106,19 @@ public class GateEntity {
     }
 
     //Uplink from SEEN_TABLE
-    public GateEntity(Status status, Timestamp lastTimeStamp, Long deviceId) {
+    public GateEntity(Status status, Timestamp hlcTimeStamp, Long deviceId) {
         this.status = status;
-        this.lastTimeStamp = lastTimeStamp;
+        this.gateTimeStamp = hlcTimeStamp;
         this.deviceId = deviceId;
     }
 
     // HARD Coded
-    public GateEntity(Status status, Timestamp lastTimeStamp,
+    public GateEntity(Status status, Timestamp hlcTimeStamp,
                       Long deviceId, Double latitude, Double longitude,
                       String location, String requestedStatus) {
 
         this.status = status;
-        this.lastTimeStamp = lastTimeStamp;
+        this.gateTimeStamp = hlcTimeStamp;
         this.deviceId = deviceId;
         this.latitude = latitude;
         this.longitude = longitude;

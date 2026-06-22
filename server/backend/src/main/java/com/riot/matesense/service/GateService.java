@@ -11,6 +11,7 @@ import com.riot.matesense.model.GateForDownlink;
 import com.riot.matesense.repository.GateRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -39,10 +40,13 @@ public class GateService {
      * @return a list with all the gates
      */
     public List<Gate> getAllGates() {
-        List<GateEntity> gates = gateRepository.findAll();
+        List<GateEntity> gates = gateRepository.findAll(
+                Sort.by("hlcPhysical").descending()
+                        .and(Sort.by("hlcLogical").descending())
+        );
         List<Gate> customGates = new ArrayList<>();
         gates.forEach(e -> {
-            Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(), e.getStateConfirmation(),
+            Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getGateTimeStamp(), e.getStatus(), e.getStateConfirmation(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), 
                     e.getWorkerConfidence(), e.getSensorConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getQuality(), e.getPendingJob(), e.getPriority());
             customGates.add(gate);
@@ -89,7 +93,7 @@ public class GateService {
      */
     public void updateGate(GateEntity gate, MsgType reportType) {
         gate.setRequestedStatus(gate.getRequestedStatus());
-        gate.setLastTimeStamp(gate.getLastTimeStamp());
+        gate.setGateTimeStamp(gate.getGateTimeStamp());
         gate.setDeviceId(gate.getDeviceId());
         gate.setStatus(gate.getStatus());
         //Set confidence
@@ -134,7 +138,7 @@ public class GateService {
      */
     public Gate getGateById(Long id) throws GateNotFoundException {
         GateEntity gate = gateRepository.findById(id).orElseThrow(() -> new GateNotFoundException(id));
-        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(), gate.getStateConfirmation(),
+        return new Gate(gate.getId(), gate.getDeviceId(), gate.getGateTimeStamp(), gate.getStatus(), gate.getStateConfirmation(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
                 gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality(), gate.getPendingJob(), gate.getPriority());
     }
@@ -175,7 +179,7 @@ public class GateService {
             }
         }
 
-        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        gate.setGateTimeStamp(new Timestamp(System.currentTimeMillis()));
         gateRepository.save(gate);
     }
 
@@ -191,7 +195,7 @@ public class GateService {
             // }
         // }
 
-        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        gate.setGateTimeStamp(new Timestamp(System.currentTimeMillis()));
         gateRepository.save(gate);
     }
 
@@ -269,10 +273,10 @@ public class GateService {
             gate.setId(getIdForGate());
         }
         gate.setPriority(3);
-        if (gate.getLastTimeStamp() == null) {
-            gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        if (gate.getGateTimeStamp() == null) {
+            gate.setGateTimeStamp(new Timestamp(System.currentTimeMillis()));
         }
-        gate.setLastTimeStamp(gate.getLastTimeStamp());
+        gate.setGateTimeStamp(gate.getGateTimeStamp());
         gate.setRequestedStatus("REQUESTED_NONE");
         gate.setPendingJob("PENDING_NONE");
         gateRepository.save(gate);

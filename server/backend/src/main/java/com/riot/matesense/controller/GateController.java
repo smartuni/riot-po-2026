@@ -86,7 +86,8 @@ public class GateController {
      * @param body     the requested statuses of the gates
      * @throws GateNotFoundException
      */
-    @PostMapping("/{gateId}/{workerId}/request-status-change/")
+    // not so sure why there is a hard coded addition of time here, makes it hard to use hlc
+   /* @PostMapping("/{gateId}/{workerId}/request-status-change/")
     public void requestGateStatusChange(@PathVariable Long gateId, @PathVariable Long workerId, @RequestBody Map<String, String> body)
             throws GateNotFoundException {
         String targetStatus = body.get("requestedStatus");
@@ -99,6 +100,8 @@ public class GateController {
                         ActivityType.TARGET_STATE_REQUEST,
                         workerId));
     }
+
+    */
 
     /**
      * AN API Call to get all the GateForDownLink Entities in a List

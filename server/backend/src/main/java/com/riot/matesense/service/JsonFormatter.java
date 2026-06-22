@@ -24,28 +24,32 @@ public class JsonFormatter {
     static class StatusEntry {
         public int gateId;
         public int status;
-        public int timestamp;
+        public int hlc_phy;
+        public int hlc_log;
 
         public StatusEntry() {}
 
-        public StatusEntry(int gateId, int status, int timestamp) {
+        public StatusEntry(int gateId, int status, int hlc_phy,int hlc_log) {
             this.gateId = gateId;
             this.status = status;
-            this.timestamp = timestamp;
+            this.hlc_phy = hlc_phy;
+            this.hlc_log = hlc_log;
         }
     }
 
     static class SeenTableEntry {
         public int gateId;
-        public int gateTime;
+        public int hlc_phy;
+        public int hlc_log;
         public int status;
         public int senseMateId;
 
         public SeenTableEntry() {}
 
-        public SeenTableEntry(int gateId, int gateTime, int status, int senseMateId) {
+        public SeenTableEntry(int gateId, int hlc_phy,int hlc_log, int status, int senseMateId) {
             this.gateId = gateId;
-            this.gateTime = gateTime;
+            this.hlc_phy = hlc_phy;
+            this.hlc_log = hlc_log;
             this.status = status;
             this.senseMateId = senseMateId;
         }
@@ -75,8 +79,8 @@ public class JsonFormatter {
         int hlc_log = (int)rawData.get(6);
         //===== Header -----^^^^^
 
-        // TODO: add proper support for HLC instead fo this custom conversion onto the old int-timestamp
-        int timestamp = hlc_phy * 1000 + hlc_log;
+        // forward time to mqqtmessagehandler and use hlc-logic there
+        //int timestamp = hlc_phy * 1000 + hlc_log;
         /*
         int cnt = 0;
         for (Object o: rawData) {
@@ -91,7 +95,7 @@ public class JsonFormatter {
         if (GATE_REPORT.equals(recordType)) {
             int gateid = writerId[3];
             int gateState = (int)rawData.get(7);
-            StatusEntry se = new StatusEntry(gateid, gateState, timestamp);
+            StatusEntry se = new StatusEntry(gateid, gateState, hlc_phy,hlc_log);
             Message message = new Message(IST_STATE.getCode(), List.of(se));
             return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
         } else if (GATE_OBSERVATION.equals(recordType)) {
@@ -102,7 +106,7 @@ public class JsonFormatter {
             int gateState = (int)rawData.get(8);
             int mateid = writerId[3];
 
-            seenTableList.add(new SeenTableEntry(gateid, timestamp, gateState, mateid));
+            seenTableList.add(new SeenTableEntry(gateid, hlc_phy,hlc_log, gateState, mateid));
             Message message = new Message(SEEN_TABLE_STATE.getCode(), seenTableList);
             return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
         }else {
@@ -126,6 +130,7 @@ public class JsonFormatter {
                 int timestamp = statusNode.get("timestamp").asInt();
                 entries.add(Arrays.asList(gateId, status, timestamp));
             }
+            // does status have same name?
         } else if (messageType == 2) { // SEEN_TABLE_STATE
             for (JsonNode statusNode : root.get("statuses")) {
                 int gateId = statusNode.get("gateId").asInt();

@@ -18,6 +18,8 @@ import com.riot.matesense.service.GateService;
 import java.sql.Timestamp;
 import java.util.List;
 
+import com.riot.matesense.time.HlcClock;
+import com.riot.matesense.time.HlcTimestamp;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +31,7 @@ public class MqttMessageHandler {
     GateActivityService gateActivityService;
     private final DeviceRegistry deviceRegistry;
     private SimpMessagingTemplate messagingTemplate;
+    private final HlcClock backendClock = new HlcClock();
 
     public MqttMessageHandler(GateService gateService, GateActivityService gateActivityService, DeviceRegistry deviceRegistry, SimpMessagingTemplate messagingTemplate) {
         this.gateService = gateService;
@@ -45,6 +48,7 @@ public class MqttMessageHandler {
         }
         deviceRegistry.registerDevice(deviceName);
         try {
+            // changes json into map i believe
             JsonNode root = mapper.readTree(decodedJson);
 
             if (!root.has("messageType") || !root.has("statuses")) {
@@ -69,8 +73,17 @@ public class MqttMessageHandler {
                     for (JsonNode statusNode : root.get("statuses")) {
                         long gateId = statusNode.get("gateId").asLong();
                         int statusCode = statusNode.get("status").asInt();
-                        Timestamp gateTimeStamp = new Timestamp(statusNode.get("timestamp").asLong());
-                        Timestamp localTimeStamp = new Timestamp(System.currentTimeMillis());
+                        // physical is when it actually happened at the gate ,
+                        // willl be used here just as additional information, time for ordering will be hlc_time
+                        Long gatePhysicalTime = statusNode.get("hlc_phy").asLong();
+                        Long gateLogicalTimeStamp = statusNode.get("hlc_log").asLong();
+
+                        HlcTimestamp hlcTimestamp =
+                                backendClock.receive(gatePhysicalTime, gateLogicalTimeStamp);
+                        Timestamp hlcLongTotimeStamp = new Timestamp(hlcTimestamp.getPhysical());
+                        Timestamp LongToPysicalGateTimeStamp = new Timestamp(gatePhysicalTime);
+                        //localtime replaced by hlc
+                        //Timestamp localTimeStamp = new Timestamp(System.currentTimeMillis());
                         Status status = Status.fromCode(statusCode);
 
                         try {
@@ -82,17 +95,19 @@ public class MqttMessageHandler {
                                 gateService.changeGateStateConfirmation(gateId, StateConfirmation.UNCONFIRMED);
                                 activity = ActivityType.SENSOR_VALUE_CHANGED;
                             }
-                            gateService.changeGateStatus(gateId, status, MsgType.IST_STATE, gateTimeStamp);
-                            gateActivityService.addGateActivity(new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), activity,null));
+
+                            gateService.changeGateStatus(gateId, status, MsgType.IST_STATE, LongToPysicalGateTimeStamp);
+
+                            gateActivityService.addGateActivity(new GateActivityEntity(LongToPysicalGateTimeStamp,hlcLongTotimeStamp, hlcTimestamp.getLogical(), gateId, status.toString(), activity,null));
                             System.out.println("Gate wird aktualisiert: ID=" + gateId + ", Neuer Status=" + status);
                         } catch (GateNotFoundException e) {
                             //add new Gate
                             //GateEntity newGate = new GateEntity(gateId,status, localTimeStamp, 53.5633146 + (1.0* gateId / 20000.0),9.9873ct261 +  (1.0 * gateId / 20000.0), "Hamburg", "REQUESTED_NONE", 0, "PENDING_NONE", 3  );
-                            GateEntity newGate = new GateEntity(gateId,status, localTimeStamp, 53.557120, 10.022826, "Hamburg", "REQUESTED_NONE", 0, "PENDING_NONE", 3  );
+                            GateEntity newGate = new GateEntity(gateId,status, hlcLongTotimeStamp,hlcTimestamp.getLogical(), 53.557120, 10.022826, "Hamburg", "REQUESTED_NONE", 0, "PENDING_NONE", 3  );
                             gateService.addGateFromGUI(newGate);
                             System.out.println("Gate wird neu erstellt: ID=" + gateId + "Status." + status);
-                            System.out.println("GateID:" + gateId + "Timestamp" + localTimeStamp.getTime());
-                            gateActivityService.addGateActivity(new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId, status.toString(), ActivityType.SENSOR_NEW, null));
+                            System.out.println("GateID:" + gateId + "Timestamp" + hlcLongTotimeStamp.getTime());
+                            gateActivityService.addGateActivity(new GateActivityEntity(hlcLongTotimeStamp, LongToPysicalGateTimeStamp, hlcTimestamp.getLogical(), gateId, status.toString(), ActivityType.SENSOR_NEW, null));
 
                         }
                     }
@@ -100,19 +115,31 @@ public class MqttMessageHandler {
                 // Can be used for confidence calculator
                 case SEEN_TABLE_STATE -> {
                     for (JsonNode statusNode : payload) {
-                        long gateId = statusNode.get("gateId").asLong();        // GateID
-                        int statusCode = statusNode.get("status").asInt();      // Status
-                        long gateTime = statusNode.get("gateTime").asLong();
-                        Timestamp gateTimeStamp = new Timestamp(gateTime);
-                        Timestamp localTimeStamp = new Timestamp(System.currentTimeMillis());
-                        System.out.println(gateTime);
-                        System.out.println(gateTimeStamp);
-                        System.out.println(localTimeStamp);
+                        //long gateId = statusNode.get("gateId").asLong();        // GateID
+                        //int statusCode = statusNode.get("status").asInt();      // Status
+                        //long gateTime = statusNode.get("gateTime").asLong();
+                        //Timestamp gateTimeStamp = new Timestamp(gateTime);
+                        //Timestamp localTimeStamp = new Timestamp(System.currentTimeMillis());
+                        long gateId = statusNode.get("gateId").asLong();
+                        int statusCode = statusNode.get("status").asInt();
+                        // physical is when it actually happened at the gate ,
+                        // willl be used here just as additional information, time for ordering will be hlc_time
+                        Long gatePhysicalTime = statusNode.get("hlc_phy").asLong();
+                        Long gateLogicalTimeStamp = statusNode.get("hlc_log").asLong();
+
+                        HlcTimestamp hlcTimestamp =
+                                backendClock.receive(gatePhysicalTime, gateLogicalTimeStamp);
+                        // long to realtime
+                        Timestamp hlcLongTotimeStamp = new Timestamp(hlcTimestamp.getPhysical());
+                        Timestamp LongToPysicalGateTimeStamp = new Timestamp(gatePhysicalTime);
+                        System.out.println(hlcLongTotimeStamp);
+                        System.out.println(LongToPysicalGateTimeStamp);
+
                         Long senseMateId = statusNode.get("senseMateId").asLong(); // SenseMateID
 
                         List<GateActivity> allGateActivities = gateActivityService.getGateActivitiesByGateId(gateId);
                         Status status = Status.fromCode(statusCode);
-                        GateActivityEntity ngae = new GateActivityEntity(localTimeStamp, gateTimeStamp, gateId,
+                        GateActivityEntity ngae = new GateActivityEntity(hlcLongTotimeStamp, LongToPysicalGateTimeStamp, hlcTimestamp.getLogical(), gateId,
                                                                          status.toString(), ActivityType.SENSEMATE_WORKER_REPORT,
                                                                          senseMateId);
                         GateActivity nga = new GateActivity(ngae.getLocalTimeStamp(), ngae.getGateTimeStamp(), ngae.getGateId(),
@@ -132,7 +159,7 @@ public class MqttMessageHandler {
                             gateActivityService.addGateActivity(ngae);
                             System.out.println("SeenTable-Eintrag -> GateID: " + gateId +
                                     ", Status: " + status +
-                                    ", GateTime: " + gateTime +
+                                    ", GateTime: " + hlcLongTotimeStamp +
                                     ", SenseMateID: " + senseMateId);
                         }
                     }

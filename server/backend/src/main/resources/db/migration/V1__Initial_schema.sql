@@ -40,7 +40,9 @@ CREATE TABLE gates (
     id BIGINT PRIMARY KEY,
     status status_enum DEFAULT 'NONE',
     state_confirmation state_confirmation_enum DEFAULT 'UNCONFIRMED',
-    last_time_stamp TIMESTAMP,
+    --last_time_stamp TIMESTAMP,
+    gate_time_stamp TIMESTAMP,
+    hlc_log BIGINT,
     last_transition_gate_time_stamp TIMESTAMP,
     device_id BIGINT,
     location VARCHAR(255),
@@ -72,9 +74,11 @@ CREATE INDEX idx_gates_created_at ON gates(created_at);
 -- ============================================================================
 CREATE TABLE gate_activities (
     id BIGSERIAL PRIMARY KEY,
-    last_time_stamp TIMESTAMP,
+    --why is this here?
+    --last_time_stamp TIMESTAMP,
     local_time_stamp TIMESTAMP,
     gate_time_stamp TIMESTAMP,
+    hlc_log BIGINT,
     gate_id BIGINT NOT NULL,
     requested_status VARCHAR(50),
     message TEXT,

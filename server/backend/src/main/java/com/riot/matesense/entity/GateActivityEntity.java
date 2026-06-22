@@ -21,6 +21,7 @@ public class GateActivityEntity implements Comparable<GateActivityEntity> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Timestamp lastTimeStamp;
+    private Long hlcLog;
     private Timestamp localTimeStamp;
     private Timestamp gateTimeStamp;
     private Long gateId;
@@ -30,11 +31,14 @@ public class GateActivityEntity implements Comparable<GateActivityEntity> {
     @Enumerated(EnumType.STRING)
     private ActivityType activityType;
 
-    public GateActivityEntity(Timestamp localTimeStamp, Timestamp gateTimeStamp, Long gateId,
+    public GateActivityEntity(Timestamp localTimeStamp,Timestamp hlcTimeStamp,Long hlcLog, Long gateId,
                               String state, ActivityType activityType, Long workerId) {
+
         this.lastTimeStamp = localTimeStamp;
+        this.hlcLog = hlcLog;
+        // actual time of gate(event) in hardware
         this.localTimeStamp = localTimeStamp;
-        this.gateTimeStamp = gateTimeStamp;
+        this.gateTimeStamp = hlcTimeStamp;
         this.gateId = gateId;
         this.requestedStatus = state;
         this.workerId = workerId;
