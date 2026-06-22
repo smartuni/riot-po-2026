@@ -9,7 +9,7 @@ static int _serialize_with_array_encoding(const health_monitor_payload_t* record
 
     cbor_encode_uint(&main_array_encoder, ENCODING_V_1);
     cbor_encode_uint(&main_array_encoder, MESSAGE_TYPE_HEALTH_MONITOR);
-    uint16_t node_id = 0; // Placeholder for node_id, you can replace it with actual value if needed
+    uint32_t node_id = 0; // Placeholder for node_id, you can replace it with actual value if needed
     cbor_encode_uint(&main_array_encoder, node_id);
 	cbor_encode_uint(&main_array_encoder, record->shock_status);
 	cbor_encode_uint(&main_array_encoder, record->battery_info.battery_status);
