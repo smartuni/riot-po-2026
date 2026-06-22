@@ -43,6 +43,16 @@ int mate_lorawan_start(tables_context_t *tables);
  */
 bool mate_lorawan_joined(void);
 
+/**
+ * @brief   Send a LoRaWAN packet with given payload.
+ * @param   buf         Pointer to the data to be sent.
+ * @param   len         length of buf.
+ *
+ * @retval   0 on success
+ * @retval  -1 on failure
+ */
+int send_lorawan_packet(const uint8_t *buf, size_t len);
+
 #endif /* MATE_LORAWAN_H */
 /** @} */
 
