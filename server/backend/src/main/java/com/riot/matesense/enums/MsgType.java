@@ -5,7 +5,8 @@ public enum MsgType {
     IST_STATE(1),   // Is Status Table (BLE) for us
     SEEN_TABLE_STATE(2), //Sensemate Status Table n*m Table for us
     JOB_TABLE(3),   // Seen table for the Pilots user for them
-    DUMMY_STATE(4); // dummy state for compatibility with GateController
+    DUMMY_STATE(4),
+    HEALTH_MONITORING(5);
 
     private final int code;
 

@@ -65,6 +65,16 @@ public class MqttMessageHandler {
             System.out.println("Verarbeiteter Nachrichtentyp: " + type + " mit Code: " + type.getCode());
             messagingTemplate.convertAndSend("/topic/uplinks", messagestring);
             switch (type) {
+                case HEALTH_MONITORING -> {
+                    messagingTemplate.convertAndSend("/topic/health", decodedJson);
+                    //Konsolen-Log für das Testing/Debugging laut DoD
+                    for (JsonNode healthNode : payload) {
+                        System.out.println("Health Update erhalten -> SenseGateID: " + healthNode.get("senseGateId") +
+                                ", Battery: " + healthNode.get("batteryStatus") +
+                                ", Voltage: " + healthNode.get("voltageMv") + "mV" +
+                                ", Shock: " + healthNode.get("shockStatus"));
+                    }
+                }
                 case IST_STATE -> {
                     for (JsonNode statusNode : root.get("statuses")) {
                         long gateId = statusNode.get("gateId").asLong();

@@ -3,9 +3,14 @@ package com.riot.matesense.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.riot.matesense.enums.BatteryStatus;
+import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.RecordType;
+import com.riot.matesense.enums.ShockStatus;
+import com.riot.matesense.model.HealthStatusDTO;
 import org.springframework.stereotype.Service;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.riot.matesense.enums.MsgType.IST_STATE;
@@ -69,6 +74,27 @@ public class JsonFormatter {
         //===== Header -----vvvvv
         int version = (int) rawData.get(0);
         int messageType = (int)rawData.get(1);
+
+        // 2. Abzweigung für das neue Health-Monitoring (Code 5)
+        if (MsgType.HEALTH_MONITORING.getCode()==messageType) {
+            // Byte 2: Writer ID (4 Bytes)
+            byte[] writerIdBytes = (byte[]) rawData.get(2);
+            int senseGateId = ByteBuffer.wrap(writerIdBytes).getInt();
+            // Byte 3: Shock Status (1 Byte)
+            int shockCode = (int) rawData.get(3);
+            ShockStatus shockStatus = ShockStatus.fromCode(shockCode);
+            // Byte 4: Battery Status (1 Byte)
+            int batteryCode = (int) rawData.get(4);
+            BatteryStatus batteryStatus = BatteryStatus.fromCode(batteryCode);
+            // Byte 5: Voltage in mV (2 Bytes, bereits als int im rawData)
+            int voltageMv = (int) rawData.get(5);
+            // DTO erstellen
+            HealthStatusDTO healthDTO = new HealthStatusDTO(version, senseGateId, shockStatus, batteryStatus, voltageMv);
+            // Verpacken in deine Standard-Message-Struktur (damit das Frontend dasselbe Format liest)
+            Message message = new Message(MsgType.HEALTH_MONITORING.getCode(), List.of(healthDTO));
+            return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
+        }
+
         RecordType recordType = RecordType.fromCode((int)rawData.get(2));
         byte[] writerId= (byte[])rawData.get(3);
         int hlc_phy = (int)rawData.get(5);
@@ -133,6 +159,14 @@ public class JsonFormatter {
                 int status = statusNode.get("status").asInt();
                 int senseMateId = statusNode.get("senseMateId").asInt();
                 entries.add(Arrays.asList(gateId,status,gateTime, senseMateId));
+            }
+        } else if (messageType == 5) { // HEALTH_MONITORING
+            // Falls das Inbound-System (z.B. für Tests) auch die Rückrichtung de-serialisieren muss:
+            for (JsonNode statusNode : root.get("statuses")) {
+                int senseGateId = statusNode.get("senseGateId").asInt();
+                int voltageMv = statusNode.get("voltageMv").asInt();
+                // Enums/Strings als Code mappen wenn nötig
+                entries.add(Arrays.asList(senseGateId, voltageMv));
             }
         } else {
             throw new IllegalArgumentException("Unbekannter MessageType: " + messageType);
