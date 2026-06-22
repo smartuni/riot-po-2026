@@ -22,6 +22,13 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.server.HandshakeInterceptor;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.web.socket.WebSocketHandler;
+
+import java.util.List;
+import java.util.Map;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -53,16 +60,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     if (accessor.getNativeHeader("Cookie") != null) {
                         cookieHeader = accessor.getFirstNativeHeader("Cookie");
                     }
-                    // Also try from native session attributes (handshake headers)
+                    // Also try from session attributes populated by the
+                    // HandshakeInterceptor (browsers send cookies on the HTTP
+                    // upgrade, not in the STOMP CONNECT frame).
                     if (cookieHeader == null) {
                         java.util.Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
-                        if (sessionAttributes != null && sessionAttributes.get("nativeHeaders") instanceof java.util.Map) {
-                            @SuppressWarnings("unchecked")
-                            java.util.Map<String, java.util.List<String>> nativeHeaders =
-                                (java.util.Map<String, java.util.List<String>>) sessionAttributes.get("nativeHeaders");
-                            java.util.List<String> cookies = nativeHeaders.get("cookie");
-                            if (cookies != null && !cookies.isEmpty()) {
-                                cookieHeader = cookies.get(0);
+                        if (sessionAttributes != null) {
+                            Object cookieAttr = sessionAttributes.get("cookie");
+                            if (cookieAttr instanceof String s && !s.isEmpty()) {
+                                cookieHeader = s;
                             }
                         }
                     }
@@ -97,6 +103,34 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOrigins(allowedOrigins);
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins(allowedOrigins)
+                .addInterceptors(new HandshakeInterceptor() {
+                    @Override
+                    public boolean beforeHandshake(ServerHttpRequest request,
+                                                  ServerHttpResponse response,
+                                                  WebSocketHandler wsHandler,
+                                                  Map<String, Object> attributes) {
+                        // Copy the Cookie header from the HTTP upgrade request into
+                        // the session attributes so the STOMP CONNECT interceptor can
+                        // read the JWT cookie. Browsers send cookies on the WS
+                        // handshake but do NOT forward them into STOMP CONNECT
+                        // frames, so the interceptor's nativeHeader path is a no-op
+                        // in production browsers.
+                        List<String> cookies = request.getHeaders().get("Cookie");
+                        if (cookies != null && !cookies.isEmpty()) {
+                            attributes.put("cookie", cookies.get(0));
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public void afterHandshake(ServerHttpRequest request,
+                                                ServerHttpResponse response,
+                                                WebSocketHandler wsHandler,
+                                                Exception exception) {
+                        // no-op
+                    }
+                });
     }
 }
