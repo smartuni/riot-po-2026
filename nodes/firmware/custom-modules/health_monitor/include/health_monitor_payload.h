@@ -16,7 +16,7 @@
 
 #include <stdint.h>
 
-#define HEALTH_MONITOR_PAYLOAD_SIZE 4
+#define HEALTH_MONITOR_PAYLOAD_ELEMENTS 3
 
 typedef uint8_t shock_status_t;
 enum {
@@ -39,6 +39,6 @@ typedef struct {
 typedef struct {
 	shock_status_t shock_status; // 1 byte
 	battery_info_t battery_info; // 3 bytes
-} health_monitor_payload_t; // total 4 bytes
+} health_monitor_payload_t; // total 6 elements
 
 #endif
