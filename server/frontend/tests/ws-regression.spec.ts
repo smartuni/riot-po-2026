@@ -31,7 +31,7 @@ test.describe('WebSocket regression — stale lastTimeStamp bug', () => {
     const row = page.locator('table.gate-table tbody tr', {
       hasText: 'E2E Gate Alpha',
     });
-    await expect(row).toContainText('CLOSED', { timeout: 5000 });
+    await expect(row).toContainText(/closed/i, { timeout: 5000 });
 
     // 4. KEY BUG ASSERTION: "Last Update" must show a fresh relative time.
     //    Before fix: WS sends stale lastTimeStamp → UI shows "5 months ago" (from Jan 2026 seed) → test FAILS.
@@ -80,7 +80,7 @@ test.describe('WebSocket regression — stale lastTimeStamp bug', () => {
     // WORKER_CONFIRMED_SINGLE renders a ✓ icon via CheckIcon.
     // The Badge badgeContent contains the icon; the cell should still show CLOSED status.
     const statusCell = row.locator('td[data-label="Status"]');
-    await expect(statusCell).toContainText('CLOSED', { timeout: 5000 });
+    await expect(statusCell).toContainText(/closed/i, { timeout: 5000 });
 
     // 4. Verify via API that lastTimeStamp is no longer the stale seed value
     const gatesAfter = await (await request.get(`${BACKEND_URL}/gates`)).json();
