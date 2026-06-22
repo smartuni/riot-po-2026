@@ -41,9 +41,9 @@ static void collect_magnitudes(shock_detector_t* detector) {
 		}
 	}
 
-	// for (int i = 0; i < *nsamples; i++) {
-	// 	detector->input[i].r = 0;
-	// }
+	for (int i = 0; i < *nsamples; i++) {
+		detector->input[i].r = 0;
+	}
 	for (int i = 0; i < *nsamples; i++) {
 		int* x = &raw_accel_data[i].x;
 		int* y = &raw_accel_data[i].y;
@@ -57,10 +57,10 @@ static void collect_magnitudes(shock_detector_t* detector) {
 
 static void process_fft(shock_detector_t* detector) {
 	LED1_ON;
-	// for(int i = 0; i < detector->sample_size; i++) {
-	// 	detector->output[i].r = 0;
-	// 	detector->output[i].i = 0;
-	// }
+	for(int i = 0; i < detector->sample_size; i++) {
+		detector->output[i].r = 0;
+		detector->output[i].i = 0;
+	}
 	kiss_fft_cfg cfg = kiss_fft_alloc(detector->sample_size, 0, 0, 0);
 	kiss_fft(cfg, detector->input, detector->output);
 	kiss_fft_free(cfg);
