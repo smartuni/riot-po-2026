@@ -35,7 +35,7 @@ static const char *ok(bool condition)
 #define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
 #endif
 
-#define MIN_VISIBLE_RSSI -80
+static int min_rssi = -80;
 
 extern int credential_manager_setup(const char *db_path);
 extern int tables_setup(tables_context_t **t, const char *db_path);
@@ -62,6 +62,19 @@ table_query_t all_gates_query = {
     .writer_id = NULL,
     .involved_id = NULL
 };
+
+bool _set_min_rssi_cb(int8_t rssi)
+{
+    LOG_INFO("New minimum RSSI: %d\n", rssi);
+
+    min_rssi = rssi;
+
+    return true;
+}
+
+int8_t _get_min_rssi_cb(void){
+    return min_rssi;
+}
 
 uint32_t _get_known_gate_count_by_type(table_record_type_t type)
 {
@@ -164,7 +177,7 @@ static bool _all_gates_iter(ui_data_element_t *prev)
             _LOGDBG("%s Gate State: %s\n", __func__, gate_state_tostr(rdata->state));
             hlc_timestamp_t timestamp;
             get_record_timestamp(record, &timestamp);
-            li->sensor_timestamp = timestamp;
+            //li->sensor_timestamp = timestamp;
             memcpy(li->gateID, writer_id, sizeof(node_id_t));
             li->sensor_state = rdata->state;
             li->sensor_data_present = true;
@@ -201,6 +214,8 @@ static bool _put_gate_observation_cb(ui_data_element_t *elem)
 static ui_data_cbs_t _ui_data_cbs = {
     .all_gates_iter = _all_gates_iter,
     .put_gate_observation = _put_gate_observation_cb,
+    .set_min_rssi = _set_min_rssi_cb,
+    .get_min_rssi = _get_min_rssi_cb,
     .jobs_iter = NULL,
 };
 
@@ -281,7 +296,7 @@ int main(void) {
     while (1)
     {
         ui_state->visible_gate_cnt = _get_known_gate_count();
-        ui_state->visible_mate_cnt = _get_visible_mate_count(MIN_VISIBLE_RSSI);
+        ui_state->visible_mate_cnt = _get_visible_mate_count(min_rssi);
         ui_state->pending_jobs_cnt = _get_known_gate_count_by_type(RECORD_GATE_JOB);
 
         bool updateui = false;
