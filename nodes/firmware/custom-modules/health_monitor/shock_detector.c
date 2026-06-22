@@ -69,7 +69,7 @@ static void process_fft(shock_detector_t* detector) {
 
 static void postprocess_fft(shock_detector_t* detector) {
 	moving_freq_avg_reset(detector->freq_avg);
-	for (int k = 0; k < detector->frequncy_domain_size; k++) {
+	for (int k = 0; k < detector->nyquist_domain_size; k++) {
 		int magnitude = calculate_magnitude(detector->output[k].r, detector->output[k].i, 0);
 		float sampling_rate_hz = 1000.0 / detector->sampling_period_ms;
 		int frequency = k * ((float)sampling_rate_hz / detector->sample_size);
@@ -89,7 +89,7 @@ static void* acceleration_thread(void* detector_void) {
 		process_fft(detector); // process the collected samples with FFT
 		puts("Post-processing FFT results...");
 		postprocess_fft(detector); // post-process the FFT results to find the average over frequency
-		for (int i = 0; i < detector->freq_avg->domain_size; i += 100) {
+		for (int i = 450; i < 601; i += 2) {
 			printf("Frequency: %d Hz, Average Magnitude: %d\n", i, detector->freq_avg->frequency_domain[i].average);
 		}
 	}
@@ -105,11 +105,11 @@ shock_detector_t* shock_detector_new(int threshold, int sample_size, int samplin
 	// sensor_data_t* accel_sensor = &new_detector->accel_sensor;
 	// accel_sensor->callback = acceleration_callback;
 	new_detector->callback = acceleration_callback;
-	int nyquist_bin = sample_size / 2 + 1;
-	new_detector->frequncy_domain_size = nyquist_bin + 1;
-	new_detector->freq_avg = moving_freq_avg_new(new_detector->frequncy_domain_size);
+	int nyquist = sample_size / 2 + 1;
+	new_detector->nyquist_domain_size = nyquist;// + 1;
+	new_detector->freq_avg = moving_freq_avg_new(new_detector->nyquist_domain_size);
 	new_detector->input = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * sample_size);
-	new_detector->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * sample_size);
+	new_detector->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * nyquist);
 
 	/* [TASK 3: find your device here] */
 	new_detector->accel_sensor = saul_reg_find_type(SAUL_SENSE_ACCEL);
