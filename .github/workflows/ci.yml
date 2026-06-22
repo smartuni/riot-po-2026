@@ -15,8 +15,7 @@ on:
         default: /dev/ttyACM0
   push:
     branches:
-      - main
-      - develop
+      - '**'
 
   pull_request:
 
