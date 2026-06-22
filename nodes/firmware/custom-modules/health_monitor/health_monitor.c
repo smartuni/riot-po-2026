@@ -36,7 +36,12 @@ static void* thread_function(void* monitor_void) {
 		LOG_DEBUG("[health_monitor.c:%d] Serialized health monitor payload, size: %d bytes\n", __LINE__, buff_size);
 
 		//send the payload via lorawan	
-		send_lorawan_packet(buffer, buff_size);
+		int status = send_lorawan_packet(buffer, buff_size);
+		if (status == 0) {
+			LOG_DEBUG("[health_monitor.c:%d] Sent health monitor payload via LoRaWAN\n", __LINE__);
+		} else {
+			LOG_DEBUG("[health_monitor.c:%d] Failed to send health monitor payload via LoRaWAN: lorawan is not initialized yet\n", __LINE__);
+		}
 		LOG_DEBUG("[health_monitor.c:%d] Sent health monitor payload via LoRaWAN\n", __LINE__);
 		ztimer_sleep(ZTIMER_SEC, monitor->update_period_sec);
 	}
