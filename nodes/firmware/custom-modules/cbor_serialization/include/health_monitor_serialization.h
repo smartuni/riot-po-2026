@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #define MESSAGE_TYPE_HEALTH_MONITOR 0x04
+#define HEALTH_MONITOR_BUFFER_SIZE (HEALTH_MONITOR_PAYLOAD_ELEMENTS + 3) // +3 for version, msg_type, and node_id
 
 /**
  * @brief Same as cbor_serialize_record but leave out signature field
