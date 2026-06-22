@@ -1,4 +1,4 @@
--- Migration: V9__Add_device_keys.sql
+-- Migration: V12__Add_device_keys.sql
 -- Description: Add Ed25519 key storage tables for asymmetric signing
 --              (mirrors firmware credential_manager pattern)
 

@@ -1,4 +1,4 @@
--- Migration: V10__Fix_gate_activities_activity_type_column.sql
+-- Migration: V11__Fix_gate_activities_activity_type_column.sql
 -- Description: Convert gate_activities.activity_type from activity_type_enum to VARCHAR
 -- to match Hibernate's @Enumerated(EnumType.STRING) mapping. Without this, inserts via
 -- the entity (gateActivityService.addGateActivity -> repository.save) fail with:

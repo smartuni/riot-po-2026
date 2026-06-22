@@ -1,4 +1,4 @@
--- Migration: V12__Remove_last_seq_tx_column.sql
+-- Migration: V13__Remove_last_seq_tx_column.sql
 -- Description: Remove last_seq_tx column from gates table.
 --              Replaced by HLC-based replay protection (see ticket-64-downlink-cmac).
 
