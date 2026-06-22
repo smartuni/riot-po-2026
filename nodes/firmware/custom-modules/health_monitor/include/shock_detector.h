@@ -25,6 +25,7 @@
 #include "board.h"
 #include "phydat.h"
 #include "kiss_fft.h"
+#include "mutex.h"
 
 #define LOG_LEVEL LOG_DEBUG
 #include "log.h"
@@ -43,6 +44,7 @@ typedef struct {
 // Restructures for memory alignment and to avoid padding
 typedef struct {
 	kernel_pid_t thread_pid;
+	mutex_t shock_status_mutex;
 	saul_reg_t* accel_sensor;
 	kiss_fft_cpx* input;
 	kiss_fft_cpx* output;
@@ -53,6 +55,7 @@ typedef struct {
 	int sampling_period_ms;
 	int nyquist_domain_size;
 	volatile bool running;
+	volatile shock_status_t shock_status;
 	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT*2];
 } shock_detector_t;
 
