@@ -20,8 +20,25 @@ health_monitor_t* health_monitor_new(int update_period_sec) {
 static void* thread_function(void* monitor_void) {
 	health_monitor_t* monitor = (health_monitor_t*)monitor_void;
 	while (monitor->running) {
+		//init the payload
+		health_monitor_payload_t payload;
 		//get battery info
+		battery_voltage_monitor_fetch_info(monitor->battery_monitor, &payload.battery_info);
 		//get shock status
+		shock_detector_fetch_status(monitor->shock_detector, &payload.shock_status);
+		//serialize the payload
+		//send the payload via lorawan	
+		size_t buff_size = sizeof(health_monitor_payload_t);
+		uint8_t* buffer = (uint8_t*)malloc(buff_size);
+		if (buffer == NULL) {
+			LOG_DEBUG("[health_monitor.c:%d] Failed to allocate memory for buffer", __LINE__);
+			return NULL;
+		}
+		health_monitor_serialize_record_no_sig(&payload, buffer, &buff_size, true);
+		LOG_DEBUG("[health_monitor.c:%d] Serialized health monitor payload, size: %d bytes\n", __LINE__, buff_size);
+		//send_lorawan_packet(netif, buffer, buff_size);
+		LOG_DEBUG("[health_monitor.c:%d] Sent health monitor payload via LoRaWAN\n", __LINE__);
+		free(buffer);
 		ztimer_sleep(ZTIMER_SEC, monitor->update_period_sec);
 	}
 	return NULL;
