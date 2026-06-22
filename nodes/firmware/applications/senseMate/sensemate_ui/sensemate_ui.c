@@ -664,16 +664,19 @@ static void _clear_tile_dyn_leave(ui_dyn_menu_ctx_t *c)
     }
 }
 
-static void slider_event_cb(lv_event_t * e)
+static void slider_event_cb(lv_event_t *e)
 {
-    lv_obj_t * slider = lv_event_get_target(e);
-    void *user_data = lv_event_get_user_data(e);
-    if (user_data) {
-        lv_obj_t *slider_label = (lv_obj_t*)user_data;
-        char buf[8];
-        lv_snprintf(buf, sizeof(buf), "%d%%", (int)lv_slider_get_value(slider));
-        lv_label_set_text(slider_label, buf);
-        lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+    lv_obj_t *slider = lv_event_get_target(e);
+    lv_obj_t *slider_label = lv_event_get_user_data(e);
+
+    int8_t rssi = (int8_t)lv_slider_get_value(slider);
+
+    char buf[16];
+    lv_snprintf(buf, sizeof(buf), "%d dBm", rssi);
+    lv_label_set_text(slider_label, buf);
+
+    if (_data_cbs && _data_cbs->set_min_rssi) {
+        _data_cbs->set_min_rssi(rssi);
     }
 }
 
@@ -701,7 +704,18 @@ static void _settings_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
 
     /*Create a label below the slider*/
     lv_obj_t *slider_label = lv_label_create(list1);
-    lv_label_set_text(slider_label, "0%");
+    int8_t rssi = -80;
+
+    if (_data_cbs && _data_cbs->get_min_rssi) {
+        rssi = _data_cbs->get_min_rssi();
+    }
+
+    lv_slider_set_range(slider, -100, -30);
+    lv_slider_set_value(slider, rssi, LV_ANIM_OFF);
+
+    char buf[16];
+    lv_snprintf(buf, sizeof(buf), "%d dBm", rssi);
+    lv_label_set_text(slider_label, buf);
     lv_obj_align(slider_label, LV_ALIGN_CENTER, 0, 0);
     lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
     lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, slider_label);
