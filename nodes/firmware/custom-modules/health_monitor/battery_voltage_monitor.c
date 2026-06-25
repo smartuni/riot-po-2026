@@ -40,9 +40,7 @@ static int get_battery_voltage(void) {
 	//TODO adjust based on the voltage divider
 	uint32_t raw_voltage = battery_voltage_sample(AIN7_BAT);
 	uint32_t voltage_mv = battery_voltage_sample2adc_voltage(raw_voltage);
-
-	LOG_DEBUG("[battery_voltage_monitor.c:%d] Hey!Raw data is %d Voltage is: %d\n", __LINE__, (int)raw_voltage, (int)voltage_mv);
-	return 3700;
+	return (int)voltage_mv;
 }
 
 battery_voltage_monitor_t* battery_voltage_monitor_new(int threshold_mv) {
@@ -59,7 +57,6 @@ battery_voltage_monitor_t* battery_voltage_monitor_new(int threshold_mv) {
 	}
 	monitor->threshold_mv = threshold_mv;
 	monitor->prev_voltage_mv = -1;
-	//monitor->running = false;
 
 	return monitor;
 }
