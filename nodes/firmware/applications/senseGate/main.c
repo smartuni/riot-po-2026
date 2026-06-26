@@ -62,7 +62,7 @@ void* shell_thread(void* arg) {
 
 int main(void) {
 	ztimer_sleep(ZTIMER_MSEC, 7000);
-	shock_detector_t* shock_detector = shock_detector_new(1000, 1);
+	shock_detector_t* shock_detector = shock_detector_new(1000, 1024, 1);
 	shock_detector_start(shock_detector);
 
 	while (1) {
