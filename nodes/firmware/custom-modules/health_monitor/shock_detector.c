@@ -22,7 +22,8 @@ static void acceleration_callback(void) {
 
 static void collect_magnitudes(shock_detector_t* detector) {
 	phydat_t acceleration;
-	raw_acceleration_t raw_accel_data[SAMPLE_SIZE];
+	//raw_acceleration_t raw_accel_data[SAMPLE_SIZE];
+	raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * SAMPLE_SIZE);
 	LED0_ON;
 	for (int i = 0; i < SAMPLE_SIZE; i++) {
 		int acc_dim = saul_reg_read(detector->accel_sensor, &acceleration);
@@ -39,6 +40,7 @@ static void collect_magnitudes(shock_detector_t* detector) {
 			ztimer_sleep(ZTIMER_MSEC, detector->sampling_period_ms);
 		}
 	}
+	LOG_DEBUG("[shock_detector.c:%d] Collected samples\n", __LINE__);
 
 	for (int i = 0; i < SAMPLE_SIZE; i++) {
 		detector->input[i].r = 0;
@@ -51,6 +53,7 @@ static void collect_magnitudes(shock_detector_t* detector) {
 		detector->input[i].i = 0;
 	}
 	LED0_OFF;
+	free(raw_accel_data);
 }
 
 static void process_fft(shock_detector_t* detector) {
