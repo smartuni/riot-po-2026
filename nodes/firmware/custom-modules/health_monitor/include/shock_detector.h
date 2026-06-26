@@ -62,7 +62,6 @@ typedef struct {
 /**
  * @brief Creates a new shock detector to the heap
  * @param threshold The magnitude threshold for shock detection in mm/s^2
- * @param sample_size The number of samples to collect for each FFT analysis. Max frequency domain would be sample_size / 2 + 1 bins.
  * @param sampling_period_ms The period in milliseconds between each sample collection
  * @return Pointer to the new shock detector, or NULL if memory allocation failed
  */
