@@ -56,7 +56,7 @@ typedef struct {
 	int nyquist_domain_size;
 	volatile bool running;
 	volatile shock_status_t shock_status;
-	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT*2];
+	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
 } shock_detector_t;
 
 /**

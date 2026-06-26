@@ -54,7 +54,6 @@ static void collect_magnitudes(shock_detector_t* detector) {
 	}
 	free(raw_accel_data);
 	LED0_OFF;
-	free(raw_accel_data);
 }
 
 static void process_fft(shock_detector_t* detector) {
@@ -91,7 +90,7 @@ static void* acceleration_thread(void* detector_void) {
 		process_fft(detector); // process the collected samples with FFT
 		LOG_DEBUG("[shock_detector.c:%d] Post-processing FFT results...\n", __LINE__);
 		postprocess_fft(detector); // post-process the FFT results to find the average over frequency
-		for (int i = 0; i < 500; i += 2) {
+		for (int i = 0; i < detector->nyquist_domain_size; i += 5) {
 			LOG_DEBUG("[shock_detector.c:%d] Frequency: %d Hz, Average Magnitude: %d\n", __LINE__, i, detector->freq_avg->frequency_domain[i].average);
 		}
 		mutex_lock(&detector->shock_status_mutex);
