@@ -22,7 +22,6 @@ static void acceleration_callback(void) {
 
 static void collect_magnitudes(shock_detector_t* detector) {
 	phydat_t acceleration;
-	//raw_acceleration_t raw_accel_data[SAMPLE_SIZE];
 	raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * SAMPLE_SIZE);
 	LED0_ON;
 	for (int i = 0; i < SAMPLE_SIZE; i++) {
