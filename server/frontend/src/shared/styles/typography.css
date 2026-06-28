@@ -2,27 +2,3 @@
 
 /* Google Fonts: Inter + JetBrains Mono */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap');
-
-/* ===== Font Family Utilities ===== */
-.font-sans {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-.font-mono {
-  font-family: 'JetBrains Mono', monospace;
-}
-
-/* ===== Font Scale ===== */
-.text-xs   { font-size: 12px; }
-.text-sm   { font-size: 13px; }
-.text-base { font-size: 14px; }
-.text-lg   { font-size: 16px; }
-.text-xl   { font-size: 20px; }
-.text-2xl  { font-size: 28px; }
-.text-3xl  { font-size: 36px; }
-.text-4xl  { font-size: 52px; }
-
-/* ===== Letter Spacing ===== */
-.tracking-wide { letter-spacing: 0.05em; }
-
-/* ===== Text Transform ===== */
-.uppercase { text-transform: uppercase; }

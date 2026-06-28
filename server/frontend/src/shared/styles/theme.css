@@ -1103,6 +1103,107 @@ body.dark .map-container { background: var(--slate-800); }
   word-break: break-word;
 }
 
+/* ===== Missing CSS Classes ===== */
+
+/* 1. .coords — gate lat/lng sub-text */
+.coords {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 2. .bulk-count — selection counter in bulk-bar */
+.bulk-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* 3. .row-check — per-row checkbox in gate-table */
+.row-check {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue-600);
+  cursor: pointer;
+}
+
+/* 4. .select-all — header select-all checkbox */
+.select-all {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue-600);
+  cursor: pointer;
+}
+
+/* 5. .table-search — search input in table toolbar */
+.table-search {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  transition: border 0.15s, box-shadow 0.15s;
+}
+.table-search:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  outline: none;
+}
+
+/* 6. .page-content-inner — centered content within .page-content */
+.page-content-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* 7. .settings-avatar — big avatar */
+.settings-avatar {
+  width: 56px;
+  height: 56px;
+  background: var(--blue-600);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* 8. .map-view — leaflet map wrapper */
+.map-view {
+  height: 100%;
+  width: 100%;
+}
+
+/* 9. .map-page-container — map page wrapper */
+.map-page-container {
+  height: 100%;
+  width: 100%;
+}
+
+/* 10. .guest-dashboard — guest page wrapper */
+.guest-dashboard {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 11. .guest-content — guest main content */
+.guest-content {
+  padding: 24px;
+  flex: 1;
+}
+
+/* 12. .collapse-btn — marker, inherits .topbar-btn */
+.collapse-btn { /* marker — inherits .topbar-btn */ }
+
+/* 13. .dark-toggle — marker, inherits .topbar-btn */
+.dark-toggle { /* marker — inherits .topbar-btn */ }
+
 /* ===== Responsive ===== */
 @media (max-width: 1024px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1126,7 +1227,7 @@ body.dark .map-container { background: var(--slate-800); }
   .mobile-overlay {
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.4);
-    z-index: 99;
+    z-index: 101;
     display: none;
   }
   .mobile-overlay.visible { display: block; }
