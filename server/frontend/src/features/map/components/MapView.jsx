@@ -26,8 +26,8 @@ function MapView({ search = '', statusFilter = { Closed: true, Open: true, OOS: 
 
     if (error) {
         return (
-            <div className="map-view" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '500px', backgroundColor: '#fef2f2', color: '#dc2626' }}>
-                Failed to load gates data: {error.toString()}
+            <div className="map-view" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '500px', backgroundColor: 'var(--red-100)', color: 'var(--red-600)' }}>
+                Failed to load gates data. Please try again later.
             </div>
         );
     }
@@ -51,9 +51,9 @@ function MapView({ search = '', statusFilter = { Closed: true, Open: true, OOS: 
     });
 
     const getStatusStyle = (status) => {
-        if (status === "OPEN") return { color: "#ef4444" };
-        if (status === "OUT_OF_SERVICE") return { color: "#f59e0b" };
-        return { color: "#16a34a" };
+        if (status === "OPEN") return { color: "var(--red-600)" };
+        if (status === "OUT_OF_SERVICE") return { color: "var(--amber-600)" };
+        return { color: "var(--green-600)" };
     };
 
     return (
@@ -69,7 +69,7 @@ function MapView({ search = '', statusFilter = { Closed: true, Open: true, OOS: 
                     attribution='&copy; OpenStreetMap contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                {filteredGates.map((gate) => (
+                {filteredGates.filter(gate => gate.latitude != null && gate.longitude != null).map((gate) => (
                     <Marker
                         key={gate.id}
                         position={[gate.latitude, gate.longitude]}
@@ -79,7 +79,7 @@ function MapView({ search = '', statusFilter = { Closed: true, Open: true, OOS: 
                             <strong>{gate.location}</strong><br />
                             Status: <span style={getStatusStyle(gate.status)}>{gate.status}</span><br />
                             Gate-ID: <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{gate.id}</span><br />
-                            Last Update: {new Date(gate.lastTimeStamp).toLocaleString()}<br />
+                            Last Update: {gate.lastTimeStamp ? new Date(gate.lastTimeStamp).toLocaleString() : '—'}<br />
                             Confidence: {gate.confidence}
                         </Popup>
                     </Marker>
