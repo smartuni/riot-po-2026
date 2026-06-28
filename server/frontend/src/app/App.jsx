@@ -15,6 +15,7 @@ import DevicesPage from '../pages/DevicesPage';
 import AutomationPage from '../pages/AutomationPage';
 import LogsPage from '../pages/LogsPage';
 import SettingsPage from '../pages/SettingsPage';
+import NotFoundPage from '../shared/components/NotFoundPage';
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -55,6 +56,8 @@ function AppContent() {
           <Route path="/logs" element={<LogsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
+        {/* 404 catch-all */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
