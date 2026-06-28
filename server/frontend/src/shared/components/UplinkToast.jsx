@@ -70,7 +70,7 @@ export default function UplinkToast() {
   if (!toastState.show) return null;
 
   return (
-    <div className={`uplink-toast ${toastState.exiting ? 'hiding' : 'visible'}`}>
+    <div className={`uplink-toast ${toastState.exiting ? 'hiding' : 'visible'}`} role="status" aria-live="polite">
       <div className="uplink-toast-header">
         <span className="uplink-toast-title">
           <span className="uplink-toast-icon">&#x1F4E1;</span>

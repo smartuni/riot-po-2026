@@ -23,7 +23,7 @@ const LogoutButton = () => {
     <>
       {errorMsg && <Alert severity="error" onClose={() => setErrorMsg(null)} sx={{ mb: 1 }}>{errorMsg}</Alert>}
       <Button onClick={handleLogout} startIcon={<FiLogOut />} sx={{
-        borderRadius: 2, width: '120px', height: '60px', color: 'white', textTransform: 'none', fontSize: '18px', '&:hover': { backgroundColor: '#115293' }
+        borderRadius: 2, width: '120px', height: '60px', textTransform: 'none', fontSize: '18px', '&:hover': { backgroundColor: 'var(--accent-hover)' }
       }}>
         Logout
       </Button>
