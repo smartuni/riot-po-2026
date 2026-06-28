@@ -36,7 +36,7 @@ function useCountUp(target) {
 }
 
 export default function StatCards() {
-  const { data: gates = [] } = useGetGatesQuery();
+  const { data: gates = [], isLoading, error } = useGetGatesQuery();
 
   const total = gates.length;
   const closed = gates.filter(g => g.status === 'CLOSED').length;
@@ -47,6 +47,31 @@ export default function StatCards() {
   const displayClosed = useCountUp(closed);
   const displayOpen = useCountUp(open);
   const displayOos = useCountUp(oos);
+
+  if (isLoading) {
+    return (
+      <div className="stats-grid">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="stat-card" style={{ opacity: 0.5 }}>
+            <div className="stat-header">
+              <span className="stat-label">Loading…</span>
+            </div>
+            <div className="stat-number">—</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="stats-grid">
+        <div className="stat-card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '24px', color: 'var(--red-600)' }}>
+          Failed to load gate statistics.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="stats-grid">

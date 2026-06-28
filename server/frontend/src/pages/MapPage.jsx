@@ -19,7 +19,7 @@ const MapPage = () => {
     OOS: true,
   });
 
-  const { data: gates = [] } = useGetGatesQuery();
+  const { data: gates = [], isLoading, error } = useGetGatesQuery();
 
   const counts = useMemo(() => {
     const total = gates.length;
@@ -77,30 +77,38 @@ const MapPage = () => {
 
           {/* Floating summary card — bottom-left */}
           <div className="map-summary">
-            <div className="map-stat">
-              <div className="num" style={{ color: 'var(--blue-600)' }}>
-                {counts.total}
-              </div>
-              <div className="lbl">Total</div>
-            </div>
-            <div className="map-stat">
-              <div className="num" style={{ color: 'var(--green-600)' }}>
-                {counts.closed}
-              </div>
-              <div className="lbl">Closed</div>
-            </div>
-            <div className="map-stat">
-              <div className="num" style={{ color: 'var(--red-600)' }}>
-                {counts.open}
-              </div>
-              <div className="lbl">Open</div>
-            </div>
-            <div className="map-stat">
-              <div className="num" style={{ color: 'var(--amber-600)' }}>
-                {counts.oos}
-              </div>
-              <div className="lbl">OOS</div>
-            </div>
+            {isLoading ? (
+              <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Loading…</div>
+            ) : error ? (
+              <div style={{ color: 'var(--red-600)', fontSize: 13 }}>Failed to load</div>
+            ) : (
+              <>
+                <div className="map-stat">
+                  <div className="num" style={{ color: 'var(--blue-600)' }}>
+                    {counts.total}
+                  </div>
+                  <div className="lbl">Total</div>
+                </div>
+                <div className="map-stat">
+                  <div className="num" style={{ color: 'var(--green-600)' }}>
+                    {counts.closed}
+                  </div>
+                  <div className="lbl">Closed</div>
+                </div>
+                <div className="map-stat">
+                  <div className="num" style={{ color: 'var(--red-600)' }}>
+                    {counts.open}
+                  </div>
+                  <div className="lbl">Open</div>
+                </div>
+                <div className="map-stat">
+                  <div className="num" style={{ color: 'var(--amber-600)' }}>
+                    {counts.oos}
+                  </div>
+                  <div className="lbl">OOS</div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Attribution — bottom-right */}
