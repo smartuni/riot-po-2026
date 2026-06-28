@@ -176,18 +176,19 @@ function StatusTables() {
     );
 
     const sendManualDownlink = async () => {
-        const statusIntMap = {
-            null: 2,
-            "REQUESTED_OPEN": 1,
-            "REQUESTED_CLOSE": 0
+        const getStatusCode = (requestedStatus) => {
+            if (requestedStatus === null || requestedStatus === undefined || requestedStatus === "REQUESTED_NONE") return 2;
+            if (requestedStatus === "REQUESTED_OPEN") return 1;
+            if (requestedStatus === "REQUESTED_CLOSE") return 0;
+            return null;
         };
 
         const payload = [
             0,
             Math.floor(Date.now() / 1000),
             filteredGates
-                .filter(g => g.requestedStatus in statusIntMap)
-                .map(g => [g.id, statusIntMap[g.requestedStatus], g.priority ?? 0])
+                .filter(g => getStatusCode(g.requestedStatus) !== null)
+                .map(g => [g.id, getStatusCode(g.requestedStatus), g.priority ?? 0])
         ];
 
         if (payload[2].length === 0) {
@@ -291,6 +292,7 @@ function StatusTables() {
 
                 <input
                     className="search-input table-search"
+                    aria-label="Search gates"
                     placeholder="Search gates…"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -394,6 +396,7 @@ function StatusTables() {
                                     <input
                                         type="checkbox"
                                         className="select-all"
+                                        aria-label="Select all gates"
                                         checked={filteredGates.length > 0 && selectedGateIds.size === filteredGates.length}
                                         onChange={toggleSelectAll}
                                     />
@@ -424,6 +427,7 @@ function StatusTables() {
                                                 <input
                                                     type="checkbox"
                                                     className="row-check"
+                                                    aria-label={`Select gate ${gate.id}`}
                                                     checked={selectedGateIds.has(gate.id)}
                                                     onChange={() => toggleGateSelection(gate.id)}
                                                 />
@@ -434,7 +438,7 @@ function StatusTables() {
                                             <td data-label="Location">
                                                 {gate.location}<br />
                                                 <span className="coords" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                                    {gate.latitude.toFixed(5)}, {gate.longitude.toFixed(5)}
+                                                    {gate.latitude != null ? gate.latitude.toFixed(5) : '—'}, {gate.longitude != null ? gate.longitude.toFixed(5) : '—'}
                                                 </span>
                                             </td>
                                             <td data-label="Status">
@@ -500,13 +504,14 @@ function StatusTables() {
                                                 </Select>
                                             </td>
                                             <td data-label="Last Update">
-                                                <span className="last-update">{getTimeAgo(gate.lastTimeStamp)}</span>
+                                                <span className="last-update">{gate.lastTimeStamp ? getTimeAgo(gate.lastTimeStamp) : '—'}</span>
                                                 <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                                    {new Date(gate.lastTimeStamp).toLocaleString()}
+                                                    {gate.lastTimeStamp ? new Date(gate.lastTimeStamp).toLocaleString() : '—'}
                                                 </div>
                                             </td>
                                             <td data-label="Actions">
-                                                <a
+                                                <button
+                                                    type="button"
                                                     className="action-link"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -515,7 +520,7 @@ function StatusTables() {
                                                     }}
                                                 >
                                                     Request Change
-                                                </a>
+                                                </button>
                                             </td>
                                             <td data-label="Activities">
                                                 <button
@@ -529,7 +534,8 @@ function StatusTables() {
                                                 </button>
                                             </td>
                                             <td data-label="Delete">
-                                                <a
+                                                <button
+                                                    type="button"
                                                     className="action-link"
                                                     style={{ color: 'var(--red-600)' }}
                                                     onClick={() => {
@@ -538,7 +544,7 @@ function StatusTables() {
                                                     }}
                                                 >
                                                     Delete
-                                                </a>
+                                                </button>
                                             </td>
                                         </tr>
                                         {expandedGateId === gate.id && (
@@ -551,7 +557,7 @@ function StatusTables() {
                                                             .slice(-4)
                                                             .map(activity => (
                                                                 <p key={activity.id}>
-                                                                    <strong>{new Date(activity.lastTimeStamp).toLocaleString()}:</strong> {activity.message}
+                                                                    <strong>{activity.lastTimeStamp ? new Date(activity.lastTimeStamp).toLocaleString() : '—'}:</strong> {activity.message}
                                                                 </p>
                                                             ))
                                                         }

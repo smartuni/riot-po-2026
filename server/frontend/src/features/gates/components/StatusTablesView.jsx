@@ -67,7 +67,7 @@ function StatusTablesView() {
         return (
             <div className="card" style={{ padding: '16px' }}>
                 <div style={{ padding: '16px', background: 'var(--red-100)', borderRadius: '8px', color: 'var(--red-600)' }}>
-                    Failed to load gates data: {error.toString()}
+                    Failed to load gates data. Please try again later.
                 </div>
             </div>
         );
@@ -81,6 +81,7 @@ function StatusTablesView() {
 
                 <input
                     className="search-input table-search"
+                    aria-label="Search gates"
                     placeholder="Search gates…"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -146,7 +147,7 @@ function StatusTablesView() {
                                         <td data-label="Location">
                                             {gate.location}<br />
                                             <span className="coords" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                                {gate.latitude}, {gate.longitude}
+                                                {gate.latitude != null ? gate.latitude : '—'}, {gate.longitude != null ? gate.longitude : '—'}
                                             </span>
                                         </td>
                                         <td data-label="Status">
@@ -156,9 +157,9 @@ function StatusTablesView() {
                                             </span>
                                         </td>
                                         <td data-label="Last Update">
-                                            <span className="last-update">{getTimeAgo(gate.lastTimeStamp)}</span>
+                                            <span className="last-update">{gate.lastTimeStamp ? getTimeAgo(gate.lastTimeStamp) : '—'}</span>
                                             <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                                {new Date(gate.lastTimeStamp).toLocaleString()}
+                                                {gate.lastTimeStamp ? new Date(gate.lastTimeStamp).toLocaleString() : '—'}
                                             </div>
                                         </td>
                                         <td data-label="Confidence">
@@ -193,7 +194,7 @@ function StatusTablesView() {
                                                         .slice(-4)
                                                         .map(activity => (
                                                             <p key={activity.id}>
-                                                                <strong>{new Date(activity.lastTimeStamp).toLocaleString()}:</strong> {activity.message}
+                                                                <strong>{activity.lastTimeStamp ? new Date(activity.lastTimeStamp).toLocaleString() : '—'}:</strong> {activity.message}
                                                             </p>
                                                         ))
                                                     }
