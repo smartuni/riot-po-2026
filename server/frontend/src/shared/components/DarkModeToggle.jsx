@@ -9,6 +9,7 @@ export default function DarkModeToggle() {
     <button
       className="topbar-btn dark-toggle"
       title="Toggle dark mode"
+      aria-label="Toggle dark mode"
       onClick={() => dispatch(toggleDarkMode())}
       type="button"
     >

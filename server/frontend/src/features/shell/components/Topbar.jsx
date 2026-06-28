@@ -34,7 +34,7 @@ export default function Topbar({
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <button className="hamburger" onClick={onHamburgerClick} type="button">☰</button>
+        <button className="hamburger" onClick={onHamburgerClick} type="button" aria-label="Open menu">☰</button>
         <CollapseToggle collapsed={sidebarCollapsed} onToggle={onCollapseToggle} />
         <span className="topbar-title">{title}</span>
       </div>
@@ -43,6 +43,7 @@ export default function Topbar({
           id="notificationButton"
           className={`topbar-btn${notificationsOpen ? ' active' : ''}`}
           title="Notifications"
+          aria-label="Notifications"
           type="button"
           onClick={onToggleNotifications}
         >

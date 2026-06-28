@@ -75,6 +75,15 @@ export default function AppLayout({ children }) {
       <div
         className={`mobile-overlay${mobileOpen ? ' visible' : ''}`}
         onClick={handleCloseMobile}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleCloseMobile();
+          }
+        }}
+        aria-label="Close menu"
       />
       <Sidebar
         collapsed={collapsed}

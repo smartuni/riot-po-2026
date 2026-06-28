@@ -3,10 +3,11 @@ export default function CollapseToggle({ collapsed, onToggle }) {
     <button
       className="collapse-btn topbar-btn"
       title="Toggle sidebar"
+      aria-label="Toggle sidebar"
       onClick={onToggle}
       type="button"
     >
-      {collapsed ? '☰' : '☰'}
+      {collapsed ? '☰' : '✕'}
     </button>
   );
 }

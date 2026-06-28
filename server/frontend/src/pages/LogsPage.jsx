@@ -60,6 +60,7 @@ export default function LogsPage() {
           <input
             className="search-input"
             type="text"
+            aria-label="Filter logs"
             placeholder="Filter by gate, message, or type…"
             value={filter}
             onChange={e => setFilter(e.target.value)}
