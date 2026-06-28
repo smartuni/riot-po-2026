@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import AppLayout from '../features/shell/components/AppLayout';
 import { useAppSelector, useAppDispatch } from '../app/store';
 import { setDarkMode } from '../app/store/slices/uiSlice';
@@ -19,6 +19,13 @@ const SettingsPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'success' | 'error'
   const [errorMessage, setErrorMessage] = useState('');
+  const saveTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   const handleDarkToggle = (e) => {
     dispatch(setDarkMode(e.target.checked));
@@ -30,14 +37,24 @@ const SettingsPage = () => {
     if (!currentPassword) {
       setErrorMessage('Current password is required');
       setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 5000);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), 5000);
       return;
     }
 
     if (newPassword !== confirmPassword) {
       setErrorMessage('Passwords do not match');
       setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 5000);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), 5000);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setErrorMessage('New password must be at least 6 characters');
+      setSaveStatus('error');
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), 5000);
       return;
     }
 
@@ -49,11 +66,13 @@ const SettingsPage = () => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
       setErrorMessage('Save failed. Please try again.');
       setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 5000);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), 5000);
     }
   };
 
@@ -100,7 +119,7 @@ const SettingsPage = () => {
                   width: 56,
                   height: 56,
                   borderRadius: '50%',
-                  backgroundColor: '#2563eb',
+                  backgroundColor: 'var(--blue-600)',
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
@@ -120,8 +139,9 @@ const SettingsPage = () => {
               </div>
             </div>
             <div className="form-group">
-              <label className="form-label">Email</label>
+              <label className="form-label" htmlFor="settings-email">Email</label>
               <input
+                id="settings-email"
                 className="form-input"
                 type="email"
                 value={user.email || ''}
@@ -134,8 +154,9 @@ const SettingsPage = () => {
           <div className="settings-section">
             <h3>Change Password</h3>
             <div className="form-group">
-              <label className="form-label">Current Password</label>
+              <label className="form-label" htmlFor="settings-current-password">Current Password</label>
               <input
+                id="settings-current-password"
                 className="form-input"
                 type="password"
                 placeholder="••••••••"
@@ -144,8 +165,9 @@ const SettingsPage = () => {
               />
             </div>
             <div className="form-group">
-              <label className="form-label">New Password</label>
+              <label className="form-label" htmlFor="settings-new-password">New Password</label>
               <input
+                id="settings-new-password"
                 className="form-input"
                 type="password"
                 placeholder="••••••••"
@@ -154,8 +176,9 @@ const SettingsPage = () => {
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Confirm New Password</label>
+              <label className="form-label" htmlFor="settings-confirm-password">Confirm New Password</label>
               <input
+                id="settings-confirm-password"
                 className="form-input"
                 type="password"
                 placeholder="••••••••"
@@ -194,10 +217,10 @@ const SettingsPage = () => {
           {/* ── Save ────────────────────────────────────────────── */}
           <div style={{ textAlign: 'right' }}>
             {saveStatus === 'success' && (
-              <div style={{ color: 'green', marginBottom: 8 }}>Saved!</div>
+              <div style={{ color: 'var(--green-600)', marginBottom: 8 }}>Saved!</div>
             )}
             {saveStatus === 'error' && (
-              <div style={{ color: 'red', marginBottom: 8 }}>{errorMessage}</div>
+              <div style={{ color: 'var(--red-600)', marginBottom: 8 }}>{errorMessage}</div>
             )}
             <button
               className="btn btn-primary"
