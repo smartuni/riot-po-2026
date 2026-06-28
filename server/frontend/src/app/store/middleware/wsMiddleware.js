@@ -57,7 +57,13 @@ function createWsMiddleware() {
         resetReconnectState();
 
         stompClient.subscribe('/topic/gates/add', (message) => {
-          const newGate = JSON.parse(message.body);
+          let newGate;
+          try {
+            newGate = JSON.parse(message.body);
+          } catch (err) {
+            console.error('Failed to parse gates/add message:', err);
+            return;
+          }
           store.dispatch(
             api.util.updateQueryData('getGates', undefined, (draft) => {
               draft.push(newGate);
@@ -67,6 +73,10 @@ function createWsMiddleware() {
 
         stompClient.subscribe('/topic/gates/delete', (message) => {
           const deletedGateId = parseInt(message.body);
+          if (isNaN(deletedGateId)) {
+            console.error('Failed to parse gates/delete message: invalid gate ID');
+            return;
+          }
           store.dispatch(
             api.util.updateQueryData('getGates', undefined, (draft) => {
               return draft.filter((gate) => gate.id !== deletedGateId);
@@ -75,7 +85,13 @@ function createWsMiddleware() {
         });
 
         stompClient.subscribe('/topic/gates/updates', (message) => {
-          const updatedGate = JSON.parse(message.body);
+          let updatedGate;
+          try {
+            updatedGate = JSON.parse(message.body);
+          } catch (err) {
+            console.error('Failed to parse gates/updates message:', err);
+            return;
+          }
           store.dispatch(
             api.util.updateQueryData('getGates', undefined, (draft) => {
               const idx = draft.findIndex((g) => g.id === updatedGate.id);
@@ -87,7 +103,13 @@ function createWsMiddleware() {
         });
 
         stompClient.subscribe('/topic/gate-activities', (message) => {
-          const newActivity = JSON.parse(message.body);
+          let newActivity;
+          try {
+            newActivity = JSON.parse(message.body);
+          } catch (err) {
+            console.error('Failed to parse gate-activities message:', err);
+            return;
+          }
           store.dispatch(
             api.util.updateQueryData('getActivities', undefined, (draft) => {
               draft.push(newActivity);
@@ -97,6 +119,10 @@ function createWsMiddleware() {
 
         stompClient.subscribe('/topic/gate-activities/delete', (message) => {
           const deletedActivityId = parseInt(message.body);
+          if (isNaN(deletedActivityId)) {
+            console.error('Failed to parse gate-activities/delete message: invalid activity ID');
+            return;
+          }
           store.dispatch(
             api.util.updateQueryData('getActivities', undefined, (draft) => {
               return draft.filter(
