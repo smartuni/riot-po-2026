@@ -15,8 +15,10 @@
 #define SHOCK_DETECTOR_H
 
 #define kiss_fft_scalar int
+#define SAMPLE_SIZE 4096
 
 #include "health_monitor_payload.h"
+#include "moving_freq_avg.h"
 
 #include "saul_reg.h"
 #include "ztimer.h"
@@ -24,10 +26,10 @@
 #include "board.h"
 #include "phydat.h"
 #include "kiss_fft.h"
+#include "mutex.h"
 
 #define LOG_LEVEL LOG_DEBUG
 #include "log.h"
-#define LOG_SHOCK_DETECTOR(...) LOG_DEBUG("[shock_detector]: " __VA_ARGS__)
 
 #include <math.h>
 #include <sched.h>
@@ -39,19 +41,23 @@ typedef struct {
 	int z;
 } raw_acceleration_t;
 
+
+
 // Restructures for memory alignment and to avoid padding
 typedef struct {
 	kernel_pid_t thread_pid;
+	mutex_t shock_status_mutex;
 	saul_reg_t* accel_sensor;
-	kiss_fft_cpx* input;
-	kiss_fft_cpx* output;
+	kiss_fft_cpx input[SAMPLE_SIZE];
+	kiss_fft_cpx output[SAMPLE_SIZE];
+	moving_freq_avg_t* freq_avg; //rename to frequency domain later
 	void (*callback)(void);
 	int threshold;
-	int sample_size;
 	int sampling_period_ms;
+	int nyquist_domain_size;
 	volatile bool running;
-	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
-	int* sample_array;
+	volatile shock_status_t shock_status;
+	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT*2];
 } shock_detector_t;
 
 /**
@@ -61,7 +67,7 @@ typedef struct {
  * @param sampling_period_ms The period in milliseconds between each sample collection
  * @return Pointer to the new shock detector, or NULL if memory allocation failed
  */
-shock_detector_t* shock_detector_new(int threshold, int sample_size, int sampling_period_ms);
+shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms);
 
 /**
  * @brief Starts the shock detector
@@ -69,6 +75,10 @@ shock_detector_t* shock_detector_new(int threshold, int sample_size, int samplin
  * @return 0 on success, EOVERFLOW on failure
  */
 int shock_detector_start(shock_detector_t* detector);
+
+int shock_detector_fetch_status(shock_detector_t* detector, shock_status_t* status);
+
+int shock_detector_reset_status(shock_detector_t* detector);
 
 /**
  * @brief Deletes the shock detector

@@ -45,6 +45,18 @@ enum {
 	UNKNOWN
 };
 
+typedef uint8_t battery_status_t;
+enum {
+	CHARGING = 0,
+	DISCHARGING,
+	DISCHARGING_LOW_BATTERY
+};
+
+typedef struct {
+	battery_status_t battery_status;
+	int16_t voltage_mv;
+} battery_info_t; //1+2 bytes
+
 typedef struct {
 	//Structure for memory alignment and to avoid padding
 	//1. classes, structs, STL containers, arrays
