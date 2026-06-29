@@ -15,7 +15,6 @@
 #define SHOCK_DETECTOR_H
 
 #define kiss_fft_scalar int
-#define SAMPLE_SIZE 4096
 
 #include "health_monitor_payload.h"
 #include "moving_freq_avg.h"
@@ -58,7 +57,6 @@ typedef struct {
 	volatile bool running;
 	volatile shock_status_t shock_status;
 	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
-	raw_acceleration_t raw_accel_data[SAMPLE_SIZE];
 } shock_detector_t;
 
 /**
@@ -67,7 +65,7 @@ typedef struct {
  * @param sampling_period_ms The period in milliseconds between each sample collection
  * @return Pointer to the new shock detector, or NULL if memory allocation failed
  */
-shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms);
+shock_detector_t* shock_detector_new(int threshold, int sample_size, int sampling_period_ms);
 
 /**
  * @brief Starts the shock detector
