@@ -71,27 +71,29 @@ public class JsonFormatter {
     // ========================= Methoden =========================
 
     public String toJsonFormat(List<Object> rawData) throws Exception {
-        //===== Header -----vvvvv
-        int version = (int) rawData.get(0);
-        int messageType = (int)rawData.get(1);
+        if (rawData == null || rawData.size() < 2) {
+            throw new IllegalArgumentException("rawData ist unvollständig oder null");
+        }
 
-        // Laut Update ist HEALTH_MONITORING jetzt wieder Code 5 (0x05)
-        if (messageType == 5 || MsgType.HEALTH_MONITORING.getCode() == messageType) {
+        // 1. Nur die absoluten Basis-Header auslesen, die JEDE Nachricht hat
+        int version = ((Number) rawData.get(0)).intValue();
+        int messageType = ((Number) rawData.get(1)).intValue();
 
+        // ================= NEW: HEALTH STATUS BLOCK (Typ 5) =================
+        // Wir prüfen hier nur auf die harte 5, um Enum-Fehler auszuschließen
+        if (messageType == 5) {
             int senseGateId = ((Number) rawData.get(2)).intValue();
             int eventHeader = ((Number) rawData.get(3)).intValue();
             int eventBody = ((Number) rawData.get(4)).intValue();
 
-            // Standardwerte initialisieren
-            ShockStatus shockStatus = ShockStatus.UNKNOWN; // Bzw. ein passender Default-Wert deines Enums
+            ShockStatus shockStatus = ShockStatus.UNKNOWN;
             BatteryStatus batteryStatus = BatteryStatus.UNKNOWN;
             int voltageMv = 0;
 
-            // Eventbasiert auswerten laut Ticket:
             switch (eventHeader) {
                 case 0x00 -> { // BATTERY_CHARGING
-                    batteryStatus = BatteryStatus.fromCode(0); // oder direkt dein Enum-Wert für charging
-                    voltageMv = eventBody; // Im Battery-Fall enthält der Body die mV!
+                    batteryStatus = BatteryStatus.fromCode(0);
+                    voltageMv = eventBody;
                 }
                 case 0x01 -> { // BATTERY_DISCHARGING
                     batteryStatus = BatteryStatus.fromCode(1);
@@ -102,7 +104,7 @@ public class JsonFormatter {
                     voltageMv = eventBody;
                 }
                 case 0x03 -> { // SHOCK_STATUS
-                    shockStatus = ShockStatus.fromCode(eventBody); // Im Schock-Fall enthält der Body 0x00 oder 0x01
+                    shockStatus = ShockStatus.fromCode(eventBody);
                 }
                 case 0x04 -> {
                     System.out.println("FREE_FALL Event empfangen (noch nicht voll implementiert)");
@@ -110,11 +112,10 @@ public class JsonFormatter {
                 default -> System.err.println("Unbekannter Health Event Header: " + eventHeader);
             }
 
-            // DTO erstellen
             HealthStatusDTO healthDTO = new HealthStatusDTO(version, senseGateId, shockStatus, batteryStatus, voltageMv);
-
-            // Verpacken in deine Standard-Message-Struktur fürs Frontend
             Message message = new Message(messageType, List.of(healthDTO));
+
+            // Verlässt die Methode sofort für Typ 5. Der alte Code darunter wird nie erreicht!
             return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
         }
 
