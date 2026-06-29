@@ -34,6 +34,7 @@
 #include <sched.h>
 #include <stdlib.h>
 
+#define SAMPLE_SIZE 2048
 typedef struct {
 	int x;
 	int y;
@@ -65,7 +66,7 @@ typedef struct {
  * @param sampling_period_ms The period in milliseconds between each sample collection
  * @return Pointer to the new shock detector, or NULL if memory allocation failed
  */
-shock_detector_t* shock_detector_new(int threshold, int sample_size, int sampling_period_ms);
+shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms);
 
 /**
  * @brief Starts the shock detector
