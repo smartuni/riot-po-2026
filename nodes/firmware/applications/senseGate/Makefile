@@ -2,8 +2,8 @@
 APPLICATION = SenseGate
 
 # If no BOARD is found in the environment, use this default:
-BOARD ?= adafruit-feather-nrf52840-sense
-#BOARD ?= seeedstudio-xiao-nrf52840-sense
+#BOARD ?= adafruit-feather-nrf52840-sense
+BOARD ?= seeedstudio-xiao-nrf52840-sense
 
 PROJECT_BASE ?= $(CURDIR)/../..
 RIOTBASE ?= $(PROJECT_BASE)/RIOT
@@ -11,7 +11,7 @@ EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
 # Configrue device id and device type.
 # This will instruct the key-distro module to include required credentials.
-RIOT_CONFIG_DEVICE_ID ?= 1
+RIOT_CONFIG_DEVICE_ID ?= 2
 # Set the device type to 'Gate' to configure some device specific behaviors.
 # Dont allow overwrites here, as that would only cause trouble anyway.
 # (the corresponding values are defined in tables/types.h)
