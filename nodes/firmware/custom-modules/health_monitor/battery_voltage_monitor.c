@@ -69,7 +69,7 @@ static voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const int 
 	} else if (current_voltage_mv == prev_voltage_mv) {
 		return STABLE;
 	}
-	return UNKNOWN;
+	return UNKNOWN_VOLTAGE_TREND;
 }
 
 battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* monitor) {
@@ -101,6 +101,8 @@ battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* mon
 		}
 		default: {
 			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery status is unknown\n", __LINE__);
+			info.battery_status = UNKNOWN_BATTERY_STATE;
+			info.voltage_mv = voltage_mv;
 			break;
 		}
 	}
