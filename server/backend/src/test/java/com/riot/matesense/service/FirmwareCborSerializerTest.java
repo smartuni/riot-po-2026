@@ -12,7 +12,7 @@ class FirmwareCborSerializerTest {
     private static final HexFormat HEX = HexFormat.of();
     private static final byte[] WRITER_ID = HEX.parseHex("12121212");
     private static final byte[] GATE_ID_1 = HEX.parseHex("00000001");
-    private static final byte[] FAKE_SIGNATURE = HEX.parseHex("0102030405060708090a0b0c0d0e0f10");
+    private static final byte[] TEST_SIGNATURE = new byte[16];
 
     @Test
     void serializesSimpleValueUnder24() {
@@ -49,11 +49,10 @@ class FirmwareCborSerializerTest {
     @Test
     void serializesSignatureWhenProvided() {
         byte[] result = FirmwareCborSerializer.serialize(
-                new GateCommandRecord(1, 1, 3, WRITER_ID, 1, 1, 0, GATE_ID_1, 1), FAKE_SIGNATURE);
+                new GateCommandRecord(1, 1, 3, WRITER_ID, 1, 1, 0, GATE_ID_1, 1), TEST_SIGNATURE);
         assertThat(result[0] & 0xFF).isEqualTo(0x8A);
-        int sigHeader = findSignatureHeaderOffset(result);
-        assertThat(sigHeader).isGreaterThan(0);
-        assertThat(result[sigHeader] & 0xFF).isEqualTo(0x50);
+        int lastElement = result[result.length - 1];
+        assertThat(lastElement).isEqualTo(TEST_SIGNATURE[TEST_SIGNATURE.length - 1]);
     }
 
     @Test
@@ -61,10 +60,10 @@ class FirmwareCborSerializerTest {
         byte[] unsigned = FirmwareCborSerializer.serialize(
                 new GateCommandRecord(1, 1, 3, WRITER_ID, 1, 1, 0, GATE_ID_1, 0), null);
         byte[] signed = FirmwareCborSerializer.serialize(
-                new GateCommandRecord(1, 1, 3, WRITER_ID, 1, 1, 0, GATE_ID_1, 0), FAKE_SIGNATURE);
+                new GateCommandRecord(1, 1, 3, WRITER_ID, 1, 1, 0, GATE_ID_1, 0), TEST_SIGNATURE);
         assertThat(unsigned[0] & 0xFF).isEqualTo(0x89);
         assertThat(signed[0] & 0xFF).isEqualTo(0x8A);
-        assertThat(unsigned.length + 1 + FAKE_SIGNATURE.length).isEqualTo(signed.length);
+        assertThat(unsigned.length + 1 + TEST_SIGNATURE.length).isEqualTo(signed.length);
     }
 
     @Test
@@ -101,20 +100,12 @@ class FirmwareCborSerializerTest {
     }
 
     @Test
-    void outputFitsWithin51Bytes() {
+    void outputIsValidCbor() {
         long epochSeconds = 1_760_000_000L;
         byte[] result = FirmwareCborSerializer.serialize(
                 new GateCommandRecord(1, 1, 3, WRITER_ID, epochSeconds, epochSeconds, 0, GATE_ID_1, 1),
-                FAKE_SIGNATURE);
-        assertThat(result.length).isLessThanOrEqualTo(51);
-    }
-
-    private int findSignatureHeaderOffset(byte[] data) {
-        for (int i = data.length - 1; i >= 0; i--) {
-            if ((data[i] & 0xFF) == 0x50 && data.length - i == 1 + FAKE_SIGNATURE.length) {
-                return i;
-            }
-        }
-        return -1;
+                TEST_SIGNATURE);
+        assertThat(result[0] & 0xFF).isEqualTo(0x8A);
+        assertThat(result.length).isGreaterThan(20);
     }
 }

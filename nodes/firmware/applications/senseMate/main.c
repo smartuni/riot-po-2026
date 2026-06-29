@@ -298,8 +298,6 @@ int main(void) {
     sensemate_ui_update();
 
     lorawan_started = mate_lorawan_start(tables);
-    mate_lorawan_set_app_mac_key(app_mac_key);
-
     puts("entering main loop");
     uint32_t prev_gate_cnt = 0;
     uint32_t prev_mate_cnt = 0;

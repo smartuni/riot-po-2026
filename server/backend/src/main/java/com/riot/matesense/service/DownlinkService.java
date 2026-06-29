@@ -4,10 +4,13 @@ import com.riot.matesense.config.DownPayload;
 import com.riot.matesense.config.MqttProperties;
 import com.riot.matesense.mqtt.TTNMqttPublisher;
 import com.riot.matesense.registry.DeviceRegistry;
+import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
+import org.bouncycastle.crypto.signers.Ed25519Signer;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HexFormat;
 import java.util.List;
 
 import static com.riot.matesense.enums.RecordType.GATE_COMMAND;
@@ -15,20 +18,18 @@ import static com.riot.matesense.enums.RecordType.GATE_COMMAND;
 @Service
 public class DownlinkService {
 
-    private static final int CMAC_TAG_SIZE = 16;
-
     private final TTNMqttPublisher mqttPublisher;
     private final MqttProperties mqttProperties;
     private final DeviceRegistry deviceRegistry;
-    private final CmacService cmacService;
+    private final KeyStoreService keyStoreService;
 
     public DownlinkService(TTNMqttPublisher mqttPublisher,
                            MqttProperties mqttProperties, DeviceRegistry deviceRegistry,
-                           CmacService cmacService) {
+                           KeyStoreService keyStoreService) {
         this.mqttPublisher = mqttPublisher;
         this.mqttProperties = mqttProperties;
         this.deviceRegistry = deviceRegistry;
-        this.cmacService = cmacService;
+        this.keyStoreService = keyStoreService;
     }
 
     public void sendDownlinkToDevice(DownPayload payloadData) {
@@ -39,7 +40,8 @@ public class DownlinkService {
             for (List<Integer> gateStatePair : sollStatusList) {
                 int gateNum = gateStatePair.get(0);
                 int targetState = gateStatePair.get(1);
-                String base64Payload = buildSignedGateCommandCbor(gateNum, targetState, null);
+                String base64Payload = buildSignedGateCommandCbor(gateNum, targetState,
+                        getServerSigningKeySeed(), getServerKid());
 
                 for (String gateDevice : deviceRegistry.getAllGateDevices()) {
                     String topic = mqttProperties.buildDeviceDownlinkTopic(gateDevice);
@@ -53,12 +55,9 @@ public class DownlinkService {
     }
 
     public String sendSignedDownlink(String deviceId, int gateNum, int targetState) {
-        byte[] appMacKey = deviceRegistry.getAppMacKey(deviceId);
-        if (appMacKey == null) {
-            throw new IllegalStateException("No AppMACKey provisioned for device: " + deviceId);
-        }
+        String base64Payload = buildSignedGateCommandCbor(gateNum, targetState,
+                getServerSigningKeySeed(), getServerKid());
 
-        String base64Payload = buildSignedGateCommandCbor(gateNum, targetState, appMacKey);
         String ttnJson = buildTtnJsonPayload(base64Payload);
 
         String topic = mqttProperties.buildDeviceDownlinkTopic(deviceId);
@@ -67,29 +66,41 @@ public class DownlinkService {
         return base64Payload;
     }
 
-    String buildSignedGateCommandCbor(int gateNum, int targetState, byte[] appMacKey) {
+    static String buildSignedGateCommandCbor(int gateNum, int targetState,
+                                              byte[] signingKeySeed, byte[] kid) {
         GateCommandRecord record = toGateCommandRecord(gateNum, targetState);
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
 
-        byte[] signature;
-        if (appMacKey != null) {
-            byte[] cmac = cmacService.computeCmac(appMacKey, unsignedCbor);
-            signature = Arrays.copyOf(cmac, CMAC_TAG_SIZE);
-        } else {
-            signature = null;
-        }
+        byte[] rawSig = signEd25519(signingKeySeed, unsignedCbor);
+        byte[] coseSignature = CoseSign1Encoder.encode(kid, rawSig);
 
-        byte[] signedCbor = FirmwareCborSerializer.serialize(record, signature);
-
-        if (signedCbor.length > 51) {
-            throw new IllegalStateException("Signed CBOR downlink exceeds 51 byte limit: " + signedCbor.length);
-        }
+        byte[] signedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
         return Base64.getEncoder().encodeToString(signedCbor);
     }
 
-    private GateCommandRecord toGateCommandRecord(int gateNum, int targetState) {
+    static byte[] signEd25519(byte[] signingKeySeed, byte[] data) {
+        Ed25519PrivateKeyParameters privKey = new Ed25519PrivateKeyParameters(signingKeySeed, 0);
+        Ed25519Signer signer = new Ed25519Signer();
+        signer.init(true, privKey);
+        signer.update(data, 0, data.length);
+        return signer.generateSignature();
+    }
+
+    private byte[] getServerSigningKeySeed() {
+        var serverKey = keyStoreService.getServerKey()
+                .orElseThrow(() -> new IllegalStateException("No server signing key configured"));
+        return Arrays.copyOf(serverKey.getPrivateKey(), 32);
+    }
+
+    private byte[] getServerKid() {
+        var serverKey = keyStoreService.getServerKey()
+                .orElseThrow(() -> new IllegalStateException("No server signing key configured"));
+        return HexFormat.of().parseHex(serverKey.getKid());
+    }
+
+    static GateCommandRecord toGateCommandRecord(int gateNum, int targetState) {
         long nowMs = System.currentTimeMillis();
         long epochSeconds = nowMs / 1000;
 

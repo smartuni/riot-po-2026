@@ -53,8 +53,7 @@ public class GateEntity {
     @Column(name = "height_above_nn")
     private Double heightAboveNN;
 
-    @Column(name = "app_mac_key")
-    private byte[] appMacKey;
+
 
 
     public GateEntity(Long gateID, Status status, Timestamp lastTimeStamp,

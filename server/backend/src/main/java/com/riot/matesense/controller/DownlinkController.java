@@ -46,12 +46,6 @@ public class DownlinkController {
                     .body(SignedDownlinkResponse.error(deviceId, "Device not registered"));
         }
 
-        byte[] appMacKey = deviceRegistry.getAppMacKey(deviceId);
-        if (appMacKey == null) {
-            return ResponseEntity.badRequest()
-                    .body(SignedDownlinkResponse.error(deviceId, "No AppMACKey provisioned for device"));
-        }
-
         try {
             String base64Payload = downlinkService.sendSignedDownlink(
                     deviceId, request.getGateNum(), request.getTargetState());

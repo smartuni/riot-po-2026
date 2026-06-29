@@ -1,5 +1,7 @@
 package com.riot.matesense.service;
 
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
+import org.bouncycastle.crypto.signers.Ed25519Signer;
 import org.junit.jupiter.api.Test;
 
 import java.util.Base64;
@@ -9,23 +11,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Simulates the full end-to-end flow without LoRaWAN hardware:
- * Backend signs → CBOR over LoRaWAN → Firmware verifies.
+ * Backend signs with Ed25519 COSE → CBOR over LoRaWAN → Firmware verifies.
  *
- * The firmware verification logic is reimplemented here in Java:
- * 1. Parse CBOR, extract record + signature
+ * The firmware verification is simulated here:
+ * 1. Parse CBOR, extract COSE Sign1 signature
  * 2. Re-serialize unsigned CBOR (firmware's cbor_serialize_record_no_sig)
- * 3. Compute AES-CMAC over unsigned CBOR
- * 4. Constant-time compare with extracted signature
+ * 3. Parse COSE Sign1, extract KID and raw Ed25519 signature
+ * 4. Verify Ed25519 over unsigned CBOR via Bouncy Castle
  */
 class EndToEndDownlinkTest {
 
     private static final HexFormat HEX = HexFormat.of();
-    private static final byte[] TEST_KEY = HEX.parseHex("2b7e151628aed2a6abf7158809cf4f3c");
-    private static final CmacService cmacService = new CmacService();
 
-    /**
-     * Full round-trip: backend signs → firmware verifies.
-     */
+    private static final byte[] BACKEND_SEED = HEX.parseHex(
+            "ce65cd03fc31cc7137f193e4e0696cf31a15a3507959f5eebdaa849a8cbb7c9d");
+    private static final byte[] BACKEND_PUBLIC_KEY = HEX.parseHex(
+            "24ccc1fa01cb1e92d541cbac95e6f9e52c16a874b01a29e59aa9c6da824b6248");
+    private static final byte[] WRONG_PUBLIC_KEY = HEX.parseHex(
+            "98390187359cad019ba905660ff2ac5df1d21cd313ed75ada78b9f42dbbe9e5e");
+    private static final byte[] BACKEND_KID = HEX.parseHex("12121212");
+
     @Test
     void backendSignsAndFirmwareVerifies() {
         // ── Backend side ──
@@ -38,11 +43,9 @@ class EndToEndDownlinkTest {
         );
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
-        byte[] cmac = cmacService.computeCmac(TEST_KEY, unsignedCbor);
-        byte[] signature = java.util.Arrays.copyOf(cmac, 16);
-        byte[] signedCbor = FirmwareCborSerializer.serialize(record, signature);
-
-        assertThat(signedCbor.length).isLessThanOrEqualTo(51);
+        byte[] rawSignature = DownlinkService.signEd25519(BACKEND_SEED, unsignedCbor);
+        byte[] coseSignature = CoseSign1Encoder.encode(BACKEND_KID, rawSignature);
+        byte[] signedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
         // ── Over LoRaWAN: Base64-encode, then decode (simulate TTN) ──
         String base64Payload = Base64.getEncoder().encodeToString(signedCbor);
@@ -50,37 +53,62 @@ class EndToEndDownlinkTest {
 
         assertThat(receivedCbor).isEqualTo(signedCbor);
 
-        // ── Firmware side ──
+        // ── Firmware side (simulated) ──
 
-        // Step 1: Extract version, message_type from CBOR (firmware validates these)
-        assertThat(receivedCbor[0] & 0xFF).isEqualTo(0x8A); // array(10) with signature
-        assertThat(receivedCbor[1] & 0xFF).isEqualTo(0xE1); // simple(1) version
-        assertThat(receivedCbor[2] & 0xFF).isEqualTo(0xE1); // simple(1) message_type
+        // Step 1: Validate CBOR array(10) for signed payload
+        assertThat(receivedCbor[0] & 0xFF).isEqualTo(0x8A); // array(10)
 
-        // Step 2: Extract record via cbor_deserialize (simulated byte manipulation)
-        // The signature is the last CBOR element: 0x50 (bytes(16)) + 16 bytes
-        byte[] extractedSig = new byte[16];
-        System.arraycopy(receivedCbor, receivedCbor.length - 16, extractedSig, 0, 16);
+        // Step 2: Extract COSE signature from end of CBOR
+        // CBOR encodes the signature as a byte string at the end
+        int coseSigLen = coseSignature.length;
+        int bstrHdrLen = coseSigLen >= 24 ? 2 : 1;
 
-        // Step 3: Re-serialize unsigned CBOR via cbor_serialize_record_no_sig
-        byte[] reUnsignedCbor = new byte[receivedCbor.length - 17];
-        reUnsignedCbor[0] = (byte) 0x89; // array(9), changed from array(10)
-        System.arraycopy(receivedCbor, 1, reUnsignedCbor, 1, reUnsignedCbor.length - 1);
+        byte[] extractedCoseSig = new byte[coseSigLen];
+        System.arraycopy(receivedCbor, receivedCbor.length - coseSigLen,
+                extractedCoseSig, 0, coseSigLen);
 
-        // Step 4: Compute CMAC via aes128_cmac (firmware)
-        byte[] computedTag = cmacService.computeCmac(TEST_KEY, reUnsignedCbor);
+        // Verify the byte string header
+        int bstrHdrByte = receivedCbor[receivedCbor.length - coseSigLen - 1] & 0xFF;
+        assertThat(bstrHdrByte & 0xE0).isEqualTo(0x40); // major type 2 (bstr)
 
-        // Step 5: Constant-time compare (firmware's _constant_time_memcmp)
-        int diff = 0;
-        for (int i = 0; i < 16; i++) {
-            diff |= computedTag[i] ^ extractedSig[i];
-        }
-        assertThat(diff).isEqualTo(0);
+        // Step 3: Parse COSE Sign1 structure
+        // COSE_Sign1 = [protected_bstr, {}, nil, sig_bstr(64)]
+        assertThat(extractedCoseSig[0] & 0xFF).isEqualTo(0x84); // array(4)
+
+        // Extract raw signature (last 64 bytes of COSE)
+        byte[] extractedRawSig = new byte[64];
+        System.arraycopy(extractedCoseSig, extractedCoseSig.length - 64,
+                extractedRawSig, 0, 64);
+
+        // Step 4: Verify KID in protected header
+        // protected header: bstr_wrapped({1: -8, 4: h'12121212'})
+        // Skip array(4) header (1 byte), then bstr header
+        int pos = 1;
+        int bstrLen = extractedCoseSig[pos] & 0x1F;
+        pos += (bstrLen >= 24) ? 2 : 1;
+        // Inside bstr: map(2), key 1, -8, key 4, bstr(4), KID bytes
+        pos += 3; // map(2) + key 1 + 0x27(-8)
+        assertThat(extractedCoseSig[pos] & 0xFF).isEqualTo(0x04); // key 4
+        pos++;
+        assertThat(extractedCoseSig[pos] & 0xE0).isEqualTo(0x40); // bstr
+        pos++;
+        byte[] extractedKid = new byte[4];
+        System.arraycopy(extractedCoseSig, pos, extractedKid, 0, 4);
+        assertThat(HEX.formatHex(extractedKid)).isEqualTo(HEX.formatHex(BACKEND_KID));
+
+        // Step 5: Re-serialize unsigned CBOR (firmware's cbor_serialize_record_no_sig)
+        byte[] reUnsignedCbor = new byte[signedCbor.length - coseSigLen - bstrHdrLen];
+        reUnsignedCbor[0] = (byte) 0x89; // array(9) — unsigned
+        System.arraycopy(signedCbor, 1, reUnsignedCbor, 1, reUnsignedCbor.length - 1);
+
+        // Step 6: Verify Ed25519 signature via Bouncy Castle
+        Ed25519PublicKeyParameters pubKey = new Ed25519PublicKeyParameters(BACKEND_PUBLIC_KEY, 0);
+        Ed25519Signer verifier = new Ed25519Signer();
+        verifier.init(false, pubKey);
+        verifier.update(reUnsignedCbor, 0, reUnsignedCbor.length);
+        assertThat(verifier.verifySignature(extractedRawSig)).isTrue();
     }
 
-    /**
-     * Tampered payload (single bit flip) is rejected.
-     */
     @Test
     void tamperedPayloadIsRejected() {
         GateCommandRecord record = new GateCommandRecord(
@@ -92,31 +120,37 @@ class EndToEndDownlinkTest {
         );
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
-        byte[] cmac = cmacService.computeCmac(TEST_KEY, unsignedCbor);
-        byte[] signature = java.util.Arrays.copyOf(cmac, 16);
-        byte[] originalSignedCbor = FirmwareCborSerializer.serialize(record, signature);
+        byte[] rawSignature = DownlinkService.signEd25519(BACKEND_SEED, unsignedCbor);
+        byte[] coseSignature = CoseSign1Encoder.encode(BACKEND_KID, rawSignature);
+        byte[] originalSignedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
-        // Flip one bit in the gate_num field (byte at index 18)
+        // Flip one bit in the gate_num field
         byte[] tamperedCbor = originalSignedCbor.clone();
         tamperedCbor[18] ^= 0x01;
 
-        // Firmware extracts unsigned CBOR from tampered payload
-        byte[] extractedSig = new byte[16];
-        System.arraycopy(tamperedCbor, tamperedCbor.length - 16, extractedSig, 0, 16);
+        // Extract as firmware would
+        int coseSigLen = coseSignature.length;
+        int bstrHdrLen = coseSigLen >= 24 ? 2 : 1;
 
-        byte[] reUnsignedCbor = new byte[tamperedCbor.length - 17];
+        byte[] extractedCoseSig = new byte[coseSigLen];
+        System.arraycopy(tamperedCbor, tamperedCbor.length - coseSigLen,
+                extractedCoseSig, 0, coseSigLen);
+
+        byte[] reUnsignedCbor = new byte[tamperedCbor.length - coseSigLen - bstrHdrLen];
         reUnsignedCbor[0] = (byte) 0x89;
         System.arraycopy(tamperedCbor, 1, reUnsignedCbor, 1, reUnsignedCbor.length - 1);
 
-        byte[] computedTag = cmacService.computeCmac(TEST_KEY, reUnsignedCbor);
+        byte[] extractedRawSig = new byte[64];
+        System.arraycopy(extractedCoseSig, extractedCoseSig.length - 64,
+                extractedRawSig, 0, 64);
 
-        // CMAC mismatch → firmware drops silently
-        assertThat(HEX.formatHex(computedTag)).isNotEqualTo(HEX.formatHex(extractedSig));
+        Ed25519PublicKeyParameters pubKey = new Ed25519PublicKeyParameters(BACKEND_PUBLIC_KEY, 0);
+        Ed25519Signer verifier = new Ed25519Signer();
+        verifier.init(false, pubKey);
+        verifier.update(reUnsignedCbor, 0, reUnsignedCbor.length);
+        assertThat(verifier.verifySignature(extractedRawSig)).isFalse();
     }
 
-    /**
-     * Wrong key → CMAC mismatch.
-     */
     @Test
     void wrongKeyIsRejected() {
         GateCommandRecord record = new GateCommandRecord(
@@ -128,29 +162,35 @@ class EndToEndDownlinkTest {
         );
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
-        byte[] cmac = cmacService.computeCmac(TEST_KEY, unsignedCbor);
-        byte[] signature = java.util.Arrays.copyOf(cmac, 16);
-        byte[] signedCbor = FirmwareCborSerializer.serialize(record, signature);
+        byte[] rawSignature = DownlinkService.signEd25519(BACKEND_SEED, unsignedCbor);
+        byte[] coseSignature = CoseSign1Encoder.encode(BACKEND_KID, rawSignature);
+        byte[] signedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
-        // Firmware uses a different key (all zeros)
-        byte[] wrongKey = new byte[16];
-        byte[] extractedSig = new byte[16];
-        System.arraycopy(signedCbor, signedCbor.length - 16, extractedSig, 0, 16);
+        // Use a different valid key pair
+        byte[] wrongPubKey = WRONG_PUBLIC_KEY;
 
-        byte[] reUnsignedCbor = new byte[signedCbor.length - 17];
+        int coseSigLen = coseSignature.length;
+        int bstrHdrLen = coseSigLen >= 24 ? 2 : 1;
+
+        byte[] extractedCoseSig = new byte[coseSigLen];
+        System.arraycopy(signedCbor, signedCbor.length - coseSigLen,
+                extractedCoseSig, 0, coseSigLen);
+
+        byte[] reUnsignedCbor = new byte[signedCbor.length - coseSigLen - bstrHdrLen];
         reUnsignedCbor[0] = (byte) 0x89;
         System.arraycopy(signedCbor, 1, reUnsignedCbor, 1, reUnsignedCbor.length - 1);
 
-        byte[] computedTag = cmacService.computeCmac(wrongKey, reUnsignedCbor);
+        byte[] extractedRawSig = new byte[64];
+        System.arraycopy(extractedCoseSig, extractedCoseSig.length - 64,
+                extractedRawSig, 0, 64);
 
-        // Mismatch → rejected
-        assertThat(HEX.formatHex(computedTag)).isNotEqualTo(HEX.formatHex(extractedSig));
+        Ed25519PublicKeyParameters wrongPub = new Ed25519PublicKeyParameters(wrongPubKey, 0);
+        Ed25519Signer verifier = new Ed25519Signer();
+        verifier.init(false, wrongPub);
+        verifier.update(reUnsignedCbor, 0, reUnsignedCbor.length);
+        assertThat(verifier.verifySignature(extractedRawSig)).isFalse();
     }
 
-    /**
-     * Signed CBOR matches firmware's expected wire format (simple values,
-     * byte strings, proper array structure).
-     */
     @Test
     void cborWireFormatMatchesFirmwareExpectations() {
         GateCommandRecord record = new GateCommandRecord(
@@ -162,11 +202,11 @@ class EndToEndDownlinkTest {
         );
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
-        // Use a 16-byte signature like real CMAC
-        byte[] signature = HEX.parseHex("0102030405060708090a0b0c0d0e0f10");
-        byte[] signedCbor = FirmwareCborSerializer.serialize(record, signature);
+        byte[] rawSignature = DownlinkService.signEd25519(BACKEND_SEED, unsignedCbor);
+        byte[] coseSignature = CoseSign1Encoder.encode(BACKEND_KID, rawSignature);
+        byte[] signedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
-        // Check array header
+        // Check array headers
         assertThat(unsignedCbor[0] & 0xFF).isEqualTo(0x89); // array(9)
         assertThat(signedCbor[0] & 0xFF).isEqualTo(0x8A);   // array(10)
 
@@ -182,47 +222,14 @@ class EndToEndDownlinkTest {
         assertThat(unsignedCbor[7]).isEqualTo((byte) 0x03);
         assertThat(unsignedCbor[8]).isEqualTo((byte) 0x04);
 
-        // Check sequence: uint(0xDACB) → 0x19 + 2 bytes
-        assertThat(unsignedCbor[9] & 0xFF).isEqualTo(0x19);
-        assertThat(unsignedCbor[10] & 0xFF).isEqualTo(0xDA);
-        assertThat(unsignedCbor[11] & 0xFF).isEqualTo(0xCB);
-
-        // Check HLC physical: uint(0xDACB) → 0x19 + 2 bytes
-        assertThat(unsignedCbor[12] & 0xFF).isEqualTo(0x19);
-        assertThat(unsignedCbor[13] & 0xFF).isEqualTo(0xDA);
-        assertThat(unsignedCbor[14] & 0xFF).isEqualTo(0xCB);
-
-        // Check HLC logical: uint(0x0A) → 0x0A
-        assertThat(unsignedCbor[15] & 0xFF).isEqualTo(0x0A);
-
-        // Check gate ID byte string: 0x44 + 4 bytes
-        assertThat(unsignedCbor[16] & 0xFF).isEqualTo(0x44);
-        assertThat(unsignedCbor[17]).isEqualTo((byte) 0x11);
-        assertThat(unsignedCbor[18]).isEqualTo((byte) 0x12);
-        assertThat(unsignedCbor[19]).isEqualTo((byte) 0x13);
-        assertThat(unsignedCbor[20]).isEqualTo((byte) 0x14);
-
-        // Check gate state: simple(1) → 0xE1
-        assertThat(unsignedCbor[21] & 0xFF).isEqualTo(0xE1);
-
-        // Check signature in signed CBOR: 0x50 (bytes(16)) + 16 bytes
-        assertThat(signedCbor[22] & 0xFF).isEqualTo(0x50);
-        for (int i = 0; i < 16; i++) {
-            assertThat(signedCbor[23 + i]).isEqualTo(signature[i]);
-        }
-
-        // Unsigned length = signed length - 17 (1 byte header + 16 sig bytes)
-        assertThat(unsignedCbor.length).isEqualTo(signedCbor.length - 17);
-
-        // Both fit within 51-byte limit
-        assertThat(unsignedCbor.length).isLessThanOrEqualTo(51);
-        assertThat(signedCbor.length).isLessThanOrEqualTo(51);
+        // Check signature in signed CBOR: bstr of COSE length
+        int coseLen = coseSignature.length;
+        int bstrHdrOffset = unsignedCbor.length; // after unsigned CBOR elements
+        int bstrHdrByte = signedCbor[bstrHdrOffset] & 0xFF;
+        assertThat(bstrHdrByte & 0xE0).isEqualTo(0x40); // bstr major type
+        assertThat(signedCbor.length).isEqualTo(unsignedCbor.length + (coseLen >= 24 ? 2 : 1) + coseLen);
     }
 
-    /**
-     * Prints the exact hex payload that would be sent over LoRaWAN.
-     * Copy hex from test output to verify against firmware.
-     */
     @Test
     void printExactDownlinkHex() {
         GateCommandRecord record = new GateCommandRecord(
@@ -234,9 +241,9 @@ class EndToEndDownlinkTest {
         );
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
-        byte[] cmac = cmacService.computeCmac(TEST_KEY, unsignedCbor);
-        byte[] signature = java.util.Arrays.copyOf(cmac, 16);
-        byte[] signedCbor = FirmwareCborSerializer.serialize(record, signature);
+        byte[] rawSignature = DownlinkService.signEd25519(BACKEND_SEED, unsignedCbor);
+        byte[] coseSignature = CoseSign1Encoder.encode(BACKEND_KID, rawSignature);
+        byte[] signedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
         System.out.println("=== Downlink Payload (hex, " + signedCbor.length + " bytes) ===");
         System.out.println(HEX.formatHex(signedCbor));
@@ -244,9 +251,9 @@ class EndToEndDownlinkTest {
         System.out.println(Base64.getEncoder().encodeToString(signedCbor));
         System.out.println("=== Unsigned CBOR (hex, " + unsignedCbor.length + " bytes) ===");
         System.out.println(HEX.formatHex(unsignedCbor));
-        System.out.println("=== CMAC tag (hex) ===");
-        System.out.println(HEX.formatHex(signature));
-
-        assertThat(signedCbor.length).isLessThanOrEqualTo(51);
+        System.out.println("=== COSE Sign1 (hex, " + coseSignature.length + " bytes) ===");
+        System.out.println(HEX.formatHex(coseSignature));
+        System.out.println("=== Raw Ed25519 signature (hex) ===");
+        System.out.println(HEX.formatHex(rawSignature));
     }
 }

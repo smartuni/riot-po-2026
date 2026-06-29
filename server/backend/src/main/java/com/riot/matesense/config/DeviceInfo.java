@@ -11,8 +11,6 @@ public class DeviceInfo {
     private final String name;
     private final Type type;
 
-    private byte[] appMacKey;
-
     public DeviceInfo(String name, Type type) {
         this.name = name;
         this.type = type;
