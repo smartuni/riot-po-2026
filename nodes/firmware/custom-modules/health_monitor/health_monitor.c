@@ -5,8 +5,7 @@ health_monitor_t* health_monitor_new(int update_period_sec) {
 	monitor->update_period_sec = update_period_sec;
 
 	//init battery monitoring
-	int threshold_mv = 3000; // TODO adjust this later
-	monitor->battery_monitor = battery_voltage_monitor_new(threshold_mv);
+	monitor->battery_monitor = battery_voltage_monitor_new();
 
 	//init shock detection
 	int shock_threshold = 15000; // TODO adjust this later
