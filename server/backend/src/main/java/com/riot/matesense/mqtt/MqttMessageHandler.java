@@ -31,13 +31,15 @@ public class MqttMessageHandler {
     GateActivityService gateActivityService;
     private final DeviceRegistry deviceRegistry;
     private SimpMessagingTemplate messagingTemplate;
-    private final HlcClock backendClock = new HlcClock();
+    private final HlcClock backendClock;
 
-    public MqttMessageHandler(GateService gateService, GateActivityService gateActivityService, DeviceRegistry deviceRegistry, SimpMessagingTemplate messagingTemplate) {
+
+    public MqttMessageHandler(GateService gateService, GateActivityService gateActivityService, DeviceRegistry deviceRegistry, SimpMessagingTemplate messagingTemplate, HlcClock backendClock) {
         this.gateService = gateService;
         this.gateActivityService = gateActivityService;
         this.deviceRegistry = deviceRegistry;
         this.messagingTemplate = messagingTemplate;
+        this.backendClock = backendClock;
     }
 
     public void msgHandlerUplinks(String decodedJson,String deviceName) {

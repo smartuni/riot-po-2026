@@ -5,6 +5,8 @@ import com.riot.matesense.config.DownPayload;
 import com.riot.matesense.config.MqttProperties;
 import com.riot.matesense.mqtt.TTNMqttPublisher;
 import com.riot.matesense.registry.DeviceRegistry;
+import com.riot.matesense.time.HlcClock;
+import com.riot.matesense.time.HlcTimestamp;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -17,13 +19,14 @@ public class DownlinkService {
     private final TTNMqttPublisher mqttPublisher;
     private final CborConverter cborConverter;
     private final MqttProperties mqttProperties;
-
     private final DeviceRegistry deviceRegistry;
-    public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter, MqttProperties mqttProperties, DeviceRegistry deviceRegistry) {
+    private final HlcClock hlcClock;
+    public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter, MqttProperties mqttProperties, DeviceRegistry deviceRegistry, HlcClock hlcClock) {
         this.mqttPublisher = mqttPublisher;
         this.cborConverter = cborConverter;
         this.mqttProperties = mqttProperties;
         this.deviceRegistry = deviceRegistry;
+        this.hlcClock = hlcClock;
     }
 
     public void sendDownlinkToDevice(DownPayload payloadData) {
@@ -44,9 +47,15 @@ public class DownlinkService {
                 byte[] writerId = { 0x12, 0x12, 0x12, 0x12 };
                 //byte[] sequence = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, (byte)0x88};
                 Long sequence = 12345678L;
-                long msSinceEpoch = System.currentTimeMillis();
+               /* long msSinceEpoch = System.currentTimeMillis();
                 int hlc_phy =  (int)(msSinceEpoch / 1000);
                 int hlc_log =  (int)(msSinceEpoch % 1000);
+                */
+                HlcTimestamp ts = hlcClock.send();
+
+                int hlc_phy = (int) ts.getPhysical();
+                int hlc_log = (int) ts.getLogical();
+
                 //===== HEADER ^^^^
 
                 byte device_type_gate = 0x00;
