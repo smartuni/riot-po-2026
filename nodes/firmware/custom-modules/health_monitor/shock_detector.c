@@ -22,10 +22,10 @@ static void acceleration_callback(void) {
 
 static void collect_magnitudes(shock_detector_t* detector) {
 	phydat_t acceleration;
-	const int* nsamples = &detector->sample_size;
-	raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * (*nsamples));
+	// raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * (*nsamples));
+	memset(detector->raw_accel_data, 0, sizeof(raw_acceleration_t) * detector->sample_size);
 	LED0_ON;
-	for (int i = 0; i < *nsamples; i++) {
+	for (int i = 0; i < detector->sample_size; i++) {
 		int acc_dim = saul_reg_read(detector->accel_sensor, &acceleration);
 		if (acc_dim < 1) {
 			LOG_INFO("[shock_detector.c:%d] Error reading a value "
@@ -33,26 +33,26 @@ static void collect_magnitudes(shock_detector_t* detector) {
 					 __LINE__);
 			return;
 		}
-		raw_accel_data[i].x = acceleration.val[0] * 10;
-		raw_accel_data[i].y = acceleration.val[1] * 10;
-		raw_accel_data[i].z = acceleration.val[2] * 10;
+		detector->raw_accel_data[i].x = acceleration.val[0] * 10;
+		detector->raw_accel_data[i].y = acceleration.val[1] * 10;
+		detector->raw_accel_data[i].z = acceleration.val[2] * 10;
 		if (detector->sampling_period_ms > 0) {
 			ztimer_sleep(ZTIMER_MSEC, detector->sampling_period_ms);
 		}
 	}
 	LOG_DEBUG("[shock_detector.c:%d] Collected samples\n", __LINE__);
 
-	for (int i = 0; i < *nsamples; i++) {
+	for (int i = 0; i < detector->sample_size; i++) {
 		detector->input[i].r = 0;
 	}
-	for (int i = 0; i < *nsamples; i++) {
-		int* x = &raw_accel_data[i].x;
-		int* y = &raw_accel_data[i].y;
-		int* z = &raw_accel_data[i].z;
+	for (int i = 0; i < detector->sample_size; i++) {
+		int* x = &detector->raw_accel_data[i].x;
+		int* y = &detector->raw_accel_data[i].y;
+		int* z = &detector->raw_accel_data[i].z;
 		detector->input[i].r = calculate_magnitude(*x, *y, *z);
 		detector->input[i].i = 0;
 	}
-	free(raw_accel_data);
+	// free(detector->raw_accel_data);
 	LED0_OFF;
 }
 

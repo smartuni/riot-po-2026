@@ -15,6 +15,7 @@
 #define SHOCK_DETECTOR_H
 
 #define kiss_fft_scalar int
+#define SAMPLE_SIZE 2048
 
 #include "health_monitor_payload.h"
 #include "moving_freq_avg.h"
@@ -34,7 +35,6 @@
 #include <sched.h>
 #include <stdlib.h>
 
-#define SAMPLE_SIZE 2048
 typedef struct {
 	int x;
 	int y;
@@ -58,6 +58,7 @@ typedef struct {
 	volatile bool running;
 	volatile shock_status_t shock_status;
 	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
+	raw_acceleration_t raw_accel_data[SAMPLE_SIZE];
 } shock_detector_t;
 
 /**
