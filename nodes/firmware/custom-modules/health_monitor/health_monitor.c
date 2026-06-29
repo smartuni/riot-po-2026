@@ -22,16 +22,16 @@ static void* thread_function(void* monitor_void) {
 		//init the payload
 		health_monitor_payload_t payload;
 
-		//get battery info
-		battery_voltage_monitor_fetch_info(monitor->battery_monitor, &payload.battery_info);
+		//TODO get battery info
+		//battery_voltage_monitor_fetch_info(monitor->battery_monitor, &payload.battery_info);
 
-		//get shock status
-		shock_detector_fetch_status(monitor->shock_detector, &payload.shock_status);
+		//TODO get shock status
+		//shock_detector_fetch_status(monitor->shock_detector, &payload.shock_status);
 
 		//serialize the payload
 		uint8_t buffer[HEALTH_MONITOR_BUFFER_SIZE];
 		size_t buff_size = sizeof(buffer);
-		health_monitor_serialize_record_no_sig(&payload, buffer, &buff_size, true);
+		health_monitor_serialize_record_no_sig(&payload, buffer, &buff_size);
 		LOG_DEBUG("[health_monitor.c:%d] Serialized health monitor payload, size: %d bytes\n", __LINE__, buff_size);
 
 		//send the payload via lorawan	
