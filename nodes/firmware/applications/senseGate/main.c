@@ -221,14 +221,15 @@ int main(void){
     int put_cnt = 0;
     int put_err_cnt = 0;
 
-    battery_voltage_monitor_t* battery_monitor = battery_voltage_monitor_new(3700);
-   
+   health_monitor_t* monitor = health_monitor_new();
+   if (monitor) {
+       health_monitor_start(monitor);
+   } else {
+       _LOGDBG("Failed to initialize health monitor\n");
+   }
+
     while(1){
         ztimer_sleep(ZTIMER_MSEC,1000);
-
-        battery_info_t battery_info;
-        battery_voltage_monitor_fetch_info(battery_monitor, &battery_info);
-        _LOGDBG("[main] Battery voltage: %d mV\n", battery_info.voltage_mv);
 
         if (timeToUpdateTable == TIME_PERIOD_TABLE_UPDATE) {
             _LOGDBG("get current observer state...\n");
