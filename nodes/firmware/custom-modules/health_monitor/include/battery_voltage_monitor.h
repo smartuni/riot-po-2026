@@ -39,15 +39,17 @@
 
 typedef uint8_t voltage_trend;
 enum {
-	INCREASING = 0,
+	UNKNOWN_VOLTAGE_TREND = 0,
+	INCREASING,
 	DECREASING,
 	STABLE,
-	UNKNOWN
+	
 };
 
 typedef uint8_t battery_status_t;
 enum {
-	CHARGING = 0,
+	UNKNOWN_BATTERY_STATE = 0,
+	CHARGING,
 	DISCHARGING
 };
 
