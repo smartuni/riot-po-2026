@@ -42,6 +42,7 @@ typedef struct {
 } raw_acceleration_t;
 
 
+
 // Restructures for memory alignment and to avoid padding
 typedef struct {
 	kernel_pid_t thread_pid;

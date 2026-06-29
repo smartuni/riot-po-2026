@@ -16,29 +16,26 @@
 
 #include <stdint.h>
 
-#define HEALTH_MONITOR_PAYLOAD_ELEMENTS 3
+#define HEALTH_MONITOR_PAYLOAD_ELEMENTS 2
 
-typedef uint8_t shock_status_t;
+typedef uint8_t health_monitor_header_t;
+enum {
+	BATTERY_CHARGING = 0,
+	BATTERY_DISCHARGING,
+	BATTERY_LOW,
+	SHOCK_STATUS,
+};
+
+typedef int16_t shock_status_t;
 enum {
 	NO_SHOCK = 0,
 	SHOCK_DETECTED
 };
 
-typedef uint8_t battery_status_t;
-enum {
-	CHARGING = 0,
-	DISCHARGING,
-	DISCHARGING_LOW_BATTERY
-};
 
 typedef struct {
-	battery_status_t battery_status;
-	int16_t voltage_mv;
-} battery_info_t; //1+2 bytes
-
-typedef struct {
-	shock_status_t shock_status; // 1 byte
-	battery_info_t battery_info; // 3 bytes
+	health_monitor_header_t header;
+	int16_t body;
 } health_monitor_payload_t; // total 6 elements
 
 #endif

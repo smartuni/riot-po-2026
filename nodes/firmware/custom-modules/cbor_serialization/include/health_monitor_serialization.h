@@ -34,6 +34,6 @@
  * @retval 0 on success
  * @retval negative value on error
  */
-int health_monitor_serialize_record_no_sig(const health_monitor_payload_t* record, uint8_t* out, size_t* out_len, bool use_array);
+int health_monitor_serialize_record_no_sig(const health_monitor_payload_t* record, uint8_t* out, size_t* out_len);
 
 #endif
