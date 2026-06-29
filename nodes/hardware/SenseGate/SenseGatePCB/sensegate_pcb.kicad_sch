@@ -4158,6 +4158,321 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Transistor_FET:BSS138"
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "Q"
+				(at 5.08 1.905 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" "BSS138"
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+				(at 5.08 -1.905 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+						(italic yes)
+					)
+					(justify left)
+				)
+			)
+			(property "Datasheet" "https://www.onsemi.com/pub/Collateral/BSS138-D.PDF"
+				(at 5.08 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Description" "50V Vds, 0.22A Id, N-Channel MOSFET, SOT-23"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "N-Channel MOSFET"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "SOT?23*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "BSS138_0_1"
+				(polyline
+					(pts
+						(xy 0.254 1.905) (xy 0.254 -1.905)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.254 0) (xy -2.54 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 2.286) (xy 0.762 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 0.508) (xy 0.762 -0.508)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 -1.27) (xy 0.762 -2.286)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 -1.778) (xy 3.302 -1.778) (xy 3.302 1.778) (xy 0.762 1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.016 0) (xy 2.032 0.381) (xy 2.032 -0.381) (xy 1.016 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(circle
+					(center 1.651 0)
+					(radius 2.794)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 2.54) (xy 2.54 1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 2.54 1.778)
+					(radius 0.254)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(circle
+					(center 2.54 -1.778)
+					(radius 0.254)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 -2.54) (xy 2.54 0) (xy 0.762 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.921 0.381) (xy 3.683 0.381)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 3.302 0.381) (xy 2.921 -0.254) (xy 3.683 -0.254) (xy 3.302 0.381)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "BSS138_1_1"
+				(pin input line
+					(at -5.08 0 0)
+					(length 2.54)
+					(name "G"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 -5.08 90)
+					(length 2.54)
+					(name "S"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 5.08 270)
+					(length 2.54)
+					(name "D"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "custom_symbols:dd05cvsa_DCDC_Converter"
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -4721,6 +5036,16 @@
 			(embedded_fonts no)
 		)
 	)
+	(text "10 kOhm"
+		(exclude_from_sim no)
+		(at 123.444 132.334 0)
+		(effects
+			(font
+				(size 0.635 0.635)
+			)
+		)
+		(uuid "06280ff0-cc75-4731-9760-562101fb4bf7")
+	)
 	(text "kleine löcher (akkuhalterung)"
 		(exclude_from_sim no)
 		(at 75.946 17.018 0)
@@ -4741,6 +5066,16 @@
 		)
 		(uuid "50eaf7d0-96c0-40b5-b52b-99d5fe68efaf")
 	)
+	(text "20 kOhm"
+		(exclude_from_sim no)
+		(at 127 53.594 90)
+		(effects
+			(font
+				(size 0.635 0.635)
+			)
+		)
+		(uuid "5f4333ee-c5d7-42e9-abad-f84eede9f2c1")
+	)
 	(text "Schalter aus -> Akku laden aus"
 		(exclude_from_sim no)
 		(at 112.268 153.416 0)
@@ -4750,6 +5085,16 @@
 			)
 		)
 		(uuid "66d28f99-4b18-4476-a00b-ff822f4d21ba")
+	)
+	(text "20 kOhm"
+		(exclude_from_sim no)
+		(at 50.8 159.004 90)
+		(effects
+			(font
+				(size 0.635 0.635)
+			)
+		)
+		(uuid "6a8a35f1-43e5-4fec-bd10-6f02baa2e11b")
 	)
 	(text "Inductive Sensor"
 		(exclude_from_sim no)
@@ -4761,6 +5106,26 @@
 		)
 		(uuid "6bc7e5b3-e8b4-4e42-bf35-60095d0f2604")
 	)
+	(text "20 kOhm"
+		(exclude_from_sim no)
+		(at 50.8 111.76 90)
+		(effects
+			(font
+				(size 0.635 0.635)
+			)
+		)
+		(uuid "829bbd95-6622-4a00-892e-feb7420efd93")
+	)
+	(text "20 kOhm"
+		(exclude_from_sim no)
+		(at 113.03 132.334 0)
+		(effects
+			(font
+				(size 0.635 0.635)
+			)
+		)
+		(uuid "82d936fa-9f95-4e96-a84f-676a3bb34b00")
+	)
 	(text "große löcher"
 		(exclude_from_sim no)
 		(at 172.212 16.51 0)
@@ -4771,7 +5136,17 @@
 		)
 		(uuid "af7110ae-2479-4c57-ab30-2b61c30b41d6")
 	)
-	(text "Spannungsteiler für 7V -> 3,3V"
+	(text "20 kOhm"
+		(exclude_from_sim no)
+		(at 52.07 82.55 90)
+		(effects
+			(font
+				(size 0.635 0.635)
+			)
+		)
+		(uuid "b4458eb2-d0d2-4480-a9de-bf907f029bb6")
+	)
+	(text "7V -> 3,5V"
 		(exclude_from_sim no)
 		(at 116.332 44.196 0)
 		(effects
@@ -4780,6 +5155,26 @@
 			)
 		)
 		(uuid "bfe87497-b303-4181-b7f9-84c3c855beed")
+	)
+	(text "20 kOhm"
+		(exclude_from_sim no)
+		(at 118.11 53.594 90)
+		(effects
+			(font
+				(size 0.635 0.635)
+			)
+		)
+		(uuid "cfd50d26-390a-436d-8db4-7677e5e3b810")
+	)
+	(text "20 kOhm"
+		(exclude_from_sim no)
+		(at 50.8 136.144 90)
+		(effects
+			(font
+				(size 0.635 0.635)
+			)
+		)
+		(uuid "e82f1428-4a1b-4563-9651-1a66924cfedf")
 	)
 	(junction
 		(at 50.8 132.08)
@@ -4798,6 +5193,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "179fc662-3ce7-42a6-8931-f42f7cb230ca")
+	)
+	(junction
+		(at 130.81 104.14)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2910de1e-1700-4792-8e53-9475ba2f0e0c")
 	)
 	(junction
 		(at 121.92 49.53)
@@ -4834,6 +5235,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "40d5f1b6-f3e4-49e9-9478-5094adf73265")
+	)
+	(junction
+		(at 130.81 96.52)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "4f63c3cf-4e8a-4f1c-909d-64bc0a73fe86")
 	)
 	(junction
 		(at 213.36 45.72)
@@ -5015,16 +5422,6 @@
 	)
 	(wire
 		(pts
-			(xy 133.35 109.22) (xy 119.38 109.22)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "15baa8fe-203f-4cfb-a8a6-ea8e057410a8")
-	)
-	(wire
-		(pts
 			(xy 111.76 134.62) (xy 109.22 134.62)
 		)
 		(stroke
@@ -5075,16 +5472,6 @@
 	)
 	(wire
 		(pts
-			(xy 129.54 104.14) (xy 124.46 104.14)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "3013851b-b94e-4b7a-8184-5077d6ac9c96")
-	)
-	(wire
-		(pts
 			(xy 200.66 76.2) (xy 213.36 76.2)
 		)
 		(stroke
@@ -5112,6 +5499,16 @@
 			(type default)
 		)
 		(uuid "36476113-4aac-4f43-a66c-f627af49a5f9")
+	)
+	(wire
+		(pts
+			(xy 146.05 104.14) (xy 143.51 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "38fcfbfe-237f-4360-b49b-03cf002766cf")
 	)
 	(wire
 		(pts
@@ -5285,6 +5682,16 @@
 	)
 	(wire
 		(pts
+			(xy 130.81 104.14) (xy 133.35 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6be3164e-3b5f-4464-9c75-d4e327a68d58")
+	)
+	(wire
+		(pts
 			(xy 213.36 50.8) (xy 238.76 50.8)
 		)
 		(stroke
@@ -5345,6 +5752,16 @@
 	)
 	(wire
 		(pts
+			(xy 130.81 96.52) (xy 129.54 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8a8ab696-4bfe-4c9a-87f0-a78b4906b8d0")
+	)
+	(wire
+		(pts
 			(xy 199.39 43.18) (xy 213.36 43.18)
 		)
 		(stroke
@@ -5392,6 +5809,16 @@
 			(type default)
 		)
 		(uuid "936a2b12-6288-4672-9246-5d240bb26eef")
+	)
+	(wire
+		(pts
+			(xy 130.81 96.52) (xy 146.05 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "95d5e405-4f9a-4a54-8138-183e63bf5004")
 	)
 	(wire
 		(pts
@@ -5512,16 +5939,6 @@
 			(type default)
 		)
 		(uuid "af9813a9-c542-4a20-9a3b-db4055375537")
-	)
-	(wire
-		(pts
-			(xy 129.54 96.52) (xy 133.35 96.52)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b2595240-4dda-4b65-a85b-8ee95116ca9a")
 	)
 	(wire
 		(pts
@@ -5795,6 +6212,16 @@
 	)
 	(wire
 		(pts
+			(xy 124.46 104.14) (xy 130.81 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fb3c3af4-cc97-4f42-abb5-fb337f4cca62")
+	)
+	(wire
+		(pts
 			(xy 200.66 88.9) (xy 213.36 88.9)
 		)
 		(stroke
@@ -5907,7 +6334,7 @@
 	)
 	(global_label "GND"
 		(shape input)
-		(at 133.35 109.22 0)
+		(at 119.38 109.22 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -5917,7 +6344,7 @@
 		)
 		(uuid "1c1fe16b-af7a-4161-b338-14348b5634da")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 140.2057 109.22 0)
+			(at 126.2357 109.22 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6022,30 +6449,6 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
-			)
-		)
-	)
-	(global_label "TOG_20V"
-		(shape input)
-		(at 129.54 104.14 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "48fcb267-67d2-486b-b6d2-3385199efc56")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 140.5685 104.14 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
 			)
 		)
 	)
@@ -6289,9 +6692,33 @@
 			)
 		)
 	)
+	(global_label "TOG_20V"
+		(shape input)
+		(at 138.43 111.76 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "8955ed9e-8ded-47d4-9f53-487187bf35a0")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 149.4585 111.76 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
 	(global_label "VBAT"
 		(shape input)
-		(at 133.35 96.52 0)
+		(at 146.05 96.52 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -6301,7 +6728,7 @@
 		)
 		(uuid "8ac17dd3-4c32-4715-96f4-ce8457ba3ce5")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 140.75 96.52 0)
+			(at 153.45 96.52 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6673,6 +7100,30 @@
 			)
 		)
 	)
+	(global_label "GND"
+		(shape input)
+		(at 146.05 104.14 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "c1d85d51-033a-4881-a7cb-2f7dda2c4cf9")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 152.9057 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+	)
 	(global_label "+3V3"
 		(shape input)
 		(at 199.39 45.72 180)
@@ -6988,6 +7439,88 @@
 			(project "sensegate_pcb"
 				(path "/cab49cbb-a41f-4356-a83b-79a7aa8374de"
 					(reference "H7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 130.81 100.33 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "1b52166d-030c-4da8-9de4-2f99e84727bb")
+		(property "Reference" "R16"
+			(at 128.524 102.362 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "R"
+			(at 131.826 101.854 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
+			(at 132.588 100.33 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 130.81 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Resistor"
+			(at 130.81 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "802f94ca-5c02-46d1-970c-55831a13cfd0")
+		)
+		(pin "2"
+			(uuid "1637eba9-8766-43ec-a6f3-9d92ff395ac3")
+		)
+		(instances
+			(project "sensegate_pcb"
+				(path "/cab49cbb-a41f-4356-a83b-79a7aa8374de"
+					(reference "R16")
 					(unit 1)
 				)
 			)
@@ -10155,6 +10688,91 @@
 			(project "sensegate_pcb"
 				(path "/cab49cbb-a41f-4356-a83b-79a7aa8374de"
 					(reference "H3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Transistor_FET:BSS138")
+		(at 138.43 106.68 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "cdb14629-7e22-4f6c-bb0a-0a3584ef7bcc")
+		(property "Reference" "Q2"
+			(at 143.51 105.918 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "BSS138"
+			(at 144.526 108.204 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+			(at 140.335 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+					(italic yes)
+				)
+				(justify left)
+			)
+		)
+		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/BSS138-D.PDF"
+			(at 142.24 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Description" "50V Vds, 0.22A Id, N-Channel MOSFET, SOT-23"
+			(at 138.43 106.68 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "f1ba099f-971b-4c7d-8045-4bbbfca1ca53")
+		)
+		(pin "3"
+			(uuid "65092a41-c053-4fcf-b432-51b3fae8af83")
+		)
+		(pin "2"
+			(uuid "107189e6-1ef6-46ad-9622-dc5487f88fe1")
+		)
+		(instances
+			(project "sensegate_pcb"
+				(path "/cab49cbb-a41f-4356-a83b-79a7aa8374de"
+					(reference "Q2")
 					(unit 1)
 				)
 			)
