@@ -47,8 +47,8 @@ typedef struct {
 	kernel_pid_t thread_pid;
 	mutex_t shock_status_mutex;
 	saul_reg_t* accel_sensor;
-	kiss_fft_cpx* input;
-	kiss_fft_cpx* output;
+	kiss_fft_cpx input[SAMPLE_SIZE];
+	kiss_fft_cpx output[SAMPLE_SIZE];
 	moving_freq_avg_t* freq_avg; //rename to frequency domain later
 	void (*callback)(void);
 	int threshold;

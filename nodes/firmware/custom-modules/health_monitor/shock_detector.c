@@ -42,9 +42,8 @@ static void collect_magnitudes(shock_detector_t* detector) {
 	}
 	LOG_DEBUG("[shock_detector.c:%d] Collected samples\n", __LINE__);
 
-	for (int i = 0; i < detector->sample_size; i++) {
-		detector->input[i].r = 0;
-	}
+	memset(detector->input, 0, sizeof(kiss_fft_cpx) * detector->sample_size);
+
 	for (int i = 0; i < detector->sample_size; i++) {
 		int* x = &detector->raw_accel_data[i].x;
 		int* y = &detector->raw_accel_data[i].y;
@@ -58,10 +57,7 @@ static void collect_magnitudes(shock_detector_t* detector) {
 
 static void process_fft(shock_detector_t* detector) {
 	LED1_ON;
-	for (int i = 0; i < detector->sample_size; i++) {
-		detector->output[i].r = 0;
-		detector->output[i].i = 0;
-	}
+	memset(detector->output, 0, sizeof(kiss_fft_cpx) * detector->sample_size);
 	kiss_fft_cfg cfg = kiss_fft_alloc(detector->sample_size, 0, 0, 0);
 	kiss_fft(cfg, detector->input, detector->output);
 	kiss_fft_free(cfg);
@@ -112,8 +108,8 @@ shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms) {
 	int nyquist = new_detector->sample_size / 2 + 1;
 	new_detector->nyquist_domain_size = nyquist; // + 1;
 	new_detector->freq_avg = moving_freq_avg_new(new_detector->nyquist_domain_size);
-	new_detector->input = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * new_detector->sample_size);
-	new_detector->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * new_detector->sample_size);
+	// new_detector->input = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * new_detector->sample_size);
+	// new_detector->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * new_detector->sample_size);
 	new_detector->shock_status = NO_SHOCK;
 	new_detector->shock_status_mutex = (mutex_t)MUTEX_INIT;
 
@@ -152,8 +148,6 @@ int shock_detector_start(shock_detector_t* detector) {
 int shock_detector_delete(shock_detector_t* detector) {
 	detector->running = false;
 	ztimer_sleep(ZTIMER_MSEC, 5000); // give some time for the thread to exit
-	free(detector->input);
-	free(detector->output);
 	moving_freq_avg_delete(detector->freq_avg);
 	free(detector);
 	return 0;
