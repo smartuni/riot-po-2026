@@ -43,7 +43,7 @@ static int get_battery_voltage(void) {
 	return (int)voltage_mv;
 }
 
-battery_voltage_monitor_t* battery_voltage_monitor_new(int threshold_mv) {
+battery_voltage_monitor_t* battery_voltage_monitor_new(void) {
 	gpio_t adc_pin = GPIO_PIN(0, 14);
 	int res = voltage_adc_setup(adc_pin, AIN7_BAT);
 	if (res != 0) {
@@ -55,7 +55,7 @@ battery_voltage_monitor_t* battery_voltage_monitor_new(int threshold_mv) {
 		LOG_DEBUG("[battery_voltage_monitor.c:%d] Failed to allocate memory for battery voltage monitor", __LINE__);
 		return NULL;
 	}
-	monitor->threshold_mv = threshold_mv;
+	//monitor->threshold_mv = threshold_mv;
 	monitor->prev_voltage_mv = -1;
 
 	return monitor;
@@ -72,45 +72,41 @@ static voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const int 
 	return UNKNOWN;
 }
 
-void battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* monitor, battery_info_t* info) {
+battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* monitor) {
+	battery_info_t info;
 	int voltage_mv = get_battery_voltage();
 	if (monitor->prev_voltage_mv == -1) {
 		monitor->prev_voltage_mv = voltage_mv;
 	}
 	LOG_DEBUG("[battery_voltage_monitor.c:%d] Current battery voltage: %d mV\n", __LINE__, voltage_mv);
-	if (voltage_mv < monitor->threshold_mv) {
-		LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is below threshold! (%d mV < %d mV)\n", __LINE__, voltage_mv, monitor->threshold_mv);
-		info->battery_status = DISCHARGING_LOW_BATTERY;
-		info->voltage_mv = voltage_mv;
-	} else {
-		LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is nominal: %d mV\n", __LINE__, voltage_mv);
-		voltage_trend trend = analyze_voltage_trend(monitor->prev_voltage_mv, voltage_mv);
-		switch (trend) {
-			case INCREASING: {
-				LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is increasing\n", __LINE__);
-				info->battery_status = CHARGING;
-				info->voltage_mv = voltage_mv;
-				break;
-			}
-			case DECREASING: {
-				LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is decreasing\n", __LINE__);
-				info->battery_status = DISCHARGING;
-				info->voltage_mv = voltage_mv;
-				break;
-			}
-			case STABLE: {
-				LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is stable\n", __LINE__);
-				info->battery_status = STABLE;
-				info->voltage_mv = voltage_mv;
-				break;
-			}
-			default: {
-				LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery status is unknown\n", __LINE__);
-				break;
-			}
+	voltage_trend trend = analyze_voltage_trend(monitor->prev_voltage_mv, voltage_mv);
+	switch (trend) {
+		case INCREASING: {
+			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is increasing\n", __LINE__);
+			info.battery_status = CHARGING;
+			info.voltage_mv = voltage_mv;
+			break;
+		}
+		case DECREASING: {
+			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is decreasing\n", __LINE__);
+			info.battery_status = DISCHARGING;
+			info.voltage_mv = voltage_mv;
+			break;
+		}
+		case STABLE: {
+			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is stable\n", __LINE__);
+			info.battery_status = monitor->last_battery_status;
+			info.voltage_mv = voltage_mv;
+			break;
+		}
+		default: {
+			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery status is unknown\n", __LINE__);
+			break;
 		}
 	}
+	monitor->last_battery_status = info.battery_status;
 	monitor->prev_voltage_mv = voltage_mv;
+	return info;
 }
 
 int battery_voltage_monitor_delete(battery_voltage_monitor_t* monitor) {

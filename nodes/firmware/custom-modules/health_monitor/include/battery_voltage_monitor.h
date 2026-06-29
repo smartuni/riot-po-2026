@@ -48,8 +48,7 @@ enum {
 typedef uint8_t battery_status_t;
 enum {
 	CHARGING = 0,
-	DISCHARGING,
-	DISCHARGING_LOW_BATTERY
+	DISCHARGING
 };
 
 typedef struct {
@@ -65,22 +64,20 @@ typedef struct {
 	//2. pointers
 	// void (*callback)(void);
 	//3. primitive types (int, double)
-	int threshold_mv;
+	//int threshold_mv;
 	int prev_voltage_mv;
-	//enum battery_status battery_status;
-	//enum voltage_trend last_voltage_trend;
+	battery_status_t last_battery_status;
 	//4. bool and char
 	//volatile bool running;
 } battery_voltage_monitor_t;
 
 /**
  * @brief Creates a new battery voltage monitor to the heap
- * @param threshold_mv Voltage threshold in millivolts to recognize the battery as low
  * @return Pointer to the new battery voltage monitor, or NULL if memory allocation failed
  */
-battery_voltage_monitor_t* battery_voltage_monitor_new(int threshold_mv);
+battery_voltage_monitor_t* battery_voltage_monitor_new(void);
 
-void battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* monitor, battery_info_t* info);
+battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* monitor);
 
 /**
  * @brief Deletes the battery voltage monitor
