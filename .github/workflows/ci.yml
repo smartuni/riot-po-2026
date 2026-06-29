@@ -142,8 +142,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
-          cache: maven
+          java-version: 17
 
       - name: Make mvnw executable
         run: chmod +x server/backend/mvnw
@@ -184,7 +183,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 17
           cache: maven
 
       - name: Make mvnw executable
