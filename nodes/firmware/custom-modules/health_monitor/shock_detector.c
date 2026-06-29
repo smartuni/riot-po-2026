@@ -22,9 +22,10 @@ static void acceleration_callback(void) {
 
 static void collect_magnitudes(shock_detector_t* detector) {
 	phydat_t acceleration;
-	raw_acceleration_t raw_accel_data[SAMPLE_SIZE];
+	// raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * (*nsamples));
+	memset(detector->raw_accel_data, 0, sizeof(raw_acceleration_t) * detector->sample_size);
 	LED0_ON;
-	for (int i = 0; i < SAMPLE_SIZE; i++) {
+	for (int i = 0; i < detector->sample_size; i++) {
 		int acc_dim = saul_reg_read(detector->accel_sensor, &acceleration);
 		if (acc_dim < 1) {
 			LOG_INFO("[shock_detector.c:%d] Error reading a value "
@@ -32,34 +33,32 @@ static void collect_magnitudes(shock_detector_t* detector) {
 					 __LINE__);
 			return;
 		}
-		raw_accel_data[i].x = acceleration.val[0] * 10;
-		raw_accel_data[i].y = acceleration.val[1] * 10;
-		raw_accel_data[i].z = acceleration.val[2] * 10;
+		detector->raw_accel_data[i].x = acceleration.val[0] * 10;
+		detector->raw_accel_data[i].y = acceleration.val[1] * 10;
+		detector->raw_accel_data[i].z = acceleration.val[2] * 10;
 		if (detector->sampling_period_ms > 0) {
 			ztimer_sleep(ZTIMER_MSEC, detector->sampling_period_ms);
 		}
 	}
+	LOG_DEBUG("[shock_detector.c:%d] Collected samples\n", __LINE__);
 
-	for (int i = 0; i < SAMPLE_SIZE; i++) {
-		detector->input[i].r = 0;
-	}
-	for (int i = 0; i < SAMPLE_SIZE; i++) {
-		int* x = &raw_accel_data[i].x;
-		int* y = &raw_accel_data[i].y;
-		int* z = &raw_accel_data[i].z;
+	memset(detector->input, 0, sizeof(kiss_fft_cpx) * detector->sample_size);
+
+	for (int i = 0; i < detector->sample_size; i++) {
+		int* x = &detector->raw_accel_data[i].x;
+		int* y = &detector->raw_accel_data[i].y;
+		int* z = &detector->raw_accel_data[i].z;
 		detector->input[i].r = calculate_magnitude(*x, *y, *z);
 		detector->input[i].i = 0;
 	}
+	// free(detector->raw_accel_data);
 	LED0_OFF;
 }
 
 static void process_fft(shock_detector_t* detector) {
 	LED1_ON;
-	for (int i = 0; i < SAMPLE_SIZE; i++) {
-		detector->output[i].r = 0;
-		detector->output[i].i = 0;
-	}
-	kiss_fft_cfg cfg = kiss_fft_alloc(SAMPLE_SIZE, 0, 0, 0);
+	memset(detector->output, 0, sizeof(kiss_fft_cpx) * detector->sample_size);
+	kiss_fft_cfg cfg = kiss_fft_alloc(detector->sample_size, 0, 0, 0);
 	kiss_fft(cfg, detector->input, detector->output);
 	kiss_fft_free(cfg);
 	LED1_OFF;
@@ -70,7 +69,7 @@ static void postprocess_fft(shock_detector_t* detector) {
 	for (int k = 0; k < detector->nyquist_domain_size; k++) {
 		int magnitude = calculate_magnitude(detector->output[k].r, detector->output[k].i, 0);
 		float sampling_rate_hz = 1000.0 / detector->sampling_period_ms;
-		int frequency = k * ((float)sampling_rate_hz / SAMPLE_SIZE);
+		int frequency = k * ((float)sampling_rate_hz / detector->sample_size);
 		if (magnitude > 0) {
 			moving_freq_avg_add_sample(detector->freq_avg, frequency, magnitude);
 		}
@@ -87,7 +86,7 @@ static void* acceleration_thread(void* detector_void) {
 		process_fft(detector); // process the collected samples with FFT
 		LOG_DEBUG("[shock_detector.c:%d] Post-processing FFT results...\n", __LINE__);
 		postprocess_fft(detector); // post-process the FFT results to find the average over frequency
-		for (int i = 0; i < 500; i += 2) {
+		for (int i = 0; i < detector->nyquist_domain_size; i += 5) {
 			LOG_DEBUG("[shock_detector.c:%d] Frequency: %d Hz, Average Magnitude: %d\n", __LINE__, i, detector->freq_avg->frequency_domain[i].average);
 		}
 		mutex_lock(&detector->shock_status_mutex);
@@ -101,13 +100,16 @@ shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms) {
 	shock_detector_t* new_detector = (shock_detector_t*)malloc(sizeof(shock_detector_t));
 	new_detector->running = false;
 	new_detector->threshold = threshold;
+	new_detector->sample_size = SAMPLE_SIZE;
 	new_detector->sampling_period_ms = sampling_period_ms;
 	// sensor_data_t* accel_sensor = &new_detector->accel_sensor;
 	// accel_sensor->callback = acceleration_callback;
 	new_detector->callback = acceleration_callback;
-	int nyquist = SAMPLE_SIZE / 2 + 1;
+	int nyquist = new_detector->sample_size / 2 + 1;
 	new_detector->nyquist_domain_size = nyquist; // + 1;
 	new_detector->freq_avg = moving_freq_avg_new(new_detector->nyquist_domain_size);
+	// new_detector->input = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * new_detector->sample_size);
+	// new_detector->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * new_detector->sample_size);
 	new_detector->shock_status = NO_SHOCK;
 	new_detector->shock_status_mutex = (mutex_t)MUTEX_INIT;
 

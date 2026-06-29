@@ -15,7 +15,7 @@
 #define SHOCK_DETECTOR_H
 
 #define kiss_fft_scalar int
-#define SAMPLE_SIZE 4096
+#define SAMPLE_SIZE 2048
 
 #include "health_monitor_payload.h"
 #include "moving_freq_avg.h"
@@ -53,17 +53,18 @@ typedef struct {
 	moving_freq_avg_t* freq_avg; //rename to frequency domain later
 	void (*callback)(void);
 	int threshold;
+	int sample_size;
 	int sampling_period_ms;
 	int nyquist_domain_size;
 	volatile bool running;
 	volatile shock_status_t shock_status;
-	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT*2];
+	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
+	raw_acceleration_t raw_accel_data[SAMPLE_SIZE];
 } shock_detector_t;
 
 /**
  * @brief Creates a new shock detector to the heap
  * @param threshold The magnitude threshold for shock detection in mm/s^2
- * @param sample_size The number of samples to collect for each FFT analysis. Max frequency domain would be sample_size / 2 + 1 bins.
  * @param sampling_period_ms The period in milliseconds between each sample collection
  * @return Pointer to the new shock detector, or NULL if memory allocation failed
  */
