@@ -695,14 +695,17 @@ static void _settings_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
     lv_group_add_obj(c->nav_group, btn);
     //lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
 
-    lv_obj_t * slider = lv_slider_create(list1);
+    lv_obj_t *rssi_title_label = lv_label_create(list1);
+    lv_label_set_text(rssi_title_label, "Min RSSI");
+    lv_obj_set_style_text_align(rssi_title_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(rssi_title_label, LV_ALIGN_CENTER, 0, 0);
+
+    lv_obj_t *slider = lv_slider_create(list1);
     lv_obj_set_size(slider, LV_PCT(80), LV_SIZE_CONTENT);
-    //TODO: this does not center the element in the list as intended
-    lv_obj_center(slider);
-    lv_obj_align(slider, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align_to(slider, rssi_title_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 8);
     lv_group_add_obj(c->nav_group, slider);
 
-    /*Create a label below the slider*/
+    /* Create a value label below the slider */
     lv_obj_t *slider_label = lv_label_create(list1);
     int8_t rssi = -80;
 
