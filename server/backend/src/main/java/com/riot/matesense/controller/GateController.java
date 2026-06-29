@@ -124,7 +124,7 @@ public class GateController {
     public void updatePriority(
             @PathVariable Long gateId,
             @RequestBody Map<String, Integer> request
-    ) {
+    ) throws GateNotFoundException {
         Integer priority = request.get("priority");
         gateService.updatePriority(gateId, priority);
     }

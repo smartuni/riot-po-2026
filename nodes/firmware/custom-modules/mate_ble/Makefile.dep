@@ -14,5 +14,3 @@ USEMODULE += bluetil_ad
 
 # Add the tinycbor package
 USEPKG += tinycbor
-
-USEMODULE += cose-service

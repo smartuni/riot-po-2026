@@ -1,5 +1,7 @@
 # BLE Module
 
+> Got reworked a bunch. Outdated!
+
 ## Overview
 
 The BLE module builds on RIOT’s NimBLE stack to provide beacon‐style, peer‐to‐peer exchange of state tables between SenseMate and GateMate nodes. Instead of point‐to‐point messaging, each node broadcasts its current state and listens for updates from its neighbors.
@@ -21,7 +23,7 @@ The BLE module builds on RIOT’s NimBLE stack to provide beacon‐style, peer�
 ## Dependencies
 
 - **RIOT OS** (NimBLE and other RIOT features)  
-- **cose-service** (for COSE signing and verification)  
+- **cose-service** (for COSE signing and verification) **this isn't true anymore**
 - **table-module** (to prepare outgoing and process incoming packets)
 
 ## Paket Layout

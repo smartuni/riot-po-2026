@@ -66,9 +66,9 @@ INSERT INTO gate_activities (
     requested_status, message, worker_id, activity_type, created_at
 ) VALUES
     (TIMESTAMP '2026-01-01 08:00:00', TIMESTAMP '2026-01-01 08:00:00', TIMESTAMP '2026-01-01 08:00:00',
-        1001, 'OPEN', 'E2E seed: Gate 1001 OPEN', NULL, 'SENSOR_VALUE_KEEPALIVE'::activity_type_enum,
+        1001, 'OPEN', 'E2E seed: Gate 1001 OPEN', NULL, 'SENSOR_VALUE_KEEPALIVE',
         TIMESTAMP '2026-01-01 08:00:00'),
     (TIMESTAMP '2026-01-01 08:05:00', TIMESTAMP '2026-01-01 08:05:00', TIMESTAMP '2026-01-01 08:05:00',
-        1002, 'CLOSED', 'E2E seed: Gate 1002 CLOSED', NULL, 'SENSOR_VALUE_KEEPALIVE'::activity_type_enum,
+        1002, 'CLOSED', 'E2E seed: Gate 1002 CLOSED', NULL, 'SENSOR_VALUE_KEEPALIVE',
         TIMESTAMP '2026-01-01 08:05:00');
 
