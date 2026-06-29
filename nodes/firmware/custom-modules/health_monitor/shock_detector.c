@@ -100,20 +100,20 @@ static void* acceleration_thread(void* detector_void) {
 	return NULL;
 }
 
-shock_detector_t* shock_detector_new(int threshold, int sample_size, int sampling_period_ms) {
+shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms) {
 	shock_detector_t* new_detector = (shock_detector_t*)malloc(sizeof(shock_detector_t));
 	new_detector->running = false;
 	new_detector->threshold = threshold;
-	new_detector->sample_size = sample_size;
+	new_detector->sample_size = SAMPLE_SIZE;
 	new_detector->sampling_period_ms = sampling_period_ms;
 	// sensor_data_t* accel_sensor = &new_detector->accel_sensor;
 	// accel_sensor->callback = acceleration_callback;
 	new_detector->callback = acceleration_callback;
-	int nyquist = sample_size / 2 + 1;
+	int nyquist = new_detector->sample_size / 2 + 1;
 	new_detector->nyquist_domain_size = nyquist; // + 1;
 	new_detector->freq_avg = moving_freq_avg_new(new_detector->nyquist_domain_size);
-	new_detector->input = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * sample_size);
-	new_detector->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * sample_size);
+	new_detector->input = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * new_detector->sample_size);
+	new_detector->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * new_detector->sample_size);
 	new_detector->shock_status = NO_SHOCK;
 	new_detector->shock_status_mutex = (mutex_t)MUTEX_INIT;
 
