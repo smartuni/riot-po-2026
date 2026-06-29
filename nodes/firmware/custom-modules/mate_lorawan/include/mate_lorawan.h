@@ -36,6 +36,13 @@
 int mate_lorawan_start(tables_context_t *tables);
 
 /**
+ * @brief   Set the AppMACKey used for AES-CMAC verification of downlinks.
+ *
+ * @param   key      16-byte AES key
+ */
+void mate_lorawan_set_app_mac_key(const uint8_t *key);
+
+/**
  * @brief   Check if joining lorawan network finished sucessfully.
  *
  * @retval  true if the node joined

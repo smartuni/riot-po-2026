@@ -202,6 +202,8 @@ int main(void){
         _LOGDBG("starting lorawan failed\n");
     }
 
+    mate_lorawan_set_app_mac_key(app_mac_key);
+
     //start thread init bluetooth
     _LOGDBG("starting [mate_ble]\n");
     if (BLE_SUCCESS == mate_ble_init(tables, &ble_tx_pid)){

@@ -7,7 +7,6 @@ import lombok.Setter;
 @Setter
 public class SignedDownlinkRequest {
     private String deviceId;
-    private int commandId;
-    private byte[] commandData;
-    private String commandDataHex;
+    private int gateNum;
+    private int targetState;
 }

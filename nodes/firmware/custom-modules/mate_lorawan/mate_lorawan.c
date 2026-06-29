@@ -44,6 +44,7 @@
 #include "tables/records.h"
 #include "tables/types.h"
 #include "cbor_serialization.h"
+#include "hashes/aes128_cmac.h"
 #include "personalization.h"
 #include "event.h"
 #include "event/thread.h"
@@ -84,6 +85,8 @@ static table_memo_t _self_state_change_memo;
 static table_query_t _self_state_change_query;
 static tables_context_t *_tables;
 static bool _joined = false;
+static uint8_t _app_mac_key[16];
+static bool _app_mac_key_set = false;
 
 kernel_pid_t mate_lorawan_pid = KERNEL_PID_UNDEF;
 
@@ -335,6 +338,8 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             _LOGDBG("%d bytes: \n", pkt->size);
             print_hex_arr(pkt->data, pkt->size);
 
+            uint8_t signature_buf[16];
+            size_t signature_len = sizeof(signature_buf);
             table_record_t record;
             table_record_data_buffer_t record_data;
             size_t signature_len = 0;
@@ -349,24 +354,33 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             record_tostr(&record, _rx_record_str_buf, sizeof(_rx_record_str_buf));
             _LOGINF("RX: %s\n", _rx_record_str_buf);
 
-            table_merge_result_t result;
-            res = tables_merge_record(_tables, &record, &result);
-            if (res) {
-                _LOGINF("tables_merge_record failed: %d\n", res);
+            if (!_app_mac_key_set || signature_len != 16) {
                 break;
             }
-            _LOGDBG("merge result: %d\n", result.updated);
 
-            if (result.updated || result.new) {
-#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
-                event_post(EVENT_PRIO_MEDIUM, &eventNews);
-                _LOGDBG("Downlink received and table updated.\n");
-#endif
-            } else if (result.rejected_sig || result.invalid_record){
-                _LOGDBG("Error updating table\n");
-            } else {
-                _LOGDBG("Downlink received. No updates.\n");
+            size_t unsigned_len = MAX_SERIALIZED_RECORD_SIZE;
+            uint8_t unsigned_buf[unsigned_len];
+
+            res = cbor_serialize_record_no_sig(&record, unsigned_buf, &unsigned_len);
+            if (res) {
+                break;
             }
+
+            uint8_t cmac_tag[16];
+            aes128_cmac_context_t cmac_ctx;
+            aes128_cmac_init(&cmac_ctx, _app_mac_key, 16);
+            aes128_cmac_update(&cmac_ctx, unsigned_buf, unsigned_len);
+            aes128_cmac_final(&cmac_ctx, cmac_tag);
+
+            if (!_constant_time_memcmp(cmac_tag, signature_buf, 16)) {
+                break;
+            }
+
+            _LOGINF("Downlink verified.\n");
+
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+            event_post(EVENT_PRIO_MEDIUM, &eventNews);
+#endif
         }
         snip = snip->next;
     }
@@ -435,6 +449,21 @@ static void _table_self_state_updated_cb(tables_context_t *ctx, const table_reco
             msg_send(&m, mate_lorawan_pid);
         }
     }
+}
+
+void mate_lorawan_set_app_mac_key(const uint8_t *key)
+{
+    memcpy(_app_mac_key, key, 16);
+    _app_mac_key_set = true;
+}
+
+static bool _constant_time_memcmp(const uint8_t *a, const uint8_t *b, size_t len)
+{
+    uint8_t diff = 0;
+    for (size_t i = 0; i < len; i++) {
+        diff |= a[i] ^ b[i];
+    }
+    return diff == 0;
 }
 
 int mate_lorawan_start(tables_context_t *t)
