@@ -22,7 +22,6 @@ static void acceleration_callback(void) {
 
 static void collect_magnitudes(shock_detector_t* instance) {
 	phydat_t acceleration;
-	// raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * (*nsamples));
 	memset(instance->raw_accel_data, 0, sizeof(raw_acceleration_t) * instance->sample_size);
 	LED0_ON;
 	for (int i = 0; i < instance->sample_size; i++) {
@@ -51,7 +50,6 @@ static void collect_magnitudes(shock_detector_t* instance) {
 		instance->input[i].r = calculate_magnitude(*x, *y, *z);
 		instance->input[i].i = 0;
 	}
-	// free(instance->raw_accel_data);
 	LED0_OFF;
 }
 
@@ -100,15 +98,11 @@ int shock_detector_init(shock_detector_t* instance, int threshold, int sampling_
 	instance->threshold = threshold;
 	instance->sample_size = SAMPLE_SIZE;
 	instance->sampling_period_ms = sampling_period_ms;
-	// sensor_data_t* accel_sensor = &instance->accel_sensor;
-	// accel_sensor->callback = acceleration_callback;
 	instance->callback = acceleration_callback;
 	int nyquist = instance->sample_size / 2 + 1;
 	instance->nyquist_domain_size = nyquist; // + 1;
 	instance->freq_avg = moving_freq_avg_new(instance->nyquist_domain_size);
-	// instance->input = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * instance->sample_size);
 	instance->cfg = kiss_fft_alloc(instance->sample_size, 0, NULL, NULL);
-	// instance->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * instance->sample_size);
 	instance->shock_status = NO_SHOCK;
 	instance->shock_status_mutex = (mutex_t)MUTEX_INIT;
 
