@@ -94,8 +94,8 @@ static void* acceleration_thread(void* instance_void) {
 	return NULL;
 }
 
-shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms) {
-	shock_detector_t* instance = (shock_detector_t*)malloc(sizeof(shock_detector_t));
+int shock_detector_init(shock_detector_t* instance, int threshold, int sampling_period_ms) {
+	//instance = (shock_detector_t*)malloc(sizeof(shock_detector_t));
 	instance->running = false;
 	instance->threshold = threshold;
 	instance->sample_size = SAMPLE_SIZE;
@@ -116,13 +116,13 @@ shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms) {
 	instance->accel_sensor = saul_reg_find_type(SAUL_SENSE_ACCEL);
 	if (!instance->accel_sensor) {
 		LOG_DEBUG("[shock_detector:%d] No accelerometer sensor found!\n", __LINE__);
-		return NULL;
+		return -1;
 	} else {
 		//commented out for now to reduce console output, but can be useful for debugging
 		LOG_DEBUG("[shock_detector:%d] Accelerometer sensor found: %s\n", __LINE__, instance->accel_sensor->name);
 	}
 
-	return instance;
+	return 0;
 }
 
 int shock_detector_start(shock_detector_t* instance) {
@@ -149,7 +149,6 @@ int shock_detector_delete(shock_detector_t* instance) {
 	ztimer_sleep(ZTIMER_MSEC, 5000); // give some time for the thread to exit
 	moving_freq_avg_delete(instance->freq_avg);
 	kiss_fft_free(instance->cfg);
-	free(instance);
 	return 0;
 }
 

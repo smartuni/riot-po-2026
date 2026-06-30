@@ -63,12 +63,13 @@ typedef struct {
 } shock_detector_t;
 
 /**
- * @brief Creates a new shock detector to the heap
+ * @brief Initializes a shock detector instance
+ * @param instance Pointer to the shock detector instance
  * @param threshold The magnitude threshold for shock detection in mm/s^2
  * @param sampling_period_ms The period in milliseconds between each sample collection
  * @return Pointer to the new shock detector, or NULL if memory allocation failed
  */
-shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms);
+int shock_detector_init(shock_detector_t* instance, int threshold, int sampling_period_ms);
 
 /**
  * @brief Starts the shock detector
