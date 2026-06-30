@@ -72,20 +72,20 @@ shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms);
 
 /**
  * @brief Starts the shock detector
- * @param detector Pointer to the shock detector
+ * @param instance Pointer to the shock detector
  * @return 0 on success, EOVERFLOW on failure
  */
-int shock_detector_start(shock_detector_t* detector);
+int shock_detector_start(shock_detector_t* instance);
 
-int shock_detector_fetch_status(shock_detector_t* detector, shock_status_t* status);
+int shock_detector_fetch_status(shock_detector_t* instance, shock_status_t* status);
 
-int shock_detector_reset_status(shock_detector_t* detector);
+int shock_detector_reset_status(shock_detector_t* instance);
 
 /**
  * @brief Deletes the shock detector
- * @param detector Pointer to the shock detector
+ * @param instance Pointer to the shock detector
  * @return always return 0
  */
-int shock_detector_delete(shock_detector_t* detector);
+int shock_detector_delete(shock_detector_t* instance);
 
 #endif
