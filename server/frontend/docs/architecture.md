@@ -9,7 +9,7 @@ flowchart TB
     subgraph Browser["BROWSER (SPA)"]
         subgraph ReactApp["React Application"]
             Router["BrowserRouter"]
-            Pages["Page Components<br/>(7 pages)"]
+            Pages["Page Components<br/>(11 pages)"]
             
             Features["Feature Modules"]
             Features --> Router
@@ -23,7 +23,6 @@ flowchart TB
             Features --> F6[shell]
             
             Shared["Shared Layer"]
-            Shared --> API["apiClient"]
             Shared --> Components["components"]
             Shared --> Styles["styles"]
             Shared --> Utils["utils"]
@@ -31,7 +30,7 @@ flowchart TB
             Features --> Shared
         end
         
-        HTTP[("HTTP<br/>(Axios)")]
+        HTTP[("HTTP<br/>(RTK Query)")]
         WS[("STOMP/WS")]
         
         ReactApp --> HTTP
@@ -48,7 +47,7 @@ flowchart TB
 
 ### 1. App Shell (`src/app/`)
 
-`App.jsx` is the composition root: `BrowserRouter` wraps `Routes` with 7 page components. Protected pages validate auth inline (a proper auth context is planned as issue #9).
+`App.jsx` is the composition root: `BrowserRouter` wraps `Routes` with page components. Protected pages are wrapped with `ProtectedRoute` (role-gated) or `PublicOnlyRoute` route guards from `features/auth/`.
 
 ### 2. Pages (`src/pages/`)
 
@@ -62,18 +61,17 @@ Six domain modules, each with the same internal shape:
 features/{feature}/
 ├── index.js        # Barrel exports (public API)
 ├── components/     # React components
-├── api/            # REST functions (optional)
 └── styles/         # CSS (optional)
 ```
 
 | Feature | Purpose | Components |
 |---|---|---|
-| `auth` | Authentication, session, user management | `LogoutButton` |
-| `gates` | Gate CRUD, status control, downlinks | `StatusTables`, `StatusTablesView`, `InfoBoxes`, `StatusChangedDialog` |
+| `auth` | Authentication, session, user management | `LogoutButton`, `ProtectedRoute`, `PublicOnlyRoute` |
+| `gates` | Gate CRUD, status control, downlinks | `StatusTables`, `StatusTablesView`, `StatCards`, `StatusChangedDialog` |
 | `map` | Leaflet map visualization | `MapView` |
-| `activities` | Gate activity log | `RecentActivity` |
+| `activities` | Gate activity log | `ActivityPanel` |
 | `notifications` | User notification system | `NotificationPopup` |
-| `shell` | Application chrome (header bars) | `HeaderBar`, `HeaderBarGuest` |
+| `shell` | Application chrome (layout, navigation) | `AppLayout`, `Sidebar`, `Topbar` |
 
 Minimal cross-feature imports: `shell` imports from `auth` + `notifications`; `map` imports from `gates`. All other features go through `shared/`.
 
@@ -83,23 +81,21 @@ Cross-cutting code:
 
 | Module | Contents |
 |---|---|
-| `api/apiClient.js` | Axios singleton (`http://localhost:8080`, JSON headers) |
-| `components/` | Three alert dialogs: `AlertDialog`, `AlertDialogIllegal`, `AlertDialogUplink` |
-| `styles/` | `App.css` (layout, badges), `HeaderBar.css`, `Sidebar.css` |
+| `components/` | `DarkModeToggle`, `CollapseToggle`, `ComingSoonHero`, `SkeletonLoader`, `UplinkToast` |
+| `styles/` | `theme.css`, `typography.css` |
 | `utils/cookie.js` | `getCookie` |
-| `index.js` | Barrel re-exports of all shared modules |
 
 ## State Management
 
-No external library. React's built-in mechanisms only:
+Redux Toolkit + RTK Query:
 
 | State Type | Mechanism | Example |
 |---|---|---|
-| Auth state | Per-component (cookie + `apiClient` header) — #9 will add context | User, token, login/logout |
-| Server data | Local `useState` + `useEffect` fetch | Gate list, activities, notifications |
+| Auth state | Redux (`authSlice`) | User, login/logout, role |
+| Server data | RTK Query (api.js) | Gate list, activities, notifications |
 | UI state | Local `useState` | Dialog open/close, search, tab selection |
-| Real-time data | WebSocket message → local `useState` | Gate status changes, new activities |
-| Downlink counter | Local `useState` + REST | Count value, rate limiting state |
+| Real-time data | WebSocket middleware (Redux) | Gate status changes, new activities |
+| Downlink counter | RTK Query + local `useState` | Count value, rate limiting state |
 
 ## React Compiler
 
@@ -130,41 +126,46 @@ The compiler is enabled via the `reactCompiler` option in the `react()` plugin c
 flowchart TB
     subgraph Pages
         DP[DashboardPage]
-        DVP[DashboardViewPage]
         DGP[DashboardGuestPage]
-        UP[UserPage]
         LP[LoginPage]
         RP[RegisterPage]
+        MP[MapPage]
+        DiagP[DiagnosticsPage]
+        DevP[DevicesPage]
+        AutP[AutomationPage]
+        LogsP[LogsPage]
+        SetP[SettingsPage]
     end
 
     subgraph Features
         ST[StatusTables]
         STV[StatusTablesView]
-        IB[InfoBoxes]
+        SC[StatCards]
         SCD[StatusChangedDialog]
         MV[MapView]
-        RA[RecentActivity]
+        AP[ActivityPanel]
         NP[NotificationPopup]
-        HB[HeaderBar]
-        HBG[HeaderBarGuest]
+        AL[AppLayout]
+        SB[Sidebar]
+        TB[Topbar]
         LB[LogoutButton]
+        PR[ProtectedRoute]
+        POR[PublicOnlyRoute]
     end
 
-    subgraph Shared
-        ADI[AlertDialogIllegal]
-        AD[AlertDialog]
-        ADU[AlertDialogUplink]
-    end
+    DP --> AL & SC & ST & AP
+    DGP --> SC & STV & AP
+    MP --> AL & MV
+    DiagP --> AL
+    DevP --> AL
+    AutP --> AL
+    LogsP --> AL & AP
+    SetP --> AL & LB
 
-    DP --> HB & IB & ST & RA & ADI
-    DVP --> HB & IB & STV & RA & ADI
-    DVP --> HB
-    DGP --> HBG & IB & STV & RA
-    UP --> HB & LB & AD
-
-    ST --> SCD & MV & ADU
-    HB -.->|imports| notifications
-    HB -.->|imports| auth
+    AL --> SB & TB
+    ST --> SCD
+    TB -.->|imports| notifications
+    TB -.->|imports| auth
     MV -.->|imports| gates
 ```
 

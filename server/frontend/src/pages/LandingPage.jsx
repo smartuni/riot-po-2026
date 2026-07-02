@@ -1,238 +1,93 @@
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
-import Grid2 from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
-import { Container } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { IoAccessibilityOutline } from "react-icons/io5";
-
+import { Link } from 'react-router-dom';
 
 const LandingPage = () => {
-  const navigate = useNavigate();
-
-
   return (
-    <Container component="main" maxWidth="lg" sx={{ mt: 6, mb: 6 }}>
-      <Grid2 
-        container 
-        spacing={4} 
-        sx={{ 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          minHeight: '70vh', 
-          flexWrap: { xs: 'wrap', md: 'nowrap' } 
-        }}
-      >
-        {/* Decorative background circle top-left */}
+    <>
+      {/* Header */}
+      <header className="landing-header">
+        <div className="landing-logo">
+          <div className="logo-icon">SM</div>
+          <span>SenseMate</span>
+        </div>
+        <nav className="landing-nav">
+          <Link to="/login" className="btn btn-ghost-light">Login</Link>
+          <Link to="/register" className="btn btn-white">Register</Link>
+        </nav>
+      </header>
 
-        {/* Decorative background circle top-left */}
-<Box
-  sx={{
-    position: 'absolute',
-    top: '10%',
-    left: '10%',
-    width: 300,
-    height: 300,
-    backgroundColor: 'primary.light',
-    borderRadius: '50%',
-    opacity: 0.8,
-    zIndex: 0,
-  }}
-/>
+      {/* Hero */}
+      <section className="hero">
+        <h1>SenseMate</h1>
+        <p>Intelligent Flood Gate Monitoring — Real-time control, smart automation, and full visibility over your water infrastructure.</p>
+        <div className="hero-buttons">
+          <Link to="/register" className="btn btn-hero-primary btn-lg">Get Started</Link>
+          <Link to="/dashboard-guest" className="btn btn-hero-ghost btn-lg">View Demo</Link>
+        </div>
+        <div className="wave-divider">
+          <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,30 C360,60 720,0 1080,30 C1260,45 1380,20 1440,30 L1440,60 L0,60 Z" fill="#ffffff"/>
+          </svg>
+        </div>
+      </section>
 
+      {/* Features */}
+      <section className="features">
+        <h2>Built for Water Infrastructure</h2>
+        <div className="features-grid">
+          <div className="feature-card">
+            <div className="feature-icon">📊</div>
+            <h3>Real-Time Monitoring</h3>
+            <p>Track gate status, water levels, and system health with live dashboards and instant alerts.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">⚡</div>
+            <h3>Smart Automation</h3>
+            <p>Automate gate operations with rule-based triggers, scheduled actions, and intelligent flood response.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">🎮</div>
+            <h3>Full Control</h3>
+            <p>Request gate changes, manage access, and maintain a complete audit trail of every action.</p>
+          </div>
+        </div>
+      </section>
 
-{/* Decorative Icon */}
-<Box
-        sx={{
-          position: 'absolute',
-          down: '100%',
-          left: 50,
-          zIndex: 0,
-          opacity: 0.8,
-          fontSize: 240,
-          transform: 'rotate(15deg)',
-          color: 'primary.main',
-          pointerEvents: 'none',
-        }}
-      >
-        <IoAccessibilityOutline />
-      </Box>
+      {/* How It Works */}
+      <section className="how-it-works">
+        <h2>How It Works</h2>
+        <div className="steps-grid">
+          <div className="step">
+            <div className="step-number">1</div>
+            <h3>Connect Your Gates</h3>
+            <p>Register flood gates and sensors. SenseMate automatically discovers and maps your infrastructure.</p>
+          </div>
+          <div className="step">
+            <div className="step-number">2</div>
+            <h3>Monitor in Real-Time</h3>
+            <p>Live dashboards show gate status, water levels, and system health — updated every second.</p>
+          </div>
+          <div className="step">
+            <div className="step-number">3</div>
+            <h3>Act with Confidence</h3>
+            <p>Request changes, automate responses, and maintain full control over every gate in your network.</p>
+          </div>
+        </div>
+      </section>
 
-      {/* Decorative Icon */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 40,
-          right: -20,
-          zIndex: 0,
-          opacity: 0.8,
-          fontSize: 240,
-          transform: 'rotate(-15deg)',
-          color: 'primary.main',
-          pointerEvents: 'none',
-        }}
-      >
-        <IoAccessibilityOutline />
-      </Box>
+      {/* Our Mission */}
+      <section className="mission-section">
+        <h2>Our Mission</h2>
+        <p>SenseMate exists to protect communities from flood risk through intelligent, accessible gate monitoring. We believe real-time data and smart automation should be available to every water authority — not just those with legacy SCADA systems. Our platform puts reliable flood control in the hands of the people who need it most.</p>
+      </section>
 
-      {/* Decorative Circle */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 100,
-          left: -80,
-          width: 200,
-          height: 200,
-          borderRadius: '50%',
-          background: 'rgba(255, 0, 0, 0.1)',
-          zIndex: 0,
-        }}
-      />
-
-
-{/* Decorative background circle bottom-right */}
-<Box
-  sx={{
-    position: 'absolute',
-    bottom: '20%',
-    right: '20%',
-    width: 300,
-    height: 300,
-    backgroundColor: 'secondary.light',
-    borderRadius: '50%',
-    opacity: 0.8,
-    zIndex: 0,
-  }}
-/>
-
-<Box
-  sx={{
-    position: 'absolute',
-    top: -40,
-    left: -40,
-    width: 120,
-    height: 120,
-    backgroundColor: 'primary.light',
-    borderRadius: '50%',
-    opacity: 0.2,
-    zIndex: 0,
-  }}
-/>
-
-{/* Decorative background circle bottom-right */}
-<Box
-  sx={{
-    position: 'absolute',
-    bottom: -40,
-    right: -40,
-    width: 150,
-    height: 150,
-    backgroundColor: 'secondary.light',
-    borderRadius: '50%',
-    opacity: 0.2,
-    zIndex: 0,
-  }}
-/>
-
-
-        
-        {/* Square box with content */}
-        <Box
-          sx={{
-            position: 'relative',
-            border: '2px solid',
-            borderColor: 'primary.main',
-            borderRadius: 4,
-            p: 4,
-            maxWidth: 600,
-            width: '100%',
-            boxShadow: 4,
-            backgroundColor: 'background.paper',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Angled corner ribbon */}
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 40,
-              right: -50,
-              transform: 'rotate(50deg)',
-              backgroundColor: 'red',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: '1rem',
-              px: 4,
-              py: 1,
-              boxShadow: 2,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Powered by RIOT
-          </Box>
-
-          
-
-          <Typography variant="h2" component="h1" gutterBottom>
-            <Box component="span" sx={{ color: 'primary.main' }}>Sense Mate</Box> Dashboard
-          </Typography>
-
-          <Typography variant="h6" sx={{ mb: 3, color: 'text.secondary', fontWeight: 500 }}>
-            A Project by <Box component="span" sx={{ color: 'red', fontWeight: 700 }}>RIOT</Box>
-          </Typography>
-
-          <Typography variant="body1" sx={{ mb: 4, lineHeight: 1.5, color: 'text.secondary' }}>
-            Sense Mate is an intelligent dashboard designed to support real-time flood monitoring and disaster management. Developed as part of our university project, it aims to help local authorities efficiently oversee Hamburg’s critical flood infrastructure.
-          </Typography>
-
-          <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main', mb: 1 }}>
-            Our Mission
-          </Typography>
-          <Typography variant="body1" sx={{ mb: 4, lineHeight: 1.5, color: 'text.secondary' }}>
-            To provide a smart, reliable, and user-friendly platform that enhances urban resilience through the power of IoT (Internet of Things) and data-driven insights.
-          </Typography>
-
-          <Box sx={{ display: 'flex', gap: 2, width: '100%', justifyContent: 'center' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => navigate('/login')}
-              sx={{ borderRadius: 20, flex: 1, maxWidth: 160 }}
-            >
-              Login
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => navigate('/register')}
-              sx={{ borderRadius: 20, flex: 1, maxWidth: 160 }}
-            >
-              Sign Up
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => navigate('/dashboard-guest')}
-              sx={{ borderRadius: 20, flex: 1, maxWidth: 160 }}
-            >
-              Continue as Guest
-            </Button>
-          </Box>
-        </Box>
-      </Grid2>
-
-      {/* Team info at the bottom */}
-      <Box sx={{ mt: 8, textAlign: 'center', color: 'text.secondary' }}>
-        <Typography variant="body1" sx={{ maxWidth: 600, mx: 'auto', mb: 1 }}>
-          We are Team RIOT – a group of passionate university students focused on solving real-world problems through innovative technology. Our name stands for Reliable IoT Team, and we believe in building systems that matter.
-        </Typography>
-      </Box>
-    </Container>
+      {/* CTA Section */}
+      <section className="cta-section">
+        <h2>Ready to take control?</h2>
+        <p>Join the operators who trust SenseMate for flood gate monitoring.</p>
+        <Link to="/register" className="btn btn-primary" style={{ padding: '14px 32px', fontSize: '16px' }}>Get Started Free</Link>
+      </section>
+    </>
   );
-}
+};
 
 export default LandingPage;

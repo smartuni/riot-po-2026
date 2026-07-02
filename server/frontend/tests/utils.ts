@@ -27,7 +27,7 @@ export const SEEDED_GATES = [
 
 /**
  * Log in through the UI and wait for the post-login redirect.
- * Controllers land on /dashboard, everyone else on /dashboard-view.
+ * All authenticated users land on /dashboard; role-based rendering is handled in-page.
  */
 export async function login(
   page: Page,
@@ -41,7 +41,24 @@ export async function login(
   await expect(submit).toBeEnabled();
   await submit.click();
 
-  await expect(page).toHaveURL(/\/dashboard(-view)?$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
+}
+
+/**
+ * Map DB status enum to the human-readable label rendered by the UI.
+ * StatusTables.jsx transforms "OPEN" → "Open", "CLOSED" → "Closed", etc.
+ */
+export function statusToLabel(status: string): string {
+  switch (status) {
+    case 'OPEN':
+      return 'Open';
+    case 'CLOSED':
+      return 'Closed';
+    case 'OUT_OF_SERVICE':
+      return 'Out of Service';
+    default:
+      return status;
+  }
 }
 
 /** Extract XSRF-TOKEN from all Set-Cookie headers in a response. */

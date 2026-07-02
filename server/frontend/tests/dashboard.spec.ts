@@ -1,5 +1,5 @@
 import { test, expect, expectLoaded } from './fixtures';
-import { BACKEND_URL, CONTROLLER, SEEDED_GATES, apiToken, login } from './utils';
+import { BACKEND_URL, CONTROLLER, SEEDED_GATES, apiToken, login, statusToLabel } from './utils';
 
 /**
  * Frontend functionality, driven through the UI against the dockerised backend
@@ -32,36 +32,37 @@ test.describe('Controller dashboard', () => {
 
   test('renders every seeded gate with its id and status', async ({ page }) => {
     for (const gate of SEEDED_GATES) {
-      const row = page.locator('table.status-table tbody tr', { hasText: gate.location });
+      const row = page.locator('table.gate-table tbody tr', { hasText: gate.location });
       await expect(row).toContainText(String(gate.id));
-      await expect(row).toContainText(gate.status);
+      // UI renders human-readable label (e.g. "Open") not DB enum ("OPEN")
+      await expect(row).toContainText(statusToLabel(gate.status));
     }
   });
 
   test('total-gates info box matches the number of rendered rows', async ({ page }) => {
     // Compare against the live row count rather than a hardcoded number so the
     // assertion stays valid even if the mutating create-gate test is mid-run.
-    const rowCount = await page.locator('table.status-table tbody tr').count();
+    const rowCount = await page.locator('table.gate-table tbody tr').count();
     expect(rowCount).toBeGreaterThanOrEqual(SEEDED_GATES.length);
 
-    const totalBox = page.locator('.info-boxes .box').filter({ hasText: 'Total Gate' });
-    await expect(totalBox.locator('h1')).toHaveText(String(rowCount));
+    const totalBox = page.locator('.stat-card').filter({ hasText: 'Total Gates' });
+    await expect(totalBox.locator('.stat-number')).toHaveText(String(rowCount));
   });
 
   test('search filters the gate table by location', async ({ page }) => {
-    await page.getByPlaceholder('Search gates...').fill('Alpha');
+    await page.getByPlaceholder('Search gates…').fill('Alpha');
 
     await expect(page.getByText('E2E Gate Alpha')).toBeVisible();
     await expect(page.getByText('E2E Gate Beta')).toHaveCount(0);
-    await expect(page.locator('table.status-table tbody tr')).toHaveCount(1);
+    await expect(page.locator('table.gate-table tbody tr')).toHaveCount(1);
   });
 
   test('map view renders a marker for every seeded gate', async ({ page }) => {
-    await expect(page.locator('table.status-table')).toBeVisible();
+    await expect(page.locator('table.gate-table')).toBeVisible();
 
     await page.getByRole('tab', { name: 'Map View' }).click();
     await expect(page.locator('.leaflet-container')).toBeVisible();
-    await expect(page.locator('table.status-table')).toHaveCount(0);
+    await expect(page.locator('table.gate-table')).toHaveCount(0);
 
     // Markers are rendered from gate data (not network tiles), so this verifies
     // the map actually plotted the gates — and works offline / in CI where
@@ -69,16 +70,16 @@ test.describe('Controller dashboard', () => {
     await expect(page.locator('.leaflet-marker-icon')).toHaveCount(SEEDED_GATES.length);
 
     await page.getByRole('tab', { name: 'List View' }).click();
-    await expect(page.locator('table.status-table')).toBeVisible();
+    await expect(page.locator('table.gate-table')).toBeVisible();
   });
 
   test('expanding a gate row reveals its seeded activity', async ({ page }) => {
-    const alphaRow = page.locator('table.status-table tbody tr', { hasText: 'E2E Gate Alpha' });
+    const alphaRow = page.locator('table.gate-table tbody tr', { hasText: 'E2E Gate Alpha' });
     await alphaRow.getByRole('button', { name: 'expand row' }).click();
 
     // The seeded message also shows in the RecentActivity panel, so scope to the
     // expanded row to confirm expansion actually rendered the gate's activity.
-    const expandedRow = page.locator('table.status-table tr.expanded-row');
+    const expandedRow = page.locator('table.gate-table tr.expanded-row');
     await expect(expandedRow).toContainText('E2E seed: Gate 1001 OPEN');
   });
 
@@ -111,19 +112,20 @@ test.describe('Controller dashboard', () => {
     await expect(dialog).toHaveCount(0);
 
     // The new gate must show up in the table (RTK Query invalidates and refetches).
-    const newRow = page.locator('table.status-table tbody tr', { hasText: location });
+    const newRow = page.locator('table.gate-table tbody tr', { hasText: location });
     await expect(newRow).toBeVisible();
   });
 
-  test('logout leaves the user page and renders the landing page', async ({ page }) => {
-    await page.goto('/userpage');
-    await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
+  test('logout leaves the dashboard and renders the landing page', async ({ page }) => {
+    // The sidebar Logout button is visible on any authenticated route.
+    await page.goto('/dashboard');
+    await expect(page.getByRole('heading', { name: 'Flood Gates' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Logout' }).click();
 
     await expect(page).toHaveURL(/\/$/);
     // Assert the landing page content actually rendered — a URL change alone
-    // would pass even if the user-page stayed mounted with a stale session.
+    // would pass even if the dashboard stayed mounted with a stale session.
     await expect(page.getByText('Our Mission')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Logout' })).toHaveCount(0);
   });

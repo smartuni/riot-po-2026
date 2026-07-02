@@ -29,7 +29,7 @@ test.describe('Authentication', () => {
 
   test('viewer is routed to a fully loaded read-only dashboard', async ({ page }) => {
     await login(page, VIEWER);
-    await expect(page).toHaveURL(/\/dashboard-view$/);
+    await expect(page).toHaveURL(/\/dashboard$/);
     // Seeded data must actually render — not just the URL change.
     await expect(page.getByText('E2E Gate Alpha')).toBeVisible();
     await expectLoaded(page);

@@ -29,11 +29,11 @@ The frontend subscribes to the following STOMP topics:
 
 | Topic | Purpose | Subscribed By |
 |---|---|---|
-| `/topic/gates/add` | New gate created | `StatusTables`, `InfoBoxes` |
-| `/topic/gates/delete` | Gate removed | `StatusTables`, `InfoBoxes` |
-| `/topic/gates/updates` | Gate status changed | `StatusTables`, `InfoBoxes` |
-| `/topic/gate-activities` | New activity logged | `RecentActivity`, `StatusTables` |
-| `/topic/gate-activities/delete` | Activity removed | `RecentActivity`, `StatusTables` |
+| `/topic/gates/add` | New gate created | `StatusTables`, `StatCards` |
+| `/topic/gates/delete` | Gate removed | `StatusTables`, `StatCards` |
+| `/topic/gates/updates` | Gate status changed | `StatusTables`, `StatCards` |
+| `/topic/gate-activities` | New activity logged | `ActivityPanel`, `StatusTables` |
+| `/topic/gate-activities/delete` | Activity removed | `ActivityPanel`, `StatusTables` |
 | `/topic/uplinks` | Uplink received from end-node | `StatusTables` |
 
 ## Connection Lifecycle
@@ -86,7 +86,7 @@ When a gate status changes (via `StatusChangedDialog` or external event):
 2. Backend processes the change and publishes to `/topic/gates/updates`
 3. All connected clients receive the updated gate object
 4. `StatusTables` updates the gate in its local array
-5. `InfoBoxes` recalculates summary counts (total, open, closed, out-of-service)
+5. `StatCards` recalculates summary counts (total, open, closed, out-of-service)
 6. React re-renders affected components
 
 ### New Activities
@@ -94,7 +94,7 @@ When a gate status changes (via `StatusChangedDialog` or external event):
 When a gate activity is logged:
 
 1. Published to `/topic/gate-activities`
-2. `RecentActivity` prepends to its list (showing last 4)
+2. `ActivityPanel` prepends to its list (showing last 4)
 3. `StatusTables` expands its activity log for the relevant gate
 
 ### Uplink Events
@@ -102,7 +102,7 @@ When a gate activity is logged:
 When an end-node device sends an uplink:
 
 1. Published to `/topic/uplinks`
-2. `StatusTables` shows an `AlertDialogUplink` notification to the user
+2. `StatusTables` shows a toast notification to the user
 3. The dialog informs the user that an uplink was received
 
 ## Polling Fallback

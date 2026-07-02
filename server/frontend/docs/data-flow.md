@@ -10,18 +10,14 @@ Used for: Login, registration, gate CRUD, downlink commands, user profile update
 sequenceDiagram
     participant User
     participant Component
-    participant API as API Function
-    participant Axios
+    participant RTK as RTK Query
     participant Backend
     
     User->>Component: Click button
-    Component->>API: Call API fn
-    API->>Axios: apiClient.get/post/put/delete
-    Axios->>Backend: HTTP request
-    Backend-->>Axios: Response
-    Axios-->>API: response.data
-    API-->>Component: Return data
-    Component->>Component: setState(data)
+    Component->>RTK: useMutation hook
+    RTK->>Backend: HTTP request (credentials + CSRF)
+    Backend-->>RTK: Response
+    RTK-->>Component: Auto-update (cache invalidation)
     Component-->>User: UI updated
 ```
 
@@ -33,7 +29,7 @@ const handleStatusChange = async (gateId, newStatus) => {
   try {
     // 2. Call feature API function
     const result = await requestGateStatusChange(gateId, workerId, newStatus);
-    // 3. API function calls Axios
+    // 3. RTK Query mutation fires HTTP request
     //    → POST /{gateId}/{workerId}/request-status-change/
     //    with body: { requestedStatus: newStatus }
     // 4. On success, WebSocket will push the update
@@ -93,12 +89,12 @@ sequenceDiagram
 | Component | Topics | Trigger |
 |---|---|---|
 | `StatusTables` | gates/add, gates/delete, gates/updates, gate-activities, gate-activities/delete, uplinks | Any gate or activity change |
-| `InfoBoxes` | gates/add, gates/delete, gates/updates | Gate count changes |
-| `RecentActivity` | gate-activities, gate-activities/delete | New activity logged or removed |
+| `StatCards` | gates/add, gates/delete, gates/updates | Gate count changes |
+| `ActivityPanel` | gate-activities, gate-activities/delete | New activity logged or removed |
 
 ## 3. Polling Flow (Fallback)
 
-Used for: Read-only dashboards (`DashboardViewPage`, `DashboardGuestPage`).
+Used for: Read-only dashboards (viewer dashboard mode in `DashboardPage`, `DashboardGuestPage`).
 
 ```mermaid
 sequenceDiagram
@@ -120,24 +116,20 @@ sequenceDiagram
 
 ## Error Handling Pattern
 
-API errors are caught at the call site and logged to the console. There is no centralized error handling:
+API errors are handled by RTK Query's built-in error tracking. Components use the `isError` and `error` properties from query/mutation results:
 
 ```javascript
-export const fetchGates = async () => {
-  try {
-    const response = await apiClient.get('/gates');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching gates:', error);
-    throw error;
-  }
-};
+const { data: gates, isLoading, isError, error } = useGetGatesQuery();
+
+if (isError) {
+  console.error('Error fetching gates:', error);
+}
 ```
 
 **In components**, errors from API calls are typically handled with:
 1. `console.error()` for logging
 2. `alert()` or a dialog for user-facing errors
-3. `throw` in API functions so callers can decide what to show
+3. RTK Query's `isError`/`error` state for conditional rendering
 
 ## Specialized Flows
 
@@ -187,22 +179,22 @@ const payload = [
 ```mermaid
 sequenceDiagram
     participant User
-    participant HeaderBar
+    participant Topbar
     participant NotifAPI as Notification API
     participant Backend
 
-    HeaderBar->>NotifAPI: fetchNotificationByWorkerId(workerId)
+    Topbar->>NotifAPI: fetchNotificationByWorkerId(workerId)
     NotifAPI->>Backend: GET /notifications/{workerId}
-    Backend-->>HeaderBar: Notification list
+    Backend-->>Topbar: Notification list
 
-    User->>HeaderBar: Click bell icon
-    HeaderBar->>HeaderBar: Show NotificationPopup
+    User->>Topbar: Click bell icon
+    Topbar->>Topbar: Show NotificationPopup
 
-    User->>HeaderBar: Click notification
-    HeaderBar->>NotifAPI: markNotificationAsRead(id)
+    User->>Topbar: Click notification
+    Topbar->>NotifAPI: markNotificationAsRead(id)
     NotifAPI->>Backend: POST /notifications/{id}/request-read-change
-    HeaderBar->>HeaderBar: Update local notification state (read: true)
-    HeaderBar->>HeaderBar: Show notification detail in Dialog
+    Topbar->>Topbar: Update local notification state (read: true)
+    Topbar->>Topbar: Show notification detail in Dialog
 ```
 
 ### Bulk Status Change Flow
@@ -231,10 +223,10 @@ sequenceDiagram
 flowchart TB
     UI["User Interface<br/>(Pages + Feature Components)"]
     
-    REST[("REST API<br/>(Axios)")]
+    REST[("REST API<br/>(RTK Query)")]
     WS[("WebSocket<br/>(STOMP)")]
     
-    State["Component State<br/>(useState)"]
+    State["Redux Store<br/>(authSlice + RTK Query cache)"]
     Render["React Re-render<br/>(Virtual DOM → DOM)"]
     
     UI --> REST

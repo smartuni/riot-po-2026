@@ -30,7 +30,7 @@ sequenceDiagram
     Backend-->>Browser: Set-Cookie: jwt=<token>; HttpOnly; SameSite=Lax; Max-Age=36000
     Backend-->>RTK: UserDetailsResponse {name, email, role, workerId}
     RTK-->>Redux: dispatch(auth/setUser)
-    Browser->>Browser: Navigate by role (controller → /dashboard, viewer → /dashboard-view)
+    Browser->>Browser: Navigate by role (controller → /dashboard, viewer → /dashboard)
 
     Note over Browser,Backend: User logs out
     Browser->>RTK: useLogoutMutation()
@@ -115,4 +115,4 @@ All cookies are set by the backend with:
 
 4. **No token refresh** — when the 10-hour JWT expires, the user must log in again.
 
-5. **Hardcoded downlink counter password** — `"secret123"` in `StatusTables.jsx` source code.
+

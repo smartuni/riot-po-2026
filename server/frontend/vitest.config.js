@@ -6,5 +6,6 @@ export default defineConfig({
         globals: true, // This is the crucial part
         environment: 'jsdom',
         setupFiles: ['./vitest.setup.js'],
+        exclude: ['tests/**', 'node_modules/**'],
     },
 })

@@ -7,38 +7,52 @@ Defined in `src/app/App.jsx` with `react-router-dom` v7.
 | Path | Component | Auth | Role | Purpose |
 |---|---|---|---|---|
 | `/` | `LandingPage` | No | — | Hero page with Log In / Sign Up / Guest CTAs |
-| `/login` | `LoginPage` | No | — | Email/password form |
-| `/register` | `RegisterPage` | No | — | Registration with controller/viewer role toggle |
-| `/dashboard` | `DashboardPage` | Yes | Controller | Full control — gate CRUD, downlinks |
-| `/dashboard-view` | `DashboardViewPage` | Yes | Viewer | Read-only dashboard |
+| `/login` | `LoginPage` | PublicOnlyRoute | — | Email/password form |
+| `/register` | `RegisterPage` | PublicOnlyRoute | — | Registration with controller/viewer role toggle |
+| `/dashboard` | `DashboardPage` | ProtectedRoute | Controller + Viewer | Gate dashboard — conditional rendering by role |
 | `/dashboard-guest` | `DashboardGuestPage` | No | Guest | Unauthenticated read-only |
-| `/userpage` | `UserPage` | Yes | Any | Profile management, logout |
+| `/map` | `MapPage` | ProtectedRoute | Controller + Viewer | Leaflet map visualization |
+| `/diagnostics` | `DiagnosticsPage` | ProtectedRoute | Controller + Viewer | System diagnostics |
+| `/devices` | `DevicesPage` | ProtectedRoute | Controller + Viewer | Device management |
+| `/automation` | `AutomationPage` | ProtectedRoute | Controller + Viewer | Automation rules |
+| `/logs` | `LogsPage` | ProtectedRoute | Controller + Viewer | Activity logs |
+| `/settings` | `SettingsPage` | ProtectedRoute | Controller + Viewer | User settings |
 
 ## Auth Guards
 
-Protected pages (`DashboardPage`, `DashboardViewPage`, `UserPage`) check `isAuthenticated` on mount. If not authenticated, an `AlertDialogIllegal` appears and navigating away redirects to `/`.
+### ProtectedRoute
+Wraps routes that require authentication and optionally a specific role:
+- While `auth.status === 'loading'` → shows `CircularProgress`
+- If `unauthenticated` → redirects to `/login`
+- If role doesn't match → redirects to `/`
 
-Guest pages (`DashboardGuestPage`) skip the guard entirely and use `HeaderBarGuest`.
+### PublicOnlyRoute
+Wraps routes that should only be visible to unauthenticated users (login, register):
+- If `authenticated` → redirects to `/dashboard`
+- If `unauthenticated` → renders the child route
+
+Guest pages (`DashboardGuestPage`) skip guards entirely.
 
 ## Page Composition
 
-| Component | DashboardPage | DashboardViewPage | DashboardGuestPage |
+DashboardPage uses `AppLayout` (Sidebar + Topbar) with conditional rendering based on user role:
+
+| Component | Controller | Viewer | Guest |
 |---|---|---|---|
-| Header | `HeaderBar` | `HeaderBar` | `HeaderBarGuest` |
-| Summary Cards | `InfoBoxes` | `InfoBoxes` | `InfoBoxes` |
+| Layout | `AppLayout` | `AppLayout` | — |
+| Summary Cards | `StatCards` | `StatCards` | — |
 | Gate Table | `StatusTables` | `StatusTablesView` | `StatusTablesView` |
-| Activity Feed | `RecentActivity` | `RecentActivity` | `RecentActivity` |
-| Auth Guard | `AlertDialogIllegal` | `AlertDialogIllegal` | None |
-| Notifications | via `HeaderBar` | via `HeaderBar` | None |
+| Activity Feed | `ActivityPanel` | `ActivityPanel` | — |
+| Auth Guard | `ProtectedRoute` | `ProtectedRoute` | None |
 
 ```
 +-------------------------------------------+
-|  HeaderBar / HeaderBarGuest               |
+|  AppLayout (Sidebar + Topbar)             |
 +-------------------------------------------+
-|  InfoBoxes: Total | Open | Closed | OOS   |
+|  StatCards: Total | Open | Closed | OOS   |
 +-------------------------------------------+
-|  StatusTables / StatusTablesView           |
-|  RecentActivity                            |
+|  StatusTables / StatusTablesView          |
+|  ActivityPanel                            |
 +-------------------------------------------+
 ```
 
@@ -52,12 +66,13 @@ flowchart TB
     Landing -->|Sign Up| Register[Register /register]
     Landing -->|Guest| Guest[Guest Dashboard /dashboard-guest]
     
-    Login --> RoleCheck{Role?}
-    Register --> RoleCheck
+    Login --> Dashboard[Dashboard /dashboard]
+    Register --> Dashboard
     
-    RoleCheck -->|controller| Controller[Controller Dashboard /dashboard]
-    RoleCheck -->|viewer| Viewer[Viewer Dashboard /dashboard-view]
-    
-    Controller --> UserPage[User Page /userpage]
-    Viewer --> UserPage
+    Dashboard --> Map[Map /map]
+    Dashboard --> Diagnostics[Diagnostics /diagnostics]
+    Dashboard --> Devices[Devices /devices]
+    Dashboard --> Automation[Automation /automation]
+    Dashboard --> Logs[Logs /logs]
+    Dashboard --> Settings[Settings /settings]
 ```

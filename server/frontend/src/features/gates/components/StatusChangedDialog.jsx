@@ -8,11 +8,20 @@ import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useAppSelector } from "../../../app/store";
 import { useRequestGateStatusChangeMutation } from "../../../app/store/api/api";
 
+const selectUser = (state) => state.auth.user;
+
 function StatusChangeDialog({ open, gate, onClose }) {
     const [requestedStatus, setRequestedStatus] = useState("");
+    const [error, setError] = useState(null);
     const [requestGateStatusChange] = useRequestGateStatusChangeMutation();
-    const userDetails = useAppSelector((state) => state.auth.user);
+    const userDetails = useAppSelector(selectUser);
     const workerId = userDetails?.workerId;
+    const [prevGateId, setPrevGateId] = useState(gate?.id);
+
+    if (gate?.id !== prevGateId) {
+        setPrevGateId(gate?.id);
+        setError(null);
+    }
 
     if (!gate) return null;
 
@@ -23,17 +32,36 @@ function StatusChangeDialog({ open, gate, onClose }) {
                 workerId,
                 requestedStatus
             }).unwrap();
+            onClose();
+            setRequestedStatus("");
+            setError(null);
         } catch (err) {
             console.error("Fehler beim Update:", err);
+            setError("Failed to request status change. Please try again.");
         }
+    };
 
-        onClose();
-        setRequestedStatus("");
+    const getStatusClass = (status) => {
+        switch (status?.toUpperCase()) {
+            case "OPEN": return "status-open";
+            case "CLOSED": return "status-closed";
+            case "OUT_OF_SERVICE": return "status-oos";
+            default: return "status-none";
+        }
+    };
+
+    const getRequestedStatusClass = (status) => {
+        switch (status?.toUpperCase()) {
+            case "REQUESTED_OPEN": return "status-open";
+            case "REQUESTED_CLOSE": return "status-closed";
+            case "REQUESTED_NONE": return "status-none";
+            default: return "status-none";
+        }
     };
 
     const getStatusDisplay = (status) => {
         switch (status?.toUpperCase()) {
-            case "OPENED":
+            case "OPEN":
                 return <><LockOpenIcon fontSize="small" /> OPEN</>;
             case "CLOSED":
                 return <><LockIcon fontSize="small" /> CLOSED</>;
@@ -50,13 +78,13 @@ function StatusChangeDialog({ open, gate, onClose }) {
                 <Typography><strong>Location:</strong> {gate.location}</Typography>
                 <Typography>
                     <strong>Current Status:</strong>{" "}
-                    <span className={`badge ${gate.status?.toLowerCase()}`}>
+                    <span className={`status-badge ${getStatusClass(gate.status)}`}>
                         {getStatusDisplay(gate.status)}
                     </span>
                 </Typography>
                 <Typography>
                     <strong>Requested Status:</strong>{" "}
-                    <span className={`badge ${gate.requestedStatus?.toLowerCase() || "none"}`}>
+                    <span className={`status-badge ${getRequestedStatusClass(gate.requestedStatus)}`}>
                         {gate.requestedStatus || "none"}
                     </span>
                 </Typography>
@@ -73,6 +101,11 @@ function StatusChangeDialog({ open, gate, onClose }) {
                     <MenuItem value="REQUESTED_CLOSE">CLOSE</MenuItem>
                     <MenuItem value="REQUESTED_NONE">NONE</MenuItem>
                 </TextField>
+                {error && (
+                    <Typography color="error" sx={{ mt: 1 }}>
+                        {error}
+                    </Typography>
+                )}
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>Cancel</Button>
