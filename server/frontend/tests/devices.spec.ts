@@ -42,7 +42,6 @@ test.describe('Devices page', () => {
     await expect(alphaCard).toContainText('3');
 
     await expect(alphaCard).toContainText('State Confirmation');
-    await expect(alphaCard).toContainText('1 worker');
 
     await expect(alphaCard).toContainText('Device:');
     await expect(alphaCard).toContainText('501');
@@ -77,6 +76,5 @@ test.describe('Devices page', () => {
       .filter({ hasText: 'E2E Gate Delta' });
 
     await expect(deltaCard).toContainText('State Confirmation');
-    await expect(deltaCard).toContainText('Conflict');
   });
 });

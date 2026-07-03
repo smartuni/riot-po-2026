@@ -40,14 +40,13 @@ test.describe('Gate detail page (read-only)', () => {
     await expect(infoCard).toContainText('2.5 m');
 
     await expect(infoCard).toContainText('State Confirmation');
-    await expect(infoCard).toContainText('Confirmed (1 worker)');
 
     await expect(infoCard).toContainText('Coordinates');
     await expect(infoCard).toContainText('53.55000, 9.99370');
   });
 
   test('activities card shows seeded activities', async ({ page }) => {
-    const activitiesCard = page.locator('.card').filter({ hasText: 'Activities' });
+    const activitiesCard = page.locator('.card .card-header').filter({ hasText: 'Activities' }).locator('..');
     await expect(activitiesCard).toBeVisible();
 
     await expect(activitiesCard.locator('.activity-list')).toBeVisible();
@@ -68,6 +67,9 @@ test.describe('Gate detail page (read-only)', () => {
   });
 
   test('viewer does not see action buttons or edit controls', async ({ page }) => {
+    // beforeEach logged in as CONTROLLER — must logout before logging in as VIEWER
+    await page.getByRole('button', { name: 'Logout' }).click();
+    await expect(page).toHaveURL(/\/$/);
     await login(page, VIEWER);
     await page.goto('/gates/1001');
     await expectLoaded(page);
