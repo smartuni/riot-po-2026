@@ -4,8 +4,6 @@ import com.riot.matesense.config.DownPayload;
 import com.riot.matesense.config.MqttProperties;
 import com.riot.matesense.mqtt.TTNMqttPublisher;
 import com.riot.matesense.registry.DeviceRegistry;
-import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
-import org.bouncycastle.crypto.signers.Ed25519Signer;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -72,20 +70,11 @@ public class DownlinkService {
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
 
-        byte[] rawSig = signEd25519(signingKeySeed, unsignedCbor);
-        byte[] coseSignature = CoseSign1Encoder.encode(kid, rawSig);
+        byte[] coseSignature = CoseSign1Encoder.buildCoseSign1(kid, unsignedCbor, signingKeySeed);
 
         byte[] signedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
         return Base64.getEncoder().encodeToString(signedCbor);
-    }
-
-    static byte[] signEd25519(byte[] signingKeySeed, byte[] data) {
-        Ed25519PrivateKeyParameters privKey = new Ed25519PrivateKeyParameters(signingKeySeed, 0);
-        Ed25519Signer signer = new Ed25519Signer();
-        signer.init(true, privKey);
-        signer.update(data, 0, data.length);
-        return signer.generateSignature();
     }
 
     private byte[] getServerSigningKeySeed() {

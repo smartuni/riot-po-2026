@@ -80,7 +80,7 @@ class DownlinkServiceTest {
     @Test
     void signEd25519_produces64ByteSignature() {
         byte[] data = new byte[]{0x01, 0x02, 0x03};
-        byte[] sig = DownlinkService.signEd25519(TEST_SIGNING_KEY_SEED, data);
+        byte[] sig = CoseSign1Encoder.signEd25519(TEST_SIGNING_KEY_SEED, data);
         assertThat(sig).hasSize(64);
     }
 
@@ -88,8 +88,8 @@ class DownlinkServiceTest {
     void signEd25519_differentInputsProduceDifferentSignatures() {
         byte[] data1 = new byte[]{0x01, 0x02, 0x03};
         byte[] data2 = new byte[]{0x01, 0x02, 0x04};
-        byte[] sig1 = DownlinkService.signEd25519(TEST_SIGNING_KEY_SEED, data1);
-        byte[] sig2 = DownlinkService.signEd25519(TEST_SIGNING_KEY_SEED, data2);
+        byte[] sig1 = CoseSign1Encoder.signEd25519(TEST_SIGNING_KEY_SEED, data1);
+        byte[] sig2 = CoseSign1Encoder.signEd25519(TEST_SIGNING_KEY_SEED, data2);
         assertThat(HEX.formatHex(sig1)).isNotEqualTo(HEX.formatHex(sig2));
     }
 }

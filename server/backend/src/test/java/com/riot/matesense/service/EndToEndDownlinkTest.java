@@ -17,7 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 1. Parse CBOR, extract COSE Sign1 signature
  * 2. Re-serialize unsigned CBOR (firmware's cbor_serialize_record_no_sig)
  * 3. Parse COSE Sign1, extract KID and raw Ed25519 signature
- * 4. Verify Ed25519 over unsigned CBOR via Bouncy Castle
+ * 4. Rebuild Sig_structure (firmware's libcose does this internally)
+ * 5. Verify Ed25519 over the Sig_structure via Bouncy Castle
  */
 class EndToEndDownlinkTest {
 
@@ -33,7 +34,7 @@ class EndToEndDownlinkTest {
 
     @Test
     void backendSignsAndFirmwareVerifies() {
-        // ── Backend side ──
+        // ── Backend side (using new COSE-correct signing) ──
         GateCommandRecord record = new GateCommandRecord(
                 0x01, 0x01, 0x03,
                 new byte[]{0x12, 0x12, 0x12, 0x12},
@@ -43,8 +44,10 @@ class EndToEndDownlinkTest {
         );
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
-        byte[] rawSignature = DownlinkService.signEd25519(BACKEND_SEED, unsignedCbor);
-        byte[] coseSignature = CoseSign1Encoder.encode(BACKEND_KID, rawSignature);
+
+        // Build COSE Sign1 properly: signs Sig_structure, not raw payload
+        byte[] coseSignature = CoseSign1Encoder.buildCoseSign1(
+                BACKEND_KID, unsignedCbor, BACKEND_SEED);
         byte[] signedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
         // ── Over LoRaWAN: Base64-encode, then decode (simulate TTN) ──
@@ -101,11 +104,16 @@ class EndToEndDownlinkTest {
         reUnsignedCbor[0] = (byte) 0x89; // array(9) — unsigned
         System.arraycopy(signedCbor, 1, reUnsignedCbor, 1, reUnsignedCbor.length - 1);
 
-        // Step 6: Verify Ed25519 signature via Bouncy Castle
+        // Step 6: Rebuild the COSE Sig_structure (firmware's libcose does this internally)
+        // Sig_structure = ["Signature1", protected, external_aad, payload]
+        byte[] protectedHeaders = CoseSign1Encoder.buildProtectedHeader(BACKEND_KID);
+        byte[] sigStructure = CoseSign1Encoder.buildSigStructure(protectedHeaders, reUnsignedCbor);
+
+        // Step 7: Verify Ed25519 signature over the Sig_structure (matches libcose behavior)
         Ed25519PublicKeyParameters pubKey = new Ed25519PublicKeyParameters(BACKEND_PUBLIC_KEY, 0);
         Ed25519Signer verifier = new Ed25519Signer();
         verifier.init(false, pubKey);
-        verifier.update(reUnsignedCbor, 0, reUnsignedCbor.length);
+        verifier.update(sigStructure, 0, sigStructure.length);
         assertThat(verifier.verifySignature(extractedRawSig)).isTrue();
     }
 
@@ -120,8 +128,8 @@ class EndToEndDownlinkTest {
         );
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
-        byte[] rawSignature = DownlinkService.signEd25519(BACKEND_SEED, unsignedCbor);
-        byte[] coseSignature = CoseSign1Encoder.encode(BACKEND_KID, rawSignature);
+        byte[] coseSignature = CoseSign1Encoder.buildCoseSign1(
+                BACKEND_KID, unsignedCbor, BACKEND_SEED);
         byte[] originalSignedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
         // Flip one bit in the gate_num field
@@ -144,10 +152,14 @@ class EndToEndDownlinkTest {
         System.arraycopy(extractedCoseSig, extractedCoseSig.length - 64,
                 extractedRawSig, 0, 64);
 
+        // Rebuild Sig_structure (as libcose does internally)
+        byte[] protectedHeaders = CoseSign1Encoder.buildProtectedHeader(BACKEND_KID);
+        byte[] sigStructure = CoseSign1Encoder.buildSigStructure(protectedHeaders, reUnsignedCbor);
+
         Ed25519PublicKeyParameters pubKey = new Ed25519PublicKeyParameters(BACKEND_PUBLIC_KEY, 0);
         Ed25519Signer verifier = new Ed25519Signer();
         verifier.init(false, pubKey);
-        verifier.update(reUnsignedCbor, 0, reUnsignedCbor.length);
+        verifier.update(sigStructure, 0, sigStructure.length);
         assertThat(verifier.verifySignature(extractedRawSig)).isFalse();
     }
 
@@ -162,8 +174,8 @@ class EndToEndDownlinkTest {
         );
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
-        byte[] rawSignature = DownlinkService.signEd25519(BACKEND_SEED, unsignedCbor);
-        byte[] coseSignature = CoseSign1Encoder.encode(BACKEND_KID, rawSignature);
+        byte[] coseSignature = CoseSign1Encoder.buildCoseSign1(
+                BACKEND_KID, unsignedCbor, BACKEND_SEED);
         byte[] signedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
         // Use a different valid key pair
@@ -184,10 +196,14 @@ class EndToEndDownlinkTest {
         System.arraycopy(extractedCoseSig, extractedCoseSig.length - 64,
                 extractedRawSig, 0, 64);
 
+        // Rebuild Sig_structure (as libcose does internally)
+        byte[] protectedHeaders = CoseSign1Encoder.buildProtectedHeader(BACKEND_KID);
+        byte[] sigStructure = CoseSign1Encoder.buildSigStructure(protectedHeaders, reUnsignedCbor);
+
         Ed25519PublicKeyParameters wrongPub = new Ed25519PublicKeyParameters(wrongPubKey, 0);
         Ed25519Signer verifier = new Ed25519Signer();
         verifier.init(false, wrongPub);
-        verifier.update(reUnsignedCbor, 0, reUnsignedCbor.length);
+        verifier.update(sigStructure, 0, sigStructure.length);
         assertThat(verifier.verifySignature(extractedRawSig)).isFalse();
     }
 
@@ -202,8 +218,8 @@ class EndToEndDownlinkTest {
         );
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
-        byte[] rawSignature = DownlinkService.signEd25519(BACKEND_SEED, unsignedCbor);
-        byte[] coseSignature = CoseSign1Encoder.encode(BACKEND_KID, rawSignature);
+        byte[] coseSignature = CoseSign1Encoder.buildCoseSign1(
+                BACKEND_KID, unsignedCbor, BACKEND_SEED);
         byte[] signedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
         // Check array headers
@@ -241,8 +257,8 @@ class EndToEndDownlinkTest {
         );
 
         byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
-        byte[] rawSignature = DownlinkService.signEd25519(BACKEND_SEED, unsignedCbor);
-        byte[] coseSignature = CoseSign1Encoder.encode(BACKEND_KID, rawSignature);
+        byte[] coseSignature = CoseSign1Encoder.buildCoseSign1(
+                BACKEND_KID, unsignedCbor, BACKEND_SEED);
         byte[] signedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
 
         System.out.println("=== Downlink Payload (hex, " + signedCbor.length + " bytes) ===");
@@ -253,7 +269,5 @@ class EndToEndDownlinkTest {
         System.out.println(HEX.formatHex(unsignedCbor));
         System.out.println("=== COSE Sign1 (hex, " + coseSignature.length + " bytes) ===");
         System.out.println(HEX.formatHex(coseSignature));
-        System.out.println("=== Raw Ed25519 signature (hex) ===");
-        System.out.println(HEX.formatHex(rawSignature));
     }
 }
