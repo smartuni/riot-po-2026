@@ -19,4 +19,14 @@ public class ApiExceptionHandler {
     public ResponseEntity<Map<String, String>> handleInvalidCredentials(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", ex.getMessage()));
     }
+
+    @ExceptionHandler(RootKeyNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleRootKeyNotFound(RootKeyNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(NodeNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNodeNotFound(NodeNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+    }
 }
