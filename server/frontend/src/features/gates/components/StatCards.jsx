@@ -16,7 +16,6 @@ function useCountUp(target) {
     const animate = (now) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // ease-out quad
       const eased = 1 - (1 - progress) * (1 - progress);
       setDisplay(Math.round(start + (end - start) * eased));
       if (progress < 1) {
@@ -35,7 +34,7 @@ function useCountUp(target) {
   return display;
 }
 
-export default function StatCards() {
+export default function StatCards({ filter = "", onFilter }) {
   const { data: gates = [], isLoading, error } = useGetGatesQuery();
 
   const total = gates.length;
@@ -47,6 +46,24 @@ export default function StatCards() {
   const displayClosed = useCountUp(closed);
   const displayOpen = useCountUp(open);
   const displayOos = useCountUp(oos);
+
+  const handleToggle = (value) => {
+    if (!onFilter) return;
+    onFilter(filter === value ? "" : value);
+  };
+
+  const handleKeyDown = (e, value) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleToggle(value);
+    }
+  };
+
+  const activeStyle = (value) => ({
+    cursor: onFilter ? 'pointer' : 'default',
+    outline: filter === value ? '2px solid var(--blue-600)' : 'none',
+    outlineOffset: '-2px',
+  });
 
   if (isLoading) {
     return (
@@ -75,28 +92,56 @@ export default function StatCards() {
 
   return (
     <div className="stats-grid">
-      <div className="stat-card blue">
+      <div
+        className="stat-card blue"
+        role="button"
+        tabIndex={0}
+        style={activeStyle("")}
+        onClick={() => handleToggle("")}
+        onKeyDown={(e) => handleKeyDown(e, "")}
+      >
         <div className="stat-header">
           <span className="stat-label">Total Gates</span>
           <div className="stat-icon blue">🚪</div>
         </div>
         <div className="stat-number" data-count={total}>{displayTotal}</div>
       </div>
-      <div className="stat-card green">
+      <div
+        className="stat-card green"
+        role="button"
+        tabIndex={0}
+        style={activeStyle("CLOSED")}
+        onClick={() => handleToggle("CLOSED")}
+        onKeyDown={(e) => handleKeyDown(e, "CLOSED")}
+      >
         <div className="stat-header">
           <span className="stat-label">Closed</span>
           <div className="stat-icon green">✓</div>
         </div>
         <div className="stat-number" data-count={closed}>{displayClosed}</div>
       </div>
-      <div className="stat-card red">
+      <div
+        className="stat-card red"
+        role="button"
+        tabIndex={0}
+        style={activeStyle("OPEN")}
+        onClick={() => handleToggle("OPEN")}
+        onKeyDown={(e) => handleKeyDown(e, "OPEN")}
+      >
         <div className="stat-header">
           <span className="stat-label">Open</span>
           <div className="stat-icon red">⚠</div>
         </div>
         <div className="stat-number" data-count={open}>{displayOpen}</div>
       </div>
-      <div className="stat-card amber">
+      <div
+        className="stat-card amber"
+        role="button"
+        tabIndex={0}
+        style={activeStyle("OUT_OF_SERVICE")}
+        onClick={() => handleToggle("OUT_OF_SERVICE")}
+        onKeyDown={(e) => handleKeyDown(e, "OUT_OF_SERVICE")}
+      >
         <div className="stat-header">
           <span className="stat-label">Out of Service</span>
           <div className="stat-icon amber">⏸</div>
