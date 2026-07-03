@@ -1290,6 +1290,32 @@ body.dark .MuiCircularProgress-root {
   color: var(--blue-400);
 }
 
+/* ===== Confidence Indicator ===== */
+.confidence-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+}
+.confidence-indicator .confidence-icon {
+  font-size: 16px;
+}
+.confidence-indicator .confidence-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ===== Gate Table Row Interactivity ===== */
+.gate-table tbody tr {
+  cursor: pointer;
+}
+.gate-table tbody tr .action-link,
+.gate-table tbody tr input[type="checkbox"],
+.gate-table tbody tr .row-check {
+  cursor: pointer;
+}
+
 /* ===== Utility ===== */
 .text-center { text-align: center; }
 .mt-4 { margin-top: 16px; }
