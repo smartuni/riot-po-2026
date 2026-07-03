@@ -17,6 +17,9 @@ public class RootKeyEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "kid", nullable = false)
+    private String kid;
+
     @Column(name = "public_key", nullable = false, columnDefinition = "TEXT")
     private String publicKey;
 
