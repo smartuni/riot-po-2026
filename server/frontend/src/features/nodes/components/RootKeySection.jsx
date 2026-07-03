@@ -3,6 +3,7 @@ import { useAppSelector } from '../../../app/store';
 import { useGetRootKeyQuery, useUploadRootKeyMutation } from '../../../app/store/api/api';
 import { truncateKey } from '../../../shared/utils/format';
 import { useCopyToClipboard } from '../../../shared/hooks/useCopyToClipboard';
+import LoadingCard from '../../../shared/components/LoadingCard';
 import KeyDisplayBox from './KeyDisplayBox';
 
 const RootKeySection = () => {
@@ -38,13 +39,7 @@ const RootKeySection = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="card" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-        Loading root key…
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingCard label="Loading root key…" />;
 
   return (
     <div className="card">
