@@ -1,50 +1,9 @@
 import { useState } from 'react';
 import { useAppSelector } from '../../../app/store';
 import { useGetRootKeyQuery, useUploadRootKeyMutation } from '../../../app/store/api/api';
-
-const truncateKey = (key, visible = 24) => {
-  if (!key) return '';
-  return key.length <= visible ? key : `${key.slice(0, visible)}…`;
-};
-
-const KeyDisplayBox = ({ label, value, actionLabel, onAction }) => (
-  <div className="form-group" style={{ marginBottom: '0' }}>
-    <label className="form-label">{label}</label>
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '8px 10px',
-        background: 'var(--bg-sidebar)',
-        border: '1px solid var(--border)',
-        borderRadius: '8px',
-      }}
-    >
-      <code
-        className="mono"
-        style={{
-          fontSize: '12px',
-          color: 'var(--text-secondary)',
-          flex: 1,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {value}
-      </code>
-      <button
-        type="button"
-        className="btn btn-ghost"
-        style={{ padding: '4px 10px', fontSize: '11px', flexShrink: 0 }}
-        onClick={onAction}
-      >
-        {actionLabel}
-      </button>
-    </div>
-  </div>
-);
+import { truncateKey } from '../../../shared/utils/format';
+import { useCopyToClipboard } from '../../../shared/hooks/useCopyToClipboard';
+import KeyDisplayBox from './KeyDisplayBox';
 
 const RootKeySection = () => {
   const user = useAppSelector((state) => state.auth.user);
@@ -57,17 +16,9 @@ const RootKeySection = () => {
   const [uploadForm, setUploadForm] = useState({ publicKey: '', privateKey: '' });
   const [uploadStatus, setUploadStatus] = useState('idle');
   const [uploadMessage, setUploadMessage] = useState('');
-  const [copiedField, setCopiedField] = useState(null);
+  const { copiedKey, copy } = useCopyToClipboard();
 
-  const isNotConfigured = error?.status === 404;
   const isConfigured = !error && rootKey;
-
-  const handleCopy = (value, field) => {
-    navigator.clipboard.writeText(value).then(() => {
-      setCopiedField(field);
-      setTimeout(() => setCopiedField(null), 2000);
-    });
-  };
 
   const handleUpload = async () => {
     setUploadStatus('saving');
@@ -97,27 +48,22 @@ const RootKeySection = () => {
 
   return (
     <div className="card">
-      {/* Card header with title + status badge */}
       <div className="card-header">
         <span className="card-title">Root Key Pair</span>
-        <span
-          className={`status-badge ${isConfigured ? 'status-closed' : 'status-oos'}`}
-        >
+        <span className={`status-badge ${isConfigured ? 'status-closed' : 'status-oos'}`}>
           <span className="status-dot" />
           {isConfigured ? 'Configured' : 'Not Set'}
         </span>
       </div>
 
-      {/* Body */}
       <div style={{ padding: '20px' }}>
-        {/* Read-only display when configured */}
         {isConfigured && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: isController ? '20px' : '0' }}>
             <KeyDisplayBox
               label="Public Key"
               value={truncateKey(rootKey.publicKey)}
-              actionLabel={copiedField === 'public' ? 'Copied!' : 'Copy'}
-              onAction={() => handleCopy(rootKey.publicKey, 'public')}
+              actionLabel={copiedKey === 'public' ? 'Copied!' : 'Copy'}
+              onAction={() => copy(rootKey.publicKey, 'public')}
             />
             <KeyDisplayBox
               label="Private Key"
@@ -128,67 +74,72 @@ const RootKeySection = () => {
           </div>
         )}
 
-        {/* Upload form — controller only */}
         {isController && (
           <>
             {isConfigured && (
-              <div
-                style={{
-                  borderTop: '1px solid var(--border)',
-                  paddingTop: '20px',
-                  marginBottom: '16px',
-                }}
-              >
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginBottom: '16px' }}>
                 <span className="form-label" style={{ display: 'block', marginBottom: '12px' }}>
                   Upload New Key Pair
                 </span>
               </div>
             )}
-            <div className="form-group">
-              <label className="form-label" htmlFor="rootkey-public">Public Key (Base64)</label>
-              <textarea
-                id="rootkey-public"
-                className="form-input"
-                rows={3}
-                placeholder="Paste public key…"
-                value={uploadForm.publicKey}
-                onChange={(e) => setUploadForm({ ...uploadForm, publicKey: e.target.value })}
-                style={{ fontFamily: 'monospace', fontSize: '12px', resize: 'vertical' }}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="rootkey-private">Private Key (Base64)</label>
-              <textarea
-                id="rootkey-private"
-                className="form-input"
-                rows={3}
-                placeholder="Paste private key…"
-                value={uploadForm.privateKey}
-                onChange={(e) => setUploadForm({ ...uploadForm, privateKey: e.target.value })}
-                style={{ fontFamily: 'monospace', fontSize: '12px', resize: 'vertical' }}
-              />
-            </div>
-
-            {uploadStatus === 'success' && (
-              <div style={{ color: 'var(--green-600)', marginBottom: '8px', fontSize: '13px' }}>{uploadMessage}</div>
-            )}
-            {uploadStatus === 'error' && (
-              <div style={{ color: 'var(--red-600)', marginBottom: '8px', fontSize: '13px' }}>{uploadMessage}</div>
-            )}
-
-            <button
-              className="btn btn-primary"
-              style={{ width: '100%' }}
-              disabled={!uploadForm.publicKey.trim() || !uploadForm.privateKey.trim() || uploadStatus === 'saving'}
-              onClick={handleUpload}
-            >
-              {uploadStatus === 'saving' ? 'Uploading…' : 'Upload Key Pair'}
-            </button>
+            <RootKeyUploadForm
+              form={uploadForm}
+              setForm={setUploadForm}
+              status={uploadStatus}
+              message={uploadMessage}
+              onSubmit={handleUpload}
+            />
           </>
         )}
       </div>
     </div>
   );
 };
+
+const RootKeyUploadForm = ({ form, setForm, status, message, onSubmit }) => (
+  <>
+    <div className="form-group">
+      <label className="form-label" htmlFor="rootkey-public">Public Key (Base64)</label>
+      <textarea
+        id="rootkey-public"
+        className="form-input"
+        rows={3}
+        placeholder="Paste public key…"
+        value={form.publicKey}
+        onChange={(e) => setForm({ ...form, publicKey: e.target.value })}
+        style={{ fontFamily: 'monospace', fontSize: '12px', resize: 'vertical' }}
+      />
+    </div>
+    <div className="form-group">
+      <label className="form-label" htmlFor="rootkey-private">Private Key (Base64)</label>
+      <textarea
+        id="rootkey-private"
+        className="form-input"
+        rows={3}
+        placeholder="Paste private key…"
+        value={form.privateKey}
+        onChange={(e) => setForm({ ...form, privateKey: e.target.value })}
+        style={{ fontFamily: 'monospace', fontSize: '12px', resize: 'vertical' }}
+      />
+    </div>
+
+    {status === 'success' && (
+      <div style={{ color: 'var(--green-600)', marginBottom: '8px', fontSize: '13px' }}>{message}</div>
+    )}
+    {status === 'error' && (
+      <div style={{ color: 'var(--red-600)', marginBottom: '8px', fontSize: '13px' }}>{message}</div>
+    )}
+
+    <button
+      className="btn btn-primary"
+      style={{ width: '100%' }}
+      disabled={!form.publicKey.trim() || !form.privateKey.trim() || status === 'saving'}
+      onClick={onSubmit}
+    >
+      {status === 'saving' ? 'Uploading…' : 'Upload Key Pair'}
+    </button>
+  </>
+);
 
 export default RootKeySection;
