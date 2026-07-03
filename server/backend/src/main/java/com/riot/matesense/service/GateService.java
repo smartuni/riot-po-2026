@@ -45,7 +45,7 @@ public class GateService {
             Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(), e.getStateConfirmation(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), 
                     e.getWorkerConfidence(), e.getSensorConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getQuality(), e.getPendingJob(), e.getPriority(),
-                    e.isManualOverride());
+                    e.isManualOverride(), e.getHeightAboveNN());
             customGates.add(gate);
         });
         return customGates;
@@ -135,7 +135,7 @@ public class GateService {
         return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(), gate.getStateConfirmation(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
                 gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality(), gate.getPendingJob(), gate.getPriority(),
-                gate.isManualOverride());
+                gate.isManualOverride(), gate.getHeightAboveNN());
     }
 
     /**
@@ -236,6 +236,17 @@ public class GateService {
     public void updatePriority(Long gateId, int newPriority) throws GateNotFoundException {
         GateEntity gateEntity = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         gateEntity.setPriority(newPriority);
+        gateRepository.save(gateEntity);
+    }
+
+    /**
+     * Update the height above NN (sea level) of a gate.
+     * @param gateId of the gate
+     * @param heightAboveNN the elevation in meters
+     */
+    public void updateHeightAboveNN(Long gateId, Double heightAboveNN) throws GateNotFoundException {
+        GateEntity gateEntity = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
+        gateEntity.setHeightAboveNN(heightAboveNN);
         gateRepository.save(gateEntity);
     }
 

@@ -126,6 +126,15 @@ public class GateController {
         gateService.updatePriority(gateId, priority);
     }
 
+    @PutMapping("/update-height/{gateId}")
+    public void updateHeightAboveNN(
+            @PathVariable Long gateId,
+            @RequestBody Map<String, Double> request
+    ) throws GateNotFoundException {
+        Double height = request.get("heightAboveNN");
+        gateService.updateHeightAboveNN(gateId, height);
+    }
+
     /**
      * An API Call to manually set the status of a Gate (direct override, not a request).
      * Sets the manualOverride flag so the UI can display that the status was set manually.
