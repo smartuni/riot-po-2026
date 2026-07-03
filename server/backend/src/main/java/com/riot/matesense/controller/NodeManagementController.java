@@ -1,12 +1,14 @@
 package com.riot.matesense.controller;
 
 import com.riot.matesense.model.Node;
+import com.riot.matesense.model.NodeRequest;
 import com.riot.matesense.model.RootKey;
 import com.riot.matesense.service.NodeManagementService;
+import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("nodes")
@@ -19,6 +21,7 @@ public class NodeManagementController {
     }
 
     @PostMapping("/root-key")
+    @PreAuthorize("hasRole('controller')")
     public void uploadRootKey(@RequestBody RootKey rootKey) {
         nodeManagementService.saveRootKey(rootKey);
     }
@@ -34,13 +37,13 @@ public class NodeManagementController {
     }
 
     @PostMapping
-    public Node addNode(@RequestBody Map<String, String> body) {
-        String name = body.get("name");
-        String publicKey = body.get("publicKey");
-        return nodeManagementService.addNode(name, publicKey);
+    @PreAuthorize("hasRole('controller')")
+    public Node addNode(@Valid @RequestBody NodeRequest body) {
+        return nodeManagementService.addNode(body.getName(), body.getPublicKey());
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('controller')")
     public void deleteNode(@PathVariable Long id) {
         nodeManagementService.deleteNode(id);
     }

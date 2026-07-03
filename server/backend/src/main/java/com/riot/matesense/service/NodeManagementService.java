@@ -12,11 +12,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class NodeManagementService {
+
+    private static final String ROOT_KEY_KID = "server";
+    private static final int ED25519_PUBLIC_KEY_BYTES = 32;
 
     private final RootKeyRepository rootKeyRepository;
     private final NodeRepository nodeRepository;
@@ -28,14 +32,13 @@ public class NodeManagementService {
 
     @Transactional
     public void saveRootKey(RootKey rootKey) {
-        List<RootKeyEntity> existing = rootKeyRepository.findAll();
-        RootKeyEntity entity;
-        if (existing.isEmpty()) {
-            entity = new RootKeyEntity();
-            entity.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-        } else {
-            entity = existing.get(0);
-        }
+        RootKeyEntity entity = rootKeyRepository.findFirstByOrderByIdAsc()
+                .orElseGet(() -> {
+                    RootKeyEntity newEntity = new RootKeyEntity();
+                    newEntity.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+                    return newEntity;
+                });
+        entity.setKid(rootKey.getKid() != null ? rootKey.getKid() : ROOT_KEY_KID);
         entity.setPublicKey(rootKey.getPublicKey());
         entity.setPrivateKey(rootKey.getPrivateKey());
         entity.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
@@ -43,12 +46,9 @@ public class NodeManagementService {
     }
 
     public RootKey getRootKey() {
-        List<RootKeyEntity> keys = rootKeyRepository.findAll();
-        if (keys.isEmpty()) {
-            throw new RootKeyNotFoundException();
-        }
-        RootKeyEntity entity = keys.get(0);
-        return new RootKey(entity.getPublicKey(), entity.getPrivateKey());
+        RootKeyEntity entity = rootKeyRepository.findFirstByOrderByIdAsc()
+                .orElseThrow(RootKeyNotFoundException::new);
+        return new RootKey(entity.getKid(), entity.getPublicKey(), entity.getPrivateKey());
     }
 
     public List<Node> getAllNodes() {
@@ -57,7 +57,9 @@ public class NodeManagementService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public Node addNode(String name, String publicKey) {
+        validatePublicKey(publicKey);
         NodeEntity entity = new NodeEntity();
         entity.setName(name);
         entity.setPublicKey(publicKey);
@@ -69,9 +71,29 @@ public class NodeManagementService {
 
     @Transactional
     public void deleteNode(Long nodeId) {
-        if (!nodeRepository.existsById(nodeId)) {
-            throw new NodeNotFoundException(nodeId);
+        NodeEntity entity = nodeRepository.findById(nodeId)
+                .orElseThrow(() -> new NodeNotFoundException(nodeId));
+        nodeRepository.delete(entity);
+    }
+
+    /**
+     * Validates that the public key is a valid Base64-encoded string that decodes
+     * to exactly 32 bytes (Ed25519 public key size).
+     */
+    private void validatePublicKey(String publicKey) {
+        if (publicKey == null || publicKey.isBlank()) {
+            throw new IllegalArgumentException("Public key must not be blank");
         }
-        nodeRepository.deleteById(nodeId);
+        byte[] decoded;
+        try {
+            decoded = Base64.getDecoder().decode(publicKey.trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Public key must be valid Base64");
+        }
+        if (decoded.length != ED25519_PUBLIC_KEY_BYTES) {
+            throw new IllegalArgumentException(
+                    "Public key must be exactly " + ED25519_PUBLIC_KEY_BYTES + " bytes (raw), got " + decoded.length
+            );
+        }
     }
 }
