@@ -45,6 +45,7 @@ public class GateActivityEntity implements Comparable<GateActivityEntity> {
             case SENSOR_VALUE_KEEPALIVE -> this.message = "Gate " + gateId + " reported its state as " + state.toString();
             case SENSEMATE_WORKER_REPORT -> this.message = "Gate "+ gateId + " was reported as " + state.toString() + " by SenseMate-" + workerId;
             case TARGET_STATE_REQUEST -> this.message = "The worker with ID: " + workerId + " requested the Status: " + state.toString() + " to the gate with Gate-ID: " + gateId;
+            case MANUAL_STATUS_SET -> this.message = "Worker " + workerId + " manually set gate " + gateId + " status to " + state.toString();
             default -> throw new IllegalStateException("Unexpected value: " + activityType);
         }
     }

@@ -14,24 +14,24 @@
 INSERT INTO gates (
     id, status, state_confirmation, last_time_stamp, last_transition_gate_time_stamp,
     device_id, location, latitude, longitude, requested_status, confidence, priority,
-    ignore_gate, gate_detector
+    ignore_gate, gate_detector, manual_override
 ) VALUES
     (1001, 'OPEN', 'WORKER_CONFIRMED_SINGLE',
       TIMESTAMP '2026-01-01 08:00:00', TIMESTAMP '2026-01-01 07:55:00',
       501, 'E2E Gate Alpha', 53.5500, 9.9937, 'OPEN', 90, 3,
-      false, false),
+      false, false, false),
     (1002, 'CLOSED', 'WORKER_CONFIRMED_MULTI',
       TIMESTAMP '2026-01-01 08:05:00', TIMESTAMP '2026-01-01 08:00:00',
       502, 'E2E Gate Beta', 53.5510, 9.9940, 'CLOSED', 85, 2,
-      false, false),
+      false, false, false),
     (1003, 'OPEN', 'UNCONFIRMED',
       TIMESTAMP '2026-01-01 08:10:00', TIMESTAMP '2026-01-01 08:10:00',
       503, 'E2E Gate Gamma', 53.5520, 9.9950, 'OPEN', 70, 1,
-      false, false),
+      false, false, false),
     (1004, 'OUT_OF_SERVICE', 'WORKER_CONFLICT',
       TIMESTAMP '2026-01-01 08:15:00', TIMESTAMP '2026-01-01 08:15:00',
       504, 'E2E Gate Delta', 53.5530, 9.9960, 'OUT_OF_SERVICE', 40, 0,
-      false, false);
+      false, false, false);
 
 INSERT INTO notifications (
     status, last_time_stamp, worker_id, message, read

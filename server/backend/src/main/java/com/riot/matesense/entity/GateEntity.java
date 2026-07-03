@@ -48,6 +48,7 @@ public class GateEntity {
     private String pendingJob;
     private int confidence;
     private int priority = 0;
+    private boolean manualOverride;
 
 
     public GateEntity(Long gateID, Status status, Timestamp lastTimeStamp,
