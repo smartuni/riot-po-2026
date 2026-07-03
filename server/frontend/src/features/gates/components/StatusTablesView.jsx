@@ -4,7 +4,6 @@ import { useGetGatesQuery, useGetActivitiesQuery } from "../../../app/store/api/
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import WarningIcon from "@mui/icons-material/Warning";
-import { MapView } from "../../map";
 
 const statusInfo = (status) => {
     switch (status) {
@@ -79,7 +78,6 @@ function StatusTablesView({ filter: filterProp, setFilter: setFilterProp }) {
 
     const [search, setSearch] = useState("");
     const [filterLocal, setFilterLocal] = useState("");
-    const [view, setView] = useState("list");
     const [expandedGateId, setExpandedGateId] = useState(null);
 
     const filter = filterProp !== undefined ? filterProp : filterLocal;
@@ -108,7 +106,7 @@ function StatusTablesView({ filter: filterProp, setFilter: setFilterProp }) {
     if (error) {
         return (
             <div className="card" style={{ padding: '16px' }}>
-                <div style={{ padding: '16px', background: 'var(--red-100)', borderRadius: '8px', color: 'var(--red-600)' }}>
+                <div style={{ padding: '16px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', color: 'var(--red-600)' }}>
                     Failed to load gates data. Please try again later.
                 </div>
             </div>
@@ -142,29 +140,9 @@ function StatusTablesView({ filter: filterProp, setFilter: setFilterProp }) {
                 </div>
 
                 <div style={{ flex: 1 }} />
-
-                <div className="filter-tabs" role="tablist">
-                    <button
-                        role="tab"
-                        aria-selected={view === 'list'}
-                        className={`filter-tab${view === 'list' ? ' active' : ''}`}
-                        onClick={() => setView("list")}
-                    >
-                        List View
-                    </button>
-                    <button
-                        role="tab"
-                        aria-selected={view === 'map'}
-                        className={`filter-tab${view === 'map' ? ' active' : ''}`}
-                        onClick={() => setView("map")}
-                    >
-                        Map View
-                    </button>
-                </div>
             </div>
 
-            {view === "list" ? (
-                <table className="gate-table">
+            <table className="gate-table">
                     <thead>
                         <tr>
                             <th>Gate ID</th>
@@ -208,7 +186,7 @@ function StatusTablesView({ filter: filterProp, setFilter: setFilterProp }) {
                                             </span>
                                             <br />
                                             <span className="coords" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                                {gate.latitude != null ? gate.latitude : '—'}, {gate.longitude != null ? gate.longitude : '—'}
+                                                {gate.latitude != null ? gate.latitude.toFixed(5) : '—'}, {gate.longitude != null ? gate.longitude.toFixed(5) : '—'}
                                             </span>
                                         </td>
                                         <td data-label="Status">
@@ -292,9 +270,6 @@ function StatusTablesView({ filter: filterProp, setFilter: setFilterProp }) {
                         })}
                     </tbody>
                 </table>
-            ) : (
-                <MapView search={search} statusFilter={filter} />
-            )}
         </div>
     );
 }

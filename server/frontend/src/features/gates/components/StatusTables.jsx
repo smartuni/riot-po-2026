@@ -20,7 +20,6 @@ import {
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import WarningIcon from "@mui/icons-material/Warning";
-import { MapView } from "../../map";
 import StatusChangedDialog from "./StatusChangedDialog";
 
 const statusInfo = (status) => {
@@ -98,7 +97,6 @@ function StatusTables({ filter: filterProp, setFilter: setFilterProp }) {
 
     const [search, setSearch] = useState("");
     const [filterLocal, setFilterLocal] = useState("");
-    const [view, setView] = useState("list");
     const [selectedGate, setSelectedGate] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [bulkRequestedStatus, setBulkRequestedStatus] = useState("");
@@ -242,7 +240,7 @@ function StatusTables({ filter: filterProp, setFilter: setFilterProp }) {
     if (gatesError || activitiesError) {
         return (
             <div className="card" style={{ padding: '16px' }}>
-                <div style={{ padding: '16px', background: 'var(--red-100)', borderRadius: '8px', color: 'var(--red-600)' }}>
+                <div style={{ padding: '16px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', color: 'var(--red-600)' }}>
                     {gatesError ? 'Failed to load gates data. ' : ''}
                     {activitiesError ? 'Failed to load activities data. ' : ''}
                 </div>
@@ -277,29 +275,9 @@ function StatusTables({ filter: filterProp, setFilter: setFilterProp }) {
                 </div>
 
                 <div style={{ flex: 1 }} />
-
-                <div className="filter-tabs" role="tablist">
-                    <button
-                        role="tab"
-                        aria-selected={view === 'list'}
-                        className={`filter-tab${view === 'list' ? ' active' : ''}`}
-                        onClick={() => setView("list")}
-                    >
-                        List View
-                    </button>
-                    <button
-                        role="tab"
-                        aria-selected={view === 'map'}
-                        className={`filter-tab${view === 'map' ? ' active' : ''}`}
-                        onClick={() => setView("map")}
-                    >
-                        Map View
-                    </button>
-                </div>
             </div>
 
-            {view === "list" ? (
-                <>
+            <>
                     <div className={`bulk-bar${filteredGates.length > 0 ? ' visible' : ''}`}>
                         <select
                             className="form-input"
@@ -511,10 +489,7 @@ function StatusTables({ filter: filterProp, setFilter: setFilterProp }) {
                             })}
                         </tbody>
                     </table>
-                </>
-            ) : (
-                <MapView search={search} statusFilter={filter} />
-            )}
+            </>
 
             <StatusChangedDialog
                 open={dialogOpen}
