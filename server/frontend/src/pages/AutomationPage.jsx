@@ -12,7 +12,6 @@ import {
   DialogActions,
   Button,
   Typography,
-  TextField,
   Checkbox,
   Alert,
   AlertTitle,
@@ -257,7 +256,7 @@ const AutomationPage = () => {
             <span style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: '36px', height: '36px', borderRadius: '8px',
-              background: 'var(--blue-50)', color: 'var(--blue-600)',
+              background: 'rgba(59,130,246,0.1)', color: 'var(--blue-600)',
             }}>
               <WaterDropIcon fontSize="small" />
             </span>
@@ -271,22 +270,29 @@ const AutomationPage = () => {
         </div>
 
         <div style={{ padding: '20px', display: 'flex', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          <TextField
-            label="Water Level (meters)"
-            type="number"
-            value={waterLevelInput}
-            onChange={(e) => setWaterLevelInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleCalculate(); }}
-            error={!!inputError}
-            helperText={inputError || 'Range: 0–10 meters (e.g. 3.5)'}
-            inputProps={{ min: 0, max: 100, step: 'any' }}
-            size="small"
-            style={{ width: '240px' }}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label className="form-label" htmlFor="water-level-input">Water Level (meters)</label>
+            <input
+              id="water-level-input"
+              className="form-input"
+              type="number"
+              value={waterLevelInput}
+              onChange={(e) => setWaterLevelInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleCalculate(); }}
+              min={0}
+              max={100}
+              step="any"
+              placeholder="e.g. 3.5"
+              style={{ width: '240px', borderColor: inputError ? 'var(--red-600)' : 'var(--border)' }}
+            />
+            <span style={{ fontSize: '12px', color: inputError ? 'var(--red-600)' : 'var(--text-secondary)' }}>
+              {inputError || 'Range: 0–10 meters (e.g. 3.5)'}
+            </span>
+          </div>
           <button
             className="btn btn-primary"
             onClick={handleCalculate}
-            style={{ height: '40px' }}
+            style={{ height: '40px', marginTop: '20px' }}
           >
             Calculate
           </button>
@@ -343,7 +349,7 @@ const AutomationPage = () => {
               <span style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 width: '36px', height: '36px', borderRadius: '8px',
-                background: 'var(--amber-100)', color: 'var(--amber-600)',
+                background: 'rgba(245,158,11,0.1)', color: 'var(--amber-600)',
               }}>
                 <WarningIcon fontSize="small" />
               </span>
