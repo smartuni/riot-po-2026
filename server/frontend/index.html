@@ -14,7 +14,9 @@
     (function () {
       var saved = sessionStorage.getItem('sensemante-dark');
       if (saved === 'true' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.body.classList.add('dark');
+        document.addEventListener('DOMContentLoaded', function () {
+          document.body.classList.add('dark');
+        });
       }
     })();
   </script>
