@@ -53,7 +53,7 @@ public class NodeManagementService {
 
     public List<Node> getAllNodes() {
         return nodeRepository.findAll().stream()
-                .map(e -> new Node(e.getId(), e.getName(), e.getPublicKey()))
+                .map(e -> new Node(e.getId(), e.getName(), e.getPublicKey(), e.getCreatedAt()))
                 .collect(Collectors.toList());
     }
 
@@ -64,7 +64,7 @@ public class NodeManagementService {
         entity.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         entity.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         NodeEntity saved = nodeRepository.save(entity);
-        return new Node(saved.getId(), saved.getName(), saved.getPublicKey());
+        return new Node(saved.getId(), saved.getName(), saved.getPublicKey(), saved.getCreatedAt());
     }
 
     @Transactional

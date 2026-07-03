@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -114,6 +115,7 @@ class NodeManagementServiceTest {
             entity.setId(1L);
             entity.setName("test-node");
             entity.setPublicKey("pub-key");
+            entity.setCreatedAt(Timestamp.valueOf("2026-01-01 00:00:00"));
 
             when(nodeRepository.findAll()).thenReturn(List.of(entity));
 
@@ -122,6 +124,7 @@ class NodeManagementServiceTest {
             assertThat(nodes.get(0).getId()).isEqualTo(1L);
             assertThat(nodes.get(0).getName()).isEqualTo("test-node");
             assertThat(nodes.get(0).getPublicKey()).isEqualTo("pub-key");
+            assertThat(nodes.get(0).getCreatedAt()).isEqualTo(Timestamp.valueOf("2026-01-01 00:00:00"));
         }
 
         @Test
@@ -130,6 +133,7 @@ class NodeManagementServiceTest {
             savedEntity.setId(1L);
             savedEntity.setName("new-node");
             savedEntity.setPublicKey("new-key");
+            savedEntity.setCreatedAt(Timestamp.valueOf("2026-01-01 12:00:00"));
 
             when(nodeRepository.save(any(NodeEntity.class))).thenReturn(savedEntity);
 
@@ -138,6 +142,7 @@ class NodeManagementServiceTest {
             assertThat(result.getId()).isEqualTo(1L);
             assertThat(result.getName()).isEqualTo("new-node");
             assertThat(result.getPublicKey()).isEqualTo("new-key");
+            assertThat(result.getCreatedAt()).isEqualTo(Timestamp.valueOf("2026-01-01 12:00:00"));
             verify(nodeRepository).save(argThat(e ->
                     e.getName().equals("new-node") &&
                     e.getPublicKey().equals("new-key")
