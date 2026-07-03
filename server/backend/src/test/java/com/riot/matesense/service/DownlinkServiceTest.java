@@ -1,5 +1,13 @@
 package com.riot.matesense.service;
 
+import COSE.AlgorithmID;
+import COSE.HeaderKeys;
+import COSE.KeyKeys;
+import COSE.Message;
+import COSE.MessageTag;
+import COSE.OneKey;
+import COSE.Sign1Message;
+import com.upokecenter.cbor.CBORObject;
 import org.junit.jupiter.api.Test;
 
 import java.util.Base64;
@@ -14,6 +22,8 @@ class DownlinkServiceTest {
 
     private static final byte[] TEST_SIGNING_KEY_SEED = HEX.parseHex(
             "ce65cd03fc31cc7137f193e4e0696cf31a15a3507959f5eebdaa849a8cbb7c9d");
+    private static final byte[] TEST_PUBLIC_KEY = HEX.parseHex(
+            "24ccc1fa01cb1e92d541cbac95e6f9e52c16a874b01a29e59aa9c6da824b6248");
     private static final byte[] TEST_KID = HEX.parseHex("12121212");
 
     @Test
@@ -47,20 +57,13 @@ class DownlinkServiceTest {
     }
 
     @Test
-    void buildSignedGateCommandCbor_containsCoseSignature() {
-        String base64 = DownlinkService.buildSignedGateCommandCbor(1, 0, TEST_SIGNING_KEY_SEED, TEST_KID);
-        byte[] decoded = Base64.getDecoder().decode(base64);
+    void buildSignedGateCommandCbor_containsCoseSignature() throws Exception {
+        byte[] cose = CoseSign1Encoder.buildCoseSign1(TEST_KID, new byte[]{0x01, 0x02, 0x03}, TEST_SIGNING_KEY_SEED);
 
-        // The last CBOR element is the signature byte string (bstr)
-        // bstr of 79 bytes: 0x58 0x4F + 79 bytes
-        int sigBstrHdrPos = decoded.length - 79 - 2;
-        assertThat(decoded[sigBstrHdrPos] & 0xFF).isEqualTo(0x58);
-        assertThat(decoded[sigBstrHdrPos + 1] & 0xFF).isEqualTo(0x4F);
-
-        // Extract the COSE Sign1 and verify it starts with array(4) = 0x84
-        byte[] cose = new byte[79];
-        System.arraycopy(decoded, sigBstrHdrPos + 2, cose, 0, 79);
-        assertThat(cose[0] & 0xFF).isEqualTo(0x84);
+        Sign1Message message = (Sign1Message) Message.DecodeFromBytes(cose, MessageTag.Sign1);
+        assertThat(message.findAttribute(HeaderKeys.Algorithm)).isEqualTo(AlgorithmID.EDDSA.AsCBOR());
+        assertThat(message.findAttribute(HeaderKeys.KID).GetByteString()).isEqualTo(TEST_KID);
+        assertThat(message.validate(buildVerificationKey(TEST_PUBLIC_KEY))).isTrue();
     }
 
     @Test
@@ -78,18 +81,18 @@ class DownlinkServiceTest {
     }
 
     @Test
-    void signEd25519_produces64ByteSignature() {
+    void buildCoseSign1_validatesWithPublicKey() throws Exception {
         byte[] data = new byte[]{0x01, 0x02, 0x03};
-        byte[] sig = CoseSign1Encoder.signEd25519(TEST_SIGNING_KEY_SEED, data);
-        assertThat(sig).hasSize(64);
+        byte[] cose = CoseSign1Encoder.buildCoseSign1(TEST_KID, data, TEST_SIGNING_KEY_SEED);
+        Sign1Message message = (Sign1Message) Message.DecodeFromBytes(cose, MessageTag.Sign1);
+        assertThat(message.validate(buildVerificationKey(TEST_PUBLIC_KEY))).isTrue();
     }
 
-    @Test
-    void signEd25519_differentInputsProduceDifferentSignatures() {
-        byte[] data1 = new byte[]{0x01, 0x02, 0x03};
-        byte[] data2 = new byte[]{0x01, 0x02, 0x04};
-        byte[] sig1 = CoseSign1Encoder.signEd25519(TEST_SIGNING_KEY_SEED, data1);
-        byte[] sig2 = CoseSign1Encoder.signEd25519(TEST_SIGNING_KEY_SEED, data2);
-        assertThat(HEX.formatHex(sig1)).isNotEqualTo(HEX.formatHex(sig2));
+    private static OneKey buildVerificationKey(byte[] publicKey) throws Exception {
+        CBORObject keyMap = CBORObject.NewMap();
+        keyMap.Add(KeyKeys.KeyType.AsCBOR(), KeyKeys.KeyType_OKP);
+        keyMap.Add(KeyKeys.OKP_Curve.AsCBOR(), KeyKeys.OKP_Ed25519);
+        keyMap.Add(KeyKeys.OKP_X.AsCBOR(), CBORObject.FromObject(publicKey));
+        return new OneKey(keyMap);
     }
 }
