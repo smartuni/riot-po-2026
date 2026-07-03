@@ -103,8 +103,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .setAllowedOrigins(allowedOrigins)
+        var endpoint = registry.addEndpoint("/ws")
                 .addInterceptors(new HandshakeInterceptor() {
                     @Override
                     public boolean beforeHandshake(ServerHttpRequest request,
@@ -132,5 +131,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         // no-op
                     }
                 });
+        if (java.util.Arrays.asList(allowedOrigins).contains("*")) {
+            endpoint.setAllowedOriginPatterns("*");
+        } else {
+            endpoint.setAllowedOrigins(allowedOrigins);
+        }
     }
 }
