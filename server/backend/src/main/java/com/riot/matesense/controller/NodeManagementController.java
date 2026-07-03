@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/nodes")
+@RequestMapping("nodes")
 public class NodeManagementController {
 
     private final NodeManagementService nodeManagementService;
