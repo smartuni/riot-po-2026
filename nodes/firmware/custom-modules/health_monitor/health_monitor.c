@@ -20,6 +20,7 @@ int health_monitor_init(health_monitor_t* instance, int low_battery_threshold_mv
 	instance->low_battery_threshold_mv = low_battery_threshold_mv;
 	instance->battery_update_period_sec = battery_update_period_sec;
 	instance->is_low_battery = false;
+	instance->battery_monitor_running = false;
 	battery_voltage_monitor_init(&instance->battery_instance);
 
 	instance->shock_detector_update_period_sec = shock_detector_update_period_sec;
@@ -37,8 +38,9 @@ static void serialize_and_send(const health_monitor_payload_t* payload) {
 	health_monitor_serialize_record_no_sig(payload, buffer, &buff_size);
 	LOG_DEBUG("[health_monitor.c:%d] Serialized health monitor payload, size: %d bytes\n", __LINE__, buff_size);
 	for (size_t i = 0; i < buff_size; i++) {
-		LOG_DEBUG("0x%02X\n", buffer[i]);
+		LOG_DEBUG("0x%02X", buffer[i]);
 	}
+	LOG_DEBUG("\n");
 	//send the payload via lorawan
 	int status = send_lorawan_packet(buffer, buff_size);
 	if (status == 0) {
@@ -49,8 +51,9 @@ static void serialize_and_send(const health_monitor_payload_t* payload) {
 }
 
 static void* battery_function(void* instance_void) {
+	//LOG_DEBUG("[health_monitor.c:%d] Starting the battery monitoring thread...\n", __LINE__);
 	health_monitor_t* instance = (health_monitor_t*)instance_void;
-	while (instance->running) {
+	while (instance->battery_monitor_running) {
 		//init the payload
 		health_monitor_payload_t payload;
 
@@ -99,6 +102,8 @@ int health_monitor_start(health_monitor_t* instance) {
 	// 	return -1;
 	// }
 
+	LOG_DEBUG("[health_monitor.c:%d] Starting the battery monitoring thread...\n", __LINE__);
+	instance->battery_monitor_running = true;
 	instance->battery_thread_pid = thread_create(instance->battery_thread_stack,
 												 sizeof(instance->battery_thread_stack),
 												 THREAD_PRIORITY_MAIN - 1,

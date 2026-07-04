@@ -35,11 +35,12 @@ typedef struct {
 	battery_voltage_monitor_t battery_instance;
 	int low_battery_threshold_mv;
 	bool is_low_battery;
-	volatile int battery_update_period_sec;
+	int battery_update_period_sec;
+	bool battery_monitor_running;
 
-	shock_detector_t shock_instance;
+	//shock_detector_t shock_instance;
 	volatile int shock_detector_update_period_sec;
-	volatile bool running;
+	//volatile bool running;
 } health_monitor_t;
 
 health_monitor_t* health_monitor_new(int low_battery_threshold_mv, int battery_update_period_sec, int shock_detector_update_period_sec);

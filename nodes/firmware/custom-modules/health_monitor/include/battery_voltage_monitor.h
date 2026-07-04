@@ -68,7 +68,6 @@ typedef struct {
 	int prev_voltage_mv;
 	battery_status_t last_battery_status;
 	//4. bool and char
-	//volatile bool running;
 } battery_voltage_monitor_t;
 
 /**
