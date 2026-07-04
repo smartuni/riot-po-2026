@@ -1386,3 +1386,68 @@ body.dark .MuiCircularProgress-root {
   color: var(--amber-600);
   border: 1px solid var(--amber-500);
 }
+
+/* ===== Detail Tabs ===== */
+.detail-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+}
+.detail-tab {
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.detail-tab:hover {
+  color: var(--text);
+}
+.detail-tab.active {
+  color: var(--blue-600);
+  border-bottom-color: var(--blue-600);
+}
+body.dark .detail-tab.active {
+  color: var(--blue-400);
+  border-bottom-color: var(--blue-400);
+}
+.detail-tab-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--slate-100);
+  color: var(--text-secondary);
+  padding: 1px 6px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+body.dark .detail-tab-badge {
+  background: var(--slate-700);
+}
+.detail-tab-panel {
+  padding: 20px;
+}
+
+/* ===== Highlighted metadata field (dark-mode aware) ===== */
+.meta-highlight {
+  background: var(--blue-50);
+  border: 1px solid var(--blue-200);
+}
+body.dark .meta-highlight {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+.meta-highlight-text {
+  color: var(--blue-700);
+}
+body.dark .meta-highlight-text {
+  color: var(--blue-300);
+}

@@ -5,24 +5,21 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import EditIcon from '@mui/icons-material/Edit';
-import CheckIcon from '@mui/icons-material/Check';
-import CloseIcon from '@mui/icons-material/Close';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import InfoIcon from '@mui/icons-material/Info';
+import ListIcon from '@mui/icons-material/List';
 import AppLayout from '../features/shell/components/AppLayout';
 import StatusChangedDialog from '../features/gates/components/StatusChangedDialog';
 import ManualStatusDialog from '../features/gates/components/ManualStatusDialog';
+import GateMetadataCard from '../features/gates/components/GateMetadataCard';
 import { useAppSelector } from '../app/store';
 import {
     useGetGatesQuery,
     useGetActivitiesQuery,
     useDeleteGateMutation,
     useUpdateGatePriorityMutation,
-    useUpdateHeightAboveNNMutation,
 } from '../app/store/api/api';
-
-/* ── helpers: map domain values → Hydro-Blue CSS classes ── */
 
 const statusInfo = (status) => {
     switch (status) {
@@ -86,6 +83,13 @@ const formatFullTimestamp = (timestamp) => {
     return new Date(timestamp).toLocaleString();
 };
 
+const infoGridItem = (label, children) => (
+    <div>
+        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</span>
+        <div style={{ marginTop: '2px' }}>{children}</div>
+    </div>
+);
+
 const GateDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -96,13 +100,11 @@ const GateDetailPage = () => {
     const { data: activities = [], isLoading: activitiesLoading } = useGetActivitiesQuery();
     const [deleteGate] = useDeleteGateMutation();
     const [updateGatePriority] = useUpdateGatePriorityMutation();
-    const [updateHeightAboveNN] = useUpdateHeightAboveNNMutation();
 
     const [statusDialogOpen, setStatusDialogOpen] = useState(false);
     const [manualDialogOpen, setManualDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [heightInput, setHeightInput] = useState('');
-    const [editingHeight, setEditingHeight] = useState(false);
+    const [activeTab, setActiveTab] = useState('overview');
 
     const gate = gates.find((g) => g.id === parseInt(id));
 
@@ -110,7 +112,6 @@ const GateDetailPage = () => {
         .filter((a) => a.gateId === parseInt(id))
         .sort((a, b) => new Date(b.lastTimeStamp) - new Date(a.lastTimeStamp));
 
-    /* ── loading state ── */
     if (gatesLoading || activitiesLoading) {
         return (
             <AppLayout>
@@ -121,7 +122,6 @@ const GateDetailPage = () => {
         );
     }
 
-    /* ── error / not found state ── */
     if (gatesError) {
         return (
             <AppLayout>
@@ -170,32 +170,6 @@ const GateDetailPage = () => {
         }
     };
 
-    const handleHeightSubmit = async () => {
-        const parsed = parseFloat(heightInput);
-        if (isNaN(parsed)) {
-            alert('Please enter a valid number.');
-            return;
-        }
-        try {
-            await updateHeightAboveNN({ gateId: gate.id, heightAboveNN: parsed }).unwrap();
-            setHeightInput('');
-            setEditingHeight(false);
-        } catch (error) {
-            console.error('Failed to update height:', error);
-            alert('Failed to update height.');
-        }
-    };
-
-    const startEditingHeight = () => {
-        setHeightInput(gate.heightAboveNN != null ? String(gate.heightAboveNN) : '');
-        setEditingHeight(true);
-    };
-
-    const cancelEditingHeight = () => {
-        setHeightInput('');
-        setEditingHeight(false);
-    };
-
     return (
         <AppLayout>
             <button
@@ -206,7 +180,6 @@ const GateDetailPage = () => {
                 <ArrowBackIcon fontSize="small" /> Back to Dashboard
             </button>
 
-            {/* ── Gate header (full width) ── */}
             <div className="card" style={{ marginBottom: '16px' }}>
                 <div style={{ padding: '24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
@@ -242,199 +215,149 @@ const GateDetailPage = () => {
                 </div>
             </div>
 
-            {/* ── 2-column layout: info+activities (2/3) | actions (1/3) ── */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', alignItems: 'start' }}>
+                <div className="card">
+                    <div className="detail-tabs">
+                        <button
+                            className={`detail-tab ${activeTab === 'overview' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('overview')}
+                        >
+                            <InfoIcon style={{ fontSize: '16px' }} /> Overview
+                        </button>
+                        <button
+                            className={`detail-tab ${activeTab === 'metadata' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('metadata')}
+                        >
+                            <ListIcon style={{ fontSize: '16px' }} /> Metadata
+                        </button>
+                        <button
+                            className={`detail-tab ${activeTab === 'activities' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('activities')}
+                        >
+                            Activities
+                            <span className="detail-tab-badge">{gateActivities.length}</span>
+                        </button>
+                    </div>
 
-                {/* ── Left column: Gate info + Activities ── */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {/* Gate info card */}
-                    <div className="card">
-                        <div className="card-header">
-                            <span className="card-title">Gate Information</span>
-                        </div>
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(2, 1fr)',
-                            gap: '16px',
-                            padding: '16px 20px',
-                        }}>
-                            <div>
-                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Device ID</span>
-                                <p className="mono" style={{ fontSize: '14px', color: 'var(--text)' }}>{gate.deviceId ?? '—'}</p>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Confidence</span>
-                                <p className="mono" style={{ fontSize: '14px', color: 'var(--text)' }}>
-                                    {gate.confidence != null ? `${gate.confidence}%` : '—'}
-                                    {gate.quality != null && (
-                                        <span style={{ color: 'var(--text-secondary)', fontSize: '12px', marginLeft: '6px' }}>
-                                            ({gate.quality})
+                    {activeTab === 'overview' && (
+                        <div className="detail-tab-panel">
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: '16px',
+                            }}>
+                                {infoGridItem('Device ID', <p className="mono" style={{ fontSize: '14px', color: 'var(--text)' }}>{gate.deviceId ?? '—'}</p>)}
+                                {infoGridItem('Confidence', (
+                                    <p className="mono" style={{ fontSize: '14px', color: 'var(--text)' }}>
+                                        {gate.confidence != null ? `${gate.confidence}%` : '—'}
+                                        {gate.quality != null && (
+                                            <span style={{ color: 'var(--text-secondary)', fontSize: '12px', marginLeft: '6px' }}>
+                                                ({gate.quality})
+                                            </span>
+                                        )}
+                                    </p>
+                                ))}
+                                {infoGridItem('Priority', (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <span className={priorityClass(gate.priority ?? 0)} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                            <span className="priority-dot" />
+                                            {gate.priority ?? 0}
                                         </span>
-                                    )}
-                                </p>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Priority</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '2px' }}>
-                                    <span className={priorityClass(gate.priority ?? 0)} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                        <span className="priority-dot" />
-                                        {gate.priority ?? 0}
-                                    </span>
-                                    {isController && (
-                                        <Select
-                                            value={gate.priority ?? 0}
-                                            onChange={(e) => handlePriorityChange(parseInt(e.target.value))}
-                                            variant="outlined"
-                                            size="small"
-                                            style={{ minWidth: 60 }}
-                                        >
-                                            {[0, 1, 2, 3].map((level) => (
-                                                <MenuItem key={level} value={level}>
-                                                    {level}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    )}
-                                </div>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Height above NN</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                                    {editingHeight && isController ? (
-                                        <>
-                                            <input
-                                                className="form-input"
-                                                type="number"
-                                                step="any"
-                                                min="0"
-                                                value={heightInput}
-                                                onChange={(e) => setHeightInput(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') handleHeightSubmit();
-                                                    if (e.key === 'Escape') cancelEditingHeight();
-                                                }}
-                                                autoFocus
-                                                style={{ width: '80px', fontSize: '13px', padding: '4px 8px' }}
-                                            />
-                                            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>m</span>
-                                            <button
-                                                className="action-link"
-                                                onClick={handleHeightSubmit}
-                                                style={{ color: 'var(--green-600)' }}
+                                        {isController && (
+                                            <Select
+                                                value={gate.priority ?? 0}
+                                                onChange={(e) => handlePriorityChange(parseInt(e.target.value))}
+                                                variant="outlined"
+                                                size="small"
+                                                style={{ minWidth: 60 }}
                                             >
-                                                <CheckIcon fontSize="small" />
-                                            </button>
-                                            <button
-                                                className="action-link"
-                                                onClick={cancelEditingHeight}
-                                                style={{ color: 'var(--text-secondary)' }}
-                                            >
-                                                <CloseIcon fontSize="small" />
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <p className="mono" style={{ fontSize: '14px', color: 'var(--text)', margin: 0 }}>
-                                                {gate.heightAboveNN != null ? `${gate.heightAboveNN} m` : '—'}
-                                            </p>
-                                            {isController && (
-                                                <button
-                                                    className="action-link"
-                                                    onClick={startEditingHeight}
-                                                    style={{ padding: '2px', display: 'inline-flex', alignItems: 'center' }}
-                                                >
-                                                    <EditIcon fontSize="small" style={{ fontSize: '16px' }} />
-                                                </button>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Requested Status</span>
-                                <div style={{ marginTop: '4px' }}>
+                                                {[0, 1, 2, 3].map((level) => (
+                                                    <MenuItem key={level} value={level}>{level}</MenuItem>
+                                                ))}
+                                            </Select>
+                                        )}
+                                    </div>
+                                ))}
+                                {infoGridItem('Height above NN', (
+                                    <p className="mono" style={{ fontSize: '14px', color: 'var(--text)' }}>
+                                        {gate.heightAboveNN != null ? `${gate.heightAboveNN} m` : '—'}
+                                    </p>
+                                ))}
+                                {infoGridItem('Requested Status', (
                                     <span className={`status-badge ${rsi.cls}`}>
                                         <span className="status-dot" />
                                         {rsi.label}
                                     </span>
-                                </div>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Pending Job</span>
-                                <div style={{ marginTop: '4px' }}>
+                                ))}
+                                {infoGridItem('Pending Job', (
                                     <span className={`status-badge ${pji.cls}`}>
                                         <span className="status-dot" />
                                         {pji.label}
                                     </span>
-                                </div>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Last Update</span>
-                                <p className="mono" style={{ fontSize: '13px', color: 'var(--text)' }}>
-                                    {formatFullTimestamp(gate.lastTimeStamp)}
-                                </p>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Coordinates</span>
-                                <p className="coords" style={{ fontSize: '13px' }}>
-                                    {gate.latitude != null ? gate.latitude.toFixed(5) : '—'}, {gate.longitude != null ? gate.longitude.toFixed(5) : '—'}
-                                </p>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>State Confirmation</span>
-                                <div style={{ marginTop: '4px' }}>
+                                ))}
+                                {infoGridItem('Last Update', (
+                                    <p className="mono" style={{ fontSize: '13px', color: 'var(--text)' }}>
+                                        {formatFullTimestamp(gate.lastTimeStamp)}
+                                    </p>
+                                ))}
+                                {infoGridItem('Coordinates', (
+                                    <p className="coords" style={{ fontSize: '13px' }}>
+                                        {gate.latitude != null ? gate.latitude.toFixed(5) : '—'}, {gate.longitude != null ? gate.longitude.toFixed(5) : '—'}
+                                    </p>
+                                ))}
+                                {infoGridItem('State Confirmation', (
                                     <span className={`status-badge ${sci.cls}`}>
                                         <span className="status-dot" />
                                         {sci.label}
                                     </span>
-                                </div>
+                                ))}
                             </div>
                         </div>
-                    </div>
+                    )}
 
-                    {/* Activities card */}
-                    <div className="card">
-                        <div className="card-header">
-                            <span className="card-title">Activities</span>
-                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                {gateActivities.length} total
-                            </span>
+                    {activeTab === 'metadata' && (
+                        <div className="detail-tab-panel">
+                            <GateMetadataCard gate={gate} isController={isController} embedded={true} />
                         </div>
-                        <div className="activity-list">
-                            {gateActivities.length === 0 ? (
-                                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-                                    No activities available for this gate.
-                                </div>
-                            ) : (
-                                gateActivities.map((activity, i) => {
-                                    const ati = activityTypeInfo(activity.activityType);
-                                    return (
-                                        <div className="activity-item" key={activity.id || i}>
-                                            <div className={`activity-dot ${ati.dotClass}`}>
-                                                {ati.icon}
-                                            </div>
-                                            <div>
-                                                <div className="activity-text">
-                                                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600, marginRight: '6px' }}>
-                                                        {activity.activityType || 'UNKNOWN'}
-                                                    </span>
-                                                    {activity.message || ''}
+                    )}
+
+                    {activeTab === 'activities' && (
+                        <div className="detail-tab-panel">
+                            <div className="activity-list" style={{ padding: 0 }}>
+                                {gateActivities.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                                        No activities available for this gate.
+                                    </div>
+                                ) : (
+                                    gateActivities.map((activity, i) => {
+                                        const ati = activityTypeInfo(activity.activityType);
+                                        return (
+                                            <div className="activity-item" key={activity.id || i}>
+                                                <div className={`activity-dot ${ati.dotClass}`}>
+                                                    {ati.icon}
                                                 </div>
-                                                <div className="activity-time">
-                                                    {formatFullTimestamp(activity.lastTimeStamp)}
-                                                    {activity.workerId != null && ` · Worker: ${activity.workerId}`}
-                                                    {activity.requestedStatus && ` · Requested: ${activity.requestedStatus}`}
+                                                <div>
+                                                    <div className="activity-text">
+                                                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600, marginRight: '6px' }}>
+                                                            {activity.activityType || 'UNKNOWN'}
+                                                        </span>
+                                                        {activity.message || ''}
+                                                    </div>
+                                                    <div className="activity-time">
+                                                        {formatFullTimestamp(activity.lastTimeStamp)}
+                                                        {activity.workerId != null && ` · Worker: ${activity.workerId}`}
+                                                        {activity.requestedStatus && ` · Requested: ${activity.requestedStatus}`}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    );
-                                })
-                            )}
+                                        );
+                                    })
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
-                {/* ── Right column: Actions ── */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {isController && (
                         <div className="card">
@@ -467,7 +390,6 @@ const GateDetailPage = () => {
                         </div>
                     )}
 
-                    {/* Quick stats sidebar */}
                     <div className="card">
                         <div className="card-header">
                             <span className="card-title">Quick Stats</span>
@@ -487,7 +409,7 @@ const GateDetailPage = () => {
                                 </span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Height über NN</span>
+                                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Height above NN</span>
                                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '14px', fontWeight: 600 }}>
                                     {gate.heightAboveNN != null ? `${gate.heightAboveNN} m` : '—'}
                                 </span>
