@@ -50,15 +50,15 @@ battery_voltage_monitor_t* battery_voltage_monitor_new(void) {
 		LOG_DEBUG("[battery_voltage_monitor.c:%d] Error setting up voltage adc\n", __LINE__);
 		return NULL;
 	}
-	battery_voltage_monitor_t* monitor = (battery_voltage_monitor_t*)malloc(sizeof(battery_voltage_monitor_t));
-	if (monitor == NULL) {
+	battery_voltage_monitor_t* instance = (battery_voltage_monitor_t*)malloc(sizeof(battery_voltage_monitor_t));
+	if (instance == NULL) {
 		LOG_DEBUG("[battery_voltage_monitor.c:%d] Failed to allocate memory for battery voltage monitor", __LINE__);
 		return NULL;
 	}
 	//monitor->threshold_mv = threshold_mv;
-	monitor->prev_voltage_mv = -1;
+	instance->prev_voltage_mv = -1;
 
-	return monitor;
+	return instance;
 }
 
 static voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const int current_voltage_mv) {
