@@ -3,14 +3,18 @@ import { useGetActivitiesQuery } from '../../../app/store/api/api';
 
 const getDotClass = (type) => {
   switch (type) {
-    case 'status_change':
-    case 'status':
-      return 'green';
-    case 'error':
-    case 'alert':
-      return 'red';
-    case 'warning':
+    case 'SENSOR_NEW':
+      return 'blue';
+    case 'SENSOR_VALUE_CHANGED':
       return 'amber';
+    case 'SENSOR_VALUE_KEEPALIVE':
+      return 'blue';
+    case 'SENSEMATE_WORKER_REPORT':
+      return 'green';
+    case 'TARGET_STATE_REQUEST':
+      return 'amber';
+    case 'MANUAL_STATUS_SET':
+      return 'red';
     default:
       return 'blue';
   }
@@ -18,14 +22,18 @@ const getDotClass = (type) => {
 
 const getDotIcon = (type) => {
   switch (type) {
-    case 'status_change':
-    case 'status':
-      return '✓';
-    case 'error':
-    case 'alert':
-      return '⚠️';
-    case 'warning':
-      return '⚡';
+    case 'SENSOR_NEW':
+      return '🆕';
+    case 'SENSOR_VALUE_CHANGED':
+      return '🔄';
+    case 'SENSOR_VALUE_KEEPALIVE':
+      return '📡';
+    case 'SENSEMATE_WORKER_REPORT':
+      return '👷';
+    case 'TARGET_STATE_REQUEST':
+      return '📋';
+    case 'MANUAL_STATUS_SET':
+      return '✋';
     default:
       return '📊';
   }
@@ -89,8 +97,8 @@ export default function ActivityPanel() {
         ) : (
           recent.map((activity, i) => (
             <div className="activity-item" key={activity.id || i}>
-              <div className={`activity-dot ${getDotClass(activity.type)}`}>
-                {getDotIcon(activity.type)}
+              <div className={`activity-dot ${getDotClass(activity.activityType)}`}>
+                {getDotIcon(activity.activityType)}
               </div>
               <div>
                 <div className="activity-text">
