@@ -55,7 +55,7 @@ int battery_voltage_monitor_init(battery_voltage_monitor_t* instance) {
 		LOG_DEBUG("[battery_voltage_monitor.c:%d] Failed to allocate memory for battery voltage monitor", __LINE__);
 		return -1;
 	}
-	//monitor->threshold_mv = threshold_mv;
+	//instance->threshold_mv = threshold_mv;
 	instance->prev_voltage_mv = -1;
 
 	return 0;
@@ -72,14 +72,14 @@ static voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const int 
 	return VOLTAGE_TREND_UNKNOWN;
 }
 
-battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* monitor) {
+battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* instance) {
 	battery_info_t info;
 	int voltage_mv = get_battery_voltage();
-	if (monitor->prev_voltage_mv == -1) {
-		monitor->prev_voltage_mv = voltage_mv;
+	if (instance->prev_voltage_mv == -1) {
+		instance->prev_voltage_mv = voltage_mv;
 	}
 	LOG_DEBUG("[battery_voltage_monitor.c:%d] Current battery voltage: %d mV\n", __LINE__, voltage_mv);
-	voltage_trend trend = analyze_voltage_trend(monitor->prev_voltage_mv, voltage_mv);
+	voltage_trend trend = analyze_voltage_trend(instance->prev_voltage_mv, voltage_mv);
 	switch (trend) {
 		case VOLTAGE_TREND_INCREASING: {
 			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is increasing\n", __LINE__);
@@ -95,7 +95,7 @@ battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* mon
 		}
 		case VOLTAGE_TREND_STABLE: {
 			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is stable\n", __LINE__);
-			info.battery_status = monitor->last_battery_status;
+			info.battery_status = instance->last_battery_status;
 			info.voltage_mv = voltage_mv;
 			break;
 		}
@@ -106,16 +106,16 @@ battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* mon
 			break;
 		}
 	}
-	monitor->last_battery_status = info.battery_status;
-	monitor->prev_voltage_mv = voltage_mv;
+	instance->last_battery_status = info.battery_status;
+	instance->prev_voltage_mv = voltage_mv;
 	return info;
 }
 
-int battery_voltage_monitor_delete(battery_voltage_monitor_t* monitor) {
-	if (monitor == NULL) {
+int battery_voltage_monitor_delete(battery_voltage_monitor_t* instance) {
+	if (instance == NULL) {
 		LOG_DEBUG("[battery_voltage_monitor.c:%d] Invalid battery voltage monitor", __LINE__);
 		return -1;
 	}
-	free(monitor);
+	free(instance);
 	return 0;
 }
