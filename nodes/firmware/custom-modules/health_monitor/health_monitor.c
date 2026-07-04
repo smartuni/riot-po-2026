@@ -45,10 +45,10 @@ static void* battery_function(void* instance_void) {
 		//TODO get battery info
 		battery_info_t battery_info = battery_voltage_monitor_fetch_info(instance->battery_monitor);
 		switch (battery_info.battery_status) {
-			case CHARGING:
+			case BATTERY_STATE_CHARGING:
 				payload.header = BATTERY_CHARGING;
 				break;
-			case DISCHARGING:
+			case BATTERY_STATE_DISCHARGING:
 				payload.header = BATTERY_DISCHARGING;
 				break;
 			default:
