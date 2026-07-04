@@ -43,21 +43,21 @@ static int get_battery_voltage(void) {
 	return (int)voltage_mv;
 }
 
-int battery_voltage_monitor_init(battery_voltage_monitor_t* instance) {
+battery_voltage_monitor_t* battery_voltage_monitor_new(void) {
 	gpio_t adc_pin = GPIO_PIN(0, 14);
 	int res = voltage_adc_setup(adc_pin, AIN7_BAT);
 	if (res != 0) {
 		LOG_DEBUG("[battery_voltage_monitor.c:%d] Error setting up voltage adc\n", __LINE__);
-		return -1;
+		return NULL;
 	}
-	instance = (battery_voltage_monitor_t*)malloc(sizeof(battery_voltage_monitor_t));
+	battery_voltage_monitor_t* instance = (battery_voltage_monitor_t*)malloc(sizeof(battery_voltage_monitor_t));
 	if (instance == NULL) {
 		LOG_DEBUG("[battery_voltage_monitor.c:%d] Failed to allocate memory for battery voltage monitor", __LINE__);
-		return -1;
+		return NULL;
 	}
 	instance->prev_voltage_mv = -1;
 
-	return 0;
+	return instance;
 }
 
 static voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const int current_voltage_mv) {
