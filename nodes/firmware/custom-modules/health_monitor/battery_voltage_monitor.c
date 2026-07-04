@@ -73,40 +73,36 @@ static voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const int 
 
 battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* instance) {
 	battery_info_t info;
-	int voltage_mv = get_battery_voltage();
+	info.voltage_mv = get_battery_voltage();
 	if (instance->prev_voltage_mv == -1) {
-		instance->prev_voltage_mv = voltage_mv;
+		instance->prev_voltage_mv = info.voltage_mv;
 	}
-	LOG_DEBUG("[battery_voltage_monitor.c:%d] Current battery voltage: %d mV\n", __LINE__, voltage_mv);
-	voltage_trend trend = analyze_voltage_trend(instance->prev_voltage_mv, voltage_mv);
+	LOG_DEBUG("[battery_voltage_monitor.c:%d] Current battery voltage: %d mV\n", __LINE__, info.voltage_mv);
+	voltage_trend trend = analyze_voltage_trend(instance->prev_voltage_mv, info.voltage_mv);
 	switch (trend) {
 		case VOLTAGE_TREND_INCREASING: {
 			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is increasing\n", __LINE__);
 			info.battery_status = BATTERY_STATE_CHARGING;
-			info.voltage_mv = voltage_mv;
 			break;
 		}
 		case VOLTAGE_TREND_DECREASING: {
 			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is decreasing\n", __LINE__);
 			info.battery_status = BATTERY_STATE_DISCHARGING;
-			info.voltage_mv = voltage_mv;
 			break;
 		}
 		case VOLTAGE_TREND_STABLE: {
 			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is stable\n", __LINE__);
 			info.battery_status = instance->last_battery_status;
-			info.voltage_mv = voltage_mv;
 			break;
 		}
 		default: {
 			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery status is unknown\n", __LINE__);
 			info.battery_status = BATTERY_STATE_UNKNOWN;
-			info.voltage_mv = voltage_mv;
 			break;
 		}
 	}
 	instance->last_battery_status = info.battery_status;
-	instance->prev_voltage_mv = voltage_mv;
+	instance->prev_voltage_mv = info.voltage_mv;
 	return info;
 }
 
