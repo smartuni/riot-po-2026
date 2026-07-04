@@ -33,12 +33,12 @@ int health_monitor_init(health_monitor_t* instance, int low_battery_threshold_mv
 
 static void serialize_and_send(const health_monitor_payload_t* payload) {
 	//serialize the payload
-	uint8_t buffer[HEALTH_MONITOR_BUFFER_SIZE];
+	uint8_t buffer[64]; //TODO fix this 64 magic number. Using HEALTH_MONITOR_BUFFER_SIZE causes buffer overflow
 	size_t buff_size = sizeof(buffer);
 	health_monitor_serialize_record_no_sig(payload, buffer, &buff_size);
 	LOG_DEBUG("[health_monitor.c:%d] Serialized health monitor payload, size: %d bytes\n", __LINE__, buff_size);
 	for (size_t i = 0; i < buff_size; i++) {
-		LOG_DEBUG("0x%02X", buffer[i]);
+		LOG_DEBUG("0x%02X ", buffer[i]);
 	}
 	LOG_DEBUG("\n");
 	//send the payload via lorawan
