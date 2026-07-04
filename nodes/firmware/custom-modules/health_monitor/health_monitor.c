@@ -1,21 +1,21 @@
 #include "health_monitor.h"
 
 health_monitor_t* health_monitor_new(void) {
-	health_monitor_t* monitor = (health_monitor_t*)malloc(sizeof(health_monitor_t));
-	monitor->update_period_sec = 10; // default update period
-	monitor->low_battery_threshold_mv = 3700; // default low battery threshold
-	monitor->is_low_battery = false;
-	monitor->battery_update_period_sec = 10; // default battery update period
+	health_monitor_t* instance = (health_monitor_t*)malloc(sizeof(health_monitor_t));
+	instance->update_period_sec = 10; // default update period
+	instance->low_battery_threshold_mv = 3700; // default low battery threshold
+	instance->is_low_battery = false;
+	instance->battery_update_period_sec = 10; // default battery update period
 
 	//init battery monitoring
-	monitor->battery_monitor = battery_voltage_monitor_new();
+	instance->battery_monitor = battery_voltage_monitor_new();
 
 	//init shock detection
 	// int shock_threshold = 15000; // TODO adjust this later
 	// int sampling_period_ms = 1; //to give other threads a chance to run
-	// monitor->shock_detector = shock_detector_new(shock_threshold, sampling_period_ms); // TODO adjust parameters later
+	// instance->shock_detector = shock_detector_new(shock_threshold, sampling_period_ms); // TODO adjust parameters later
 
-	return monitor;
+	return instance;
 }
 
 static void serialize_and_send(const health_monitor_payload_t* payload) {
@@ -71,35 +71,35 @@ static void* battery_function(void* instance_void) {
 	return NULL;
 }
 
-int health_monitor_start(health_monitor_t* monitor) {
-	if (monitor == NULL) {
+int health_monitor_start(health_monitor_t* instance) {
+	if (instance == NULL) {
 		return -1;
 	}
 	//start shock detection
-	if (monitor->shock_detector) {
-		shock_detector_start(monitor->shock_detector);
+	if (instance->shock_detector) {
+		shock_detector_start(instance->shock_detector);
 	} else {
 		return -1;
 	}
 
-	monitor->battery_thread_pid = thread_create(monitor->battery_thread_stack,
-										sizeof(monitor->battery_thread_stack),
+	instance->battery_thread_pid = thread_create(instance->battery_thread_stack,
+										sizeof(instance->battery_thread_stack),
 										THREAD_PRIORITY_MAIN - 1,
 										THREAD_CREATE_STACKTEST,
 										battery_function,
-										(void*)monitor, "Battery Thread");
+										(void*)instance, "Battery Thread");
 
 	return 0;
 }
 
-int health_monitor_delete(health_monitor_t* monitor) {
-	if (monitor == NULL) {
+int health_monitor_delete(health_monitor_t* instance) {
+	if (instance == NULL) {
 		return -1;
 	}
-	// shock_detector_delete(monitor->shock_detector);
-	// free(monitor->shock_detector);
-	// battery_voltage_monitor_delete(monitor->battery_monitor);
-	// free(monitor->battery_monitor);
-	// free(monitor);
+	// shock_detector_delete(instance->shock_detector);
+	// free(instance->shock_detector);
+	// battery_voltage_monitor_delete(instance->battery_monitor);
+	// free(instance->battery_monitor);
+	// free(instance);
 	return 0;
 }
