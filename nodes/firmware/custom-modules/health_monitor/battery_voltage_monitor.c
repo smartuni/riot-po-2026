@@ -55,7 +55,6 @@ int battery_voltage_monitor_init(battery_voltage_monitor_t* instance) {
 		LOG_DEBUG("[battery_voltage_monitor.c:%d] Failed to allocate memory for battery voltage monitor", __LINE__);
 		return -1;
 	}
-	//instance->threshold_mv = threshold_mv;
 	instance->prev_voltage_mv = -1;
 
 	return 0;

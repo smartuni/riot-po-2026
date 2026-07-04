@@ -1,19 +1,19 @@
 #include "health_monitor.h"
 
-health_monitor_t* health_monitor_new(void) {
+health_monitor_t* health_monitor_new(int low_battery_threshold_mv, int battery_update_period_sec, int shock_detector_update_period_sec) {
 	health_monitor_t* instance = (health_monitor_t*)malloc(sizeof(health_monitor_t));
-	instance->update_period_sec = 10; // default update period
-	instance->low_battery_threshold_mv = 3700; // default low battery threshold
-	instance->is_low_battery = false;
-	instance->battery_update_period_sec = 10; // default battery update period
+	instance->low_battery_threshold_mv = low_battery_threshold_mv;
+	instance->battery_update_period_sec = battery_update_period_sec;
+	instance->shock_detector_update_period_sec = shock_detector_update_period_sec;
 
+	instance->is_low_battery = false;
 	//init battery monitoring
-	battery_voltage_monitor_init(instance->battery_monitor);
+	battery_voltage_monitor_init(instance->battery_instance);
 
 	//init shock detection
 	// int shock_threshold = 15000; // TODO adjust this later
 	// int sampling_period_ms = 1; //to give other threads a chance to run
-	// instance->shock_detector = shock_detector_new(shock_threshold, sampling_period_ms); // TODO adjust parameters later
+	// instance->shock_instance = shock_detector_new(shock_threshold, sampling_period_ms); // TODO adjust parameters later
 
 	return instance;
 }
@@ -42,8 +42,7 @@ static void* battery_function(void* instance_void) {
 		//init the payload
 		health_monitor_payload_t payload;
 
-		//TODO get battery info
-		battery_info_t battery_info = battery_voltage_monitor_fetch_info(instance->battery_monitor);
+		battery_info_t battery_info = battery_voltage_monitor_fetch_info(instance->battery_instance);
 		switch (battery_info.battery_status) {
 			case BATTERY_STATE_CHARGING:
 				payload.header = BATTERY_CHARGING;
@@ -55,14 +54,20 @@ static void* battery_function(void* instance_void) {
 				payload.header = BATTERY_DISCHARGING; // default to discharging if unknown
 				break;
 		}
+		payload.body = battery_info.voltage_mv;
+
 		//report the battery state
 		serialize_and_send(&payload);
 
+		// check for low battery and report if it's not yet reported
 		if (battery_info.voltage_mv < instance->low_battery_threshold_mv && !instance->is_low_battery) {
-			instance->is_low_battery = true;
-			//report low battery even
+			//report low battery one time and set the flag
 			payload.header = BATTERY_LOW;
+			payload.body = battery_info.voltage_mv;
 			serialize_and_send(&payload);
+			instance->is_low_battery = true;
+
+			//reset the low battery flag after the battery voltage goes above the threshold
 		} else if (battery_info.voltage_mv >= instance->low_battery_threshold_mv && instance->is_low_battery) {
 			instance->is_low_battery = false;
 		}
@@ -76,18 +81,18 @@ int health_monitor_start(health_monitor_t* instance) {
 		return -1;
 	}
 	//start shock detection
-	if (instance->shock_detector) {
-		shock_detector_start(instance->shock_detector);
-	} else {
-		return -1;
-	}
+	// if (instance->shock_instance != NULL) {
+	// 	shock_detector_start(instance->shock_instance);
+	// } else {
+	// 	return -1;
+	// }
 
 	instance->battery_thread_pid = thread_create(instance->battery_thread_stack,
-										sizeof(instance->battery_thread_stack),
-										THREAD_PRIORITY_MAIN - 1,
-										THREAD_CREATE_STACKTEST,
-										battery_function,
-										(void*)instance, "Battery Thread");
+												 sizeof(instance->battery_thread_stack),
+												 THREAD_PRIORITY_MAIN - 1,
+												 THREAD_CREATE_STACKTEST,
+												 battery_function,
+												 (void*)instance, "Battery Thread");
 
 	return 0;
 }
