@@ -15,8 +15,6 @@
 #ifndef BATTERY_VOLTAGE_MONITOR_H
 #define BATTERY_VOLTAGE_MONITOR_H
 
-#include "health_monitor_payload.h"
-
 #include "thread.h"
 #include "board.h"
 #include "phydat.h"
@@ -77,15 +75,15 @@ typedef struct {
  * @brief Creates a new battery voltage monitor to the heap
  * @return 0 on success, -1 if memory allocation failed
  */
-int battery_voltage_monitor_init(battery_voltage_monitor_t* monitor);
+int battery_voltage_monitor_init(battery_voltage_monitor_t* instance);
 
-battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* monitor);
+battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* instance);
 
 /**
  * @brief Deletes the battery voltage monitor
  * @param monitor Pointer to the battery voltage monitor
  * @return always return 0
  */
-int battery_voltage_monitor_delete(battery_voltage_monitor_t* monitor);
+int battery_voltage_monitor_delete(battery_voltage_monitor_t* instance);
 
 #endif
