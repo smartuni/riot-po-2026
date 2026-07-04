@@ -8,7 +8,7 @@ health_monitor_t* health_monitor_new(void) {
 	instance->battery_update_period_sec = 10; // default battery update period
 
 	//init battery monitoring
-	instance->battery_monitor = battery_voltage_monitor_new();
+	battery_voltage_monitor_init(instance->battery_monitor);
 
 	//init shock detection
 	// int shock_threshold = 15000; // TODO adjust this later
