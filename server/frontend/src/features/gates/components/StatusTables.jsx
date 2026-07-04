@@ -133,8 +133,11 @@ function StatusTables({ filter: filterProp, setFilter: setFilterProp }) {
 
     const handleBulkRequestedStatusChange = async () => {
         if (!bulkRequestedStatus) return;
+        if (selectedGateIds.size === 0) return;
 
-        const promises = filteredGates.map(async (gate) => {
+        const targetGates = filteredGates.filter(g => selectedGateIds.has(g.id));
+
+        const promises = targetGates.map(async (gate) => {
             try {
                 await requestGateStatusChange({ gateId: gate.id, workerId, requestedStatus: bulkRequestedStatus }).unwrap();
             } catch (error) {
@@ -143,6 +146,7 @@ function StatusTables({ filter: filterProp, setFilter: setFilterProp }) {
         });
 
         await Promise.all(promises);
+        setSelectedGateIds(new Set());
     };
 
     const filteredGates = gates.filter(gate =>
@@ -294,9 +298,9 @@ function StatusTables({ filter: filterProp, setFilter: setFilterProp }) {
                         <button
                             className="btn btn-primary"
                             onClick={handleBulkRequestedStatusChange}
-                            disabled={!bulkRequestedStatus}
+                            disabled={!bulkRequestedStatus || selectedGateIds.size === 0}
                         >
-                            Apply to Filtered
+                            Apply to Selected
                         </button>
 
                         <button
