@@ -50,6 +50,7 @@ battery_voltage_monitor_t* battery_voltage_monitor_new(void) {
 		LOG_DEBUG("[battery_voltage_monitor.c:%d] Failed to allocate memory for battery voltage monitor", __LINE__);
 		return NULL;
 	}
+	battery_voltage_monitor_init(instance);
 	return instance;
 }
 
