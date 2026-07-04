@@ -63,13 +63,13 @@ battery_voltage_monitor_t* battery_voltage_monitor_new(void) {
 
 static voltage_trend analyze_voltage_trend(const int prev_voltage_mv, const int current_voltage_mv) {
 	if (current_voltage_mv > prev_voltage_mv) {
-		return INCREASING;
+		return VOLTAGE_TREND_INCREASING;
 	} else if (current_voltage_mv < prev_voltage_mv) {
-		return DECREASING;
+		return VOLTAGE_TREND_DECREASING;
 	} else if (current_voltage_mv == prev_voltage_mv) {
-		return STABLE;
+		return VOLTAGE_TREND_STABLE;
 	}
-	return UNKNOWN_VOLTAGE_TREND;
+	return VOLTAGE_TREND_UNKNOWN;
 }
 
 battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* monitor) {
@@ -81,19 +81,19 @@ battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* mon
 	LOG_DEBUG("[battery_voltage_monitor.c:%d] Current battery voltage: %d mV\n", __LINE__, voltage_mv);
 	voltage_trend trend = analyze_voltage_trend(monitor->prev_voltage_mv, voltage_mv);
 	switch (trend) {
-		case INCREASING: {
+		case VOLTAGE_TREND_INCREASING: {
 			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is increasing\n", __LINE__);
-			info.battery_status = CHARGING;
+			info.battery_status = BATTERY_STATE_CHARGING;
 			info.voltage_mv = voltage_mv;
 			break;
 		}
-		case DECREASING: {
+		case VOLTAGE_TREND_DECREASING: {
 			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is decreasing\n", __LINE__);
-			info.battery_status = DISCHARGING;
+			info.battery_status = BATTERY_STATE_DISCHARGING;
 			info.voltage_mv = voltage_mv;
 			break;
 		}
-		case STABLE: {
+		case VOLTAGE_TREND_STABLE: {
 			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery voltage is stable\n", __LINE__);
 			info.battery_status = monitor->last_battery_status;
 			info.voltage_mv = voltage_mv;
@@ -101,7 +101,7 @@ battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* mon
 		}
 		default: {
 			LOG_DEBUG("[battery_voltage_monitor.c:%d] Battery status is unknown\n", __LINE__);
-			info.battery_status = UNKNOWN_BATTERY_STATE;
+			info.battery_status = BATTERY_STATE_UNKNOWN;
 			info.voltage_mv = voltage_mv;
 			break;
 		}
