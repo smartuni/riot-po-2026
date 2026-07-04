@@ -8,7 +8,7 @@ health_monitor_t* health_monitor_new(int low_battery_threshold_mv, int battery_u
 
 	instance->is_low_battery = false;
 	//init battery monitoring
-	instance->battery_monitor = battery_voltage_monitor_new();
+	instance->battery_instance = battery_voltage_monitor_new();
 
 	//init shock detection
 	// int shock_threshold = 15000; // TODO adjust this later
