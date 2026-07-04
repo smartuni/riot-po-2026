@@ -24,33 +24,36 @@ test.describe('Gate detail page (read-only)', () => {
   });
 
   test('shows gate information card with all fields', async ({ page }) => {
-    const infoCard = page.locator('.card').filter({ hasText: 'Gate Information' });
-    await expect(infoCard).toBeVisible();
+    const infoPanel = page.locator('.detail-tab-panel').first();
+    await expect(infoPanel).toBeVisible();
 
-    await expect(infoCard).toContainText('Device ID');
-    await expect(infoCard).toContainText('501');
+    await expect(infoPanel).toContainText('Device ID');
+    await expect(infoPanel).toContainText('501');
 
-    await expect(infoCard).toContainText('Confidence');
-    await expect(infoCard).toContainText('90%');
+    await expect(infoPanel).toContainText('Confidence');
+    await expect(infoPanel).toContainText('90%');
 
-    await expect(infoCard).toContainText('Priority');
-    await expect(infoCard).toContainText('3');
+    await expect(infoPanel).toContainText('Priority');
+    await expect(infoPanel).toContainText('3');
 
-    await expect(infoCard).toContainText('Height above NN');
-    await expect(infoCard).toContainText('2.5 m');
+    await expect(infoPanel).toContainText('Height above NN');
+    await expect(infoPanel).toContainText('2.5 m');
 
-    await expect(infoCard).toContainText('State Confirmation');
+    await expect(infoPanel).toContainText('State Confirmation');
 
-    await expect(infoCard).toContainText('Coordinates');
-    await expect(infoCard).toContainText('53.55000, 9.99370');
+    await expect(infoPanel).toContainText('Coordinates');
+    await expect(infoPanel).toContainText('53.55000, 9.99370');
   });
 
-  test('activities card shows seeded activities', async ({ page }) => {
-    const activitiesCard = page.locator('.card .card-header').filter({ hasText: 'Activities' }).locator('..');
-    await expect(activitiesCard).toBeVisible();
+  test('activities tab shows seeded activities', async ({ page }) => {
+    await page.locator('.detail-tab').nth(2).click();
+    await expectLoaded(page);
 
-    await expect(activitiesCard.locator('.activity-list')).toBeVisible();
-    await expect(activitiesCard.locator('.activity-list')).toContainText('E2E seed: Gate 1001 OPEN');
+    const activitiesPanel = page.locator('.detail-tab-panel').first();
+    await expect(activitiesPanel).toBeVisible();
+
+    await expect(activitiesPanel.locator('.activity-list')).toBeVisible();
+    await expect(activitiesPanel.locator('.activity-list')).toContainText('E2E seed: Gate 1001 OPEN');
   });
 
   test('back button navigates to dashboard', async ({ page }) => {
@@ -66,24 +69,40 @@ test.describe('Gate detail page (read-only)', () => {
     await expect(page.getByRole('button', { name: 'Delete Gate' })).toBeVisible();
   });
 
+  test('tabs are visible and switchable', async ({ page }) => {
+    const tabs = page.locator('.detail-tab');
+    await expect(tabs).toHaveCount(3);
+
+    await expect(tabs.nth(0)).toContainText('Overview');
+    await expect(tabs.nth(1)).toContainText('Metadata');
+    await expect(tabs.nth(2)).toContainText('Activities');
+
+    await tabs.nth(1).click();
+    await expect(page.locator('.detail-tab-panel')).toContainText('Closing Threshold');
+
+    await tabs.nth(2).click();
+    await expect(page.locator('.detail-tab-panel')).toContainText('E2E seed');
+
+    await tabs.nth(0).click();
+    await expect(page.locator('.detail-tab-panel')).toContainText('Device ID');
+  });
+
   test('viewer does not see action buttons or edit controls', async ({ page }) => {
-    // beforeEach logged in as CONTROLLER — must logout before logging in as VIEWER
     await page.getByRole('button', { name: 'Logout' }).click();
     await expect(page).toHaveURL(/\/$/);
     await login(page, VIEWER);
     await page.goto('/gates/1001');
     await expectLoaded(page);
 
-    // No controller-only action buttons
     await expect(page.getByRole('button', { name: 'Set Status Manually' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Request Change' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Delete Gate' })).toHaveCount(0);
 
-    // No priority MUI Select dropdown
     await expect(page.locator('.MuiSelect-select')).toHaveCount(0);
 
-    // No height edit pencil button (action-link with EditIcon svg)
-    await expect(page.locator('button.action-link').filter({ has: page.locator('svg') })).toHaveCount(0);
+    await page.locator('.detail-tab').nth(1).click();
+    await page.waitForTimeout(500);
+    await expect(page.getByRole('button', { name: 'Add' })).toHaveCount(0);
   });
 });
 
@@ -96,29 +115,92 @@ test.describe('Gate detail page (mutations)', () => {
     await login(page, CONTROLLER);
   });
 
-  // ── g) editing height above NN ──
+  // ── g) metadata card displays seeded metadata and allows CRUD ──
+
+  test('metadata card displays seeded metadata and allows CRUD', async ({ page }) => {
+    await page.goto('/gates/1001');
+    await expectLoaded(page);
+
+    await page.locator('.detail-tab').nth(1).click();
+    await page.waitForTimeout(500);
+
+    const metadataPanel = page.locator('.detail-tab-panel').first();
+
+    await expect(metadataPanel).toContainText('Closing Threshold');
+    await expect(metadataPanel).toContainText('Height above NN');
+    await expect(metadataPanel).toContainText('2.5 m');
+
+    await expect(metadataPanel).toContainText('Additional Metadata');
+    await expect(metadataPanel).toContainText('closing_threshold_cm');
+    await expect(metadataPanel).toContainText('max_water_flow');
+
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    const keyInput = metadataPanel.locator('input').nth(0);
+    const valueInput = metadataPanel.locator('input').nth(1);
+    await keyInput.fill('test_key');
+    await valueInput.fill('test_value');
+
+    const checkButton = metadataPanel.locator('button.action-link').filter({ has: page.locator('svg') }).last();
+    await checkButton.click();
+
+    await expect(metadataPanel).toContainText('test_key');
+    await expect(metadataPanel).toContainText('test_value');
+
+    const testRow = metadataPanel.locator('div', { hasText: 'test_key' }).first();
+    const editPencil = testRow.locator('button.action-link').filter({ has: page.locator('svg') }).first();
+    await editPencil.click();
+
+    const editValueInput = metadataPanel.locator('input').nth(1);
+    await editValueInput.fill('updated_value');
+
+    const saveCheck = metadataPanel.locator('button.action-link').filter({ has: page.locator('svg') }).first();
+    await saveCheck.click();
+
+    await expect(metadataPanel).toContainText('updated_value');
+
+    const deleteRow = metadataPanel.locator('div', { hasText: 'test_key' }).first();
+    const deleteButton = deleteRow.locator('button.action-link').filter({ has: page.locator('svg') }).last();
+    await deleteButton.click();
+
+    await expect(metadataPanel).not.toContainText('test_key');
+  });
+
+  test.afterEach(async () => {
+    const { requestContext, csrfToken } = await apiToken(CONTROLLER);
+    const headers: Record<string, string> = {};
+    if (csrfToken) {
+      headers['X-XSRF-TOKEN'] = csrfToken;
+    }
+    const response = await requestContext.get(`${BACKEND_URL}/gates/1001/metadata`);
+    if (response.ok()) {
+      const metadata = await response.json();
+      for (const m of metadata.filter((m: { key: string; id: number }) => m.key === 'test_key')) {
+        await requestContext.delete(`${BACKEND_URL}/gates/1001/metadata/${m.id}`, { headers });
+      }
+    }
+  });
+
+  // ── g2) editing height above NN updates the displayed value ──
 
   test('editing height above NN updates the displayed value', async ({ page }) => {
     await page.goto('/gates/1001');
     await expectLoaded(page);
 
-    // Scope to the Gate Information card to find the height edit pencil button
-    const infoCard = page.locator('.card').filter({ hasText: 'Gate Information' });
-    const heightSection = infoCard.locator('div', { hasText: 'Height above NN' }).first();
-    const editPencil = heightSection.locator('button.action-link').filter({ has: page.locator('svg') });
+    await page.locator('.detail-tab').nth(1).click();
+    await page.waitForTimeout(500);
+
+    const metadataPanel = page.locator('.detail-tab-panel').first();
+    const editPencil = metadataPanel.locator('button.action-link').filter({ has: page.locator('svg') }).first();
 
     await editPencil.click();
 
-    // An input appears — fill with 7.7
-    const heightInput = infoCard.locator('input.form-input[type="number"]');
+    const heightInput = metadataPanel.locator('input[type="number"]');
     await heightInput.fill('7.7');
 
-    // Click the check button (action-link with CheckIcon svg)
-    const checkButton = heightSection.locator('button.action-link').filter({ has: page.locator('svg') }).nth(0);
-    await checkButton.click();
+    await heightInput.press('Enter');
 
-    // Assert the height now displays 7.7 m
-    await expect(infoCard).toContainText('7.7 m');
+    await expect(metadataPanel).toContainText('7.7 m');
   });
 
   test.afterEach(async () => {
@@ -139,18 +221,15 @@ test.describe('Gate detail page (mutations)', () => {
     await page.goto('/gates/1001');
     await expectLoaded(page);
 
-    // Scope to the Gate Information card for the MUI Select
-    const infoCard = page.locator('.card').filter({ hasText: 'Gate Information' });
-    const prioritySelect = infoCard.locator('.MuiSelect-select');
+    const overviewPanel = page.locator('.detail-tab-panel').first();
+    const prioritySelect = overviewPanel.locator('.MuiSelect-select');
 
     await prioritySelect.click();
 
-    // Click the MenuItem with text "1" from the dropdown
     await page.getByRole('option', { name: '1', exact: true }).click();
 
-    // Assert priority displays "1"
-    await expect(infoCard).toContainText('Priority');
-    const prioritySection = infoCard.locator('div', { hasText: 'Priority' }).first();
+    await expect(overviewPanel).toContainText('Priority');
+    const prioritySection = overviewPanel.locator('div', { hasText: 'Priority' }).first();
     await expect(prioritySection).toContainText('1');
   });
 

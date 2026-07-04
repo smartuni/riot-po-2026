@@ -74,29 +74,89 @@ test.describe('Backend API', () => {
     expect(notifications.every((n: { read: boolean }) => n.read === false)).toBeTruthy();
   });
 
-  test('update-height changes the heightAboveNN for a gate', async () => {
+  test('gate metadata CRUD operations work', async () => {
     const { requestContext, csrfToken } = await apiToken(CONTROLLER);
     const headers: Record<string, string> = {};
     if (csrfToken) {
       headers['X-XSRF-TOKEN'] = csrfToken;
     }
 
-    const update = await requestContext.put(`${BACKEND_URL}/update-height/1001`, {
-      data: { heightAboveNN: 9.99 },
+    // GET — verify seeded metadata
+    const initial = await requestContext.get(`${BACKEND_URL}/gates/1001/metadata`);
+    expect(initial.status()).toBe(200);
+    const initialMetadata = await initial.json();
+    expect(initialMetadata).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'closing_threshold_cm', value: '250' }),
+        expect.objectContaining({ key: 'max_water_flow', value: '12.5' }),
+      ]),
+    );
+
+    // POST — create new metadata
+    const create = await requestContext.post(`${BACKEND_URL}/gates/1001/metadata`, {
+      data: { key: 'test_key', value: 'test_value' },
       headers,
     });
-    expect([200, 204]).toContain(update.status());
+    expect(create.status()).toBe(200);
+    const created = await create.json();
+    expect(created.key).toBe('test_key');
+    expect(created.value).toBe('test_value');
+    expect(created.id).toBeTruthy();
+    const metadataId = created.id;
 
-    const gates = await (await requestContext.get(`${BACKEND_URL}/gates`)).json();
-    const gate1001 = gates.find((g: { id: number }) => g.id === 1001);
-    expect(gate1001, 'gate 1001 present').toBeTruthy();
-    expect(gate1001.heightAboveNN).toBe(9.99);
+    // GET — verify the new entry is in the list
+    const afterCreate = await requestContext.get(`${BACKEND_URL}/gates/1001/metadata`);
+    const afterCreateMetadata = await afterCreate.json();
+    expect(afterCreateMetadata).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'test_key', value: 'test_value', id: metadataId }),
+      ]),
+    );
 
-    // CLEANUP: restore the seeded height.
-    await requestContext.put(`${BACKEND_URL}/update-height/1001`, {
-      data: { heightAboveNN: 2.5 },
+    // PUT — update the value
+    const update = await requestContext.put(`${BACKEND_URL}/gates/1001/metadata/${metadataId}`, {
+      data: { key: 'test_key', value: 'updated' },
       headers,
     });
+    expect(update.status()).toBe(200);
+
+    // GET — verify the value is updated
+    const afterUpdate = await requestContext.get(`${BACKEND_URL}/gates/1001/metadata`);
+    const afterUpdateMetadata = await afterUpdate.json();
+    expect(afterUpdateMetadata).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'test_key', value: 'updated', id: metadataId }),
+      ]),
+    );
+
+    // DELETE — remove the entry
+    const deleteResponse = await requestContext.delete(`${BACKEND_URL}/gates/1001/metadata/${metadataId}`, { headers });
+    expect(deleteResponse.status()).toBe(200);
+
+    // GET — verify the entry is gone
+    const afterDelete = await requestContext.get(`${BACKEND_URL}/gates/1001/metadata`);
+    const afterDeleteMetadata = await afterDelete.json();
+    expect(afterDeleteMetadata).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'test_key' }),
+      ]),
+    );
+  });
+
+  test.afterEach(async () => {
+    const { requestContext, csrfToken } = await apiToken(CONTROLLER);
+    const headers: Record<string, string> = {};
+    if (csrfToken) {
+      headers['X-XSRF-TOKEN'] = csrfToken;
+    }
+    // Clean up any test_key metadata entries left behind
+    const response = await requestContext.get(`${BACKEND_URL}/gates/1001/metadata`);
+    if (response.ok()) {
+      const metadata = await response.json();
+      for (const m of metadata.filter((m: { key: string; id: number }) => m.key === 'test_key')) {
+        await requestContext.delete(`${BACKEND_URL}/gates/1001/metadata/${m.id}`, { headers });
+      }
+    }
   });
 
   test('set-status overrides gate status and sets manualOverride', async () => {
