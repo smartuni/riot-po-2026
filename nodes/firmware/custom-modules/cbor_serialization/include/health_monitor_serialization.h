@@ -21,7 +21,8 @@
 #include <stdint.h>
 
 #define MESSAGE_TYPE_HEALTH_MONITOR 0x05
-#define HEALTH_MONITOR_BUFFER_SIZE (HEALTH_MONITOR_PAYLOAD_ELEMENTS + 3) // +3 for version, msg_type, and node_id
+#define HEALTH_MONITOR_CBOR_SIZE_COUNT (HEALTH_MONITOR_PAYLOAD_ELEMENTS + 3) // +3 for version, msg_type, and node_id
+#define HEALTH_MONITOR_CBOR_SIZE_BYTES 9 //see health_monitor_serialization.c
 
 /**
  * @brief Same as cbor_serialize_record but leave out signature field

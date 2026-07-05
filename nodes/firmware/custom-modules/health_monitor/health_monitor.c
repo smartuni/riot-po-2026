@@ -33,7 +33,7 @@ int health_monitor_init(health_monitor_t* instance, int low_battery_threshold_mv
 
 static void serialize_and_send(const health_monitor_payload_t* payload) {
 	//serialize the payload
-	uint8_t buffer[64]; //TODO fix this 64 magic number. Using HEALTH_MONITOR_BUFFER_SIZE causes buffer overflow
+	uint8_t buffer[HEALTH_MONITOR_CBOR_SIZE_BYTES];
 	size_t buff_size = sizeof(buffer);
 	health_monitor_serialize_record_no_sig(payload, buffer, &buff_size);
 	LOG_DEBUG("[health_monitor.c:%d] Serialized health monitor payload, size: %d bytes\n", __LINE__, buff_size);

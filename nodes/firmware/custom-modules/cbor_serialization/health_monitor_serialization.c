@@ -5,7 +5,7 @@ static int _serialize_with_array_encoding(const health_monitor_payload_t* record
 	CborEncoder root_encoder;
 	cbor_encoder_init(&root_encoder, buf, *out_len, 0);
 	CborEncoder main_array_encoder;
-	cbor_encoder_create_array(&root_encoder, &main_array_encoder, HEALTH_MONITOR_BUFFER_SIZE); // +3 for version, msg_type, and node_id
+	cbor_encoder_create_array(&root_encoder, &main_array_encoder, HEALTH_MONITOR_CBOR_SIZE_COUNT); // +3 for version, msg_type, and node_id
 
     cbor_encode_uint(&main_array_encoder, ENCODING_V_1);
     cbor_encode_uint(&main_array_encoder, MESSAGE_TYPE_HEALTH_MONITOR);
