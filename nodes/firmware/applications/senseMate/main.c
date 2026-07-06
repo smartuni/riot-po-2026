@@ -25,7 +25,7 @@ static const char *ok(bool condition)
 {
     return condition ? "[OK]" : "[ERROR]";
 }
-swswswsw
+
 #define STORAGE_RAM_MOUNT_PATH "/ram0"
 //#define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
 
