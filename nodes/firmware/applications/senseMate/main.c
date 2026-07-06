@@ -42,7 +42,14 @@ extern mtd_dev_t *storage_setup_get_ram_mtd(void);
 tables_context_t *tables;
 
 #define SOUND_PWM_DEV PWM_DEV(0)
+#if defined BOARD_ADAFRUIT_FEATHER_NRF52840_SENSE // v1 board
+#define SOUND_PWM_CHANNEL (1)
+#elif defined BOARD_SEEEDSTUDIO_XIAO_NRF52840_SENSE // v2 board
 #define SOUND_PWM_CHANNEL (0)
+#else
+#error "Missing board-specific configuration."
+#endif
+
 sound_module_t sound_module;
 
 int lorawan_started = -1;
