@@ -12,7 +12,7 @@
 -- values 1 and 2 which match those auto-generated IDs.
 
 INSERT INTO gates (
-    id, status, state_confirmation, last_time_stamp, last_transition_gate_time_stamp,
+    id, status, state_confirmation, gate_time_stamp, last_transition_gate_time_stamp,
     device_id, location, latitude, longitude, requested_status, confidence, priority,
     ignore_gate, gate_detector
 ) VALUES
