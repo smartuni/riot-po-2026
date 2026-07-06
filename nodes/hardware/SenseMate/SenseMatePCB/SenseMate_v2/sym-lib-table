@@ -1,0 +1,5 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "SenseMateLibrary") (type "KiCad") (uri "${KIPRJMOD}/SenseMateLibrary.kicad_sym") (options "") (descr ""))
+	(lib (name "XIAO") (type "KiCad") (uri "/home/nico/Downloads/XIAO_Series_SCH_Symbols/Seeed_Studio_XIAO_Series.kicad_sym") (options "") (descr ""))
+)
