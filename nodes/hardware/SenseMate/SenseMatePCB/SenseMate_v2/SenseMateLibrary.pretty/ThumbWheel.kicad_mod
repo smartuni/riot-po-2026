@@ -1,0 +1,393 @@
+(footprint "ThumbWheel"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "COM-08184-5")
+	(tags "Switch")
+	(property "Reference" "S1"
+		(at 0.02 -1.145 0)
+		(layer "F.SilkS")
+		(uuid "b4485120-f817-425b-b839-9f2fd7ee9f7d")
+		(effects
+			(font
+				(size 1 1)
+			)
+		)
+	)
+	(property "Value" "COM-08184"
+		(at 0 0 0)
+		(layer "F.SilkS")
+		(hide yes)
+		(uuid "30abdb67-06f4-44fc-bb65-a2362863c855")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.254)
+			)
+		)
+	)
+	(property "Datasheet" "https://www.arrow.com/en/products/com-08184/sparkfun-electronics"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "ad91930d-318f-4b43-b0b0-edaf67b5bc35")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" "SparkFun Accessories Surface Mount Navigation Switch"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "81514d44-062d-433a-9d87-5796c7aea4fc")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Height" "2.3"
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "e0221369-8185-4e35-a35c-97260c8adf61")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Arrow Part Number" "COM-08184"
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "73cc3b34-0022-4cfc-a488-2a913783c250")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Arrow Price/Stock" "https://www.arrow.com/en/products/com-08184/sparkfun-electronics"
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "4a683d1b-0547-41c3-b11d-a861ecca20c9")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Manufacturer_Name" "SparkFun"
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "a00ec08f-691b-4861-ac5f-bea1fe1ca861")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Manufacturer_Part_Number" "COM-08184"
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "3bb543cf-169b-4c3e-ad1e-9171997fdf54")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(sheetname "/")
+	(sheetfile "SenseMatePCB.kicad_sch")
+	(attr through_hole)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -2.6 6.3)
+		(end -2.6 6.3)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "d5e2aaa8-6ba3-4181-89e8-52ce5464527d")
+	)
+	(fp_line
+		(start -2.6 6.4)
+		(end -2.6 6.4)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "44619b19-dc50-42fe-8a3e-6b2e1586e546")
+	)
+	(fp_line
+		(start -2.6 6.4)
+		(end -2.6 6.4)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "ccd0a87d-07f1-45fa-a795-91e598a83acb")
+	)
+	(fp_arc
+		(start -2.6 6.3)
+		(mid -2.55 6.35)
+		(end -2.6 6.4)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "393226aa-2b86-4e47-8f02-439cb78450de")
+	)
+	(fp_arc
+		(start -2.6 6.3)
+		(mid -2.55 6.35)
+		(end -2.6 6.4)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "884fa567-4d9d-4079-a207-814afe00484d")
+	)
+	(fp_arc
+		(start -2.6 6.4)
+		(mid -2.65 6.35)
+		(end -2.6 6.3)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "f6b531d5-0aff-4b14-a647-dca1f04d5ee0")
+	)
+	(fp_line
+		(start -5.9 -5.9)
+		(end 5.9 -5.9)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "Dwgs.User")
+		(uuid "ab04f829-faa2-4774-aa7f-99a4de76416e")
+	)
+	(fp_line
+		(start -5.9 -2)
+		(end -5.9 -5.9)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "Dwgs.User")
+		(uuid "6eff32f6-2a83-44d3-bb4c-a82b1ab0a600")
+	)
+	(fp_line
+		(start -5.9 5.9)
+		(end -5.9 0.2)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "Dwgs.User")
+		(uuid "91c397f5-00f1-45d7-8192-3023a4853930")
+	)
+	(fp_line
+		(start 5.9 -5.9)
+		(end 5.9 -2)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "Dwgs.User")
+		(uuid "1d02b39d-32cc-457a-bac3-4c6517911430")
+	)
+	(fp_line
+		(start 5.9 0.2)
+		(end 5.9 5.9)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "Dwgs.User")
+		(uuid "a38f4bb7-b10c-4919-a8da-32ec59688b76")
+	)
+	(fp_line
+		(start 5.9 5.9)
+		(end -5.9 5.9)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "Dwgs.User")
+		(uuid "15aaadeb-b2cd-438c-9221-619036c1d850")
+	)
+	(fp_line
+		(start -7.2 -6.9)
+		(end 7.2 -6.9)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "bf24d0c8-51c1-4cb7-b677-478643671e4e")
+	)
+	(fp_line
+		(start -7.2 6.9)
+		(end -7.2 -6.9)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "4310a559-86e7-4834-98eb-29b2efcae8e2")
+	)
+	(fp_line
+		(start 7.2 -6.9)
+		(end 7.2 6.9)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "3988351d-2d83-4c72-9193-bba9e8ef6c67")
+	)
+	(fp_line
+		(start 7.2 6.9)
+		(end -7.2 6.9)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "eabba4a5-c3ef-40ab-baef-43b82beb0722")
+	)
+	(fp_line
+		(start -5.9 -5.9)
+		(end -5.9 5.9)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "627ef790-4dcd-4284-9a0e-b896d59f3087")
+	)
+	(fp_line
+		(start -5.9 5.9)
+		(end 5.9 5.9)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "037aa69b-fc4b-4427-8c3d-8d4004534a9f")
+	)
+	(fp_line
+		(start 5.9 -5.9)
+		(end -5.9 -5.9)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "b1812a2c-6088-4380-9cc3-3b1548ff6a6f")
+	)
+	(fp_line
+		(start 5.9 5.9)
+		(end 5.9 -5.9)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "ddce880f-db99-4770-a2a9-41cb6b7c06bc")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(uuid "356959e2-ab6f-4949-81e6-84396a07427f")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.254)
+			)
+		)
+	)
+	(pad "" np_thru_hole circle
+		(at -2.5 0)
+		(size 1 1)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(uuid "d13fa0e6-4b38-4cc5-95a7-0ae4eaf88193")
+	)
+	(pad "" np_thru_hole circle
+		(at 2.5 0)
+		(size 1 1)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(uuid "a60761a5-0df8-43f4-9b8d-2612c862ac81")
+	)
+	(pad "1" smd rect
+		(at -2.525 4.2 90)
+		(size 2.6 1.95)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "72507941-fb01-47b5-bf7b-b73f06f6ee58")
+	)
+	(pad "2" smd rect
+		(at 2.5 4.2 90)
+		(size 2.6 1.9)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "a628b1c5-da95-4777-a400-46f7d50e3ebe")
+	)
+	(pad "MP1" smd rect
+		(at -5.8 -0.85 90)
+		(size 1.7 2.4)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "0b34003d-760d-42d2-919e-d0f450b414a2")
+	)
+	(pad "MP2" smd rect
+		(at 5.8 -0.85 90)
+		(size 1.7 2.4)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "86225422-119a-4230-8a2a-462659de7433")
+	)
+	(pad "T1" smd rect
+		(at 0 4.2 90)
+		(size 2.6 1.9)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "9641fe32-81d5-4784-be3e-a5a097fe35b5")
+	)
+	(embedded_fonts no)
+	(model "${KIPRJMOD}/3dshapes/NAV_SWITCH_FC_edit-Part.step"
+		(offset
+			(xyz -5.9 -4.3 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -0 -0 -0)
+		)
+	)
+)

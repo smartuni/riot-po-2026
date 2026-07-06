@@ -43,8 +43,14 @@ tables_context_t *tables;
 #define TIME_PERIOD_TABLE_UPDATE 30 // const defines time to update table periodically
 //#define TIME_PERIOD_TABLE_UPDATE 2 // const defines time to update table periodically
 
+#if defined BOARD_ADAFRUIT_FEATHER_NRF52840_SENSE // v1 board
 /* PIN label on feather sense: "A1" */
 #define REED_0_PIN_0 GPIO_PIN(0, 5)
+#elif defined BOARD_SEEEDSTUDIO_XIAO_NRF52840_SENSE // v2 board
+#define REED_0_PIN_0 GPIO_PIN(0, 9)
+#else
+#error "Missing board-specific configuration."
+#endif
 
 #define INDUCTIVE_SENSOR_DCDC_PWR_PIN GPIO_PIN(0,4)
 #define INDUCTIVE_SENSOR_DCDC_PWR_PIN_AH (false)
