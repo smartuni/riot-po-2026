@@ -20,6 +20,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 
 @Service
 public class GateActivityService {
@@ -30,6 +34,8 @@ public class GateActivityService {
     @Autowired
     GateService gateService;
     private SimpMessagingTemplate messagingTemplate;
+
+    private static final Logger log = LoggerFactory.getLogger(GateService.class);
 
     public GateActivityService(GateActivityRepository gateActivityRepository,
                                SimpMessagingTemplate messagingTemplate) {
@@ -49,6 +55,8 @@ public class GateActivityService {
             GateActivity gateActivity = new GateActivity(e.getLocalTimeStamp(), e.getGateTimeStamp(), e.getGateId(), e.getRequestedStatus(), e.getMessage(), e.getId(), e.getWorkerId(), e.getActivityType());
             customGateActivities.add(gateActivity);
         });
+
+        log.info("customGates={}", customGateActivities);
         return customGateActivities;
     }
 

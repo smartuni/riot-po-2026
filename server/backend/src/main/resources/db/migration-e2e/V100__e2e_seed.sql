@@ -32,10 +32,8 @@ SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
 INSERT INTO gates (
     id, status, state_confirmation, gate_time_stamp, hlc_log,last_transition_gate_time_stamp,
     device_id, location, latitude, longitude, requested_status, confidence, priority,
-    created_at, updated_at
-
-
-) VALUES
+    created_at, updated_at)
+VALUES
     (1001, 'OPEN'::status_enum, 'CONFIRMED'::state_confirmation_enum,
         TIMESTAMP '2026-01-01 08:00:00', 0,TIMESTAMP '2026-01-01 07:55:00',
         501, 'E2E Gate Alpha', 53.5500, 9.9937, 'OPEN', 90, 3,
