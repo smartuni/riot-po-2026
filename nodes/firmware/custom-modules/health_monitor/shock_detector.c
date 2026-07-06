@@ -73,6 +73,28 @@ static void postprocess_fft(shock_detector_t* instance) {
 	moving_freq_avg_finalize(instance->freq_avg);
 }
 
+static bool check_shock(shock_detector_t* instance) {
+	//frequency from 0 Hz to 94 Hz must all be below 44000 AND,
+	//frequency from 95 Hz to 500 Hz must all be below 25000
+	int frequency_middle_point = 95;
+	int magnitude_threshold_low = 44000;
+	int magnitude_threshold_high = 25000;
+
+	for (int i = 0; i < frequency_middle_point; i++) {
+		int* magnitude = &instance->freq_avg->frequency_domain[i].average;
+		if (*magnitude > magnitude_threshold_low) {
+			return true;
+		}
+	}
+	for (int i = frequency_middle_point; i < instance->nyquist_domain_size; i++) {
+		int* magnitude = &instance->freq_avg->frequency_domain[i].average;
+		if (*magnitude > magnitude_threshold_high) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static void* acceleration_thread(void* instance_void) {
 	shock_detector_t* instance = (shock_detector_t*)instance_void;
 	while (instance->running) {
@@ -86,9 +108,19 @@ static void* acceleration_thread(void* instance_void) {
 		for (int i = 0; i < instance->nyquist_domain_size; i += 5) {
 			LOG_DEBUG("%d ; %d\n", i, instance->freq_avg->frequency_domain[i].average);
 		}
-		mutex_lock(&instance->shock_status_mutex);
-		instance->shock_status = NO_SHOCK; //TODO analyze the frequency domain average to determine if there is a shock or not, and set the shock status accordingly
-		mutex_unlock(&instance->shock_status_mutex);
+
+		if (check_shock(instance)) {
+			if (instance->callback) {
+				instance->callback();
+			} else {
+				LOG_DEBUG("[shock_detector.c:%d] No callback function set for shock detection.\n", __LINE__);
+			}
+		} else {
+			LOG_DEBUG("[shock_detector.c:%d] No shock detected.\n", __LINE__);
+		}
+		// mutex_lock(&instance->shock_status_mutex);
+		// instance->shock_status = NO_SHOCK; //TODO analyze the frequency domain average to determine if there is a shock or not, and set the shock status accordingly
+		// mutex_unlock(&instance->shock_status_mutex);
 	}
 	return NULL;
 }
@@ -154,7 +186,7 @@ int shock_detector_fetch_status(shock_detector_t* instance, shock_status_t* stat
 	return 0;
 }
 
-int shock_detector_reset_status(shock_detector_t *instance){
+int shock_detector_reset_status(shock_detector_t* instance) {
 	mutex_lock(&instance->shock_status_mutex);
 	instance->shock_status = NO_SHOCK;
 	mutex_unlock(&instance->shock_status_mutex);
