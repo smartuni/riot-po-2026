@@ -28,11 +28,11 @@ INSERT INTO notifications (status, worker_id, message, read, created_at, updated
 
 -- Insert sample gate activities (audit log)
 -- NOTE: These are sensor-initiated events, so worker_id is NULL
-INSERT INTO gate_activities (gate_time_stamp, local_time_stamp, gate_time_stamp,hlc_log, gate_id, requested_status, message, worker_id, activity_type, created_at) VALUES
-(CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2,1, 'OPEN', 'Gate 1 reported status OPEN', NULL, 'SENSOR_VALUE_KEEPALIVE', CURRENT_TIMESTAMP),
-(CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3,2, 'OPEN', 'Gate 2 reported status OPEN', NULL, 'SENSOR_VALUE_KEEPALIVE', CURRENT_TIMESTAMP),
-(CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0,3, 'CLOSED', 'Gate 3 has been closed', NULL, 'SENSEMATE_WORKER_REPORT', CURRENT_TIMESTAMP),
-(CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2,4, 'CLOSED', 'Worker requested status CLOSED for Gate 4', NULL, 'TARGET_STATE_REQUEST', CURRENT_TIMESTAMP);
+INSERT INTO gate_activities (local_time_stamp, gate_time_stamp,hlc_log, gate_id, requested_status, message, worker_id, activity_type, created_at) VALUES
+( CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2,1, 'OPEN', 'Gate 1 reported status OPEN', NULL, 'SENSOR_VALUE_KEEPALIVE', CURRENT_TIMESTAMP),
+( CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3,2, 'OPEN', 'Gate 2 reported status OPEN', NULL, 'SENSOR_VALUE_KEEPALIVE', CURRENT_TIMESTAMP),
+( CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0,3, 'CLOSED', 'Gate 3 has been closed', NULL, 'SENSEMATE_WORKER_REPORT', CURRENT_TIMESTAMP),
+( CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2,4, 'CLOSED', 'Worker requested status CLOSED for Gate 4', NULL, 'TARGET_STATE_REQUEST', CURRENT_TIMESTAMP);
 
 -- Note: CommandLineRunner in Application.java is now conditional:
 -- - @Profile("dev") ensures it only runs when spring.profiles.active=dev
