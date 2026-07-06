@@ -1,16 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import CssBaseline from '@mui/material/CssBaseline';
-import TextField from '@mui/material/TextField';
-import Grid from '@mui/material/Grid';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { useLoginMutation } from '../app/store/api/api';
 import { useAppDispatch } from '../app/store';
+
 const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
 const isValidPassword = (password) => password.length >= 6;
 
@@ -34,11 +27,7 @@ const LoginPage = () => {
       }).unwrap();
 
       appDispatch({ type: 'auth/setUser', payload: userDetails });
-      if (userDetails?.role === 'controller') {
-        navigate('/dashboard');
-      } else {
-        navigate('/dashboard-view');
-      }
+      navigate('/dashboard');
     } catch (error) {
       setErrorMessage(error?.data?.error || 'Sorry, an unexpected error occurred');
       setIsErrorDialogOpen(true);
@@ -46,100 +35,83 @@ const LoginPage = () => {
   };
 
   const isFormValid = isValidEmail(email) && isValidPassword(password);
-  return (
-    <Container component="main" maxWidth="xs">
-      <CssBaseline />
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
 
-        </Avatar>
-        <Typography component="h1" variant="h5">
-          Sign in
-        </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-            disabled={!isFormValid || isLoginLoading}
-          >
-            Sign In
-          </Button>
-          <Grid container>
-            {/* <Grid item xs>
-                                <Link href="/forgot-password" variant="body2">
-                                    Forgot password?
-                                </Link>
-                            </Grid> */
-              // future possible addition of forgot password page / functionality
-            }
-            <Grid>
-              <Link to="/register" variant="body2" >
-                {"Don't have an account? Sign Up"}
-              </Link>
-            </Grid>
-          </Grid>
-        </Box>
-      </Box>
+  return (
+    <div className="auth-page">
+      <header className="auth-header">
+        <Link to="/">
+          <div className="logo-icon">SM</div>
+          <span>SenseMate</span>
+        </Link>
+      </header>
+      <div className="auth-body">
+        <div className="auth-card">
+          <h1>Welcome back</h1>
+          <p className="subtitle">Sign in to your SenseMate account</p>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="email">Email</label>
+              <input
+                className="form-input"
+                type="email"
+                id="email"
+                name="email"
+                placeholder="you@hamburg.de"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="password">Password</label>
+              <input
+                className="form-input"
+                type="password"
+                id="password"
+                name="password"
+                placeholder="••••••••"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={!isFormValid || isLoginLoading}
+            >
+              Sign In
+            </button>
+          </form>
+          <div className="auth-footer">
+            Don't have an account? <Link to="/register">Register</Link>
+          </div>
+        </div>
+      </div>
       <Dialog
         open={isErrorDialogOpen}
         onClose={() => setIsErrorDialogOpen(false)}
         aria-labelledby="error-dialog-title"
         aria-describedby="error-dialog-description"
-        sx={{ '& .MuiDialog-paper': { border: '2px solid red' } }} // This adds the red outline
+        sx={{ '& .MuiDialog-paper': { border: '2px solid red' } }}
       >
-        <DialogTitle id="error-dialog-title">{"Login Error"}</DialogTitle>
+        <DialogTitle id="error-dialog-title">Login Error</DialogTitle>
         <DialogContent>
           <DialogContentText id="error-dialog-description">
             {errorMessage}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button
+          <button
             onClick={() => setIsErrorDialogOpen(false)}
-            color="primary"
-            variant="outlined"
+            className="btn btn-outline"
           >
             OK
-          </Button>
+          </button>
         </DialogActions>
       </Dialog>
-    </Container>
-
+    </div>
   );
-}
+};
 
 export default LoginPage;
-

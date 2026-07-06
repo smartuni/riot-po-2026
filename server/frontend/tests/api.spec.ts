@@ -73,4 +73,65 @@ test.describe('Backend API', () => {
     expect(notifications).toHaveLength(2);
     expect(notifications.every((n: { read: boolean }) => n.read === false)).toBeTruthy();
   });
+
+  test('update-height changes the heightAboveNN for a gate', async () => {
+    const { requestContext, csrfToken } = await apiToken(CONTROLLER);
+    const headers: Record<string, string> = {};
+    if (csrfToken) {
+      headers['X-XSRF-TOKEN'] = csrfToken;
+    }
+
+    const update = await requestContext.put(`${BACKEND_URL}/update-height/1001`, {
+      data: { heightAboveNN: 9.99 },
+      headers,
+    });
+    expect([200, 204]).toContain(update.status());
+
+    const gates = await (await requestContext.get(`${BACKEND_URL}/gates`)).json();
+    const gate1001 = gates.find((g: { id: number }) => g.id === 1001);
+    expect(gate1001, 'gate 1001 present').toBeTruthy();
+    expect(gate1001.heightAboveNN).toBe(9.99);
+
+    // CLEANUP: restore the seeded height.
+    await requestContext.put(`${BACKEND_URL}/update-height/1001`, {
+      data: { heightAboveNN: 2.5 },
+      headers,
+    });
+  });
+
+  test('set-status overrides gate status and sets manualOverride', async () => {
+    const { requestContext, csrfToken } = await apiToken(CONTROLLER);
+    const headers: Record<string, string> = {};
+    if (csrfToken) {
+      headers['X-XSRF-TOKEN'] = csrfToken;
+    }
+
+    // Create a temp gate — manualOverride can't be reset via API, so don't
+    // mutate a seeded gate. add-gate-ui returns plain text, not JSON.
+    const create = await requestContext.post(`${BACKEND_URL}/add-gate-ui`, {
+      data: { location: 'E2E Temp Status Gate', latitude: 53.5, longitude: 10.0, priority: 0, status: 'OPEN' },
+      headers,
+    });
+    expect(create.status()).toBe(200);
+
+    const gates = await (await requestContext.get(`${BACKEND_URL}/gates`)).json();
+    const tempGate = gates.find((g: { location: string }) => g.location === 'E2E Temp Status Gate');
+    expect(tempGate, 'temp gate created').toBeTruthy();
+    const tempGateId = tempGate.id;
+
+    const setStatus = await requestContext.post(`${BACKEND_URL}/gates/${tempGateId}/1/set-status`, {
+      data: { status: 'CLOSED' },
+      headers,
+    });
+    expect(setStatus.status()).toBe(200);
+
+    const updated = await (await requestContext.get(`${BACKEND_URL}/gates`)).json();
+    const gate = updated.find((g: { id: number }) => g.id === tempGateId);
+    expect(gate, 'temp gate still present after set-status').toBeTruthy();
+    expect(gate.status).toBe('CLOSED');
+    expect(gate.manualOverride).toBe(true);
+
+    // CLEANUP: remove the temp gate.
+    await requestContext.delete(`${BACKEND_URL}/gates/${tempGateId}`, { headers });
+  });
 });

@@ -1,1 +1,1 @@
-export { default as RecentActivity } from './components/RecentActivity';
+export { default as ActivityPanel } from './components/ActivityPanel';

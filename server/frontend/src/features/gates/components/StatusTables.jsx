@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../../app/store";
 import {
     useGetGatesQuery,
@@ -6,42 +7,80 @@ import {
     useGetDownlinkCounterQuery,
     useRequestGateStatusChangeMutation,
     useTryIncrementDownlinkCounterMutation,
-    useUpdateGatePriorityMutation,
-    useDeleteGateMutation,
     useCreateGateMutation,
     useSendDownlinkMutation,
     useResetDownlinkCounterMutation,
 } from "../../../app/store/api/api";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import CloseIcon from "@mui/icons-material/Close";
 import {
-    TextField,
-    MenuItem,
-    IconButton,
-    Tabs,
-    Tab,
-    Button,
-    Select,
-    FormControl,
-    InputLabel,
-    Box, Tooltip, DialogActions, DialogContent, DialogTitle, Dialog,
-    CircularProgress, Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
 } from "@mui/material";
-import LockOpenIcon from '@mui/icons-material/LockOpen';
-import LockIcon from '@mui/icons-material/Lock';
-import CircleIcon from '@mui/icons-material/Circle';
-import SyncAltIcon from '@mui/icons-material/SyncAlt';
-import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
-import Badge from '@mui/material/Badge';
-import CheckIcon from '@mui/icons-material/Check';
-import DoneAllIcon from '@mui/icons-material/DoneAll';
-import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
-import { MapView } from "../../map";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import WarningIcon from "@mui/icons-material/Warning";
 import StatusChangedDialog from "./StatusChangedDialog";
 
+const statusInfo = (status) => {
+    switch (status) {
+        case "OPEN": return { cls: "status-open", label: "Open" };
+        case "CLOSED": return { cls: "status-closed", label: "Closed" };
+        default: return { cls: "status-oos", label: "Out of Service" };
+    }
+};
 
-function StatusTables() {
+const confirmationIndicator = (stateConfirmation) => {
+    switch (stateConfirmation) {
+        case "WORKER_CONFLICT": return { label: "⚠", color: "var(--red-600)" };
+        case "UNCONFIRMED": return null;
+        case "WORKER_CONFIRMED_SINGLE": return { label: "✓", color: "var(--blue-600)" };
+        case "WORKER_CONFIRMED_MULTI":
+        case "WORKER_CONFIRMED_ALL": return { label: "✓✓", color: "var(--green-600)" };
+        default: return null;
+    }
+};
+
+function ConfidenceCell({ gate }) {
+    const sc = gate.stateConfirmation;
+    let icon = null;
+    let title = "Unconfirmed";
+    let color = "var(--text-secondary)";
+
+    if (sc === "WORKER_CONFIRMED_SINGLE") {
+        icon = <ArrowForwardIcon className="confidence-icon" style={{ color: "var(--blue-600)" }} />;
+        title = "Confirmed by 1 worker";
+        color = "var(--blue-600)";
+    } else if (sc === "WORKER_CONFIRMED_MULTI" || sc === "WORKER_CONFIRMED_ALL") {
+        icon = <DoneAllIcon className="confidence-icon" style={{ color: "var(--green-600)" }} />;
+        title = "Confirmed by 2+ workers";
+        color = "var(--green-600)";
+    } else if (sc === "WORKER_CONFLICT") {
+        icon = <WarningIcon className="confidence-icon" style={{ color: "var(--red-600)" }} />;
+        title = "Conflict: workers disagree";
+        color = "var(--red-600)";
+    }
+
+    const confidencePct = gate.confidence != null ? `${gate.confidence}%` : "—";
+
+    return (
+        <span className="confidence-indicator" title={title}>
+            {icon}
+            <span className="confidence-value" style={{ color }}>{confidencePct}</span>
+        </span>
+    );
+}
+
+const FILTER_TABS = [
+    { label: "All", value: "" },
+    { label: "Open", value: "OPEN" },
+    { label: "Closed", value: "CLOSED" },
+    { label: "OOS", value: "OUT_OF_SERVICE" },
+];
+
+function StatusTables({ filter: filterProp, setFilter: setFilterProp }) {
+    const navigate = useNavigate();
+
     const { data: gates = [], isLoading: gatesLoading, error: gatesError } = useGetGatesQuery();
     const { data: activities = [], isLoading: activitiesLoading, error: activitiesError } = useGetActivitiesQuery();
     const { data: downlinkCounterData } = useGetDownlinkCounterQuery();
@@ -52,20 +91,16 @@ function StatusTables() {
 
     const [requestGateStatusChange] = useRequestGateStatusChangeMutation();
     const [tryIncrementDownlinkCounter] = useTryIncrementDownlinkCounterMutation();
-    const [updateGatePriority] = useUpdateGatePriorityMutation();
-    const [deleteGate] = useDeleteGateMutation();
     const [createGate] = useCreateGateMutation();
     const [sendDownlink] = useSendDownlinkMutation();
     const [resetDownlinkCounter] = useResetDownlinkCounterMutation();
+
     const [search, setSearch] = useState("");
-    const [filter, setFilter] = useState("");
-    const [view, setView] = useState("list");
+    const [filterLocal, setFilterLocal] = useState("");
     const [selectedGate, setSelectedGate] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [bulkRequestedStatus, setBulkRequestedStatus] = useState("");
     const [expandedGateId, setExpandedGateId] = useState(null);
-    const [gateToDelete, setGateToDelete] = useState(null);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
     const [newGateData, setNewGateData] = useState({
@@ -73,23 +108,13 @@ function StatusTables() {
         latitude: "",
         longitude: "",
         priority: 0,
-        status: "CLOSED", // default value
+        status: "CLOSED",
     });
 
-    /**
-     * For deleting a gate.
-     * @returns {Promise<void>}
-     */
-    const handleDeleteGate = async () => {
-        try {
-            await deleteGate(gateToDelete.id).unwrap();
-            setDeleteDialogOpen(false);
-            setGateToDelete(null);
-        } catch (error) {
-            console.error("Fehler beim Löschen des Gates:", error);
-            alert("Fehler beim Löschen des Gates.");
-        }
-    };
+    const [selectedGateIds, setSelectedGateIds] = useState(new Set());
+
+    const filter = filterProp !== undefined ? filterProp : filterLocal;
+    const setFilter = setFilterProp || setFilterLocal;
 
     const handleResetCounter = async () => {
         try {
@@ -102,22 +127,17 @@ function StatusTables() {
         }
     };
 
-    /**
-     * Schließt den Dialog und aktualisiert die Gates.
-     * @returns {Promise<void>}
-     */
     const handleClose = async () => {
         setDialogOpen(false);
     };
 
-    /**
-     * Verarbeitet die Massenänderung des angeforderten Status für die gefilterten Gates.
-     * @returns {Promise<void>}
-     */
     const handleBulkRequestedStatusChange = async () => {
         if (!bulkRequestedStatus) return;
+        if (selectedGateIds.size === 0) return;
 
-        const promises = filteredGates.map(async (gate) => {
+        const targetGates = filteredGates.filter(g => selectedGateIds.has(g.id));
+
+        const promises = targetGates.map(async (gate) => {
             try {
                 await requestGateStatusChange({ gateId: gate.id, workerId, requestedStatus: bulkRequestedStatus }).unwrap();
             } catch (error) {
@@ -126,71 +146,9 @@ function StatusTables() {
         });
 
         await Promise.all(promises);
+        setSelectedGateIds(new Set());
     };
 
-
-    /**
-     * Rendert den angeforderten Status für ein Gate.
-     * @param status
-     * @returns {Element}
-     */
-    const renderRequestedStatus = (status) => {
-        switch (status) {
-            case "REQUESTED_OPEN":
-                return <><LockOpenIcon fontSize="small" /> OPEN</>;
-            case "REQUESTED_CLOSE":
-                return <><LockIcon fontSize="small" /> CLOSE</>;
-            default:
-                return <><CircleIcon fontSize="small" /> NONE</>;
-        }
-    };
-
-    const renderPendingJobs = (status) => {
-        switch (status) {
-            case "PENDING_OPEN":
-                return <><LockOpenIcon fontSize="small" /> OPEN</>;
-            case "PENDING_CLOSE":
-                return <><LockIcon fontSize="small" /> CLOSE</>;
-            default:
-                return <><CircleIcon fontSize="small" /> NONE</>;
-        }
-    };
-
-    const confirmationBadgeContent = (status) => {
-        switch (status) {
-            case "WORKER_CONFLICT":
-                return <><PriorityHighIcon fontSize="small" /></>;
-            case "UNCONFIRMED":
-                return <> - </>;
-            case "WORKER_CONFIRMED_SINGLE":
-                return <><CheckIcon fontSize="small" /></>;
-            case "WORKER_CONFIRMED_MULTI":
-                return <><DoneAllIcon fontSize="small" /></>;
-            case "WORKER_CONFIRMED_ALL":
-                return <><DoneAllIcon fontSize="small" /></>;
-            default:
-                return <><CircleIcon fontSize="small" /></>;
-        }
-    };
-
-    const confirmationBadgeColor = (status) => {
-        switch (status) {
-            case "WORKER_CONFLICT":
-                return "error";
-            case "WORKER_CONFIRMED_SINGLE":
-                return "info";
-            case "WORKER_CONFIRMED_MULTI":
-            case "WORKER_CONFIRMED_ALL":
-                return "success";
-            default:
-                return "error";
-        }
-    };
-
-    /**
-     * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
-     * @type {*[]}
-     */
     const filteredGates = gates.filter(gate =>
         (gate.id.toString().includes(search) || (gate.location?.toLowerCase() || '').includes(search.toLowerCase())) &&
         (
@@ -200,23 +158,20 @@ function StatusTables() {
         )
     );
 
-    /**
-     * Sendet eine manuelle Downlink-Anfrage für die gefilterten Gates.
-     * @returns {Promise<void>}
-     */
     const sendManualDownlink = async () => {
-        const statusIntMap = {
-            null: 2,
-            "REQUESTED_OPEN": 1,
-            "REQUESTED_CLOSE": 0
+        const getStatusCode = (requestedStatus) => {
+            if (requestedStatus === null || requestedStatus === undefined || requestedStatus === "REQUESTED_NONE") return 2;
+            if (requestedStatus === "REQUESTED_OPEN") return 1;
+            if (requestedStatus === "REQUESTED_CLOSE") return 0;
+            return null;
         };
 
         const payload = [
             0,
             Math.floor(Date.now() / 1000),
             filteredGates
-                .filter(g => g.requestedStatus in statusIntMap)
-                .map(g => [g.id, statusIntMap[g.requestedStatus], g.priority ?? 0])
+                .filter(g => getStatusCode(g.requestedStatus) !== null)
+                .map(g => [g.id, getStatusCode(g.requestedStatus), g.priority ?? 0])
         ];
 
         if (payload[2].length === 0) {
@@ -234,15 +189,6 @@ function StatusTables() {
         }
     };
 
-
-    const handlePriorityChange = async (gateId, newPriority) => {
-        try {
-            await updateGatePriority({ gateId, priority: newPriority }).unwrap();
-        } catch (error) {
-            console.error("Fehler beim Aktualisieren der Priorität:", error);
-            alert("Fehler beim Aktualisieren der Priorität.");
-        }
-    };
     const isValidFloat = (value) => !isNaN(value) && parseFloat(value) === Number(value);
 
     const isFormValid = () => {
@@ -250,15 +196,10 @@ function StatusTables() {
             newGateData.location.trim() !== "" &&
             isValidFloat(newGateData.latitude) &&
             isValidFloat(newGateData.longitude) &&
-            (newGateData.status === "OPENED" || newGateData.status === "CLOSED")
+            (newGateData.status === "OPEN" || newGateData.status === "CLOSED")
         );
     };
 
-    /**
-     * Berechnet die Zeit seit dem letzten Update eines Gates in einem lesbaren Format.
-     * @param timestamp
-     * @returns {string}
-     */
     function getTimeAgo(timestamp) {
         const date = new Date(timestamp);
         const now = new Date();
@@ -272,348 +213,361 @@ function StatusTables() {
         const days = Math.floor(hours / 24);
         if (days === 1) return "yesterday";
         if (days < 7) return `${days} days ago`;
-        return date.toLocaleDateString(); // fallback to a readable date
+        return date.toLocaleDateString();
     }
+
+    const toggleGateSelection = (gateId) => {
+        setSelectedGateIds(prev => {
+            const next = new Set(prev);
+            if (next.has(gateId)) next.delete(gateId);
+            else next.add(gateId);
+            return next;
+        });
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedGateIds.size === filteredGates.length && filteredGates.length > 0) {
+            setSelectedGateIds(new Set());
+        } else {
+            setSelectedGateIds(new Set(filteredGates.map(g => g.id)));
+        }
+    };
 
     if (gatesLoading || activitiesLoading) {
         return (
-            <div className="gate-status-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-                <CircularProgress />
+            <div className="card" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                Loading gates…
             </div>
         );
     }
 
     if (gatesError || activitiesError) {
         return (
-            <div className="gate-status-container" style={{ padding: '2rem' }}>
-                <Alert severity="error">
+            <div className="card" style={{ padding: '16px' }}>
+                <div style={{ padding: '16px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', color: 'var(--red-600)' }}>
                     {gatesError ? 'Failed to load gates data. ' : ''}
                     {activitiesError ? 'Failed to load activities data. ' : ''}
-                </Alert>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="gate-status-container">
-            <div className="gate-status-header">
-                <h2>Flood Gates</h2>
-                <div className="gate-controls">
-                    <TextField
-                        size="small"
-                        placeholder="Search gates..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        style={{ marginRight: "1rem" }}
-                    />
+        <div className="card">
+            <div className="table-toolbar">
+                <h2 style={{ fontSize: '16px', fontWeight: 600, margin: 0, marginRight: '12px' }}>Flood Gates</h2>
 
-                    <TextField
-                        size="small"
-                        select
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                    >
-                        <MenuItem value="">All Status</MenuItem>
-                        <MenuItem value="OPENED">Open</MenuItem>
-                        <MenuItem value="CLOSED">Closed</MenuItem>
-                        <MenuItem value="REQUESTED_CLOSE">Requested Close</MenuItem>
-                        <MenuItem value="REQUESTED_OPEN">Requested Open</MenuItem>
-                        <MenuItem value="REQUESTED_NONE">No Requested Status</MenuItem>
-                    </TextField>
+                <input
+                    className="search-input table-search"
+                    aria-label="Search gates"
+                    placeholder="Search gates…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+
+                <div className="filter-tabs">
+                    {FILTER_TABS.map(tab => (
+                        <button
+                            key={tab.value}
+                            className={`filter-tab${filter === tab.value ? ' active' : ''}`}
+                            data-filter={tab.value}
+                            onClick={() => setFilter(tab.value)}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
+
+                <div style={{ flex: 1 }} />
             </div>
 
-            <Tabs
-                value={view}
-                onChange={(e, newValue) => setView(newValue)}
-                style={{ marginTop: "1rem", marginBottom: "1rem" }}
-            >
-                <Tab label="List View" value="list" />
-                <Tab label="Map View" value="map" />
-            </Tabs>
+            <>
+                    <div className={`bulk-bar${filteredGates.length > 0 ? ' visible' : ''}`}>
+                        <select
+                            className="form-input"
+                            value={bulkRequestedStatus}
+                            onChange={(e) => setBulkRequestedStatus(e.target.value)}
+                            style={{ width: 'auto', minWidth: '160px' }}
+                        >
+                            <option value="">None</option>
+                            <option value="REQUESTED_OPEN">Request Open</option>
+                            <option value="REQUESTED_CLOSE">Request Close</option>
+                            <option value="REQUESTED_NONE">Clear All Requests</option>
+                        </select>
 
-            {view === "list" ? (
-                <>
-                    <Box className={"button-box"} gap={2} mb={2}>
-                        {/* Bulk Select */}
-                        <FormControl size="small">
-                            <InputLabel>Bulk Requested Status</InputLabel>
-                            <Select
-                                value={bulkRequestedStatus}
-                                label="Bulk Requested Status"
-                                onChange={(e) => setBulkRequestedStatus(e.target.value)}
-                                style={{ minWidth: 160 }}
-                            >
-                                <MenuItem value="">None</MenuItem>
-                                <MenuItem value="REQUESTED_OPEN">Request Open</MenuItem>
-                                <MenuItem value="REQUESTED_CLOSE">Request Close</MenuItem>
-                                <MenuItem value="REQUESTED_NONE">Clear All Requests</MenuItem>
-                            </Select>
-                        </FormControl>
-
-                        <Button
-                            variant="contained"
-                            color="primary"
+                        <button
+                            className="btn btn-primary"
                             onClick={handleBulkRequestedStatusChange}
-                            disabled={!bulkRequestedStatus}
+                            disabled={!bulkRequestedStatus || selectedGateIds.size === 0}
                         >
-                            Apply to Filtered
-                        </Button>
-                        <Tooltip
-                            title={
-                                downlinkCount >= 10
-                                    ? "Downlink limit reached (10). Please wait or reset."
-                                    : "You have sent " + downlinkCount + " downlinks. You can send up to 10 downlinks."
-                            }
+                            Apply to Selected
+                        </button>
+
+                        <button
+                            className="btn btn-primary"
+                            onClick={sendManualDownlink}
+                            disabled={downlinkCount >= 10}
+                            title={downlinkCount >= 10
+                                ? "Downlink limit reached (10). Please wait or reset."
+                                : `You have sent ${downlinkCount} downlinks. You can send up to 10 downlinks.`}
                         >
-                            <span>
-                                <Button
-                                    variant="contained"
-                                    color="secondary"
-                                    onClick={sendManualDownlink}
-                                    disabled={downlinkCount >= 10}
-                                >
-                                    Send Downlink
-                                </Button>
-                            </span>
-                        </Tooltip>
-                        <Button
-                            variant="outlined"
-                            color="error"
+                            Send Downlink
+                        </button>
+
+                        <button
+                            className="btn btn-danger"
                             disabled={userDetails?.role !== 'controller'}
                             onClick={() => setResetDialogOpen(true)}
                         >
                             Reset Downlink Counter
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="success"
+                        </button>
+
+                        <button
+                            className="btn btn-ghost"
                             onClick={() => setCreateDialogOpen(true)}
                         >
                             Create Gate
-                        </Button>
-                    </Box>
+                        </button>
 
-                    <table className="status-table">
+                        {selectedGateIds.size > 0 && (
+                            <span className="bulk-count">{selectedGateIds.size} selected</span>
+                        )}
+                    </div>
+
+                    <table className="gate-table">
                         <thead>
                             <tr>
+                                <th>
+                                    <input
+                                        type="checkbox"
+                                        className="select-all"
+                                        aria-label="Select all gates"
+                                        checked={filteredGates.length > 0 && selectedGateIds.size === filteredGates.length}
+                                        onChange={toggleSelectAll}
+                                    />
+                                </th>
                                 <th>Gate ID</th>
                                 <th>Location</th>
                                 <th>Status</th>
-                                <th>Requested Status</th>
-                                <th>Pending Jobs</th>
-                                <th>Priority</th>
+                                <th>Confidence</th>
                                 <th>Last Update</th>
                                 <th>Actions</th>
                                 <th>Activities</th>
-                                <th>Delete</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredGates.map((gate) => (
-                                <React.Fragment key={gate.id}>
-                                    <tr>
-                                        <td data-label="Gate ID">{gate.id}</td>
-                                        <td data-label="Location">
-                                            {gate.location}<br />
-                                            <span className="coords">{gate.latitude.toFixed(5)}, {gate.longitude.toFixed(5)}</span>
-                                        </td>
-                                        <td data-label="Status">
-                                            <Badge
-                                                color={confirmationBadgeColor(gate.stateConfirmation)}
-                                                invisible={`${gate.stateConfirmation}` == "UNCONFIRMED"}
-                                                anchorOrigin={{ vertical: 'top', horizontal: 'right', }}
-                                                variant="standard"
-                                                badgeContent={confirmationBadgeContent(gate.stateConfirmation)} >
-                                                <span className={`badge ${gate.status?.toLowerCase()}`}>
-                                                    {
-                                                        gate.status === "OPENED"
-                                                            ? <LockOpenIcon fontSize="small" /> :
-                                                            gate.status === "CLOSED" ? <LockIcon fontSize="small" /> :
-                                                                <QuestionMarkIcon fontSize="small" />
-                                                    } {gate.status}
-                                                </span>
-                                            </Badge>
-                                        </td>
-                                        <td data-label="Requested Status">
-                                            <span
-                                                className={`badge ${gate.requestedStatus ? gate.requestedStatus.toLowerCase() : 'none'}`}>
-                                                {renderRequestedStatus(gate.requestedStatus)}
-                                            </span>
-                                        </td>
-                                        <td data-label="Pending Jobs">
-                                            <span
-                                                className={`badge ${gate.pendingJob ? gate.pendingJob.toLowerCase() : 'none'}`}>
-                                                {renderPendingJobs(gate.pendingJob)}
-                                            </span>
-                                        </td>
-                                        <td data-label="Priority">
-                                            <FormControl size="small" variant="outlined">
-                                                <Select
-                                                    value={gate.priority ?? 0}
-                                                    onChange={(e) => {
-                                                        const newPriority = parseInt(e.target.value);
-                                                        handlePriorityChange(gate.id, newPriority);
-                                                    }}
-                                                    variant="outlined">
-                                                    {[0, 1, 2, 3].map((level) => (
-                                                        <MenuItem key={level} value={level}>
-                                                            {level}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
+                            {filteredGates.map((gate) => {
+                                const si = statusInfo(gate.status);
+                                const ci = confirmationIndicator(gate.stateConfirmation);
 
-                                        </td>
-                                        <td data-label="Last Update">
-                                            <div>{getTimeAgo(gate.lastTimeStamp)}</div>
-                                            <div className="date">{new Date(gate.lastTimeStamp).toLocaleString()}</div>
-                                        </td>
-                                        <td data-label="Actions">
-                                            <IconButton
-                                                color="warning"
-                                                size="small"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelectedGate(gate);
-                                                    setDialogOpen(true);
-                                                }}
-                                            >
-                                                <SyncAltIcon />
-                                            </IconButton>
-                                        </td>
-                                        <td data-label="Activities">
-                                            <IconButton
-                                                onClick={() =>
-                                                    setExpandedGateId(expandedGateId === gate.id ? null : gate.id)
-                                                }
-                                                size="small"
-                                                aria-label="expand row"
-                                            >
-                                                {expandedGateId === gate.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                                            </IconButton>
-                                        </td>
-                                        <td data-label="Delete">
-                                            <IconButton
-                                                color="error"
-                                                size="small"
-                                                onClick={() => {
-                                                    setGateToDelete(gate);
-                                                    setDeleteDialogOpen(true);
-                                                }}
-                                            >
-                                                <CloseIcon />
-                                            </IconButton>
-                                        </td>
-                                    </tr>
-                                    {expandedGateId === gate.id && (
-                                        <tr className="expanded-row">
-                                            <td colSpan={11} style={{ backgroundColor: "#f9f9f9" }}>
-                                                <div>
-                                                    <strong>Activities</strong>
-                                                    {activities
-                                                        .filter(activity => activity.gateId === gate.id)
-                                                        .slice(-4)
-                                                        .map(activity => (
-                                                            <p key={activity.id}>
-                                                                <strong>{new Date(activity.lastTimeStamp).toLocaleString()}:</strong> {activity.message}
-                                                            </p>
-                                                        ))
-                                                    }
-                                                    {activities.filter(a => a.gateId === gate.id).length === 0 && (
-                                                        <p>No activities available for this gate.</p>
+                                return (
+                                    <React.Fragment key={gate.id}>
+                                        <tr onClick={() => navigate(`/gates/${gate.id}`)}>
+                                            <td onClick={(e) => e.stopPropagation()}>
+                                                <input
+                                                    type="checkbox"
+                                                    className="row-check"
+                                                    aria-label={`Select gate ${gate.id}`}
+                                                    checked={selectedGateIds.has(gate.id)}
+                                                    onChange={() => toggleGateSelection(gate.id)}
+                                                />
+                                            </td>
+                                            <td data-label="Gate ID">
+                                                <span
+                                                    className="gate-id"
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/gates/${gate.id}`);
+                                                    }}
+                                                >
+                                                    G-{gate.id}
+                                                </span>
+                                            </td>
+                                            <td data-label="Location">
+                                                <span
+                                                    style={{ cursor: 'pointer', color: 'var(--accent)' }}
+                                                    title="Click to view on map"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate('/map');
+                                                    }}
+                                                >
+                                                    {gate.location}
+                                                </span>
+                                                <br />
+                                                <span className="coords" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                                    {gate.latitude != null ? gate.latitude.toFixed(5) : '—'}, {gate.longitude != null ? gate.longitude.toFixed(5) : '—'}
+                                                </span>
+                                            </td>
+                                            <td data-label="Status">
+                                                <span style={{ position: 'relative', display: 'inline-flex' }}>
+                                                    <span className={`status-badge ${si.cls}`}>
+                                                        <span className="status-dot" />
+                                                        {si.label}
+                                                    </span>
+                                                    {ci && (
+                                                        <span style={{
+                                                            position: 'absolute',
+                                                            top: '-4px',
+                                                            right: '-4px',
+                                                            width: '14px',
+                                                            height: '14px',
+                                                            borderRadius: '50%',
+                                                            background: ci.color,
+                                                            color: '#fff',
+                                                            fontSize: '8px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontWeight: 700,
+                                                            lineHeight: 1,
+                                                        }}>
+                                                            {ci.label}
+                                                        </span>
                                                     )}
-                                                </div>
+                                                </span>
+                                            </td>
+                                            <td data-label="Confidence">
+                                                <ConfidenceCell gate={gate} />
+                                            </td>
+                                            <td data-label="Last Update">
+                                                {gate.lastTimeStamp ? (
+                                                    <span
+                                                        className="last-update"
+                                                        title={new Date(gate.lastTimeStamp).toLocaleString()}
+                                                    >
+                                                        {getTimeAgo(gate.lastTimeStamp)}
+                                                    </span>
+                                                ) : '—'}
+                                            </td>
+                                            <td data-label="Actions" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    type="button"
+                                                    className="action-link"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedGate(gate);
+                                                        setDialogOpen(true);
+                                                    }}
+                                                >
+                                                    Request Change
+                                                </button>
+                                            </td>
+                                            <td data-label="Activities" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    className="action-link"
+                                                    aria-label="expand row"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setExpandedGateId(expandedGateId === gate.id ? null : gate.id);
+                                                    }}
+                                                >
+                                                    {expandedGateId === gate.id ? '▼' : '▶'} Activities
+                                                </button>
                                             </td>
                                         </tr>
-                                    )}
-                                </React.Fragment>
-                            ))}
+                                        {expandedGateId === gate.id && (
+                                            <tr className="expanded-row" onClick={() => navigate(`/gates/${gate.id}`)}>
+                                                <td colSpan={8}>
+                                                    <div>
+                                                        <strong>Activities</strong>
+                                                        {activities
+                                                            .filter(activity => activity.gateId === gate.id)
+                                                            .slice(-4)
+                                                            .map(activity => (
+                                                                <p key={activity.id}>
+                                                                    <strong>{activity.lastTimeStamp ? new Date(activity.lastTimeStamp).toLocaleString() : '—'}:</strong> {activity.message}
+                                                                </p>
+                                                            ))
+                                                        }
+                                                        {activities.filter(a => a.gateId === gate.id).length === 0 && (
+                                                            <p>No activities available for this gate.</p>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
                         </tbody>
                     </table>
-                </>
-            ) : (
-                <MapView search={search} statusFilter={filter} />
-            )}
+            </>
 
             <StatusChangedDialog
                 open={dialogOpen}
                 gate={selectedGate}
                 onClose={() => handleClose()}
             />
-            <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-                <DialogTitle>Confirm Deletion</DialogTitle>
-                <DialogContent>
-                    Are you sure you want to delete the gate with the ID: <strong>{gateToDelete?.id}</strong>?
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-                    <Button color="error" onClick={handleDeleteGate} variant="contained">
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
 
             <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)}>
                 <DialogTitle>Create New Gate</DialogTitle>
                 <DialogContent>
-                    <TextField
-                        fullWidth
-                        required
-                        margin="dense"
-                        label="Location"
-                        value={newGateData.location}
-                        onChange={(e) => setNewGateData({ ...newGateData, location: e.target.value })}
-                    />
-
-                    <TextField
-                        fullWidth
-                        required
-                        margin="dense"
-                        label="Latitude"
-                        type="number"
-                        inputProps={{ step: "any" }}
-                        value={newGateData.latitude}
-                        onChange={(e) => setNewGateData({ ...newGateData, latitude: e.target.value })}
-                    />
-
-                    <TextField
-                        fullWidth
-                        required
-                        margin="dense"
-                        label="Longitude"
-                        type="number"
-                        inputProps={{ step: "any" }}
-                        value={newGateData.longitude}
-                        onChange={(e) => setNewGateData({ ...newGateData, longitude: e.target.value })}
-                    />
-                    <TextField
-                        fullWidth
-                        margin="dense"
-                        label="Priority"
-                        type="number"
-                        inputProps={{ min: 0, max: 3 }}
-                        value={newGateData.priority}
-                        onChange={(e) => setNewGateData({ ...newGateData, priority: parseInt(e.target.value) })}
-                    />
-                    <TextField
-                        fullWidth
-                        required
-                        select
-                        margin="dense"
-                        label="Status"
-                        value={newGateData.status}
-                        onChange={(e) => setNewGateData({ ...newGateData, status: e.target.value })}
-                    >
-                        <MenuItem value="OPENED">OPENED</MenuItem>
-                        <MenuItem value="CLOSED">CLOSED</MenuItem>
-                    </TextField>
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="create-gate-location">Location</label>
+                        <input
+                            id="create-gate-location"
+                            className="form-input"
+                            required
+                            value={newGateData.location}
+                            onChange={(e) => setNewGateData({ ...newGateData, location: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="create-gate-latitude">Latitude</label>
+                        <input
+                            id="create-gate-latitude"
+                            className="form-input"
+                            required
+                            type="number"
+                            step="any"
+                            value={newGateData.latitude}
+                            onChange={(e) => setNewGateData({ ...newGateData, latitude: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="create-gate-longitude">Longitude</label>
+                        <input
+                            id="create-gate-longitude"
+                            className="form-input"
+                            required
+                            type="number"
+                            step="any"
+                            value={newGateData.longitude}
+                            onChange={(e) => setNewGateData({ ...newGateData, longitude: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="create-gate-priority">Priority</label>
+                        <input
+                            id="create-gate-priority"
+                            className="form-input"
+                            type="number"
+                            min={0}
+                            max={3}
+                            value={newGateData.priority}
+                            onChange={(e) => setNewGateData({ ...newGateData, priority: parseInt(e.target.value) })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="create-gate-status">Status</label>
+                        <select
+                            id="create-gate-status"
+                            className="form-input"
+                            required
+                            value={newGateData.status}
+                            onChange={(e) => setNewGateData({ ...newGateData, status: e.target.value })}
+                        >
+                            <option value="OPEN">OPEN</option>
+                            <option value="CLOSED">CLOSED</option>
+                        </select>
+                    </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
+                    <button className="btn btn-ghost" onClick={() => setCreateDialogOpen(false)}>Cancel</button>
+                    <button
+                        className="btn btn-primary"
                         disabled={!isFormValid()}
                         onClick={async () => {
                             try {
@@ -627,19 +581,18 @@ function StatusTables() {
                         }}
                     >
                         Create
-                    </Button>
+                    </button>
                 </DialogActions>
             </Dialog>
+
             <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
                 <DialogTitle>Reset Downlink Counter</DialogTitle>
                 <DialogContent>
                     <p>Are you sure you want to reset the downlink counter?</p>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setResetDialogOpen(false)}>Cancel</Button>
-                    <Button color="error" onClick={handleResetCounter} variant="contained">
-                        Reset
-                    </Button>
+                    <button className="btn btn-ghost" onClick={() => setResetDialogOpen(false)}>Cancel</button>
+                    <button className="btn btn-danger" onClick={handleResetCounter}>Reset</button>
                 </DialogActions>
             </Dialog>
         </div>

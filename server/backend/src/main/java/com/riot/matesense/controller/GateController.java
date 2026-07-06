@@ -115,7 +115,7 @@ public class GateController {
 
 
     /**
-     * AN API Call to update the priority of a Gate
+     * An API Call to update the priority of a Gate
      *
      * @param gateId  of the gate
      * @param request the data
@@ -127,5 +127,41 @@ public class GateController {
     ) throws GateNotFoundException {
         Integer priority = request.get("priority");
         gateService.updatePriority(gateId, priority);
+    }
+
+    @PutMapping("/update-height/{gateId}")
+    public void updateHeightAboveNN(
+            @PathVariable Long gateId,
+            @RequestBody Map<String, Double> request
+    ) throws GateNotFoundException {
+        Double height = request.get("heightAboveNN");
+        gateService.updateHeightAboveNN(gateId, height);
+    }
+
+    /**
+     * An API Call to manually set the status of a Gate (direct override, not a request).
+     * Sets the manualOverride flag so the UI can display that the status was set manually.
+     *
+     * @param gateId   of the gate
+     * @param workerId of the worker performing the override
+     * @param body     containing "status" key with value "OPEN" or "CLOSED"
+     * @throws GateNotFoundException
+     */
+    @PostMapping("/gates/{gateId}/{workerId}/set-status")
+    public void setGateStatusManually(
+            @PathVariable Long gateId,
+            @PathVariable Long workerId,
+            @RequestBody Map<String, String> body
+    ) throws GateNotFoundException {
+        String status = body.get("status");
+        gateService.setGateStatusManually(gateId, status, workerId);
+        gateActivityService.addGateActivity(
+                new GateActivityEntity(new Timestamp(System.currentTimeMillis()),
+                        new Timestamp(System.currentTimeMillis()),
+                        2L,
+                        gateId,
+                        status,
+                        ActivityType.MANUAL_STATUS_SET,
+                        workerId));
     }
 }

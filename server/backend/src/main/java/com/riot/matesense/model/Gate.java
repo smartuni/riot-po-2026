@@ -29,12 +29,15 @@ public class Gate {
 	private String pendingJob;
 	private int confidence;
 	private ConfidenceQuality quality;
-	private int priority;;
+	private int priority;
+	private boolean manualOverride;
+	private Double heightAboveNN;
 
 	public Gate(Long id , Long deviceId, Timestamp lastTimeStamp, Status status,
 				StateConfirmation stateConfirmation, Double latitude, Double longitude,String location,
 				Boolean workerConfidence, Boolean sensorConfidence,
-				String requestedStatus, int confidence, ConfidenceQuality quality, String pendingJob, int priority) {
+				String requestedStatus, int confidence, ConfidenceQuality quality, String pendingJob, int priority,
+				boolean manualOverride, Double heightAboveNN) {
 		this.id = id;
 		this.location = location;
 		this.deviceId = deviceId;
@@ -50,5 +53,7 @@ public class Gate {
 		this.confidence = confidence;
 		this.quality = quality;
 		this.priority = priority;
+		this.manualOverride = manualOverride;
+		this.heightAboveNN = heightAboveNN;
 	}
 }

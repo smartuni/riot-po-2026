@@ -87,14 +87,6 @@ export const api = createApi({
       }),
       invalidatesTags: ['Gate'],
     }),
-    updateGate: builder.mutation({
-      query: (gate) => ({
-        url: '/api/update-gate',
-        method: 'PUT',
-        body: gate,
-      }),
-      invalidatesTags: ['Gate'],
-    }),
     deleteGate: builder.mutation({
       query: (gateId) => ({
         url: `/api/gates/${gateId}`,
@@ -115,6 +107,22 @@ export const api = createApi({
         url: `/api/update-priority/${gateId}`,
         method: 'PUT',
         body: { priority },
+      }),
+      invalidatesTags: ['Gate'],
+    }),
+    updateHeightAboveNN: builder.mutation({
+      query: ({ gateId, heightAboveNN }) => ({
+        url: `/api/update-height/${gateId}`,
+        method: 'PUT',
+        body: { heightAboveNN },
+      }),
+      invalidatesTags: ['Gate'],
+    }),
+    setGateStatusManually: builder.mutation({
+      query: ({ gateId, workerId, status }) => ({
+        url: `/api/gates/${gateId}/${workerId}/set-status`,
+        method: 'POST',
+        body: { status },
       }),
       invalidatesTags: ['Gate'],
     }),
@@ -147,20 +155,7 @@ export const api = createApi({
         query: () => '/api/gate-activities',
       providesTags: (result) => result ? result.map((activity) => ({ type: 'Activity', id: activity.id })) : [{ type: 'Activity' }],
     }),
-    addActivities: builder.mutation({
-      query: (newActivities) => ({
-        url: '/api/add-activities/',
-        method: 'POST',
-        body: newActivities,
-      }),
-      invalidatesTags: ['Activity'],
-    }),
-
     // ── Notifications ─────────────────────────────────────
-    getNotifications: builder.query({
-        query: () => '/api/notifications',
-      providesTags: (result) => result ? result.map((notification) => ({ type: 'Notification', id: notification.id })) : [{ type: 'Notification' }],
-    }),
     getNotificationsByWorkerId: builder.query({
         query: (workerId) => `/api/notifications/${workerId}`,
       providesTags: (result) => result ? result.map((notification) => ({ type: 'Notification', id: notification.id })) : [{ type: 'Notification' }],
@@ -182,17 +177,16 @@ export const {
   useLogoutMutation,
   useGetGatesQuery,
   useCreateGateMutation,
-  useUpdateGateMutation,
   useDeleteGateMutation,
   useRequestGateStatusChangeMutation,
   useUpdateGatePriorityMutation,
+  useUpdateHeightAboveNNMutation,
+  useSetGateStatusManuallyMutation,
   useGetDownlinkCounterQuery,
   useTryIncrementDownlinkCounterMutation,
   useResetDownlinkCounterMutation,
   useSendDownlinkMutation,
   useGetActivitiesQuery,
-  useAddActivitiesMutation,
-  useGetNotificationsQuery,
   useGetNotificationsByWorkerIdQuery,
   useMarkNotificationAsReadMutation,
 } = api;

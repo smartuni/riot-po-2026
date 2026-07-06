@@ -1,24 +1,22 @@
-import { InfoBoxes, StatusTablesView } from '../features/gates';
-import { RecentActivity } from '../features/activities';
-import { HeaderBarGuest } from '../features/shell';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import StatusTablesView from '../features/gates/components/StatusTablesView';
 
-
-const DashboardGuestPage = () => {
-
+function DashboardGuestPage() {
     return (
-        <div>
-            <HeaderBarGuest />
-            <div className="container">
-                <div className="main">
-                    <InfoBoxes />
-                    <div className="content">
-                        <StatusTablesView />
-                        <RecentActivity />
-                    </div>
-                </div>
-            </div>
+        <div className="guest-dashboard">
+            <header className="auth-header">
+                <Link to="/">
+                    <div className="logo-icon">SM</div>
+                    <span>SenseMate</span>
+                </Link>
+                <Link to="/login" className="btn btn-primary">Sign In</Link>
+            </header>
+            <main className="guest-content" style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+                <StatusTablesView />
+            </main>
         </div>
-    )
+    );
 }
 
-export default DashboardGuestPage
+export default DashboardGuestPage;

@@ -103,6 +103,7 @@ coverage/
 # AI tools
 .sisyphus/
 AGENTS.md
+.weave/
 
 */lab_workarounds.mk
 */secrets

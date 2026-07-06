@@ -27,7 +27,6 @@ const NotificationPopup = () => {
                     zIndex: 2000,
                     borderRadius: 2,
                     p: 2,
-                    backgroundColor: 'background.paper',
                 }}
             >
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
@@ -49,7 +48,6 @@ const NotificationPopup = () => {
                     zIndex: 2000,
                     borderRadius: 2,
                     p: 2,
-                    backgroundColor: 'background.paper',
                 }}
             >
                 <Alert severity="error">Failed to load notifications</Alert>
@@ -80,7 +78,6 @@ const NotificationPopup = () => {
                 zIndex: 2000,
                 borderRadius: 2,
                 p: 2,
-                backgroundColor: 'background.paper',
             }}
         >
             <Typography variant="h6" sx={{ mb: 1 }}>
@@ -88,9 +85,9 @@ const NotificationPopup = () => {
             </Typography>
             <List dense>
                 {notifications.length > 0 ? (
-                    notifications.map((note, index) => (
+                    notifications.map((note) => (
                         <ListItemButton
-                            key={index}
+                            key={note.id}
                             onClick={() => handleNotificationClick(note)}
                             sx={{
                                 opacity: note.read ? 0.6 : 1,
@@ -110,7 +107,7 @@ const NotificationPopup = () => {
                                         {note.read && <CheckIcon sx={{ fontSize: 16, ml: 1 }} />}
                                     </Typography>
                                 }
-                                secondary={new Date(note.lastTimeStamp).toLocaleString()}
+                                secondary={note.lastTimeStamp ? new Date(note.lastTimeStamp).toLocaleString() : '—'}
                             />
                         </ListItemButton>
                     ))

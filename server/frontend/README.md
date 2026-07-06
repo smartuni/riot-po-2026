@@ -45,7 +45,7 @@ npm run docs           # Serve documentation at localhost:3000
 1. Users start at the **Landing Page** (`/`) — choose Login, Sign Up, or Continue as Guest
 2. After login/registration, users are redirected based on their role:
    - **Controller** → `/dashboard` — full gate control (CRUD, downlinks, bulk operations)
-   - **Viewer** → `/dashboard-view` — read-only dashboard with notifications
+   - **Viewer** → `/dashboard` — read-only dashboard with notifications
 3. **Guests** go directly to `/dashboard-guest` — read-only, no auth required
 
 ## Directory Structure
@@ -55,7 +55,8 @@ server/frontend/
 ├── public/                          # Static assets (favicon, logos, manifest)
 ├── src/
 │   ├── app/
-│   │   ├── App.jsx                  # Root component: BrowserRouter + 7 routes
+│   │   ├── App.jsx                  # Root component: BrowserRouter + routes with guards
+│   │   ├── store.js                 # Redux store configuration
 │   │   └── App.test.jsx             # Smoke test (renders landing page)
 │   ├── index.jsx                    # Entry point: renders <App /> in React.StrictMode
 │   ├── index.css                    # Global styles
@@ -64,20 +65,23 @@ server/frontend/
 │   │   ├── LandingPage.jsx          # / — hero page with CTAs
 │   │   ├── LoginPage.jsx            # /login — email/password form
 │   │   ├── RegisterPage.jsx         # /register — registration with role toggle
-│   │   ├── DashboardPage.jsx        # /dashboard — controller dashboard
-│   │   ├── DashboardViewPage.jsx    # /dashboard-view — viewer dashboard
+│   │   ├── DashboardPage.jsx        # /dashboard — controller/viewer dashboard
 │   │   ├── DashboardGuestPage.jsx   # /dashboard-guest — guest view
-│   │   └── UserPage.jsx            # /userpage — profile management + logout
+│   │   ├── MapPage.jsx              # /map — Leaflet map
+│   │   ├── DiagnosticsPage.jsx      # /diagnostics — system diagnostics
+│   │   ├── DevicesPage.jsx          # /devices — device management
+│   │   ├── AutomationPage.jsx       # /automation — automation rules
+│   │   ├── LogsPage.jsx             # /logs — activity logs
+│   │   └── SettingsPage.jsx         # /settings — user settings
 │   ├── features/                    # Domain-driven feature modules
-│   │   ├── auth/                    # Authentication: context, provider, API, LogoutButton
-│   │   ├── gates/                   # Gate CRUD, status, priority, downlink, InfoBoxes
+│   │   ├── auth/                    # Authentication: authSlice, ProtectedRoute, PublicOnlyRoute, LogoutButton
+│   │   ├── gates/                   # Gate CRUD, status, priority, downlink, StatCards
 │   │   ├── map/                     # Leaflet map visualization (centered on Hamburg)
-│   │   ├── activities/              # Gate activity log + RecentActivity component
+│   │   ├── activities/              # Gate activity log + ActivityPanel component
 │   │   └── notifications/           # Notification API + NotificationPopup
 │   └── shared/                      # Cross-cutting code
-│       ├── api/apiClient.js         # Axios singleton (baseURL: http://localhost:8080)
-│       ├── components/             # AlertDialog variants, HeaderBar, HeaderBarGuest
-│       ├── styles/                  # Global CSS (App.css, HeaderBar.css, Sidebar.css)
+│       ├── components/              # DarkModeToggle, CollapseToggle, ComingSoonHero, SkeletonLoader, UplinkToast
+│       ├── styles/                  # theme.css, typography.css
 │       └── utils/cookie.js          # getCookie helper
 ├── docs/                            # Docsify documentation site
 ├── index.html                       # HTML entry point
@@ -107,8 +111,8 @@ server/frontend/
 - **Feature-based folder structure** — Code organized by domain, not by technical layer
 - **Barrel exports** — Each feature has an `index.js` that re-exports its public API
 - **No cross-feature imports** — Features import from `shared/` but not from each other
-- **No state management library** — React Context for auth, local `useState`/`useEffect` for all other state
-- **No route guards** — Auth checks done imperatively in each page component via `useEffect`
+- **Redux Toolkit + RTK Query** for auth and server state
+- **Route-level guards** — `ProtectedRoute` (role-gated) and `PublicOnlyRoute`
 
 ## Documentation
 

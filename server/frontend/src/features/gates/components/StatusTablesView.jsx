@@ -1,39 +1,91 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useGetGatesQuery, useGetActivitiesQuery } from "../../../app/store/api/api";
-import {
-    TextField,
-    MenuItem,
-    Tabs,
-    Tab,
-    Tooltip,
-    CircularProgress, Alert,
-} from "@mui/material";
-import LockOpenIcon from '@mui/icons-material/LockOpen';
-import LockIcon from '@mui/icons-material/Lock';
-import { MapView } from "../../map";
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import WarningIcon from "@mui/icons-material/Warning";
 
-function StatusTablesView() {
-    /**
-     * State-Variablen für die Suchanfrage, Filter, Ansicht und erweiterten Gate-ID.
-     */
+const statusInfo = (status) => {
+    switch (status) {
+        case "OPEN": return { cls: "status-open", label: "Open" };
+        case "CLOSED": return { cls: "status-closed", label: "Closed" };
+        default: return { cls: "status-oos", label: "Out of Service" };
+    }
+};
+
+const confirmationIndicator = (stateConfirmation) => {
+    switch (stateConfirmation) {
+        case "WORKER_CONFLICT": return { label: "⚠", color: "var(--red-600)" };
+        case "UNCONFIRMED": return null;
+        case "WORKER_CONFIRMED_SINGLE": return { label: "✓", color: "var(--blue-600)" };
+        case "WORKER_CONFIRMED_MULTI":
+        case "WORKER_CONFIRMED_ALL": return { label: "✓✓", color: "var(--green-600)" };
+        default: return null;
+    }
+};
+
+function ConfidenceCell({ gate }) {
+    const sc = gate.stateConfirmation;
+    let icon = null;
+    let title = "Unconfirmed";
+
+    if (sc === "WORKER_CONFIRMED_SINGLE") {
+        icon = <ArrowForwardIcon className="confidence-icon" style={{ color: "var(--blue-600)" }} />;
+        title = "Confirmed by 1 worker";
+    } else if (sc === "WORKER_CONFIRMED_MULTI" || sc === "WORKER_CONFIRMED_ALL") {
+        icon = <DoneAllIcon className="confidence-icon" style={{ color: "var(--green-600)" }} />;
+        title = "Confirmed by 2+ workers";
+    } else if (sc === "WORKER_CONFLICT") {
+        icon = <WarningIcon className="confidence-icon" style={{ color: "var(--red-600)" }} />;
+        title = "Conflict: workers disagree";
+    }
+
+    const confidencePct = gate.confidence != null ? `${gate.confidence}%` : "—";
+
+    return (
+        <span className="confidence-indicator" title={title}>
+            {icon}
+            <span className="confidence-value">{confidencePct}</span>
+        </span>
+    );
+}
+
+function getTimeAgo(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const secondsAgo = Math.floor((now - date) / 1000);
+
+    if (secondsAgo < 60) return `${secondsAgo} seconds ago`;
+    const minutes = Math.floor(secondsAgo / 60);
+    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return "yesterday";
+    if (days < 7) return `${days} days ago`;
+    return date.toLocaleDateString();
+}
+
+const FILTER_TABS = [
+    { label: "All", value: "" },
+    { label: "Open", value: "OPEN" },
+    { label: "Closed", value: "CLOSED" },
+    { label: "OOS", value: "OUT_OF_SERVICE" },
+];
+
+function StatusTablesView({ filter: filterProp, setFilter: setFilterProp }) {
+    const navigate = useNavigate();
+
     const [search, setSearch] = useState("");
-    const [filter, setFilter] = useState("");
-    const [view, setView] = useState("list");
+    const [filterLocal, setFilterLocal] = useState("");
     const [expandedGateId, setExpandedGateId] = useState(null);
+
+    const filter = filterProp !== undefined ? filterProp : filterLocal;
+    const setFilter = setFilterProp || setFilterLocal;
 
     const { data: gates = [], isLoading, error } = useGetGatesQuery();
     const { data: activities = [] } = useGetActivitiesQuery();
 
-    /**
-     * Rendern des angeforderten Status für die Gates.
-     * @param status
-     * @returns {Element}
-     */
-    /**
-     * Filtert die Gates basierend auf der Suchanfrage und dem Statusfilter.
-     * @type {Array}
-     */
     const filteredGates = gates.filter(gate =>
         (gate.id.toString().includes(search) || (gate.location?.toLowerCase() || '').includes(search.toLowerCase())) &&
         (
@@ -45,126 +97,167 @@ function StatusTablesView() {
 
     if (isLoading) {
         return (
-            <div className="gate-status-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-                <CircularProgress />
+            <div className="card" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                Loading gates…
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="gate-status-container" style={{ padding: '2rem' }}>
-                <Alert severity="error">Failed to load gates data: {error.toString()}</Alert>
+            <div className="card" style={{ padding: '16px' }}>
+                <div style={{ padding: '16px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', color: 'var(--red-600)' }}>
+                    Failed to load gates data. Please try again later.
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="gate-status-container">
-            <div className="gate-status-header">
-                <h2>Flood Gates</h2>
-                <div className="gate-controls">
-                    <TextField
-                        size="small"
-                        placeholder="Search gates..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        style={{ marginRight: "1rem" }}
-                    />
-                    <TextField
-                        size="small"
-                        select
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                    >
-                        <MenuItem value="">All Status</MenuItem>
-                        <MenuItem value="OPENED">Open</MenuItem>
-                        <MenuItem value="CLOSED">Closed</MenuItem>
-                        <MenuItem value="REQUESTED_CLOSE">Requested Close</MenuItem>
-                        <MenuItem value="REQUESTED_OPEN">Requested Open</MenuItem>
-                        <MenuItem value="REQUESTED_NONE">No Requested Status</MenuItem>
-                    </TextField>
+        <div className="card">
+            <div className="table-toolbar">
+                <h2 style={{ fontSize: '16px', fontWeight: 600, margin: 0, marginRight: '12px' }}>Flood Gates</h2>
+
+                <input
+                    className="search-input table-search"
+                    aria-label="Search gates"
+                    placeholder="Search gates…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+
+                <div className="filter-tabs">
+                    {FILTER_TABS.map(tab => (
+                        <button
+                            key={tab.value}
+                            className={`filter-tab${filter === tab.value ? ' active' : ''}`}
+                            data-filter={tab.value}
+                            onClick={() => setFilter(tab.value)}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
+
+                <div style={{ flex: 1 }} />
             </div>
 
-            <Tabs
-                value={view}
-                onChange={(e, newValue) => setView(newValue)}
-                style={{ marginTop: "1rem", marginBottom: "1rem" }}
-            >
-                <Tab label="List View" value="list" />
-                <Tab label="Map View" value="map" />
-            </Tabs>
+            <table className="gate-table">
+                    <thead>
+                        <tr>
+                            <th>Gate ID</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Confidence</th>
+                            <th>Last Update</th>
+                            <th>Activities</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredGates.map((gate) => {
+                            const si = statusInfo(gate.status);
+                            const ci = confirmationIndicator(gate.stateConfirmation);
 
-            {view === "list" ? (
-                <>
-                    <table className="status-table">
-                        <thead>
-                            <tr>
-                                <th>Gate ID</th>
-                                <th>Location</th>
-                                <th>Status</th>
-                                <th>Last Update</th>
-                                <th>Confidence</th>
-                                {/* <th>Actions</th> */}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredGates.map((gate) => (
+                            return (
                                 <React.Fragment key={gate.id}>
-                                    <tr
-                                        onClick={() => setExpandedGateId(expandedGateId === gate.id ? null : gate.id)}
-                                        style={{ cursor: "pointer" }}
-                                    >
-                                        <td>{gate.id}</td>
-                                        <td>
-                                            {gate.location}<br />
-                                            <span className="coords">{gate.latitude}, {gate.longitude}</span>
-                                        </td>
-                                        <td>
-                                            <span className={`badge ${gate.status?.toLowerCase()}`}>
-                                                {gate.status === "OPENED"
-                                                    ? <LockOpenIcon fontSize="small" />
-                                                    : <LockIcon fontSize="small" />
-                                                } {gate.status}
+                                    <tr onClick={() => navigate(`/gates/${gate.id}`)}>
+                                        <td data-label="Gate ID">
+                                            <span
+                                                className="gate-id"
+                                                style={{ cursor: 'pointer' }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/gates/${gate.id}`);
+                                                }}
+                                            >
+                                                G-{gate.id}
                                             </span>
                                         </td>
-
-                                        <td>
-                                            <div>about 1 hour ago</div>
-                                            <div className="date">{gate.lastUpdate}</div>
+                                        <td data-label="Location">
+                                            <span
+                                                style={{ cursor: 'pointer', color: 'var(--accent)' }}
+                                                title="Click to view on map"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate('/map');
+                                                }}
+                                            >
+                                                {gate.location}
+                                            </span>
+                                            <br />
+                                            <span className="coords" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                                {gate.latitude != null ? gate.latitude.toFixed(5) : '—'}, {gate.longitude != null ? gate.longitude.toFixed(5) : '—'}
+                                            </span>
                                         </td>
-                                        <td>
-                                            100%<br />
-                                            <Tooltip
-                                                title="Confidence reflects agreement between sensor and worker. 100% means both match.">
-                                                <HelpOutlineIcon
-                                                    fontSize="small"
-                                                    className="help-icon"
-                                                    style={{
-                                                        marginLeft: 4,
-                                                        cursor: "help",
-                                                        verticalAlign: "middle",
-                                                        color: "#888"
-                                                    }}
-                                                />
-                                            </Tooltip>
+                                        <td data-label="Status">
+                                            <span style={{ position: 'relative', display: 'inline-flex' }}>
+                                                <span className={`status-badge ${si.cls}`}>
+                                                    <span className="status-dot" />
+                                                    {si.label}
+                                                </span>
+                                                {ci && (
+                                                    <span style={{
+                                                        position: 'absolute',
+                                                        top: '-4px',
+                                                        right: '-4px',
+                                                        width: '14px',
+                                                        height: '14px',
+                                                        borderRadius: '50%',
+                                                        background: ci.color,
+                                                        color: '#fff',
+                                                        fontSize: '8px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontWeight: 700,
+                                                        lineHeight: 1,
+                                                    }}>
+                                                        {ci.label}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </td>
+                                        <td data-label="Confidence">
+                                            <ConfidenceCell gate={gate} />
+                                        </td>
+                                        <td data-label="Last Update">
+                                            {gate.lastTimeStamp ? (
+                                                <span
+                                                    className="last-update"
+                                                    title={new Date(gate.lastTimeStamp).toLocaleString()}
+                                                >
+                                                    {getTimeAgo(gate.lastTimeStamp)}
+                                                </span>
+                                            ) : '—'}
+                                        </td>
+                                        <td data-label="Activities" onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                className="action-link"
+                                                aria-label="expand row"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setExpandedGateId(expandedGateId === gate.id ? null : gate.id);
+                                                }}
+                                            >
+                                                {expandedGateId === gate.id ? '▼' : '▶'} Activities
+                                            </button>
                                         </td>
                                     </tr>
 
                                     {expandedGateId === gate.id && (
-                                        <tr className="expanded-row">
-                                            <td colSpan={8} style={{ backgroundColor: "#f9f9f9" }}>
+                                        <tr className="expanded-row" onClick={() => navigate(`/gates/${gate.id}`)}>
+                                            <td colSpan={6}>
                                                 <div>
                                                     <strong>Activities</strong>
                                                     {activities
                                                         .filter(activity => activity.gateId === gate.id)
-                                                        .slice(-4) // Optional: nur die letzten 4 zeigen
-                                                        .map((activity) => (
+                                                        .slice(-4)
+                                                        .map(activity => (
                                                             <p key={activity.id}>
-                                                                <strong>{activity.lastTimeStamp}:</strong> {activity.message}
+                                                                <strong>{activity.lastTimeStamp ? new Date(activity.lastTimeStamp).toLocaleString() : '—'}:</strong> {activity.message}
                                                             </p>
-                                                        ))}
+                                                        ))
+                                                    }
                                                     {activities.filter(a => a.gateId === gate.id).length === 0 && (
                                                         <p>No activities available for this gate.</p>
                                                     )}
@@ -173,17 +266,12 @@ function StatusTablesView() {
                                         </tr>
                                     )}
                                 </React.Fragment>
-                            ))}
-                        </tbody>
-                    </table>
-                </>
-            ) : (
-                <MapView search={search} statusFilter={filter} />
-            )}
+                            );
+                        })}
+                    </tbody>
+                </table>
         </div>
     );
 }
 
 export default StatusTablesView;
-
-

@@ -28,10 +28,10 @@ test.describe('WebSocket regression — stale lastTimeStamp bug', () => {
     expect(response.status()).toBe(200);
 
     // 3. Wait for Gate 1001 status to change to CLOSED in the UI (WS pushes update)
-    const row = page.locator('table.status-table tbody tr', {
+    const row = page.locator('table.gate-table tbody tr', {
       hasText: 'E2E Gate Alpha',
     });
-    await expect(row).toContainText('CLOSED', { timeout: 5000 });
+    await expect(row).toContainText(/closed/i, { timeout: 5000 });
 
     // 4. KEY BUG ASSERTION: "Last Update" must show a fresh relative time.
     //    Before fix: WS sends stale lastTimeStamp → UI shows "5 months ago" (from Jan 2026 seed) → test FAILS.
@@ -73,14 +73,14 @@ test.describe('WebSocket regression — stale lastTimeStamp bug', () => {
     );
     expect(response.status()).toBe(200);
 
-    // 3. Verify gate 1002 state confirmation badge updated in UI
-    const row = page.locator('table.status-table tbody tr', {
+    // 3. Verify gate 1002 status is still CLOSED after state confirmation change.
+    //    The state confirmation change (WORKER_CONFIRMED_MULTI → WORKER_CONFIRMED_SINGLE)
+    //    updates the confirmation badge, not the gate status itself.
+    const row = page.locator('table.gate-table tbody tr', {
       hasText: 'E2E Gate Beta',
     });
-    // WORKER_CONFIRMED_SINGLE renders a ✓ icon via CheckIcon.
-    // The Badge badgeContent contains the icon; the cell should still show CLOSED status.
     const statusCell = row.locator('td[data-label="Status"]');
-    await expect(statusCell).toContainText('CLOSED', { timeout: 5000 });
+    await expect(statusCell).toContainText(/closed/i, { timeout: 5000 });
 
     // 4. Verify via API that lastTimeStamp is no longer the stale seed value
     const gatesAfter = await (await request.get(`${BACKEND_URL}/gates`)).json();
@@ -106,10 +106,10 @@ test.describe('WebSocket regression — stale lastTimeStamp bug', () => {
       // Best-effort reset — don't fail the suite if reset fails.
     }
 
-    // Reset gate 1002 state confirmation back to CONFIRMED
+    // Reset gate 1002 state confirmation back to WORKER_CONFIRMED_MULTI (seed value)
     try {
       await request.post(`${BACKEND_URL}/e2e/simulate-state-confirmation`, {
-        data: { gateId: 1002, state: 'CONFIRMED' },
+        data: { gateId: 1002, state: 'WORKER_CONFIRMED_MULTI' },
       });
     } catch {
       // Best-effort
