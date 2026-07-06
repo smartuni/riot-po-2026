@@ -253,9 +253,9 @@ const GateMetadataCard = ({ gate, isController, embedded = false }) => {
                                 />
                             </div>
                             <div style={{ display: 'flex', gap: '4px' }}>
-                                <button className="action-link" onClick={handleSaveEdit} style={{ color: 'var(--green-600)' }}>
-                                    <CheckIcon fontSize="small" />
-                                </button>
+                                <button className="action-link" onClick={handleSaveEdit} style={{ color: 'var(--green-600)' }} aria-label="Save metadata edit">
+                                        <CheckIcon fontSize="small" />
+                                    </button>
                                 <button className="action-link" onClick={cancelEdit} style={{ color: 'var(--text-secondary)' }}>
                                     <CloseIcon fontSize="small" />
                                 </button>
@@ -276,7 +276,7 @@ const GateMetadataCard = ({ gate, isController, embedded = false }) => {
                                     <button className="action-link" onClick={() => startEdit(item)} style={{ color: 'var(--blue-600)' }}>
                                         <EditIcon style={{ fontSize: '16px' }} />
                                     </button>
-                                    <button className="action-link" onClick={() => handleDelete(item)} style={{ color: 'var(--red-600)' }}>
+                                    <button className="action-link" onClick={() => handleDelete(item)} style={{ color: 'var(--red-600)' }} aria-label="Delete metadata item">
                                         <DeleteIcon style={{ fontSize: '16px' }} />
                                     </button>
                                 </div>
@@ -317,7 +317,7 @@ const GateMetadataCard = ({ gate, isController, embedded = false }) => {
                             if (e.key === 'Escape') { setAdding(false); setNewKey(''); setNewValue(''); }
                         }}
                     />
-                    <button className="action-link" onClick={handleAdd} style={{ color: 'var(--green-600)' }}>
+                    <button className="action-link" onClick={handleAdd} style={{ color: 'var(--green-600)' }} aria-label="Add metadata item">
                         <CheckIcon fontSize="small" />
                     </button>
                     <button className="action-link" onClick={() => { setAdding(false); setNewKey(''); setNewValue(''); }} style={{ color: 'var(--text-secondary)' }}>

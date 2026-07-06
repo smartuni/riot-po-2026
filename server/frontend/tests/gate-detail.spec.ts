@@ -141,7 +141,7 @@ test.describe('Gate detail page (mutations)', () => {
     await keyInput.fill('test_key');
     await valueInput.fill('test_value');
 
-    const checkButton = metadataPanel.locator('button.action-link').filter({ has: page.locator('svg') }).last();
+    const checkButton = metadataPanel.getByRole('button', { name: 'Add metadata item' });
     await checkButton.click();
 
     await expect(metadataPanel).toContainText('test_key');
@@ -154,13 +154,13 @@ test.describe('Gate detail page (mutations)', () => {
     const editValueInput = metadataPanel.locator('input').nth(1);
     await editValueInput.fill('updated_value');
 
-    const saveCheck = metadataPanel.locator('button.action-link').filter({ has: page.locator('svg') }).first();
+    const saveCheck = metadataPanel.getByRole('button', { name: 'Save metadata edit' });
     await saveCheck.click();
 
     await expect(metadataPanel).toContainText('updated_value');
 
     const deleteRow = metadataPanel.locator('div', { hasText: 'test_key' }).first();
-    const deleteButton = deleteRow.locator('button.action-link').filter({ has: page.locator('svg') }).last();
+    const deleteButton = deleteRow.getByRole('button', { name: 'Delete metadata item' });
     await deleteButton.click();
 
     await expect(metadataPanel).not.toContainText('test_key');
