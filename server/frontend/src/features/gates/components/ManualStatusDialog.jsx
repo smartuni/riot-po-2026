@@ -5,7 +5,7 @@ import {
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useAppSelector } from "../../../app/store";
-import { useRequestGateStatusChangeMutation } from "../../../app/store/api/api";
+import { useSetGateStatusManuallyMutation } from "../../../app/store/api/api";
 
 const selectUser = (state) => state.auth.user;
 
@@ -14,15 +14,6 @@ const getStatusClass = (status) => {
         case "OPEN": return "status-open";
         case "CLOSED": return "status-closed";
         case "OUT_OF_SERVICE": return "status-oos";
-        default: return "status-none";
-    }
-};
-
-const getRequestedStatusClass = (status) => {
-    switch (status?.toUpperCase()) {
-        case "REQUESTED_OPEN": return "status-open";
-        case "REQUESTED_CLOSE": return "status-closed";
-        case "REQUESTED_NONE": return "status-none";
         default: return "status-none";
     }
 };
@@ -38,25 +29,15 @@ const getStatusDisplay = (status) => {
     }
 };
 
-const getRequestedStatusDisplay = (status) => {
-    switch (status?.toUpperCase()) {
-        case "REQUESTED_OPEN":
-            return <><LockOpenIcon fontSize="small" /> Open</>;
-        case "REQUESTED_CLOSE":
-            return <><LockIcon fontSize="small" /> Close</>;
-        default:
-            return <>None</>;
-    }
-};
-
-function StatusChangeDialog({ open, gate, onClose }) {
-    const [requestedStatus, setRequestedStatus] = useState("");
+function ManualStatusDialog({ open, gate, onClose }) {
+    const [newStatus, setNewStatus] = useState("");
     const [error, setError] = useState(null);
-    const [requestGateStatusChange] = useRequestGateStatusChangeMutation();
+    const [setGateStatusManually] = useSetGateStatusManuallyMutation();
     const userDetails = useAppSelector(selectUser);
     const workerId = userDetails?.workerId;
     const [prevGateId, setPrevGateId] = useState(gate?.id);
 
+    // Reset error when switching gates
     if (gate?.id !== prevGateId) {
         setPrevGateId(gate?.id);
         setError(null);
@@ -66,29 +47,29 @@ function StatusChangeDialog({ open, gate, onClose }) {
 
     const handleSubmit = async () => {
         try {
-            await requestGateStatusChange({
+            await setGateStatusManually({
                 gateId: gate.id,
                 workerId,
-                requestedStatus
+                status: newStatus,
             }).unwrap();
             onClose();
-            setRequestedStatus("");
+            setNewStatus("");
             setError(null);
         } catch (err) {
-            console.error("Fehler beim Update:", err);
-            setError("Failed to request status change. Please try again.");
+            console.error("Failed to set gate status manually:", err);
+            setError("Failed to set gate status. Please try again.");
         }
     };
 
     const handleClose = () => {
         setError(null);
-        setRequestedStatus("");
+        setNewStatus("");
         onClose();
     };
 
     return (
         <Dialog open={open} onClose={handleClose}>
-            <DialogTitle style={{ fontWeight: 700 }}>Request Status Change</DialogTitle>
+            <DialogTitle style={{ fontWeight: 700 }}>Set Gate Status Manually</DialogTitle>
             <DialogContent>
                 {/* ── Gate info ── */}
                 <div style={{ marginBottom: '8px' }}>
@@ -99,27 +80,39 @@ function StatusChangeDialog({ open, gate, onClose }) {
                     <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Location:</span>{' '}
                     <span style={{ fontSize: '14px', fontWeight: 500 }}>{gate.location}</span>
                 </div>
-                <div style={{ marginBottom: '8px' }}>
+                <div style={{ marginBottom: '12px' }}>
                     <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Current Status:</span>{' '}
                     <span className={`status-badge ${getStatusClass(gate.status)}`}>
                         <span className="status-dot" />
                         {getStatusDisplay(gate.status)}
                     </span>
                 </div>
-                <div style={{ marginBottom: '12px' }}>
-                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Requested Status:</span>{' '}
-                    <span className={`status-badge ${getRequestedStatusClass(gate.requestedStatus)}`}>
-                        <span className="status-dot" />
-                        {getRequestedStatusDisplay(gate.requestedStatus)}
-                    </span>
-                </div>
 
-                {/* ── Info note ── */}
+                {/* ── Manual override note (info) ── */}
+                {gate.manualOverride && (
+                    <div style={{
+                        marginTop: '12px',
+                        padding: '10px 14px',
+                        background: 'rgba(59,130,246,0.08)',
+                        border: '1px solid var(--blue-300)',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        color: 'var(--text)',
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'flex-start',
+                    }}>
+                        <span style={{ fontSize: '16px', flexShrink: 0 }}>ℹ️</span>
+                        <span>Status was previously set manually.</span>
+                    </div>
+                )}
+
+                {/* ── Warning ── */}
                 <div style={{
                     marginTop: '12px',
                     padding: '10px 14px',
-                    background: 'rgba(59,130,246,0.08)',
-                    border: '1px solid var(--blue-300)',
+                    background: 'rgba(245,158,11,0.08)',
+                    border: '1px solid var(--amber-500)',
                     borderRadius: '8px',
                     fontSize: '13px',
                     color: 'var(--text)',
@@ -127,24 +120,24 @@ function StatusChangeDialog({ open, gate, onClose }) {
                     gap: '8px',
                     alignItems: 'flex-start',
                 }}>
-                    <span style={{ fontSize: '16px', flexShrink: 0 }}>ℹ️</span>
-                    <span>This sends a status request to the gate. The actual status changes when the device confirms.</span>
+                    <span style={{ fontSize: '16px', flexShrink: 0 }}>⚠️</span>
+                    <span><strong>Warning:</strong> This will immediately override the gate status. Use with caution.</span>
                 </div>
 
                 {/* ── New status selector ── */}
                 <div style={{ marginTop: '12px', fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>
-                    Select Requested Status:
+                    Select New Status:
                 </div>
                 <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
                     <button
                         type="button"
-                        onClick={() => setRequestedStatus('REQUESTED_OPEN')}
+                        onClick={() => setNewStatus('OPEN')}
                         style={{
                             flex: 1,
                             padding: '16px',
                             borderRadius: '10px',
-                            border: requestedStatus === 'REQUESTED_OPEN' ? '2px solid var(--red-600)' : '1px solid var(--border)',
-                            background: requestedStatus === 'REQUESTED_OPEN' ? 'rgba(239,68,68,0.06)' : 'var(--bg-card)',
+                            border: newStatus === 'OPEN' ? '2px solid var(--red-600)' : '1px solid var(--border)',
+                            background: newStatus === 'OPEN' ? 'rgba(239,68,68,0.06)' : 'var(--bg-card)',
                             cursor: 'pointer',
                             display: 'flex',
                             flexDirection: 'column',
@@ -153,18 +146,18 @@ function StatusChangeDialog({ open, gate, onClose }) {
                             transition: 'all 0.15s',
                         }}
                     >
-                        <LockOpenIcon style={{ fontSize: '28px', color: requestedStatus === 'REQUESTED_OPEN' ? 'var(--red-600)' : 'var(--text-secondary)' }} />
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: requestedStatus === 'REQUESTED_OPEN' ? 'var(--red-600)' : 'var(--text)' }}>Open</span>
+                        <LockOpenIcon style={{ fontSize: '28px', color: newStatus === 'OPEN' ? 'var(--red-600)' : 'var(--text-secondary)' }} />
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: newStatus === 'OPEN' ? 'var(--red-600)' : 'var(--text)' }}>Open</span>
                     </button>
                     <button
                         type="button"
-                        onClick={() => setRequestedStatus('REQUESTED_CLOSE')}
+                        onClick={() => setNewStatus('CLOSED')}
                         style={{
                             flex: 1,
                             padding: '16px',
                             borderRadius: '10px',
-                            border: requestedStatus === 'REQUESTED_CLOSE' ? '2px solid var(--green-600)' : '1px solid var(--border)',
-                            background: requestedStatus === 'REQUESTED_CLOSE' ? 'rgba(34,197,94,0.06)' : 'var(--bg-card)',
+                            border: newStatus === 'CLOSED' ? '2px solid var(--green-600)' : '1px solid var(--border)',
+                            background: newStatus === 'CLOSED' ? 'rgba(34,197,94,0.06)' : 'var(--bg-card)',
                             cursor: 'pointer',
                             display: 'flex',
                             flexDirection: 'column',
@@ -173,28 +166,8 @@ function StatusChangeDialog({ open, gate, onClose }) {
                             transition: 'all 0.15s',
                         }}
                     >
-                        <LockIcon style={{ fontSize: '28px', color: requestedStatus === 'REQUESTED_CLOSE' ? 'var(--green-600)' : 'var(--text-secondary)' }} />
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: requestedStatus === 'REQUESTED_CLOSE' ? 'var(--green-600)' : 'var(--text)' }}>Closed</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setRequestedStatus('REQUESTED_NONE')}
-                        style={{
-                            flex: 1,
-                            padding: '16px',
-                            borderRadius: '10px',
-                            border: requestedStatus === 'REQUESTED_NONE' ? '2px solid var(--slate-500)' : '1px solid var(--border)',
-                            background: requestedStatus === 'REQUESTED_NONE' ? 'rgba(100,116,139,0.06)' : 'var(--bg-card)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'all 0.15s',
-                        }}
-                    >
-                        <span style={{ fontSize: '28px', color: requestedStatus === 'REQUESTED_NONE' ? 'var(--slate-500)' : 'var(--text-secondary)', lineHeight: 1 }}>∅</span>
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: requestedStatus === 'REQUESTED_NONE' ? 'var(--slate-500)' : 'var(--text)' }}>None</span>
+                        <LockIcon style={{ fontSize: '28px', color: newStatus === 'CLOSED' ? 'var(--green-600)' : 'var(--text-secondary)' }} />
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: newStatus === 'CLOSED' ? 'var(--green-600)' : 'var(--text)' }}>Closed</span>
                     </button>
                 </div>
 
@@ -210,14 +183,14 @@ function StatusChangeDialog({ open, gate, onClose }) {
                 <button
                     className="btn btn-primary"
                     onClick={handleSubmit}
-                    disabled={!requestedStatus || !workerId}
-                    style={{ opacity: (!requestedStatus || !workerId) ? 0.5 : 1 }}
+                    disabled={!newStatus || !workerId}
+                    style={{ opacity: (!newStatus || !workerId) ? 0.5 : 1 }}
                 >
-                    Request Change
+                    Set Status
                 </button>
             </DialogActions>
         </Dialog>
     );
 }
 
-export default StatusChangeDialog;
+export default ManualStatusDialog;

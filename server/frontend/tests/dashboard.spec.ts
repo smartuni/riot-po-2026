@@ -57,20 +57,15 @@ test.describe('Controller dashboard', () => {
     await expect(page.locator('table.gate-table tbody tr')).toHaveCount(1);
   });
 
-  test('map view renders a marker for every seeded gate', async ({ page }) => {
-    await expect(page.locator('table.gate-table')).toBeVisible();
-
-    await page.getByRole('tab', { name: 'Map View' }).click();
+  test('map page renders a marker for every seeded gate', async ({ page }) => {
+    // The map is now a separate /map route (MapPage.jsx), not a dashboard tab.
+    await page.goto('/map');
     await expect(page.locator('.leaflet-container')).toBeVisible();
-    await expect(page.locator('table.gate-table')).toHaveCount(0);
 
     // Markers are rendered from gate data (not network tiles), so this verifies
     // the map actually plotted the gates — and works offline / in CI where
     // OpenStreetMap tiles never load.
     await expect(page.locator('.leaflet-marker-icon')).toHaveCount(SEEDED_GATES.length);
-
-    await page.getByRole('tab', { name: 'List View' }).click();
-    await expect(page.locator('table.gate-table')).toBeVisible();
   });
 
   test('expanding a gate row reveals its seeded activity', async ({ page }) => {
@@ -128,6 +123,52 @@ test.describe('Controller dashboard', () => {
     // would pass even if the dashboard stayed mounted with a stale session.
     await expect(page.getByText('Our Mission')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Logout' })).toHaveCount(0);
+  });
+});
+
+test.describe('Stat card filtering', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page, CONTROLLER);
+    await expect(page.getByRole('heading', { name: 'Flood Gates' })).toBeVisible();
+    await expectLoaded(page);
+  });
+
+  test('clicking the Open stat card filters the table to open gates', async ({ page }) => {
+    const openCard = page.locator('.stat-card').filter({ hasText: 'Open' });
+    await openCard.click();
+
+    // Only OPEN gates (Alpha 1001, Gamma 1003) should be visible
+    await expect(page.getByText('E2E Gate Alpha')).toBeVisible();
+    await expect(page.getByText('E2E Gate Gamma')).toBeVisible();
+    await expect(page.getByText('E2E Gate Beta')).toHaveCount(0);
+    await expect(page.getByText('E2E Gate Delta')).toHaveCount(0);
+    await expect(page.locator('table.gate-table tbody tr')).toHaveCount(2);
+  });
+
+  test('clicking an active stat card again clears the filter', async ({ page }) => {
+    const openCard = page.locator('.stat-card').filter({ hasText: 'Open' });
+    await openCard.click();
+    await expect(page.locator('table.gate-table tbody tr')).toHaveCount(2);
+
+    // Click again to toggle off the filter
+    await openCard.click();
+    await expect(page.locator('table.gate-table tbody tr')).toHaveCount(SEEDED_GATES.length);
+  });
+
+  test('clicking Total Gates shows all gates', async ({ page }) => {
+    const totalCard = page.locator('.stat-card').filter({ hasText: 'Total Gates' });
+    await totalCard.click();
+
+    await expect(page.locator('table.gate-table tbody tr')).toHaveCount(SEEDED_GATES.length);
+  });
+
+  test('clicking Closed filters to closed gates', async ({ page }) => {
+    const closedCard = page.locator('.stat-card').filter({ hasText: 'Closed' });
+    await closedCard.click();
+
+    // Only CLOSED gate (Beta 1002) should be visible
+    await expect(page.getByText('E2E Gate Beta')).toBeVisible();
+    await expect(page.locator('table.gate-table tbody tr')).toHaveCount(1);
   });
 });
 

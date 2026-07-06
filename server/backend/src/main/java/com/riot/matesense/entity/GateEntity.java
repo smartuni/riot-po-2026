@@ -48,6 +48,9 @@ public class GateEntity {
     private String pendingJob;
     private int confidence;
     private int priority = 0;
+    private boolean manualOverride;
+    @Column(name = "height_above_nn")
+    private Double heightAboveNN;
 
 
     public GateEntity(Long gateID, Status status, Timestamp lastTimeStamp,

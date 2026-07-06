@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../../app/store";
 import {
     useGetGatesQuery,
@@ -6,56 +7,26 @@ import {
     useGetDownlinkCounterQuery,
     useRequestGateStatusChangeMutation,
     useTryIncrementDownlinkCounterMutation,
-    useUpdateGatePriorityMutation,
-    useDeleteGateMutation,
     useCreateGateMutation,
     useSendDownlinkMutation,
     useResetDownlinkCounterMutation,
 } from "../../../app/store/api/api";
 import {
-    Select,
-    MenuItem,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
 } from "@mui/material";
-import { MapView } from "../../map";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import WarningIcon from "@mui/icons-material/Warning";
 import StatusChangedDialog from "./StatusChangedDialog";
-
-/* ── helpers: map domain values → Hydro‑Blue CSS classes ── */
-
-const priorityClass = (level) => {
-    switch (level) {
-        case 0: return "priority-low";
-        case 1: return "priority-medium";
-        case 2: return "priority-high";
-        case 3: return "priority-critical";
-        default: return "priority-low";
-    }
-};
 
 const statusInfo = (status) => {
     switch (status) {
         case "OPEN": return { cls: "status-open", label: "Open" };
         case "CLOSED": return { cls: "status-closed", label: "Closed" };
         default: return { cls: "status-oos", label: "Out of Service" };
-    }
-};
-
-const requestedStatusInfo = (status) => {
-    switch (status) {
-        case "REQUESTED_OPEN": return { cls: "status-open", label: "Open" };
-        case "REQUESTED_CLOSE": return { cls: "status-closed", label: "Close" };
-        default: return { cls: "status-oos", label: "None" };
-    }
-};
-
-const pendingJobInfo = (status) => {
-    switch (status) {
-        case "PENDING_OPEN": return { cls: "status-open", label: "Open" };
-        case "PENDING_CLOSE": return { cls: "status-closed", label: "Close" };
-        default: return { cls: "status-oos", label: "None" };
     }
 };
 
@@ -66,25 +37,50 @@ const confirmationIndicator = (stateConfirmation) => {
         case "WORKER_CONFIRMED_SINGLE": return { label: "✓", color: "var(--blue-600)" };
         case "WORKER_CONFIRMED_MULTI":
         case "WORKER_CONFIRMED_ALL": return { label: "✓✓", color: "var(--green-600)" };
-        default: return null;  // unknown → no bubble (same as UNCONFIRMED)
+        default: return null;
     }
 };
 
-/* ── filter‑tab definitions (maps tab → filter value) ── */
+function ConfidenceCell({ gate }) {
+    const sc = gate.stateConfirmation;
+    let icon = null;
+    let title = "Unconfirmed";
+    let color = "var(--text-secondary)";
+
+    if (sc === "WORKER_CONFIRMED_SINGLE") {
+        icon = <ArrowForwardIcon className="confidence-icon" style={{ color: "var(--blue-600)" }} />;
+        title = "Confirmed by 1 worker";
+        color = "var(--blue-600)";
+    } else if (sc === "WORKER_CONFIRMED_MULTI" || sc === "WORKER_CONFIRMED_ALL") {
+        icon = <DoneAllIcon className="confidence-icon" style={{ color: "var(--green-600)" }} />;
+        title = "Confirmed by 2+ workers";
+        color = "var(--green-600)";
+    } else if (sc === "WORKER_CONFLICT") {
+        icon = <WarningIcon className="confidence-icon" style={{ color: "var(--red-600)" }} />;
+        title = "Conflict: workers disagree";
+        color = "var(--red-600)";
+    }
+
+    const confidencePct = gate.confidence != null ? `${gate.confidence}%` : "—";
+
+    return (
+        <span className="confidence-indicator" title={title}>
+            {icon}
+            <span className="confidence-value" style={{ color }}>{confidencePct}</span>
+        </span>
+    );
+}
 
 const FILTER_TABS = [
     { label: "All", value: "" },
     { label: "Open", value: "OPEN" },
     { label: "Closed", value: "CLOSED" },
-    { label: "Req Open", value: "REQUESTED_OPEN" },
-    { label: "Req Close", value: "REQUESTED_CLOSE" },
-    { label: "No Request", value: "REQUESTED_NONE" },
+    { label: "OOS", value: "OUT_OF_SERVICE" },
 ];
 
-/* ══════════════════════════════════════════════════════════ */
+function StatusTables({ filter: filterProp, setFilter: setFilterProp }) {
+    const navigate = useNavigate();
 
-function StatusTables() {
-    /* ── RTK Query hooks (unchanged) ── */
     const { data: gates = [], isLoading: gatesLoading, error: gatesError } = useGetGatesQuery();
     const { data: activities = [], isLoading: activitiesLoading, error: activitiesError } = useGetActivitiesQuery();
     const { data: downlinkCounterData } = useGetDownlinkCounterQuery();
@@ -95,22 +91,16 @@ function StatusTables() {
 
     const [requestGateStatusChange] = useRequestGateStatusChangeMutation();
     const [tryIncrementDownlinkCounter] = useTryIncrementDownlinkCounterMutation();
-    const [updateGatePriority] = useUpdateGatePriorityMutation();
-    const [deleteGate] = useDeleteGateMutation();
     const [createGate] = useCreateGateMutation();
     const [sendDownlink] = useSendDownlinkMutation();
     const [resetDownlinkCounter] = useResetDownlinkCounterMutation();
 
-    /* ── state (unchanged) ── */
     const [search, setSearch] = useState("");
-    const [filter, setFilter] = useState("");
-    const [view, setView] = useState("list");
+    const [filterLocal, setFilterLocal] = useState("");
     const [selectedGate, setSelectedGate] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [bulkRequestedStatus, setBulkRequestedStatus] = useState("");
     const [expandedGateId, setExpandedGateId] = useState(null);
-    const [gateToDelete, setGateToDelete] = useState(null);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
     const [newGateData, setNewGateData] = useState({
@@ -121,21 +111,10 @@ function StatusTables() {
         status: "CLOSED",
     });
 
-    /* ── checkbox selection state (new UI state) ── */
     const [selectedGateIds, setSelectedGateIds] = useState(new Set());
 
-    /* ── business‑logic handlers (unchanged) ── */
-
-    const handleDeleteGate = async () => {
-        try {
-            await deleteGate(gateToDelete.id).unwrap();
-            setDeleteDialogOpen(false);
-            setGateToDelete(null);
-        } catch (error) {
-            console.error("Fehler beim Löschen des Gates:", error);
-            alert("Fehler beim Löschen des Gates.");
-        }
-    };
+    const filter = filterProp !== undefined ? filterProp : filterLocal;
+    const setFilter = setFilterProp || setFilterLocal;
 
     const handleResetCounter = async () => {
         try {
@@ -154,8 +133,11 @@ function StatusTables() {
 
     const handleBulkRequestedStatusChange = async () => {
         if (!bulkRequestedStatus) return;
+        if (selectedGateIds.size === 0) return;
 
-        const promises = filteredGates.map(async (gate) => {
+        const targetGates = filteredGates.filter(g => selectedGateIds.has(g.id));
+
+        const promises = targetGates.map(async (gate) => {
             try {
                 await requestGateStatusChange({ gateId: gate.id, workerId, requestedStatus: bulkRequestedStatus }).unwrap();
             } catch (error) {
@@ -164,6 +146,7 @@ function StatusTables() {
         });
 
         await Promise.all(promises);
+        setSelectedGateIds(new Set());
     };
 
     const filteredGates = gates.filter(gate =>
@@ -206,15 +189,6 @@ function StatusTables() {
         }
     };
 
-    const handlePriorityChange = async (gateId, newPriority) => {
-        try {
-            await updateGatePriority({ gateId, priority: newPriority }).unwrap();
-        } catch (error) {
-            console.error("Fehler beim Aktualisieren der Priorität:", error);
-            alert("Fehler beim Aktualisieren der Priorität.");
-        }
-    };
-
     const isValidFloat = (value) => !isNaN(value) && parseFloat(value) === Number(value);
 
     const isFormValid = () => {
@@ -242,8 +216,6 @@ function StatusTables() {
         return date.toLocaleDateString();
     }
 
-    /* ── checkbox helpers (new UI, not business logic) ── */
-
     const toggleGateSelection = (gateId) => {
         setSelectedGateIds(prev => {
             const next = new Set(prev);
@@ -261,8 +233,6 @@ function StatusTables() {
         }
     };
 
-    /* ── loading / error states (plain HTML) ── */
-
     if (gatesLoading || activitiesLoading) {
         return (
             <div className="card" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-secondary)' }}>
@@ -274,7 +244,7 @@ function StatusTables() {
     if (gatesError || activitiesError) {
         return (
             <div className="card" style={{ padding: '16px' }}>
-                <div style={{ padding: '16px', background: 'var(--red-100)', borderRadius: '8px', color: 'var(--red-600)' }}>
+                <div style={{ padding: '16px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', color: 'var(--red-600)' }}>
                     {gatesError ? 'Failed to load gates data. ' : ''}
                     {activitiesError ? 'Failed to load activities data. ' : ''}
                 </div>
@@ -282,11 +252,8 @@ function StatusTables() {
         );
     }
 
-    /* ── main render ── */
-
     return (
         <div className="card">
-            {/* ── toolbar: title, search, filter tabs, view toggle ── */}
             <div className="table-toolbar">
                 <h2 style={{ fontSize: '16px', fontWeight: 600, margin: 0, marginRight: '12px' }}>Flood Gates</h2>
 
@@ -312,30 +279,9 @@ function StatusTables() {
                 </div>
 
                 <div style={{ flex: 1 }} />
-
-                <div className="filter-tabs" role="tablist">
-                    <button
-                        role="tab"
-                        aria-selected={view === 'list'}
-                        className={`filter-tab${view === 'list' ? ' active' : ''}`}
-                        onClick={() => setView("list")}
-                    >
-                        List View
-                    </button>
-                    <button
-                        role="tab"
-                        aria-selected={view === 'map'}
-                        className={`filter-tab${view === 'map' ? ' active' : ''}`}
-                        onClick={() => setView("map")}
-                    >
-                        Map View
-                    </button>
-                </div>
             </div>
 
-            {view === "list" ? (
-                <>
-                    {/* ── bulk‑action bar ── */}
+            <>
                     <div className={`bulk-bar${filteredGates.length > 0 ? ' visible' : ''}`}>
                         <select
                             className="form-input"
@@ -352,9 +298,9 @@ function StatusTables() {
                         <button
                             className="btn btn-primary"
                             onClick={handleBulkRequestedStatusChange}
-                            disabled={!bulkRequestedStatus}
+                            disabled={!bulkRequestedStatus || selectedGateIds.size === 0}
                         >
-                            Apply to Filtered
+                            Apply to Selected
                         </button>
 
                         <button
@@ -388,7 +334,6 @@ function StatusTables() {
                         )}
                     </div>
 
-                    {/* ── gate table ── */}
                     <table className="gate-table">
                         <thead>
                             <tr>
@@ -404,26 +349,21 @@ function StatusTables() {
                                 <th>Gate ID</th>
                                 <th>Location</th>
                                 <th>Status</th>
-                                <th>Requested Status</th>
-                                <th>Pending Jobs</th>
-                                <th>Priority</th>
+                                <th>Confidence</th>
                                 <th>Last Update</th>
                                 <th>Actions</th>
                                 <th>Activities</th>
-                                <th>Delete</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredGates.map((gate) => {
                                 const si = statusInfo(gate.status);
                                 const ci = confirmationIndicator(gate.stateConfirmation);
-                                const rsi = requestedStatusInfo(gate.requestedStatus);
-                                const pji = pendingJobInfo(gate.pendingJob);
 
                                 return (
                                     <React.Fragment key={gate.id}>
-                                        <tr>
-                                            <td>
+                                        <tr onClick={() => navigate(`/gates/${gate.id}`)}>
+                                            <td onClick={(e) => e.stopPropagation()}>
                                                 <input
                                                     type="checkbox"
                                                     className="row-check"
@@ -433,10 +373,29 @@ function StatusTables() {
                                                 />
                                             </td>
                                             <td data-label="Gate ID">
-                                                <span className="gate-id">G-{gate.id}</span>
+                                                <span
+                                                    className="gate-id"
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/gates/${gate.id}`);
+                                                    }}
+                                                >
+                                                    G-{gate.id}
+                                                </span>
                                             </td>
                                             <td data-label="Location">
-                                                {gate.location}<br />
+                                                <span
+                                                    style={{ cursor: 'pointer', color: 'var(--accent)' }}
+                                                    title="Click to view on map"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate('/map');
+                                                    }}
+                                                >
+                                                    {gate.location}
+                                                </span>
+                                                <br />
                                                 <span className="coords" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                                                     {gate.latitude != null ? gate.latitude.toFixed(5) : '—'}, {gate.longitude != null ? gate.longitude.toFixed(5) : '—'}
                                                 </span>
@@ -469,47 +428,20 @@ function StatusTables() {
                                                     )}
                                                 </span>
                                             </td>
-                                            <td data-label="Requested Status">
-                                                <span className={`status-badge ${rsi.cls}`}>
-                                                    <span className="status-dot" />
-                                                    {rsi.label}
-                                                </span>
-                                            </td>
-                                            <td data-label="Pending Jobs">
-                                                <span className={`status-badge ${pji.cls}`}>
-                                                    <span className="status-dot" />
-                                                    {pji.label}
-                                                </span>
-                                            </td>
-                                            <td data-label="Priority">
-                                                <span className={priorityClass(gate.priority ?? 0)} style={{ display: 'inline-flex', alignItems: 'center', marginRight: '4px' }}>
-                                                    <span className="priority-dot" />
-                                                    {gate.priority ?? 0}
-                                                </span>
-                                                <Select
-                                                    value={gate.priority ?? 0}
-                                                    onChange={(e) => {
-                                                        const newPriority = parseInt(e.target.value);
-                                                        handlePriorityChange(gate.id, newPriority);
-                                                    }}
-                                                    variant="outlined"
-                                                    size="small"
-                                                    style={{ minWidth: 60, verticalAlign: 'middle' }}
-                                                >
-                                                    {[0, 1, 2, 3].map((level) => (
-                                                        <MenuItem key={level} value={level}>
-                                                            {level}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
+                                            <td data-label="Confidence">
+                                                <ConfidenceCell gate={gate} />
                                             </td>
                                             <td data-label="Last Update">
-                                                <span className="last-update">{gate.lastTimeStamp ? getTimeAgo(gate.lastTimeStamp) : '—'}</span>
-                                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                                    {gate.lastTimeStamp ? new Date(gate.lastTimeStamp).toLocaleString() : '—'}
-                                                </div>
+                                                {gate.lastTimeStamp ? (
+                                                    <span
+                                                        className="last-update"
+                                                        title={new Date(gate.lastTimeStamp).toLocaleString()}
+                                                    >
+                                                        {getTimeAgo(gate.lastTimeStamp)}
+                                                    </span>
+                                                ) : '—'}
                                             </td>
-                                            <td data-label="Actions">
+                                            <td data-label="Actions" onClick={(e) => e.stopPropagation()}>
                                                 <button
                                                     type="button"
                                                     className="action-link"
@@ -522,34 +454,22 @@ function StatusTables() {
                                                     Request Change
                                                 </button>
                                             </td>
-                                            <td data-label="Activities">
+                                            <td data-label="Activities" onClick={(e) => e.stopPropagation()}>
                                                 <button
                                                     className="action-link"
                                                     aria-label="expand row"
-                                                    onClick={() =>
-                                                        setExpandedGateId(expandedGateId === gate.id ? null : gate.id)
-                                                    }
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setExpandedGateId(expandedGateId === gate.id ? null : gate.id);
+                                                    }}
                                                 >
                                                     {expandedGateId === gate.id ? '▼' : '▶'} Activities
                                                 </button>
                                             </td>
-                                            <td data-label="Delete">
-                                                <button
-                                                    type="button"
-                                                    className="action-link"
-                                                    style={{ color: 'var(--red-600)' }}
-                                                    onClick={() => {
-                                                        setGateToDelete(gate);
-                                                        setDeleteDialogOpen(true);
-                                                    }}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </td>
                                         </tr>
                                         {expandedGateId === gate.id && (
-                                            <tr className="expanded-row">
-                                                <td colSpan={11}>
+                                            <tr className="expanded-row" onClick={() => navigate(`/gates/${gate.id}`)}>
+                                                <td colSpan={8}>
                                                     <div>
                                                         <strong>Activities</strong>
                                                         {activities
@@ -573,31 +493,14 @@ function StatusTables() {
                             })}
                         </tbody>
                     </table>
-                </>
-            ) : (
-                <MapView search={search} statusFilter={filter} />
-            )}
+            </>
 
-            {/* ── Status‑Change dialog (unchanged component) ── */}
             <StatusChangedDialog
                 open={dialogOpen}
                 gate={selectedGate}
                 onClose={() => handleClose()}
             />
 
-            {/* ── Delete‑Gate dialog (MUI Dialog kept) ── */}
-            <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-                <DialogTitle>Confirm Deletion</DialogTitle>
-                <DialogContent>
-                    Are you sure you want to delete the gate with the ID: <strong>{gateToDelete?.id}</strong>?
-                </DialogContent>
-                <DialogActions>
-                    <button className="btn btn-ghost" onClick={() => setDeleteDialogOpen(false)}>Cancel</button>
-                    <button className="btn btn-danger" onClick={handleDeleteGate}>Delete</button>
-                </DialogActions>
-            </Dialog>
-
-            {/* ── Create‑Gate dialog (MUI Dialog kept) ── */}
             <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)}>
                 <DialogTitle>Create New Gate</DialogTitle>
                 <DialogContent>
@@ -682,7 +585,6 @@ function StatusTables() {
                 </DialogActions>
             </Dialog>
 
-            {/* ── Reset‑Counter dialog (MUI Dialog kept) ── */}
             <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
                 <DialogTitle>Reset Downlink Counter</DialogTitle>
                 <DialogContent>

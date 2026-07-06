@@ -15,6 +15,7 @@ import DevicesPage from '../pages/DevicesPage';
 import AutomationPage from '../pages/AutomationPage';
 import LogsPage from '../pages/LogsPage';
 import SettingsPage from '../pages/SettingsPage';
+import GateDetailPage from '../pages/GateDetailPage';
 import NotFoundPage from '../shared/components/NotFoundPage';
 
 function AppContent() {
@@ -55,6 +56,7 @@ function AppContent() {
           <Route path="/automation" element={<AutomationPage />} />
           <Route path="/logs" element={<LogsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/gates/:id" element={<GateDetailPage />} />
         </Route>
         {/* 404 catch-all */}
         <Route path="*" element={<NotFoundPage />} />

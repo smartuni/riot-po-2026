@@ -110,6 +110,22 @@ export const api = createApi({
       }),
       invalidatesTags: ['Gate'],
     }),
+    updateHeightAboveNN: builder.mutation({
+      query: ({ gateId, heightAboveNN }) => ({
+        url: `/api/update-height/${gateId}`,
+        method: 'PUT',
+        body: { heightAboveNN },
+      }),
+      invalidatesTags: ['Gate'],
+    }),
+    setGateStatusManually: builder.mutation({
+      query: ({ gateId, workerId, status }) => ({
+        url: `/api/gates/${gateId}/${workerId}/set-status`,
+        method: 'POST',
+        body: { status },
+      }),
+      invalidatesTags: ['Gate'],
+    }),
     getDownlinkCounter: builder.query({
         query: () => '/api/downlinkcounter/counter',
     }),
@@ -164,6 +180,8 @@ export const {
   useDeleteGateMutation,
   useRequestGateStatusChangeMutation,
   useUpdateGatePriorityMutation,
+  useUpdateHeightAboveNNMutation,
+  useSetGateStatusManuallyMutation,
   useGetDownlinkCounterQuery,
   useTryIncrementDownlinkCounterMutation,
   useResetDownlinkCounterMutation,

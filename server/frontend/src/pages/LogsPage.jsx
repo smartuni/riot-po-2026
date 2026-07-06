@@ -4,22 +4,24 @@ import { useGetActivitiesQuery } from '../app/store/api/api';
 
 const getDotClass = (type) => {
   switch (type) {
-    case 'status_change':
-    case 'status': return 'green';
-    case 'error':
-    case 'alert': return 'red';
-    case 'warning': return 'amber';
+    case 'SENSOR_NEW': return 'blue';
+    case 'SENSOR_VALUE_CHANGED': return 'amber';
+    case 'SENSOR_VALUE_KEEPALIVE': return 'blue';
+    case 'SENSEMATE_WORKER_REPORT': return 'green';
+    case 'TARGET_STATE_REQUEST': return 'amber';
+    case 'MANUAL_STATUS_SET': return 'red';
     default: return 'blue';
   }
 };
 
 const getDotIcon = (type) => {
   switch (type) {
-    case 'status_change':
-    case 'status': return '✓';
-    case 'error':
-    case 'alert': return '⚠️';
-    case 'warning': return '⚡';
+    case 'SENSOR_NEW': return '🆕';
+    case 'SENSOR_VALUE_CHANGED': return '🔄';
+    case 'SENSOR_VALUE_KEEPALIVE': return '📡';
+    case 'SENSEMATE_WORKER_REPORT': return '👷';
+    case 'TARGET_STATE_REQUEST': return '📋';
+    case 'MANUAL_STATUS_SET': return '✋';
     default: return '📊';
   }
 };
@@ -45,7 +47,7 @@ export default function LogsPage() {
     const q = filter.toLowerCase();
     return sorted.filter(a => {
       const fields = [
-        a.gateId, a.message, a.type,
+        a.gateId, a.message, a.activityType,
         a.lastTimeStamp ? new Date(a.lastTimeStamp).toLocaleString() : '',
       ];
       return fields.some(f => f != null && String(f).toLowerCase().includes(q));
@@ -103,10 +105,10 @@ export default function LogsPage() {
                     <tr key={a.id || i} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '10px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span className={`activity-dot ${getDotClass(a.type)}`} style={{ width: 22, height: 22, fontSize: 11 }}>
-                            {getDotIcon(a.type)}
+                          <span className={`activity-dot ${getDotClass(a.activityType)}`} style={{ width: 22, height: 22, fontSize: 11 }}>
+                            {getDotIcon(a.activityType)}
                           </span>
-                          <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{a.type || '—'}</span>
+                          <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{a.activityType || '—'}</span>
                         </div>
                       </td>
                       <td style={{ padding: '10px 16px', fontWeight: 600 }}>{a.gateId || '—'}</td>

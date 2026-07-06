@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useGetGatesQuery, useGetActivitiesQuery } from "../../../app/store/api/api";
-import { MapView } from "../../map";
-
-/* ── helpers ── */
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import WarningIcon from "@mui/icons-material/Warning";
 
 const statusInfo = (status) => {
     switch (status) {
@@ -11,6 +12,43 @@ const statusInfo = (status) => {
         default: return { cls: "status-oos", label: "Out of Service" };
     }
 };
+
+const confirmationIndicator = (stateConfirmation) => {
+    switch (stateConfirmation) {
+        case "WORKER_CONFLICT": return { label: "⚠", color: "var(--red-600)" };
+        case "UNCONFIRMED": return null;
+        case "WORKER_CONFIRMED_SINGLE": return { label: "✓", color: "var(--blue-600)" };
+        case "WORKER_CONFIRMED_MULTI":
+        case "WORKER_CONFIRMED_ALL": return { label: "✓✓", color: "var(--green-600)" };
+        default: return null;
+    }
+};
+
+function ConfidenceCell({ gate }) {
+    const sc = gate.stateConfirmation;
+    let icon = null;
+    let title = "Unconfirmed";
+
+    if (sc === "WORKER_CONFIRMED_SINGLE") {
+        icon = <ArrowForwardIcon className="confidence-icon" style={{ color: "var(--blue-600)" }} />;
+        title = "Confirmed by 1 worker";
+    } else if (sc === "WORKER_CONFIRMED_MULTI" || sc === "WORKER_CONFIRMED_ALL") {
+        icon = <DoneAllIcon className="confidence-icon" style={{ color: "var(--green-600)" }} />;
+        title = "Confirmed by 2+ workers";
+    } else if (sc === "WORKER_CONFLICT") {
+        icon = <WarningIcon className="confidence-icon" style={{ color: "var(--red-600)" }} />;
+        title = "Conflict: workers disagree";
+    }
+
+    const confidencePct = gate.confidence != null ? `${gate.confidence}%` : "—";
+
+    return (
+        <span className="confidence-indicator" title={title}>
+            {icon}
+            <span className="confidence-value">{confidencePct}</span>
+        </span>
+    );
+}
 
 function getTimeAgo(timestamp) {
     const date = new Date(timestamp);
@@ -28,8 +66,6 @@ function getTimeAgo(timestamp) {
     return date.toLocaleDateString();
 }
 
-/* ── filter‑tab definitions ── */
-
 const FILTER_TABS = [
     { label: "All", value: "" },
     { label: "Open", value: "OPEN" },
@@ -37,11 +73,15 @@ const FILTER_TABS = [
     { label: "OOS", value: "OUT_OF_SERVICE" },
 ];
 
-function StatusTablesView() {
+function StatusTablesView({ filter: filterProp, setFilter: setFilterProp }) {
+    const navigate = useNavigate();
+
     const [search, setSearch] = useState("");
-    const [filter, setFilter] = useState("");
-    const [view, setView] = useState("list");
+    const [filterLocal, setFilterLocal] = useState("");
     const [expandedGateId, setExpandedGateId] = useState(null);
+
+    const filter = filterProp !== undefined ? filterProp : filterLocal;
+    const setFilter = setFilterProp || setFilterLocal;
 
     const { data: gates = [], isLoading, error } = useGetGatesQuery();
     const { data: activities = [] } = useGetActivitiesQuery();
@@ -66,7 +106,7 @@ function StatusTablesView() {
     if (error) {
         return (
             <div className="card" style={{ padding: '16px' }}>
-                <div style={{ padding: '16px', background: 'var(--red-100)', borderRadius: '8px', color: 'var(--red-600)' }}>
+                <div style={{ padding: '16px', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', color: 'var(--red-600)' }}>
                     Failed to load gates data. Please try again later.
                 </div>
             </div>
@@ -75,7 +115,6 @@ function StatusTablesView() {
 
     return (
         <div className="card">
-            {/* ── toolbar: title, search, filter tabs, view toggle ── */}
             <div className="table-toolbar">
                 <h2 style={{ fontSize: '16px', fontWeight: 600, margin: 0, marginRight: '12px' }}>Flood Gates</h2>
 
@@ -101,83 +140,104 @@ function StatusTablesView() {
                 </div>
 
                 <div style={{ flex: 1 }} />
-
-                <div className="filter-tabs" role="tablist">
-                    <button
-                        role="tab"
-                        aria-selected={view === 'list'}
-                        className={`filter-tab${view === 'list' ? ' active' : ''}`}
-                        onClick={() => setView("list")}
-                    >
-                        List View
-                    </button>
-                    <button
-                        role="tab"
-                        aria-selected={view === 'map'}
-                        className={`filter-tab${view === 'map' ? ' active' : ''}`}
-                        onClick={() => setView("map")}
-                    >
-                        Map View
-                    </button>
-                </div>
             </div>
 
-            {view === "list" ? (
-                <table className="gate-table">
+            <table className="gate-table">
                     <thead>
                         <tr>
                             <th>Gate ID</th>
                             <th>Location</th>
                             <th>Status</th>
-                            <th>Last Update</th>
                             <th>Confidence</th>
+                            <th>Last Update</th>
                             <th>Activities</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredGates.map((gate) => {
                             const si = statusInfo(gate.status);
+                            const ci = confirmationIndicator(gate.stateConfirmation);
 
                             return (
                                 <React.Fragment key={gate.id}>
-                                    <tr>
+                                    <tr onClick={() => navigate(`/gates/${gate.id}`)}>
                                         <td data-label="Gate ID">
-                                            <span className="gate-id">G-{gate.id}</span>
+                                            <span
+                                                className="gate-id"
+                                                style={{ cursor: 'pointer' }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/gates/${gate.id}`);
+                                                }}
+                                            >
+                                                G-{gate.id}
+                                            </span>
                                         </td>
                                         <td data-label="Location">
-                                            {gate.location}<br />
+                                            <span
+                                                style={{ cursor: 'pointer', color: 'var(--accent)' }}
+                                                title="Click to view on map"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate('/map');
+                                                }}
+                                            >
+                                                {gate.location}
+                                            </span>
+                                            <br />
                                             <span className="coords" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                                {gate.latitude != null ? gate.latitude : '—'}, {gate.longitude != null ? gate.longitude : '—'}
+                                                {gate.latitude != null ? gate.latitude.toFixed(5) : '—'}, {gate.longitude != null ? gate.longitude.toFixed(5) : '—'}
                                             </span>
                                         </td>
                                         <td data-label="Status">
-                                            <span className={`status-badge ${si.cls}`}>
-                                                <span className="status-dot" />
-                                                {si.label}
+                                            <span style={{ position: 'relative', display: 'inline-flex' }}>
+                                                <span className={`status-badge ${si.cls}`}>
+                                                    <span className="status-dot" />
+                                                    {si.label}
+                                                </span>
+                                                {ci && (
+                                                    <span style={{
+                                                        position: 'absolute',
+                                                        top: '-4px',
+                                                        right: '-4px',
+                                                        width: '14px',
+                                                        height: '14px',
+                                                        borderRadius: '50%',
+                                                        background: ci.color,
+                                                        color: '#fff',
+                                                        fontSize: '8px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontWeight: 700,
+                                                        lineHeight: 1,
+                                                    }}>
+                                                        {ci.label}
+                                                    </span>
+                                                )}
                                             </span>
-                                        </td>
-                                        <td data-label="Last Update">
-                                            <span className="last-update">{gate.lastTimeStamp ? getTimeAgo(gate.lastTimeStamp) : '—'}</span>
-                                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                                {gate.lastTimeStamp ? new Date(gate.lastTimeStamp).toLocaleString() : '—'}
-                                            </div>
                                         </td>
                                         <td data-label="Confidence">
-                                            100%
-                                            <span
-                                                title="Confidence reflects agreement between sensor and worker. 100% means both match."
-                                                style={{ marginLeft: 4, cursor: "help", verticalAlign: "middle", color: "var(--text-secondary)" }}
-                                            >
-                                                &#9432;
-                                            </span>
+                                            <ConfidenceCell gate={gate} />
                                         </td>
-                                        <td data-label="Activities">
+                                        <td data-label="Last Update">
+                                            {gate.lastTimeStamp ? (
+                                                <span
+                                                    className="last-update"
+                                                    title={new Date(gate.lastTimeStamp).toLocaleString()}
+                                                >
+                                                    {getTimeAgo(gate.lastTimeStamp)}
+                                                </span>
+                                            ) : '—'}
+                                        </td>
+                                        <td data-label="Activities" onClick={(e) => e.stopPropagation()}>
                                             <button
                                                 className="action-link"
                                                 aria-label="expand row"
-                                                onClick={() =>
-                                                    setExpandedGateId(expandedGateId === gate.id ? null : gate.id)
-                                                }
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setExpandedGateId(expandedGateId === gate.id ? null : gate.id);
+                                                }}
                                             >
                                                 {expandedGateId === gate.id ? '▼' : '▶'} Activities
                                             </button>
@@ -185,7 +245,7 @@ function StatusTablesView() {
                                     </tr>
 
                                     {expandedGateId === gate.id && (
-                                        <tr className="expanded-row">
+                                        <tr className="expanded-row" onClick={() => navigate(`/gates/${gate.id}`)}>
                                             <td colSpan={6}>
                                                 <div>
                                                     <strong>Activities</strong>
@@ -210,9 +270,6 @@ function StatusTablesView() {
                         })}
                     </tbody>
                 </table>
-            ) : (
-                <MapView search={search} statusFilter={filter} />
-            )}
         </div>
     );
 }

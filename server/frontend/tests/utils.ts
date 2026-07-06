@@ -4,8 +4,9 @@ import { expect, request, type Page, type APIRequestContext } from '@playwright/
  * Shared fixtures for the E2E suite.
  *
  * These tests run against the dockerised backend (profile `e2e`) with the
- * deterministic seed from `server/backend/.../db/migration-e2e/V100__e2e_seed.sql`.
- * Bring it up with `server/backend/scripts/e2e-reset.sh` before running.
+ * deterministic seed from `server/backend/.../resources/data-e2e.sql` (H2
+ * in-memory database). Bring it up with `server/backend/scripts/e2e-reset.sh`
+ * before running.
  *
  * The constants below mirror that seed and the test accounts in
  * `application.yml`. If the seed changes, update them here in one place.
@@ -17,12 +18,20 @@ export const BACKEND_URL = 'http://localhost:8080';
 export const CONTROLLER = { email: 'test@example.com', password: 'test123' };
 export const VIEWER = { email: 'test2@example.com', password: 'test234' };
 
-/** The four gates seeded by V100, in id order. */
+/** The four gates seeded by data-e2e.sql, in id order. */
 export const SEEDED_GATES = [
-  { id: 1001, location: 'E2E Gate Alpha', status: 'OPEN' },
-  { id: 1002, location: 'E2E Gate Beta', status: 'CLOSED' },
-  { id: 1003, location: 'E2E Gate Gamma', status: 'OPEN' },
-  { id: 1004, location: 'E2E Gate Delta', status: 'OUT_OF_SERVICE' },
+  { id: 1001, location: 'E2E Gate Alpha', status: 'OPEN',
+    stateConfirmation: 'WORKER_CONFIRMED_SINGLE', heightAboveNN: 2.5,
+    priority: 3, confidence: 90, deviceId: 501, manualOverride: false },
+  { id: 1002, location: 'E2E Gate Beta', status: 'CLOSED',
+    stateConfirmation: 'WORKER_CONFIRMED_MULTI', heightAboveNN: 3.8,
+    priority: 2, confidence: 85, deviceId: 502, manualOverride: false },
+  { id: 1003, location: 'E2E Gate Gamma', status: 'OPEN',
+    stateConfirmation: 'UNCONFIRMED', heightAboveNN: 1.2,
+    priority: 1, confidence: 70, deviceId: 503, manualOverride: false },
+  { id: 1004, location: 'E2E Gate Delta', status: 'OUT_OF_SERVICE',
+    stateConfirmation: 'WORKER_CONFLICT', heightAboveNN: 5.0,
+    priority: 0, confidence: 40, deviceId: 504, manualOverride: false },
 ];
 
 /**

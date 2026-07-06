@@ -44,7 +44,8 @@ public class GateService {
         gates.forEach(e -> {
             Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(), e.getStateConfirmation(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), 
-                    e.getWorkerConfidence(), e.getSensorConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getQuality(), e.getPendingJob(), e.getPriority());
+                    e.getWorkerConfidence(), e.getSensorConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getQuality(), e.getPendingJob(), e.getPriority(),
+                    e.isManualOverride(), e.getHeightAboveNN());
             customGates.add(gate);
         });
         return customGates;
@@ -133,7 +134,8 @@ public class GateService {
         GateEntity gate = gateRepository.findById(id).orElseThrow(() -> new GateNotFoundException(id));
         return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(), gate.getStateConfirmation(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
-                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality(), gate.getPendingJob(), gate.getPriority());
+                gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality(), gate.getPendingJob(), gate.getPriority(),
+                gate.isManualOverride(), gate.getHeightAboveNN());
     }
 
     /**
@@ -235,6 +237,43 @@ public class GateService {
         GateEntity gateEntity = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         gateEntity.setPriority(newPriority);
         gateRepository.save(gateEntity);
+    }
+
+    /**
+     * Update the height above NN (sea level) of a gate.
+     * @param gateId of the gate
+     * @param heightAboveNN the elevation in meters
+     */
+    public void updateHeightAboveNN(Long gateId, Double heightAboveNN) throws GateNotFoundException {
+        GateEntity gateEntity = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
+        gateEntity.setHeightAboveNN(heightAboveNN);
+        gateRepository.save(gateEntity);
+    }
+
+    /**
+     * Manually set the status of a gate directly (not a request — an immediate override).
+     * Sets the manualOverride flag, updates status, and publishes a WS update + activity log.
+     * @param gateId of the gate
+     * @param newStatus the status to set (OPEN or CLOSED)
+     * @param workerId of the worker performing the override
+     */
+    public void setGateStatusManually(Long gateId, String newStatus, Long workerId) throws GateNotFoundException {
+        GateEntity gate = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
+
+        Status targetStatus;
+        switch (newStatus) {
+            case "OPEN": targetStatus = Status.OPEN; break;
+            case "CLOSED": targetStatus = Status.CLOSED; break;
+            default: throw new IllegalArgumentException("Invalid status for manual override: " + newStatus);
+        }
+
+        gate.setStatus(targetStatus);
+        gate.setManualOverride(true);
+        gate.setRequestedStatus(null);
+        gate.setPendingJob("None");
+        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        gateRepository.save(gate);
+        messagingTemplate.convertAndSend("/topic/gates/updates", gate);
     }
 
     /**
