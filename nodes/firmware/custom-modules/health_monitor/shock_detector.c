@@ -16,7 +16,7 @@ static int calculate_magnitude(int x, int y, int z) {
 	return sqrt(x * x + y * y + z * z);
 }
 
-static void acceleration_callback(void) {
+static void shock_callback(void) {
 	LOG_DEBUG("[shock_detector.c:%d] Shock!!\n", __LINE__);
 }
 
@@ -99,7 +99,7 @@ int shock_detector_init(shock_detector_t* instance, int threshold, int sampling_
 	instance->threshold = threshold;
 	instance->sample_size = SAMPLE_SIZE;
 	instance->sampling_period_ms = sampling_period_ms;
-	instance->callback = acceleration_callback;
+	instance->callback = shock_callback;
 	int nyquist = instance->sample_size / 2 + 1;
 	instance->nyquist_domain_size = nyquist; // + 1;
 	instance->freq_avg = moving_freq_avg_new(instance->nyquist_domain_size);
