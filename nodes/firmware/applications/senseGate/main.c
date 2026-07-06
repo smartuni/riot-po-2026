@@ -13,6 +13,8 @@
 #include "inductive_sensor.h"
 #include "include/gate_observer.h"
 #include "mtd.h"
+#include "health_monitor.h"
+
 #define LOG_LEVEL   LOG_DEBUG
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[main]: " __VA_ARGS__)
@@ -134,6 +136,7 @@ static void _table_update_cb(tables_context_t *ctx, const table_record_t *record
     // The change may aswell come from a recent RX.
 }
 
+static health_monitor_t health_monitor_instance;
 
 int main(void){
     /* Sleep so that we do not miss this message while connecting */
@@ -218,6 +221,10 @@ int main(void){
     int timeToUpdateTable = 0; // var to update table periodically
     int put_cnt = 0;
     int put_err_cnt = 0;
+
+   health_monitor_init(&health_monitor_instance, 3700, 5, 10);
+   health_monitor_start(&health_monitor_instance);
+
     while(1){
         ztimer_sleep(ZTIMER_MSEC,1000);
 
