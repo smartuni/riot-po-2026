@@ -11,6 +11,7 @@ import com.riot.matesense.repository.GateActivityRepository;
 
 import com.riot.matesense.repository.WorkerIdView;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +42,8 @@ public class GateActivityService {
      * @return a list with all the gateActivities
      */
     public List<GateActivity> getAllGateActivities() {
-        List<GateActivityEntity> gates = gateActivityRepository.findAll();
+        List<GateActivityEntity> gates = gateActivityRepository.findAll(Sort.by("gateTimeStamp").descending()
+                .and(Sort.by("hlcLog").descending()));
         List<GateActivity> customGateActivities = new ArrayList<>();
         gates.forEach(e -> {
             GateActivity gateActivity = new GateActivity(e.getLocalTimeStamp(), e.getGateTimeStamp(), e.getGateId(), e.getRequestedStatus(), e.getMessage(), e.getId(), e.getWorkerId(), e.getActivityType());

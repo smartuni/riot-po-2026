@@ -41,8 +41,8 @@ public class GateService {
      */
     public List<Gate> getAllGates() {
         List<GateEntity> gates = gateRepository.findAll(
-                Sort.by("hlcPhysical").descending()
-                        .and(Sort.by("hlcLogical").descending())
+                Sort.by("gateTimeStamp").descending()
+                        .and(Sort.by("hlcLog").descending())
         );
         List<Gate> customGates = new ArrayList<>();
         gates.forEach(e -> {
