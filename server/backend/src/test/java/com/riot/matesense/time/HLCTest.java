@@ -120,7 +120,9 @@ class HlcClockTest {
     @Test
     void testReceiveEqualTimestamp() {
 
-        HlcClock clock = new HlcClock();
+        long fixedTime = 1000;
+
+        HlcClock clock = new HlcClock(() -> fixedTime);
 
         HlcTimestamp local = clock.send();
 

@@ -1,23 +1,36 @@
 package com.riot.matesense.time;
 
 import org.springframework.stereotype.Component;
-
+import java.util.function.LongSupplier;
 
 @Component
+
 public class HlcClock {
 
-    private long lastPhysical = 0;
-    private long lastLogical = 0;
+    private final LongSupplier now;
+
+    private long lastPhysical;
+    private long lastLogical;
+
+    public HlcClock() {
+        this(System::currentTimeMillis);
+    }
+
+    public HlcClock(LongSupplier now) {
+        this.now = now;
+        this.lastPhysical = 0;
+        this.lastLogical = 0;
+    }
 
     /**
      * Generates a timestamp for a local event (or before sending a message).
      */
-    public synchronized HlcTimestamp send() {
 
-        long now = System.currentTimeMillis();
+    public  synchronized HlcTimestamp send() {
+        long current = now.getAsLong();
 
-        if (now > lastPhysical) {
-            lastPhysical = now;
+        if (current > lastPhysical) {
+            lastPhysical = current;
             lastLogical = 0;
         } else {
             lastLogical++;
@@ -33,10 +46,9 @@ public class HlcClock {
             long remotePhysical,
             long remoteLogical) {
 
-        long now = System.currentTimeMillis();
+        long current = now.getAsLong() ;
 
-        long maxPhysical =
-                Math.max(Math.max(lastPhysical, remotePhysical), now);
+        long maxPhysical =  Math.max(current, Math.max(lastPhysical, remotePhysical));;
 
         long logical;
 
