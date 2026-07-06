@@ -46,7 +46,7 @@ tables_context_t *tables;
 //#define TIME_PERIOD_TABLE_UPDATE 2 // const defines time to update table periodically
 
 /* PIN label on feather sense: "A1" */
-#define REED_0_PIN_0 GPIO_PIN(0, 5)
+#define REED_0_PIN_0 GPIO_PIN(0, 9)
 
 #define INDUCTIVE_SENSOR_DCDC_PWR_PIN GPIO_PIN(0,4)
 #define INDUCTIVE_SENSOR_DCDC_PWR_PIN_AH (false)
