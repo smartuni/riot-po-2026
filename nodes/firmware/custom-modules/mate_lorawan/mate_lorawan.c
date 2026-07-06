@@ -44,6 +44,7 @@
 #include "tables/records.h"
 #include "tables/types.h"
 #include "cbor_serialization.h"
+#include "personalization.h"
 #include "crypto_service.h"
 #include "event.h"
 #include "event/thread.h"
