@@ -14,8 +14,8 @@
 #ifndef SHOCK_DETECTOR_H
 #define SHOCK_DETECTOR_H
 
-#define kiss_fft_scalar int
-#define SAMPLE_SIZE 2048
+#define kiss_fft_scalar int32_t
+#define SAMPLE_SIZE 1024
 
 #include "health_monitor_payload.h"
 #include "moving_freq_avg.h"
@@ -50,6 +50,7 @@ typedef struct {
 	saul_reg_t* accel_sensor;
 	kiss_fft_cpx input[SAMPLE_SIZE];
 	kiss_fft_cpx output[SAMPLE_SIZE];
+	kiss_fft_cfg cfg;
 	moving_freq_avg_t* freq_avg; //rename to frequency domain later
 	void (*callback)(void);
 	int threshold;
@@ -63,29 +64,30 @@ typedef struct {
 } shock_detector_t;
 
 /**
- * @brief Creates a new shock detector to the heap
+ * @brief Initializes a shock detector instance
+ * @param instance Pointer to the shock detector instance
  * @param threshold The magnitude threshold for shock detection in mm/s^2
  * @param sampling_period_ms The period in milliseconds between each sample collection
  * @return Pointer to the new shock detector, or NULL if memory allocation failed
  */
-shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms);
+int shock_detector_init(shock_detector_t* instance, int threshold, int sampling_period_ms);
 
 /**
  * @brief Starts the shock detector
- * @param detector Pointer to the shock detector
+ * @param instance Pointer to the shock detector
  * @return 0 on success, EOVERFLOW on failure
  */
-int shock_detector_start(shock_detector_t* detector);
+int shock_detector_start(shock_detector_t* instance);
 
-int shock_detector_fetch_status(shock_detector_t* detector, shock_status_t* status);
+int shock_detector_fetch_status(shock_detector_t* instance, shock_status_t* status);
 
-int shock_detector_reset_status(shock_detector_t* detector);
+int shock_detector_reset_status(shock_detector_t* instance);
 
 /**
  * @brief Deletes the shock detector
- * @param detector Pointer to the shock detector
+ * @param instance Pointer to the shock detector
  * @return always return 0
  */
-int shock_detector_delete(shock_detector_t* detector);
+int shock_detector_delete(shock_detector_t* instance);
 
 #endif

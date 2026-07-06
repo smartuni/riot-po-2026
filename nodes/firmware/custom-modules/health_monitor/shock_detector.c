@@ -20,121 +20,114 @@ static void acceleration_callback(void) {
 	LOG_DEBUG("[shock_detector.c:%d] Shock!!\n", __LINE__);
 }
 
-static void collect_magnitudes(shock_detector_t* detector) {
+static void collect_magnitudes(shock_detector_t* instance) {
 	phydat_t acceleration;
-	// raw_acceleration_t* raw_accel_data = (raw_acceleration_t*)malloc(sizeof(raw_acceleration_t) * (*nsamples));
-	memset(detector->raw_accel_data, 0, sizeof(raw_acceleration_t) * detector->sample_size);
+	memset(instance->raw_accel_data, 0, sizeof(raw_acceleration_t) * instance->sample_size);
 	LED0_ON;
-	for (int i = 0; i < detector->sample_size; i++) {
-		int acc_dim = saul_reg_read(detector->accel_sensor, &acceleration);
+	for (int i = 0; i < instance->sample_size; i++) {
+		int acc_dim = saul_reg_read(instance->accel_sensor, &acceleration);
 		if (acc_dim < 1) {
 			LOG_INFO("[shock_detector.c:%d] Error reading a value "
 					 "from the device\n",
 					 __LINE__);
 			return;
 		}
-		detector->raw_accel_data[i].x = acceleration.val[0] * 10;
-		detector->raw_accel_data[i].y = acceleration.val[1] * 10;
-		detector->raw_accel_data[i].z = acceleration.val[2] * 10;
-		if (detector->sampling_period_ms > 0) {
-			ztimer_sleep(ZTIMER_MSEC, detector->sampling_period_ms);
+		instance->raw_accel_data[i].x = acceleration.val[0] * 10;
+		instance->raw_accel_data[i].y = acceleration.val[1] * 10;
+		instance->raw_accel_data[i].z = acceleration.val[2] * 10;
+		if (instance->sampling_period_ms > 0) {
+			ztimer_sleep(ZTIMER_MSEC, instance->sampling_period_ms);
 		}
 	}
 	LOG_DEBUG("[shock_detector.c:%d] Collected samples\n", __LINE__);
 
-	memset(detector->input, 0, sizeof(kiss_fft_cpx) * detector->sample_size);
+	memset(instance->input, 0, sizeof(kiss_fft_cpx) * instance->sample_size);
 
-	for (int i = 0; i < detector->sample_size; i++) {
-		int* x = &detector->raw_accel_data[i].x;
-		int* y = &detector->raw_accel_data[i].y;
-		int* z = &detector->raw_accel_data[i].z;
-		detector->input[i].r = calculate_magnitude(*x, *y, *z);
-		detector->input[i].i = 0;
+	for (int i = 0; i < instance->sample_size; i++) {
+		int* x = &instance->raw_accel_data[i].x;
+		int* y = &instance->raw_accel_data[i].y;
+		int* z = &instance->raw_accel_data[i].z;
+		instance->input[i].r = calculate_magnitude(*x, *y, *z);
+		instance->input[i].i = 0;
 	}
-	// free(detector->raw_accel_data);
 	LED0_OFF;
 }
 
-static void process_fft(shock_detector_t* detector) {
+static void process_fft(shock_detector_t* instance) {
 	LED1_ON;
-	memset(detector->output, 0, sizeof(kiss_fft_cpx) * detector->sample_size);
-	kiss_fft_cfg cfg = kiss_fft_alloc(detector->sample_size, 0, 0, 0);
-	kiss_fft(cfg, detector->input, detector->output);
-	kiss_fft_free(cfg);
+	memset(instance->output, 0, sizeof(kiss_fft_cpx) * instance->sample_size);
+	kiss_fft(instance->cfg, instance->input, instance->output);
 	LED1_OFF;
 }
 
-static void postprocess_fft(shock_detector_t* detector) {
-	moving_freq_avg_reset(detector->freq_avg);
-	for (int k = 0; k < detector->nyquist_domain_size; k++) {
-		int magnitude = calculate_magnitude(detector->output[k].r, detector->output[k].i, 0);
-		float sampling_rate_hz = 1000.0 / detector->sampling_period_ms;
-		int frequency = k * ((float)sampling_rate_hz / detector->sample_size);
+static void postprocess_fft(shock_detector_t* instance) {
+	moving_freq_avg_reset(instance->freq_avg);
+	for (int k = 0; k < instance->nyquist_domain_size; k++) {
+		int magnitude = calculate_magnitude(instance->output[k].r, instance->output[k].i, 0);
+		float sampling_rate_hz = 1000.0 / instance->sampling_period_ms;
+		int frequency = k * ((float)sampling_rate_hz / instance->sample_size);
 		if (magnitude > 0) {
-			moving_freq_avg_add_sample(detector->freq_avg, frequency, magnitude);
+			moving_freq_avg_add_sample(instance->freq_avg, frequency, magnitude);
 		}
 	}
-	moving_freq_avg_finalize(detector->freq_avg);
+	moving_freq_avg_finalize(instance->freq_avg);
 }
 
-static void* acceleration_thread(void* detector_void) {
-	shock_detector_t* detector = (shock_detector_t*)detector_void;
-	while (detector->running) {
+static void* acceleration_thread(void* instance_void) {
+	shock_detector_t* instance = (shock_detector_t*)instance_void;
+	while (instance->running) {
 		LOG_DEBUG("[shock_detector.c:%d] Collecting magnitudes...\n", __LINE__);
-		collect_magnitudes(detector);
+		collect_magnitudes(instance);
 		LOG_DEBUG("[shock_detector.c:%d] Processing FFT...\n", __LINE__);
-		process_fft(detector); // process the collected samples with FFT
+		process_fft(instance); // process the collected samples with FFT
 		LOG_DEBUG("[shock_detector.c:%d] Post-processing FFT results...\n", __LINE__);
-		postprocess_fft(detector); // post-process the FFT results to find the average over frequency
-		for (int i = 0; i < detector->nyquist_domain_size; i += 5) {
-			LOG_DEBUG("[shock_detector.c:%d] Frequency: %d Hz, Average Magnitude: %d\n", __LINE__, i, detector->freq_avg->frequency_domain[i].average);
+		postprocess_fft(instance); // post-process the FFT results to find the average over frequency
+		for (int i = 0; i < instance->nyquist_domain_size; i += 5) {
+			LOG_DEBUG("[shock_detector.c:%d] Frequency: %d Hz, Average Magnitude: %d\n", __LINE__, i, instance->freq_avg->frequency_domain[i].average);
 		}
-		mutex_lock(&detector->shock_status_mutex);
-		detector->shock_status = NO_SHOCK; //TODO analyze the frequency domain average to determine if there is a shock or not, and set the shock status accordingly
-		mutex_unlock(&detector->shock_status_mutex);
+		mutex_lock(&instance->shock_status_mutex);
+		instance->shock_status = NO_SHOCK; //TODO analyze the frequency domain average to determine if there is a shock or not, and set the shock status accordingly
+		mutex_unlock(&instance->shock_status_mutex);
 	}
 	return NULL;
 }
 
-shock_detector_t* shock_detector_new(int threshold, int sampling_period_ms) {
-	shock_detector_t* new_detector = (shock_detector_t*)malloc(sizeof(shock_detector_t));
-	new_detector->running = false;
-	new_detector->threshold = threshold;
-	new_detector->sample_size = SAMPLE_SIZE;
-	new_detector->sampling_period_ms = sampling_period_ms;
-	// sensor_data_t* accel_sensor = &new_detector->accel_sensor;
-	// accel_sensor->callback = acceleration_callback;
-	new_detector->callback = acceleration_callback;
-	int nyquist = new_detector->sample_size / 2 + 1;
-	new_detector->nyquist_domain_size = nyquist; // + 1;
-	new_detector->freq_avg = moving_freq_avg_new(new_detector->nyquist_domain_size);
-	// new_detector->input = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * new_detector->sample_size);
-	// new_detector->output = (kiss_fft_cpx*)malloc(sizeof(kiss_fft_cpx) * new_detector->sample_size);
-	new_detector->shock_status = NO_SHOCK;
-	new_detector->shock_status_mutex = (mutex_t)MUTEX_INIT;
+int shock_detector_init(shock_detector_t* instance, int threshold, int sampling_period_ms) {
+	//instance = (shock_detector_t*)malloc(sizeof(shock_detector_t));
+	instance->running = false;
+	instance->threshold = threshold;
+	instance->sample_size = SAMPLE_SIZE;
+	instance->sampling_period_ms = sampling_period_ms;
+	instance->callback = acceleration_callback;
+	int nyquist = instance->sample_size / 2 + 1;
+	instance->nyquist_domain_size = nyquist; // + 1;
+	instance->freq_avg = moving_freq_avg_new(instance->nyquist_domain_size);
+	instance->cfg = kiss_fft_alloc(instance->sample_size, 0, NULL, NULL);
+	instance->shock_status = NO_SHOCK;
+	instance->shock_status_mutex = (mutex_t)MUTEX_INIT;
 
 	/* [TASK 3: find your device here] */
-	new_detector->accel_sensor = saul_reg_find_type(SAUL_SENSE_ACCEL);
-	if (!new_detector->accel_sensor) {
+	instance->accel_sensor = saul_reg_find_type(SAUL_SENSE_ACCEL);
+	if (!instance->accel_sensor) {
 		LOG_DEBUG("[shock_detector:%d] No accelerometer sensor found!\n", __LINE__);
-		return NULL;
+		return -1;
 	} else {
 		//commented out for now to reduce console output, but can be useful for debugging
-		LOG_DEBUG("[shock_detector:%d] Accelerometer sensor found: %s\n", __LINE__, new_detector->accel_sensor->name);
+		LOG_DEBUG("[shock_detector:%d] Accelerometer sensor found: %s\n", __LINE__, instance->accel_sensor->name);
 	}
 
-	return new_detector;
+	return 0;
 }
 
-int shock_detector_start(shock_detector_t* detector) {
-	kernel_pid_t* accel_thread_pid = &detector->thread_pid;
-	detector->running = true;
-	*accel_thread_pid = thread_create(detector->accel_thread_stack,
-									  sizeof(detector->accel_thread_stack),
+int shock_detector_start(shock_detector_t* instance) {
+	kernel_pid_t* accel_thread_pid = &instance->thread_pid;
+	instance->running = true;
+	*accel_thread_pid = thread_create(instance->accel_thread_stack,
+									  sizeof(instance->accel_thread_stack),
 									  THREAD_PRIORITY_MAIN - 1,
 									  THREAD_CREATE_STACKTEST,
 									  acceleration_thread,
-									  (void*)detector,
+									  (void*)instance,
 									  "Acceleration Thread");
 	if (*accel_thread_pid == EOVERFLOW) {
 		LOG_DEBUG("[shock_detector:%d] Error creating acceleration thread - %s:%d\n", __LINE__, __FILE__, __LINE__);
@@ -145,24 +138,24 @@ int shock_detector_start(shock_detector_t* detector) {
 	return 0;
 }
 
-int shock_detector_delete(shock_detector_t* detector) {
-	detector->running = false;
+int shock_detector_delete(shock_detector_t* instance) {
+	instance->running = false;
 	ztimer_sleep(ZTIMER_MSEC, 5000); // give some time for the thread to exit
-	moving_freq_avg_delete(detector->freq_avg);
-	free(detector);
+	moving_freq_avg_delete(instance->freq_avg);
+	kiss_fft_free(instance->cfg);
 	return 0;
 }
 
-int shock_detector_fetch_status(shock_detector_t* detector, shock_status_t* status) {
-	mutex_lock(&detector->shock_status_mutex);
-	*status = detector->shock_status;
-	mutex_unlock(&detector->shock_status_mutex);
+int shock_detector_fetch_status(shock_detector_t* instance, shock_status_t* status) {
+	mutex_lock(&instance->shock_status_mutex);
+	*status = instance->shock_status;
+	mutex_unlock(&instance->shock_status_mutex);
 	return 0;
 }
 
-int shock_detector_reset_status(shock_detector_t *detector){
-	mutex_lock(&detector->shock_status_mutex);
-	detector->shock_status = NO_SHOCK;
-	mutex_unlock(&detector->shock_status_mutex);
+int shock_detector_reset_status(shock_detector_t *instance){
+	mutex_lock(&instance->shock_status_mutex);
+	instance->shock_status = NO_SHOCK;
+	mutex_unlock(&instance->shock_status_mutex);
 	return 0;
 }

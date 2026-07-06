@@ -1,5 +1,4 @@
 #include "health_monitor.h"
-#include "include/battery_voltage_monitor.h"
 
 // health_monitor_t* health_monitor_new(int low_battery_threshold_mv, int battery_update_period_sec, int shock_detector_update_period_sec) {
 // 	health_monitor_t* instance = (health_monitor_t*)malloc(sizeof(health_monitor_t));
