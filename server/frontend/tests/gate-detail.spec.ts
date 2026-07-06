@@ -115,6 +115,63 @@ test.describe('Gate detail page (mutations)', () => {
     await login(page, CONTROLLER);
   });
 
+  // Consolidated cleanup: runs once after each test. Handles all mutation
+  // cleanup in the correct order so one failing step doesn't block the others.
+  test.afterEach(async () => {
+    const { requestContext, csrfToken } = await apiToken(CONTROLLER);
+    const headers: Record<string, string> = {};
+    if (csrfToken) {
+      headers['X-XSRF-TOKEN'] = csrfToken;
+    }
+
+    // 1. Clean up test_key metadata on gate 1001
+    try {
+      const metaResp = await requestContext.get(`${BACKEND_URL}/gates/1001/metadata`);
+      if (metaResp.ok()) {
+        const metadata = await metaResp.json();
+        for (const m of metadata.filter((m: { key: string; id: number }) => m.key === 'test_key')) {
+          await requestContext.delete(`${BACKEND_URL}/gates/1001/metadata/${m.id}`, { headers });
+        }
+      }
+    } catch (e) {
+      console.warn('Metadata cleanup failed:', e);
+    }
+
+    // 2. Reset height above NN for gate 1001
+    try {
+      await requestContext.put(`${BACKEND_URL}/update-height/1001`, {
+        headers,
+        data: { heightAboveNN: 2.5 },
+      });
+    } catch (e) {
+      console.warn('Height reset failed:', e);
+    }
+
+    // 3. Reset priority for gate 1001
+    try {
+      await requestContext.put(`${BACKEND_URL}/update-priority/1001`, {
+        headers,
+        data: { priority: 3 },
+      });
+    } catch (e) {
+      console.warn('Priority reset failed:', e);
+    }
+
+    // 4. Clean up temp gates (both "E2E Temp Manual Gate" and "E2E Temp Delete Gate")
+    try {
+      const gatesResp = await requestContext.get(`${BACKEND_URL}/gates`);
+      if (gatesResp.ok()) {
+        const gates = await gatesResp.json();
+        for (const gate of gates.filter((g: { location?: string }) =>
+          g.location?.startsWith('E2E Temp Manual Gate') || g.location?.startsWith('E2E Temp Delete Gate'))) {
+          await requestContext.delete(`${BACKEND_URL}/gates/${gate.id}`, { headers });
+        }
+      }
+    } catch (e) {
+      console.warn('Temp gate cleanup failed:', e);
+    }
+  });
+
   // ── g) metadata card displays seeded metadata and allows CRUD ──
 
   test('metadata card displays seeded metadata and allows CRUD', async ({ page }) => {
@@ -166,21 +223,6 @@ test.describe('Gate detail page (mutations)', () => {
     await expect(metadataPanel).not.toContainText('test_key');
   });
 
-  test.afterEach(async () => {
-    const { requestContext, csrfToken } = await apiToken(CONTROLLER);
-    const headers: Record<string, string> = {};
-    if (csrfToken) {
-      headers['X-XSRF-TOKEN'] = csrfToken;
-    }
-    const response = await requestContext.get(`${BACKEND_URL}/gates/1001/metadata`);
-    if (response.ok()) {
-      const metadata = await response.json();
-      for (const m of metadata.filter((m: { key: string; id: number }) => m.key === 'test_key')) {
-        await requestContext.delete(`${BACKEND_URL}/gates/1001/metadata/${m.id}`, { headers });
-      }
-    }
-  });
-
   // ── g2) editing height above NN updates the displayed value ──
 
   test('editing height above NN updates the displayed value', async ({ page }) => {
@@ -203,18 +245,6 @@ test.describe('Gate detail page (mutations)', () => {
     await expect(metadataPanel).toContainText('7.7 m');
   });
 
-  test.afterEach(async () => {
-    const { requestContext, csrfToken } = await apiToken(CONTROLLER);
-    const headers: Record<string, string> = {};
-    if (csrfToken) {
-      headers['X-XSRF-TOKEN'] = csrfToken;
-    }
-    await requestContext.put(`${BACKEND_URL}/update-height/1001`, {
-      headers,
-      data: { heightAboveNN: 2.5 },
-    });
-  });
-
   // ── h) editing priority ──
 
   test('editing priority updates the displayed value', async ({ page }) => {
@@ -231,18 +261,6 @@ test.describe('Gate detail page (mutations)', () => {
     await expect(overviewPanel).toContainText('Priority');
     const prioritySection = overviewPanel.locator('div', { hasText: 'Priority' }).first();
     await expect(prioritySection).toContainText('1');
-  });
-
-  test.afterEach(async () => {
-    const { requestContext, csrfToken } = await apiToken(CONTROLLER);
-    const headers: Record<string, string> = {};
-    if (csrfToken) {
-      headers['X-XSRF-TOKEN'] = csrfToken;
-    }
-    await requestContext.put(`${BACKEND_URL}/update-priority/1001`, {
-      headers,
-      data: { priority: 3 },
-    });
   });
 
   // ── i) manual status override ──
@@ -297,19 +315,6 @@ test.describe('Gate detail page (mutations)', () => {
     await expect(page.getByText('Status was set manually by an operator')).toBeVisible();
   });
 
-  test.afterEach(async () => {
-    const { requestContext, csrfToken } = await apiToken(CONTROLLER);
-    const headers: Record<string, string> = {};
-    if (csrfToken) {
-      headers['X-XSRF-TOKEN'] = csrfToken;
-    }
-    // Clean up any temp manual gates
-    const gates = await (await requestContext.get(`${BACKEND_URL}/gates`)).json();
-    for (const gate of gates.filter((g: { location?: string }) => g.location?.startsWith('E2E Temp Manual Gate'))) {
-      await requestContext.delete(`${BACKEND_URL}/gates/${gate.id}`, { headers });
-    }
-  });
-
   // ── j) deleting a gate navigates back to dashboard ──
 
   test('deleting a gate navigates back to dashboard', async ({ page }) => {
@@ -354,18 +359,5 @@ test.describe('Gate detail page (mutations)', () => {
 
     // Assert "Flood Gates" heading visible
     await expect(page.getByRole('heading', { name: 'Flood Gates' })).toBeVisible();
-  });
-
-  test.afterEach(async () => {
-    const { requestContext, csrfToken } = await apiToken(CONTROLLER);
-    const headers: Record<string, string> = {};
-    if (csrfToken) {
-      headers['X-XSRF-TOKEN'] = csrfToken;
-    }
-    // Best-effort DELETE of any temp delete gates that might remain
-    const gates = await (await requestContext.get(`${BACKEND_URL}/gates`)).json();
-    for (const gate of gates.filter((g: { location?: string }) => g.location?.startsWith('E2E Temp Delete Gate'))) {
-      await requestContext.delete(`${BACKEND_URL}/gates/${gate.id}`, { headers });
-    }
   });
 });

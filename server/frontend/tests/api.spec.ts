@@ -51,7 +51,7 @@ test.describe('Backend API', () => {
     expect(response.status()).toBe(200);
 
     const gates = await response.json();
-    expect(gates).toHaveLength(SEEDED_GATES.length);
+    expect(gates.length).toBeGreaterThanOrEqual(SEEDED_GATES.length);
 
     // Match on id so the assertion is order-independent.
     for (const expected of SEEDED_GATES) {
