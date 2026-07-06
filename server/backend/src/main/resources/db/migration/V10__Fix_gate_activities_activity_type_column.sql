@@ -24,11 +24,12 @@ SELECT
     longitude,
     confidence,
     priority,
-    last_time_stamp,
+    gate_time_stamp,
+    hlc_log,
     created_at
 FROM gates
 WHERE ignore_gate = FALSE
-ORDER BY priority DESC, last_time_stamp DESC;
+ORDER BY priority DESC, gate_time_stamp DESC, hlc_log DESC;;
 
 CREATE OR REPLACE VIEW v_recent_activities AS
 SELECT
