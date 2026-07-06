@@ -1,14 +1,16 @@
 
 package com.riot.matesense.controller;
 
+import com.riot.matesense.controller.dto.MetadataRequest;
 import com.riot.matesense.entity.GateMetadataEntity;
 import com.riot.matesense.exceptions.GateNotFoundException;
+import com.riot.matesense.exceptions.MetadataNotFoundException;
 import com.riot.matesense.service.GateMetadataService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 public class GateMetadataController {
@@ -36,11 +38,10 @@ public class GateMetadataController {
      * @throws GateNotFoundException if the gate does not exist
      */
     @PostMapping("/gates/{gateId}/metadata")
-    public GateMetadataEntity addMetadata(@PathVariable Long gateId, @RequestBody Map<String, String> body)
+    public GateMetadataEntity addMetadata(@PathVariable Long gateId,
+                                         @Valid @RequestBody MetadataRequest body)
             throws GateNotFoundException {
-        String key = body.get("key");
-        String value = body.get("value");
-        return gateMetadataService.addMetadata(gateId, key, value);
+        return gateMetadataService.addMetadata(gateId, body.getKey(), body.getValue());
     }
 
     /**
@@ -50,16 +51,14 @@ public class GateMetadataController {
      * @param metadataId of the metadata entry that should be updated
      * @param body containing "key" and "value"
      * @return the updated metadata entry
-     * @throws GateNotFoundException if the metadata entry does not exist
+     * @throws MetadataNotFoundException if the metadata entry does not exist
      */
     @PutMapping("/gates/{gateId}/metadata/{metadataId}")
     public GateMetadataEntity updateMetadata(@PathVariable Long gateId,
                                             @PathVariable Long metadataId,
-                                            @RequestBody Map<String, String> body)
-            throws GateNotFoundException {
-        String key = body.get("key");
-        String value = body.get("value");
-        return gateMetadataService.updateMetadata(metadataId, key, value);
+                                            @Valid @RequestBody MetadataRequest body)
+            throws MetadataNotFoundException {
+        return gateMetadataService.updateMetadata(gateId, metadataId, body.getKey(), body.getValue());
     }
 
     /**
@@ -67,11 +66,11 @@ public class GateMetadataController {
      *
      * @param gateId of the gate
      * @param metadataId of the metadata entry that should be deleted
-     * @throws GateNotFoundException if the metadata entry does not exist
+     * @throws MetadataNotFoundException if the metadata entry does not exist
      */
     @DeleteMapping("/gates/{gateId}/metadata/{metadataId}")
     public void removeMetadata(@PathVariable Long gateId, @PathVariable Long metadataId)
-            throws GateNotFoundException {
-        gateMetadataService.removeMetadata(metadataId);
+            throws MetadataNotFoundException {
+        gateMetadataService.removeMetadata(gateId, metadataId);
     }
 }
