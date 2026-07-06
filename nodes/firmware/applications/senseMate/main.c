@@ -25,7 +25,7 @@ static const char *ok(bool condition)
 {
     return condition ? "[OK]" : "[ERROR]";
 }
-
+swswswsw
 #define STORAGE_RAM_MOUNT_PATH "/ram0"
 //#define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
 
@@ -42,7 +42,7 @@ extern mtd_dev_t *storage_setup_get_ram_mtd(void);
 tables_context_t *tables;
 
 #define SOUND_PWM_DEV PWM_DEV(0)
-#define SOUND_PWM_CHANNEL (1)
+#define SOUND_PWM_CHANNEL (0)
 sound_module_t sound_module;
 
 int lorawan_started = -1;

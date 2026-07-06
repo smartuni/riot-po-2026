@@ -4,7 +4,7 @@
 #include "ztimer.h"
 #include "periph/gpio.h"
 
-gpio_t vibration = GPIO_PIN(1, 9);
+gpio_t vibration = GPIO_PIN(0, 10);
 gpio_mode_t vibtation_mode = GPIO_OUT;
 
 void init_vibration_module(void) {
