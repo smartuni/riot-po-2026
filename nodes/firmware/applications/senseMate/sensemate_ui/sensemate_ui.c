@@ -707,7 +707,7 @@ static void _settings_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
 
     /* Create a value label below the slider */
     lv_obj_t *slider_label = lv_label_create(list1);
-    int8_t rssi = -100;
+    int8_t visible_rssi = -100;
 
     if (_data_cbs && _data_cbs->get_min_rssi) {
         rssi = _data_cbs->get_min_rssi();
