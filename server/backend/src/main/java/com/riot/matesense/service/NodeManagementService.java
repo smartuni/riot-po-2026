@@ -32,6 +32,7 @@ public class NodeManagementService {
 
     @Transactional
     public void saveRootKey(RootKey rootKey) {
+        validatePublicKey(rootKey.getPublicKey());
         RootKeyEntity entity = rootKeyRepository.findFirstByOrderByIdAsc()
                 .orElseGet(() -> {
                     RootKeyEntity newEntity = new RootKeyEntity();
