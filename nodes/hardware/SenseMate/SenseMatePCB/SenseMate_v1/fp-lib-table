@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "SenseMateLibrary")(type "KiCad")(uri "${KIPRJMOD}/SenseMateLibrary.pretty")(options "")(descr ""))
+)

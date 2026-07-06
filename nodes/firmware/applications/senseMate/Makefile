@@ -1,7 +1,10 @@
 # name of your application
 APPLICATION = SenseMate
 # If no BOARD is found in the environment, use this default:
-BOARD ?= adafruit-feather-nrf52840-sense
+# v1 board:
+# BOARD ?= adafruit-feather-nrf52840-sense
+# v2 board:
+BOARD ?= seeedstudio-xiao-nrf52840-sense
 
 PROJECT_BASE ?= $(CURDIR)/../..
 RIOTBASE ?= $(PROJECT_BASE)/RIOT
