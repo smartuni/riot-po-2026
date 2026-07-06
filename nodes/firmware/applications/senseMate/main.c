@@ -35,7 +35,7 @@ static const char *ok(bool condition)
 #define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
 #endif
 
-static int min_rssi = -80;
+static int min_rssi = -100;
 
 extern int credential_manager_setup(const char *db_path);
 extern int tables_setup(tables_context_t **t, const char *db_path);
