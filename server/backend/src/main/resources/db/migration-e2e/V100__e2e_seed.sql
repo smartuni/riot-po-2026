@@ -33,6 +33,8 @@ INSERT INTO gates (
     id, status, state_confirmation, gate_time_stamp, hlc_log,last_transition_gate_time_stamp,
     device_id, location, latitude, longitude, requested_status, confidence, priority,
     created_at, updated_at
+
+
 ) VALUES
     (1001, 'OPEN'::status_enum, 'CONFIRMED'::state_confirmation_enum,
         TIMESTAMP '2026-01-01 08:00:00', 0,TIMESTAMP '2026-01-01 07:55:00',
@@ -62,13 +64,13 @@ INSERT INTO notifications (
         TIMESTAMP '2026-01-01 08:25:00', TIMESTAMP '2026-01-01 08:25:00');
 
 INSERT INTO gate_activities (
-    last_time_stamp, local_time_stamp, gate_time_stamp,hlc_log, gate_id,
+    local_time_stamp, gate_time_stamp,hlc_log, gate_id,
     requested_status, message, worker_id, activity_type, created_at
 ) VALUES
-    (TIMESTAMP '2026-01-01 08:00:00', TIMESTAMP '2026-01-01 08:00:00', TIMESTAMP '2026-01-01 08:00:00',
+    (TIMESTAMP '2026-01-01 08:00:00', TIMESTAMP '2026-01-01 08:00:00',
         2,1001, 'OPEN', 'E2E seed: Gate 1001 OPEN', NULL, 'SENSOR_VALUE_KEEPALIVE',
         TIMESTAMP '2026-01-01 08:00:00'),
-    (TIMESTAMP '2026-01-01 08:05:00', TIMESTAMP '2026-01-01 08:05:00', TIMESTAMP '2026-01-01 08:05:00',
+    ( TIMESTAMP '2026-01-01 08:05:00', TIMESTAMP '2026-01-01 08:05:00',
         4,1002, 'CLOSED', 'E2E seed: Gate 1002 CLOSED', NULL, 'SENSOR_VALUE_KEEPALIVE',
         TIMESTAMP '2026-01-01 08:05:00');
 
