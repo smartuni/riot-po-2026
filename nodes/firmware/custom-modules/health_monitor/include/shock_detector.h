@@ -15,7 +15,7 @@
 #define SHOCK_DETECTOR_H
 
 #define kiss_fft_scalar int32_t
-#define SAMPLE_SIZE 2048
+#define SAMPLE_SIZE 1024
 
 #include "health_monitor_payload.h"
 #include "moving_freq_avg.h"
