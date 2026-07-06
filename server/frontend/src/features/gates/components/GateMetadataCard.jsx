@@ -15,11 +15,11 @@ import {
 } from '../../../app/store/api/api';
 
 const GateMetadataCard = ({ gate, isController, embedded = false }) => {
-    const { data: metadata = [], isLoading } = useGetGateMetadataQuery(gate.id);
-    const [createMetadata] = useCreateGateMetadataMutation();
-    const [updateMetadata] = useUpdateGateMetadataMutation();
-    const [deleteMetadata] = useDeleteGateMetadataMutation();
-    const [updateHeightAboveNN] = useUpdateHeightAboveNNMutation();
+    const { data: metadata = [], isLoading, isError } = useGetGateMetadataQuery(gate.id);
+    const [createMetadata, { isLoading: isCreating }] = useCreateGateMetadataMutation();
+    const [updateMetadata, { isLoading: isUpdating }] = useUpdateGateMetadataMutation();
+    const [deleteMetadata, { isLoading: isDeleting }] = useDeleteGateMetadataMutation();
+    const [updateHeightAboveNN, { isLoading: isUpdatingHeight }] = useUpdateHeightAboveNNMutation();
 
     const [editingHeight, setEditingHeight] = useState(false);
     const [heightValue, setHeightValue] = useState('');
@@ -151,7 +151,7 @@ const GateMetadataCard = ({ gate, isController, embedded = false }) => {
                                 }}
                             />
                             <span style={{ fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 600 }}>m</span>
-                            <button className="action-link" onClick={handleSaveHeight} style={{ color: 'var(--green-600)' }}>
+                            <button className="action-link" onClick={handleSaveHeight} style={{ color: 'var(--green-600)' }} disabled={isUpdatingHeight}>
                                 <CheckIcon fontSize="small" />
                             </button>
                             <button className="action-link" onClick={cancelEditHeight} style={{ color: 'var(--text-secondary)' }}>
@@ -199,7 +199,11 @@ const GateMetadataCard = ({ gate, isController, embedded = false }) => {
                 )}
             </div>
 
-            {isLoading ? (
+            {isError ? (
+                <div style={{ padding: '12px 0', color: 'var(--red-600)', fontSize: '13px' }}>
+                    Failed to load metadata.
+                </div>
+            ) : isLoading ? (
                 <div style={{ padding: '12px 0', color: 'var(--text-secondary)', fontSize: '13px' }}>
                     Loading...
                 </div>
@@ -253,7 +257,7 @@ const GateMetadataCard = ({ gate, isController, embedded = false }) => {
                                 />
                             </div>
                             <div style={{ display: 'flex', gap: '4px' }}>
-                                <button className="action-link" onClick={handleSaveEdit} style={{ color: 'var(--green-600)' }} aria-label="Save metadata edit">
+                                <button className="action-link" onClick={handleSaveEdit} style={{ color: 'var(--green-600)' }} aria-label="Save metadata edit" disabled={isUpdating}>
                                         <CheckIcon fontSize="small" />
                                     </button>
                                 <button className="action-link" onClick={cancelEdit} style={{ color: 'var(--text-secondary)' }}>
@@ -276,7 +280,7 @@ const GateMetadataCard = ({ gate, isController, embedded = false }) => {
                                     <button className="action-link" onClick={() => startEdit(item)} style={{ color: 'var(--blue-600)' }}>
                                         <EditIcon style={{ fontSize: '16px' }} />
                                     </button>
-                                    <button className="action-link" onClick={() => handleDelete(item)} style={{ color: 'var(--red-600)' }} aria-label="Delete metadata item">
+                                    <button className="action-link" onClick={() => handleDelete(item)} style={{ color: 'var(--red-600)' }} aria-label="Delete metadata item" disabled={isDeleting}>
                                         <DeleteIcon style={{ fontSize: '16px' }} />
                                     </button>
                                 </div>
@@ -317,7 +321,7 @@ const GateMetadataCard = ({ gate, isController, embedded = false }) => {
                             if (e.key === 'Escape') { setAdding(false); setNewKey(''); setNewValue(''); }
                         }}
                     />
-                    <button className="action-link" onClick={handleAdd} style={{ color: 'var(--green-600)' }} aria-label="Add metadata item">
+                    <button className="action-link" onClick={handleAdd} style={{ color: 'var(--green-600)' }} aria-label="Add metadata item" disabled={isCreating}>
                         <CheckIcon fontSize="small" />
                     </button>
                     <button className="action-link" onClick={() => { setAdding(false); setNewKey(''); setNewValue(''); }} style={{ color: 'var(--text-secondary)' }}>
