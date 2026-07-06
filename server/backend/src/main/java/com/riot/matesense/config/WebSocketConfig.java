@@ -6,7 +6,6 @@ import com.riot.matesense.security.CookieJwtExtractor;
 import com.riot.matesense.security.JwtService;
 import com.riot.matesense.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.Message;
@@ -33,9 +32,6 @@ import java.util.Map;
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
-    @Value("${app.cors.allowed-origins:http://localhost:3000}")
-    private String[] allowedOrigins;
 
     @Autowired
     @Lazy
@@ -103,13 +99,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        var endpoint = registry.addEndpoint("/ws")
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
                 .addInterceptors(new HandshakeInterceptor() {
                     @Override
                     public boolean beforeHandshake(ServerHttpRequest request,
-                                                  ServerHttpResponse response,
-                                                  WebSocketHandler wsHandler,
-                                                  Map<String, Object> attributes) {
+                                                   ServerHttpResponse response,
+                                                   WebSocketHandler wsHandler,
+                                                   Map<String, Object> attributes) {
                         // Copy the Cookie header from the HTTP upgrade request into
                         // the session attributes so the STOMP CONNECT interceptor can
                         // read the JWT cookie. Browsers send cookies on the WS
@@ -131,10 +128,5 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         // no-op
                     }
                 });
-        if (java.util.Arrays.asList(allowedOrigins).contains("*")) {
-            endpoint.setAllowedOriginPatterns("*");
-        } else {
-            endpoint.setAllowedOrigins(allowedOrigins);
-        }
     }
 }
