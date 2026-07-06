@@ -197,7 +197,7 @@ public class GateService {
     public void changeGateStateConfirmation(Long gateId, StateConfirmation state) throws GateNotFoundException {
         GateEntity gate = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         gate.setStateConfirmation(state);
-        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        gate.setGateTimeStamp(new Timestamp(System.currentTimeMillis()));
         gateRepository.save(gate);
         messagingTemplate.convertAndSend("/topic/gates/updates", gate);
     }
