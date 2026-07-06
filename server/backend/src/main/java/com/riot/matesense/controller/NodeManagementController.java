@@ -27,6 +27,7 @@ public class NodeManagementController {
     }
 
     @GetMapping("/root-key")
+    @PreAuthorize("hasRole('controller')")
     public RootKey getRootKey() {
         return nodeManagementService.getRootKey();
     }

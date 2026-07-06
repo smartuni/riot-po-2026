@@ -36,6 +36,9 @@ class NodeManagementServiceTest {
 
     private NodeManagementService service;
 
+    // 32-byte Ed25519 public key encoded as Base64
+    private static final String PUB_KEY = java.util.Base64.getEncoder().encodeToString(new byte[32]);
+
     @BeforeEach
     void setUp() {
         service = new NodeManagementService(rootKeyRepository, nodeRepository);
@@ -48,11 +51,11 @@ class NodeManagementServiceTest {
         void saveRootKeyCreatesNewEntityWhenNoneExists() {
             when(rootKeyRepository.findFirstByOrderByIdAsc()).thenReturn(Optional.empty());
 
-            service.saveRootKey(new RootKey("server", "pub", "priv"));
+            service.saveRootKey(new RootKey("server", PUB_KEY, "priv"));
 
             verify(rootKeyRepository).save(argThat(entity ->
                     entity.getKid().equals("server") &&
-                    entity.getPublicKey().equals("pub") &&
+                    entity.getPublicKey().equals(PUB_KEY) &&
                     entity.getPrivateKey().equals("priv") &&
                     entity.getCreatedAt() != null &&
                     entity.getUpdatedAt() != null
@@ -64,14 +67,15 @@ class NodeManagementServiceTest {
             RootKeyEntity existing = new RootKeyEntity();
             existing.setId(1L);
             existing.setKid("server");
-            existing.setPublicKey("old-pub");
-            existing.setPrivateKey("old-priv");
+            existing.setPublicKey(PUB_KEY);
+            existing.setPrivateKey("priv");
 
             when(rootKeyRepository.findFirstByOrderByIdAsc()).thenReturn(Optional.of(existing));
 
-            service.saveRootKey(new RootKey("server", "new-pub", "new-priv"));
+            String newPub = java.util.Base64.getEncoder().encodeToString(new byte[32]);
+            service.saveRootKey(new RootKey("server", newPub, "new-priv"));
 
-            assertThat(existing.getPublicKey()).isEqualTo("new-pub");
+            assertThat(existing.getPublicKey()).isEqualTo(newPub);
             assertThat(existing.getPrivateKey()).isEqualTo("new-priv");
             verify(rootKeyRepository).save(existing);
         }
@@ -80,7 +84,7 @@ class NodeManagementServiceTest {
         void saveRootKeyDefaultsKidToServerWhenNull() {
             when(rootKeyRepository.findFirstByOrderByIdAsc()).thenReturn(Optional.empty());
 
-            service.saveRootKey(new RootKey(null, "pub", "priv"));
+            service.saveRootKey(new RootKey(null, PUB_KEY, "priv"));
 
             verify(rootKeyRepository).save(argThat(entity ->
                     entity.getKid().equals("server")
