@@ -82,8 +82,9 @@ static void* acceleration_thread(void* instance_void) {
 		process_fft(instance); // process the collected samples with FFT
 		LOG_DEBUG("[shock_detector.c:%d] Post-processing FFT results...\n", __LINE__);
 		postprocess_fft(instance); // post-process the FFT results to find the average over frequency
+		LOG_DEBUG("[shock_detector.c:%d] Frequency ; Magnitude\n", __LINE__);
 		for (int i = 0; i < instance->nyquist_domain_size; i += 5) {
-			LOG_DEBUG("[shock_detector.c:%d] Frequency: %d Hz, Average Magnitude: %d\n", __LINE__, i, instance->freq_avg->frequency_domain[i].average);
+			LOG_DEBUG("%d ; %d\n", i, instance->freq_avg->frequency_domain[i].average);
 		}
 		mutex_lock(&instance->shock_status_mutex);
 		instance->shock_status = NO_SHOCK; //TODO analyze the frequency domain average to determine if there is a shock or not, and set the shock status accordingly
