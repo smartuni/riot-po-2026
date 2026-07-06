@@ -35,7 +35,7 @@ static const char *ok(bool condition)
 #define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
 #endif
 
-static int min_rssi = -100;
+static int min_visible_rssi = -100;
 
 extern int credential_manager_setup(const char *db_path);
 extern int tables_setup(tables_context_t **t, const char *db_path);
@@ -63,7 +63,7 @@ table_query_t all_gates_query = {
     .involved_id = NULL
 };
 
-bool _set_min_rssi_cb(int8_t rssi)
+bool _set_min_visible_rssi_cb(int8_t rssi)
 {
     LOG_INFO("New minimum RSSI: %d\n", rssi);
 
@@ -72,7 +72,7 @@ bool _set_min_rssi_cb(int8_t rssi)
     return true;
 }
 
-int8_t _get_min_rssi_cb(void){
+int8_t _get_min_visible_rssi_cb(void){
     return min_rssi;
 }
 
@@ -177,7 +177,7 @@ static bool _all_gates_iter(ui_data_element_t *prev)
             _LOGDBG("%s Gate State: %s\n", __func__, gate_state_tostr(rdata->state));
             hlc_timestamp_t timestamp;
             get_record_timestamp(record, &timestamp);
-            //li->sensor_timestamp = timestamp;
+            li->sensor_timestamp = timestamp;
             memcpy(li->gateID, writer_id, sizeof(node_id_t));
             li->sensor_state = rdata->state;
             li->sensor_data_present = true;
