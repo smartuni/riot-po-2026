@@ -213,18 +213,23 @@ public class GateService {
         List<GateForDownlink> customGates = new ArrayList<>();
         gates.forEach(e -> {
             int requestedStatus;
-            switch (e.getRequestedStatus()) {
-                case "REQUESTED_OPEN":
-                    requestedStatus = 1;
-                    break;
-                case "REQUESTED_CLOSE":
-                    requestedStatus = 0;
-                    break;
-                case "REQUESTED_NONE":
-                    requestedStatus = 2;
-                    break;
-                default:
-                    requestedStatus = 0; // Default to CLOSED if status is unknown
+            String rs = e.getRequestedStatus();
+            if (rs == null) {
+                requestedStatus = 0;
+            } else {
+                switch (rs) {
+                    case "REQUESTED_OPEN":
+                        requestedStatus = 1;
+                        break;
+                    case "REQUESTED_CLOSE":
+                        requestedStatus = 0;
+                        break;
+                    case "REQUESTED_NONE":
+                        requestedStatus = 2;
+                        break;
+                    default:
+                        requestedStatus = 0; // Default to CLOSED if status is unknown
+                }
             }
             GateForDownlink gate = new GateForDownlink(Math.toIntExact(e.getId()), requestedStatus);
             customGates.add(gate);
@@ -241,6 +246,7 @@ public class GateService {
         GateEntity gateEntity = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         gateEntity.setPriority(newPriority);
         gateRepository.save(gateEntity);
+        messagingTemplate.convertAndSend("/topic/gates/updates", gateEntity);
     }
 
     /**
@@ -252,6 +258,7 @@ public class GateService {
         GateEntity gateEntity = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         gateEntity.setHeightAboveNN(heightAboveNN);
         gateRepository.save(gateEntity);
+        messagingTemplate.convertAndSend("/topic/gates/updates", gateEntity);
     }
 
     /**

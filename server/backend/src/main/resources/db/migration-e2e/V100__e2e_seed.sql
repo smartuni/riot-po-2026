@@ -5,6 +5,7 @@ TRUNCATE TABLE gate_activities RESTART IDENTITY CASCADE;
 TRUNCATE TABLE notifications RESTART IDENTITY CASCADE;
 TRUNCATE TABLE gates RESTART IDENTITY CASCADE;
 TRUNCATE TABLE users RESTART IDENTITY CASCADE;
+TRUNCATE TABLE gate_metadata RESTART IDENTITY CASCADE;
 
 -- Seed the test accounts here (not only via application.yml) for two reasons:
 --   1. The notifications below reference users via fk_notifications_worker_id,
@@ -32,24 +33,31 @@ SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
 INSERT INTO gates (
     id, status, state_confirmation, gate_time_stamp, hlc_log,last_transition_gate_time_stamp,
     device_id, location, latitude, longitude, requested_status, confidence, priority,
-    created_at, updated_at)
-VALUES
+    height_above_nn, created_at, updated_at
+) VALUES
     (1001, 'OPEN'::status_enum, 'CONFIRMED'::state_confirmation_enum,
         TIMESTAMP '2026-01-01 08:00:00', 0,TIMESTAMP '2026-01-01 07:55:00',
-        501, 'E2E Gate Alpha', 53.5500, 9.9937, 'OPEN', 90, 3,
+        501, 'E2E Gate Alpha', 53.5500, 9.9937, 'OPEN', 90, 3,2.5,
         TIMESTAMP '2026-01-01 08:00:00', TIMESTAMP '2026-01-01 08:00:00'),
     (1002, 'CLOSED'::status_enum, 'CONFIRMED'::state_confirmation_enum,
         TIMESTAMP '2026-01-01 08:05:00', 1,TIMESTAMP '2026-01-01 08:00:00',
-        502, 'E2E Gate Beta', 53.5510, 9.9940, 'CLOSED', 85, 2,
+        502, 'E2E Gate Beta', 53.5510, 9.9940, 'CLOSED', 85, 2,3.8
         TIMESTAMP '2026-01-01 08:05:00', TIMESTAMP '2026-01-01 08:05:00'),
     (1003, 'OPEN'::status_enum, 'UNCONFIRMED'::state_confirmation_enum,
-        TIMESTAMP '2026-01-01 08:10:00', 2,TIMESTAMP '2026-01-01 08:10:00',
-        503, 'E2E Gate Gamma', 53.5520, 9.9950, 'OPEN', 70, 1,
+        TIMESTAMP '2026-01-01 08:10:00',2, TIMESTAMP '2026-01-01 08:10:00',
+        503, 'E2E Gate Gamma', 53.5520, 9.9950, 'OPEN', 70, 1,1.2
         TIMESTAMP '2026-01-01 08:10:00', TIMESTAMP '2026-01-01 08:10:00'),
     (1004, 'OUT_OF_SERVICE'::status_enum, 'UNCONFIRMED'::state_confirmation_enum,
         TIMESTAMP '2026-01-01 08:15:00', 3,TIMESTAMP '2026-01-01 08:15:00',
-        504, 'E2E Gate Delta', 53.5530, 9.9960, 'OUT_OF_SERVICE', 40, 0,
+        504, 'E2E Gate Delta', 53.5530, 9.9960, 'OUT_OF_SERVICE', 40, 0,5.0
         TIMESTAMP '2026-01-01 08:15:00', TIMESTAMP '2026-01-01 08:15:00');
+
+INSERT INTO gate_metadata (gate_id, "key", "value") VALUES
+    (1001, 'closing_threshold_cm', '250'),
+    (1001, 'max_water_flow', '12.5'),
+    (1002, 'closing_threshold_cm', '380'),
+    (1002, 'last_inspection', '2026-01-15'),
+    (1003, 'closing_threshold_cm', '120');
 
 INSERT INTO notifications (
     status, last_time_stamp, worker_id, message, read, created_at, updated_at

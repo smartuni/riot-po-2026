@@ -25,7 +25,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Gate', 'Activity', 'Notification', 'Auth'],
+  tagTypes: ['Gate', 'GateMetadata', 'Activity', 'Notification', 'Auth'],
   endpoints: (builder) => ({
     // ── Auth ──────────────────────────────────────────────
     login: builder.mutation({
@@ -150,6 +150,38 @@ export const api = createApi({
       invalidatesTags: ['Gate'],
     }),
 
+    // ── Gate Metadata ─────────────────────────────────────
+    getGateMetadata: builder.query({
+      query: (gateId) => `/api/gates/${gateId}/metadata`,
+      providesTags: (result, error, gateId) =>
+        result
+          ? [...result.map(({ id }) => ({ type: 'GateMetadata', id })), { type: 'GateMetadata', id: gateId }]
+          : [{ type: 'GateMetadata', id: gateId }],
+    }),
+    createGateMetadata: builder.mutation({
+      query: ({ gateId, key, value }) => ({
+        url: `/api/gates/${gateId}/metadata`,
+        method: 'POST',
+        body: { key, value },
+      }),
+      invalidatesTags: (result, error, { gateId }) => [{ type: 'GateMetadata', id: gateId }],
+    }),
+    updateGateMetadata: builder.mutation({
+      query: ({ gateId, metadataId, key, value }) => ({
+        url: `/api/gates/${gateId}/metadata/${metadataId}`,
+        method: 'PUT',
+        body: { key, value },
+      }),
+      invalidatesTags: (result, error, { gateId }) => [{ type: 'GateMetadata', id: gateId }],
+    }),
+    deleteGateMetadata: builder.mutation({
+      query: ({ gateId, metadataId }) => ({
+        url: `/api/gates/${gateId}/metadata/${metadataId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { gateId }) => [{ type: 'GateMetadata', id: gateId }],
+    }),
+
     // ── Activities ────────────────────────────────────────
     getActivities: builder.query({
         query: () => '/api/gate-activities',
@@ -186,6 +218,10 @@ export const {
   useTryIncrementDownlinkCounterMutation,
   useResetDownlinkCounterMutation,
   useSendDownlinkMutation,
+  useGetGateMetadataQuery,
+  useCreateGateMetadataMutation,
+  useUpdateGateMetadataMutation,
+  useDeleteGateMetadataMutation,
   useGetActivitiesQuery,
   useGetNotificationsByWorkerIdQuery,
   useMarkNotificationAsReadMutation,
