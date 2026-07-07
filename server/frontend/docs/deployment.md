@@ -87,7 +87,7 @@ No `.env` files are committed. The following are git-ignored:
 | Value | Location |
 |---|---|
 | `API_BASE_URL = 'http://localhost:8080'` | `src/features/auth/api.js` (RTK Query `fetchBaseQuery`) |
-| `WebSocket URL = 'http://localhost:8080/ws'` | `src/app/wsMiddleware.js` |
+| `WebSocket URL = 'http://localhost:8080/ws'` | `src/app/store/middleware/wsMiddleware.js` |
 | `Admin password = "secret123"` | `src/features/gates/components/StatusTables.jsx` |
 
 > ⚠️ These values should ideally be moved to environment variables for different deployment targets.
