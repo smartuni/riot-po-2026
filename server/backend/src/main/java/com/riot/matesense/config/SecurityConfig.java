@@ -49,6 +49,7 @@ public class SecurityConfig {
                     .requestMatchers("/auth/login", "/auth/register", "/auth/logout").permitAll()
                     .requestMatchers("/gates").permitAll()
                     .requestMatchers("/gate-activities").permitAll()
+                    .requestMatchers("/health").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/actuator/health").permitAll()
                     .requestMatchers("/e2e/**").permitAll()
