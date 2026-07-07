@@ -33,6 +33,13 @@ INSERT INTO gates (
       504, 'E2E Gate Delta', 53.5530, 9.9960, 'OUT_OF_SERVICE', 40, 0,
       false, false, false, 5.0);
 
+INSERT INTO gate_metadata (gate_id, "key", "value") VALUES
+    (1001, 'closing_threshold_cm', '250'),
+    (1001, 'max_water_flow', '12.5'),
+    (1002, 'closing_threshold_cm', '380'),
+    (1002, 'last_inspection', '2026-01-15'),
+    (1003, 'closing_threshold_cm', '120');
+
 INSERT INTO notifications (
     status, last_time_stamp, worker_id, message, read
 ) VALUES
