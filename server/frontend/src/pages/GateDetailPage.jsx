@@ -13,6 +13,7 @@ import AppLayout from '../features/shell/components/AppLayout';
 import StatusChangedDialog from '../features/gates/components/StatusChangedDialog';
 import ManualStatusDialog from '../features/gates/components/ManualStatusDialog';
 import GateMetadataCard from '../features/gates/components/GateMetadataCard';
+import { HealthBadge, useHealthForGate } from '../features/health';
 import { useAppSelector } from '../app/store';
 import {
     useGetGatesQuery,
@@ -107,6 +108,7 @@ const GateDetailPage = () => {
     const [activeTab, setActiveTab] = useState('overview');
 
     const gate = gates.find((g) => g.id === parseInt(id));
+    const health = useHealthForGate(parseInt(id));
 
     const gateActivities = activities
         .filter((a) => a.gateId === parseInt(id))
@@ -310,6 +312,10 @@ const GateDetailPage = () => {
                                         <span className="status-dot" />
                                         {sci.label}
                                     </span>
+                                ))}
+                                {infoGridItem('Health', (
+                                    // TODO: verify senseGateId === gate.id mapping with firmware team
+                                    <HealthBadge health={health} />
                                 ))}
                             </div>
                         </div>
