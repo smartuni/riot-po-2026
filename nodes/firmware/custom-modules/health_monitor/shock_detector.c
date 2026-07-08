@@ -23,7 +23,7 @@ static void shock_callback(void) {
 static void collect_magnitudes(shock_detector_t* instance) {
 	phydat_t acceleration;
 	memset(instance->raw_accel_data, 0, sizeof(raw_acceleration_t) * instance->sample_size);
-	LED0_ON;
+	LED1_ON;
 	for (int i = 0; i < instance->sample_size; i++) {
 		int acc_dim = saul_reg_read(instance->accel_sensor, &acceleration);
 		if (acc_dim < 1) {
@@ -50,14 +50,12 @@ static void collect_magnitudes(shock_detector_t* instance) {
 		instance->input[i].r = calculate_magnitude(*x, *y, *z);
 		instance->input[i].i = 0;
 	}
-	LED0_OFF;
+	LED1_OFF;
 }
 
 static void process_fft(shock_detector_t* instance) {
-	LED1_ON;
 	memset(instance->output, 0, sizeof(kiss_fft_cpx) * instance->sample_size);
 	kiss_fft(instance->cfg, instance->input, instance->output);
-	LED1_OFF;
 }
 
 static void postprocess_fft(shock_detector_t* instance) {
@@ -73,26 +71,69 @@ static void postprocess_fft(shock_detector_t* instance) {
 	moving_freq_avg_finalize(instance->freq_avg);
 }
 
+static int find_variance(int data[], int n) {
+    if (n <= 0) return 0;
+
+    int sum = 0;
+    for (int i = 0; i < n; i++) {
+        sum += data[i];
+    }
+    float mean = (float)sum / n;
+
+    float sq_diff_sum = 0.0;
+    for (int i = 0; i < n; i++) {
+        float diff = data[i] - mean;
+        sq_diff_sum += diff * diff;
+    }
+
+    float variance = sq_diff_sum / n;
+    return (int)variance;
+}
+
 static bool check_shock(shock_detector_t* instance) {
-	//frequency from 0 Hz to 94 Hz must all be below 44000 AND,
-	//frequency from 95 Hz to 500 Hz must all be below 25000
-	int frequency_middle_point = 95;
+	//it's 
+	//frequency from 0 Hz to 94 Hz must all be above 40000 AND,
+	//frequency from 95 Hz to 500 Hz must contain at least one value that is  below 25000, AND
+	//frequency from 50 Hz to 95 Hz, if the difference between lowest value and the highest value is higher than 40000
+	int frequency_point1 = 50;
+	int frequency_point2 = 95;
 	int magnitude_threshold_low = 44000;
 	int magnitude_threshold_high = 25000;
 
-	for (int i = 0; i < frequency_middle_point; i++) {
+	int lowest_value = INT_MAX;
+	int highest_value = INT_MIN;
+	int delta = 40000;
+
+	for(int i = 5; i < frequency_point1; i++) {
+		int* magnitude = &instance->freq_avg->frequency_domain[i].average;
+		if(*magnitude <= lowest_value) {
+			lowest_value = *magnitude;
+		}
+		if(*magnitude >= highest_value) {
+			highest_value = *magnitude;
+		}
+	}
+
+	if(highest_value - lowest_value < delta) {
+		LOG_DEBUG("[shock_detector.c:%d] No shock detected: highest_value - lowest_value = %d < %d\n", __LINE__, highest_value - lowest_value, delta);
+		return false;
+	}
+
+	for (int i = frequency_point1; i < frequency_point2; i++) {
 		int* magnitude = &instance->freq_avg->frequency_domain[i].average;
 		if (*magnitude > magnitude_threshold_low) {
-			return true;
+			LOG_DEBUG("[shock_detector.c:%d] No shock detected: magnitude at frequency %d Hz = %d > %d\n", __LINE__, i, *magnitude, magnitude_threshold_low);
+			return false;
 		}
 	}
-	for (int i = frequency_middle_point; i < instance->nyquist_domain_size; i++) {
+	for (int i = frequency_point2; i < instance->nyquist_domain_size; i++) {
 		int* magnitude = &instance->freq_avg->frequency_domain[i].average;
 		if (*magnitude > magnitude_threshold_high) {
-			return true;
+			LOG_DEBUG("[shock_detector.c:%d] No shock detected: magnitude at frequency %d Hz = %d > %d\n", __LINE__, i, *magnitude, magnitude_threshold_high);
+			return false;
 		}
 	}
-	return false;
+	return true;
 }
 
 static void* acceleration_thread(void* instance_void) {
