@@ -160,46 +160,6 @@ public class JsonFormatter {
         }
     }
 
-    public List<Object> fromJsonFormat(String jsonString) throws Exception {
-        JsonNode root = jsonMapper.readTree(jsonString);
-        int messageType = root.get("messageType").asInt();
-
-        List<Object> result = new ArrayList<>();
-        result.add(messageType);
-
-        List<List<Integer>> entries = new ArrayList<>();
-
-        if (messageType == 1) { // IST_STATE
-            for (JsonNode statusNode : root.get("statuses")) {
-                int gateId = statusNode.get("gateId").asInt();
-                int status = statusNode.get("status").asInt();
-                int timestamp = statusNode.get("timestamp").asInt();
-                entries.add(Arrays.asList(gateId, status, timestamp));
-            }
-        } else if (messageType == 2) { // SEEN_TABLE_STATE
-            for (JsonNode statusNode : root.get("statuses")) {
-                int gateId = statusNode.get("gateId").asInt();
-                int gateTime = statusNode.get("gateTime").asInt();
-                int status = statusNode.get("status").asInt();
-                int senseMateId = statusNode.get("senseMateId").asInt();
-                entries.add(Arrays.asList(gateId,status,gateTime, senseMateId));
-            }
-        } else if (messageType == 5) { // HEALTH_MONITORING
-            // Falls das Inbound-System (z.B. für Tests) auch die Rückrichtung de-serialisieren muss:
-            for (JsonNode statusNode : root.get("statuses")) {
-                int senseGateId = statusNode.get("senseGateId").asInt();
-                int voltageMv = statusNode.get("voltageMv").asInt();
-                // Enums/Strings als Code mappen wenn nötig
-                entries.add(Arrays.asList(senseGateId, voltageMv));
-            }
-        } else {
-            throw new IllegalArgumentException("Unbekannter MessageType: " + messageType);
-        }
-
-        result.add(entries);
-        return result;
-    }
-
     public byte[] toCborBytes(List<Object> data) throws Exception {
         return cborMapper.writeValueAsBytes(data);
     }
