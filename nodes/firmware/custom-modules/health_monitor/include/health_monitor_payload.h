@@ -23,14 +23,9 @@ enum {
 	BATTERY_CHARGING = 0,
 	BATTERY_DISCHARGING,
 	BATTERY_LOW,
-	SHOCK_STATUS,
+	ACCELEROMETER
 };
 
-typedef int16_t shock_status_t;
-enum {
-	NO_SHOCK = 0,
-	SHOCK_DETECTED
-};
 
 
 typedef struct {

@@ -277,18 +277,23 @@ static void* acceleration_thread(void* instance_void) {
 		// 	LOG_DEBUG(" ; %d ; %d\n", i, (int)(instance->input[i].r) - ACCELEROMETER_EARTH_GRAVITY);
 		// }
 
-		if(!instance->running){
-			check_shock(instance);
-		}
+		
 
 		//if (check_shock(instance)) {
-		LOG_DEBUG("[shock_detector.c:%d] Checking free fall...\n", __LINE__);
+		LOG_DEBUG("[shock_detector.c:%d] Checking accelerometer data...\n", __LINE__);
 		if(check_free_fall(instance)) {
-			//instance->callback();
+			mutex_lock(&instance->shock_status_mutex);
+			instance->shock_status = FREE_FALL;
+			mutex_unlock(&instance->shock_status_mutex);
 			sem_post(&instance->shock_count_to_report);
-			LOG_DEBUG("[shock_detector.c:%d] Shock detected and callback executed.\n", __LINE__);
-		} else {
-			LOG_DEBUG("[shock_detector.c:%d] No shock detected.\n", __LINE__);
+			LOG_DEBUG("[shock_detector.c:%d] Free fall detected.\n", __LINE__);
+		} 
+		if(check_shock(instance)){
+			mutex_lock(&instance->shock_status_mutex);
+			instance->shock_status = SHOCK_DETECTED;
+			mutex_unlock(&instance->shock_status_mutex);
+			sem_post(&instance->shock_count_to_report);
+			LOG_DEBUG("[shock_detector.c:%d] Shock detected.\n", __LINE__);
 		}
 	}
 	return NULL;
@@ -296,6 +301,7 @@ static void* acceleration_thread(void* instance_void) {
 
 int shock_detector_init(shock_detector_t* instance, int sampling_period_ms) {
 	//instance = (shock_detector_t*)malloc(sizeof(shock_detector_t));
+	instance->shock_status = NO_SHOCK;
 	instance->running = true;
 	instance->sample_size = SAMPLE_SIZE;
 	instance->sampling_period_ms = sampling_period_ms;
@@ -347,6 +353,10 @@ int shock_detector_delete(shock_detector_t* instance) {
 }
 
 
-void shock_detector_wait_for_shock(shock_detector_t* instance) {
+shock_status_t shock_detector_wait_for_shock(shock_detector_t* instance) {
 	sem_wait(&instance->shock_count_to_report);
+	mutex_lock(&instance->shock_status_mutex);
+	shock_status_t status = instance->shock_status;
+	mutex_unlock(&instance->shock_status_mutex);
+	return status;
 }

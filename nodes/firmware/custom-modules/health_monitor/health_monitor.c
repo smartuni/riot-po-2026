@@ -91,11 +91,10 @@ static void* shock_detector_function(void* instance_void) {
 	shock_detector_start(instance);
 	while (instance->running) {
 		LOG_DEBUG("[health_monitor.c:%d] Waiting for shock detection...\n", __LINE__);
-		shock_detector_wait_for_shock(instance);
-		//init the payload
 		health_monitor_payload_t payload;
-		payload.header = SHOCK_STATUS;
-		payload.body = SHOCK_DETECTED;
+		payload.header = ACCELEROMETER;
+		payload.body = (int16_t) shock_detector_wait_for_shock(instance);
+		
 		LOG_DEBUG("[health_monitor.c:%d] Shock detected, sending payload...\n", __LINE__);
 		if(serialize_and_send(&payload) != 0) {
 			LOG_ERROR("[health_monitor.c:%d] Failed to send shock status payload\n", __LINE__);

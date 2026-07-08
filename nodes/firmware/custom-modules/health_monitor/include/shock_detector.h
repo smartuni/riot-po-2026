@@ -43,12 +43,20 @@ typedef struct {
 	int z;
 } raw_acceleration_t;
 
+typedef int16_t shock_status_t; //TODO refactor to accelerometer_status or something similliar
+enum {
+	NO_SHOCK = 0,
+	SHOCK_DETECTED,
+	FREE_FALL
+};
 
 
 // Restructures for memory alignment and to avoid padding
 typedef struct {
 	kernel_pid_t thread_pid;
 	mutex_t shock_status_mutex;
+	shock_status_t shock_status;
+
 	saul_reg_t* accel_sensor;
 	kiss_fft_cpx input[SAMPLE_SIZE];
 	kiss_fft_cpx output[SAMPLE_SIZE];
@@ -80,7 +88,7 @@ int shock_detector_init(shock_detector_t* instance,  int sampling_period_ms);
  */
 int shock_detector_start(shock_detector_t* instance);
 
-void shock_detector_wait_for_shock(shock_detector_t* instance);
+shock_status_t shock_detector_wait_for_shock(shock_detector_t* instance);
 
 /**
  * @brief Deletes the shock detector
