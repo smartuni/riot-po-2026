@@ -6,7 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.riot.matesense.entity.GateActivityEntity;
 import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.ActivityType;
+import com.riot.matesense.enums.BatteryStatus;
 import com.riot.matesense.enums.MsgType;
+import com.riot.matesense.enums.ShockStatus;
 import com.riot.matesense.enums.StateConfirmation;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.exceptions.GateNotFoundException;
@@ -14,6 +16,7 @@ import com.riot.matesense.model.GateActivity;
 import com.riot.matesense.registry.DeviceRegistry;
 import com.riot.matesense.service.GateActivityService;
 import com.riot.matesense.service.GateService;
+import com.riot.matesense.service.HealthStatusService;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -29,12 +32,14 @@ public class MqttMessageHandler {
     GateActivityService gateActivityService;
     private final DeviceRegistry deviceRegistry;
     private SimpMessagingTemplate messagingTemplate;
+    private final HealthStatusService healthStatusService;
 
-    public MqttMessageHandler(GateService gateService, GateActivityService gateActivityService, DeviceRegistry deviceRegistry, SimpMessagingTemplate messagingTemplate) {
+    public MqttMessageHandler(GateService gateService, GateActivityService gateActivityService, DeviceRegistry deviceRegistry, SimpMessagingTemplate messagingTemplate, HealthStatusService healthStatusService) {
         this.gateService = gateService;
         this.gateActivityService = gateActivityService;
         this.deviceRegistry = deviceRegistry;
         this.messagingTemplate = messagingTemplate;
+        this.healthStatusService = healthStatusService;
     }
 
     public void msgHandlerUplinks(String decodedJson,String deviceName) {
@@ -62,17 +67,25 @@ public class MqttMessageHandler {
             }
 
             String messagestring = "Verarbeiteter Nachrichtentyp: " + type + " mit Code: " + type.getCode();
-            System.out.println("Verarbeiteter Nachrichtentyp: " + type + " mit Code: " + type.getCode());
+            System.out.println(messagestring);
             messagingTemplate.convertAndSend("/topic/uplinks", messagestring);
             switch (type) {
                 case HEALTH_MONITORING -> {
                     messagingTemplate.convertAndSend("/topic/health", decodedJson);
                     //Konsolen-Log für das Testing/Debugging laut DoD
                     for (JsonNode healthNode : payload) {
-                        System.out.println("Health Update erhalten -> SenseGateID: " + healthNode.get("senseGateId") +
-                                ", Battery: " + healthNode.get("batteryStatus") +
-                                ", Voltage: " + healthNode.get("voltageMv") + "mV" +
-                                ", Shock: " + healthNode.get("shockStatus"));
+                        int senseGateId = healthNode.get("senseGateId").asInt();
+                        int version = healthNode.has("version") ? healthNode.get("version").asInt() : 0;
+                        int voltageMv = healthNode.has("voltageMv") ? healthNode.get("voltageMv").asInt() : 0;
+                        BatteryStatus battery = parseBatteryStatus(healthNode.get("batteryStatus"));
+                        ShockStatus shock = parseShockStatus(healthNode.get("shockStatus"));
+
+                        healthStatusService.updateHealth(senseGateId, battery, shock, voltageMv, version);
+
+                        System.out.println("Health Update erhalten -> SenseGateID: " + senseGateId +
+                                ", Battery: " + battery +
+                                ", Voltage: " + voltageMv + "mV" +
+                                ", Shock: " + shock);
                     }
                 }
                 case IST_STATE -> {
@@ -155,6 +168,24 @@ public class MqttMessageHandler {
             System.err.println("JSON-Parsing-Fehler: " + e.getMessage());
         } catch (Exception e) {
             System.err.println("Fehler in msgHandler: " + e.getMessage());
+        }
+    }
+
+    private static BatteryStatus parseBatteryStatus(JsonNode node) {
+        if (node == null || node.isNull()) return BatteryStatus.UNKNOWN;
+        try {
+            return BatteryStatus.valueOf(node.asText());
+        } catch (IllegalArgumentException e) {
+            return BatteryStatus.UNKNOWN;
+        }
+    }
+
+    private static ShockStatus parseShockStatus(JsonNode node) {
+        if (node == null || node.isNull()) return ShockStatus.UNKNOWN;
+        try {
+            return ShockStatus.valueOf(node.asText());
+        } catch (IllegalArgumentException e) {
+            return ShockStatus.UNKNOWN;
         }
     }
 }
