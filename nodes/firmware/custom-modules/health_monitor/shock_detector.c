@@ -68,8 +68,8 @@ static void postprocess_fft(shock_detector_t* instance) {
 }
 
 static bool check_free_fall(shock_detector_t* instance) {
-	for (int i = 0; i < instance->sample_size; i++) {
-		if(instance->input[i].r == 0){
+	for (int i = 0; i < instance->sample_size; i+=3) {
+		if(instance->input[i].r < 1000) {
 			return true;
 		}
 	}
