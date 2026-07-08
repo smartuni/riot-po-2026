@@ -11,7 +11,6 @@
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
 #include "shock_detector.h"
-#include "include/shock_detector.h"
 
 static int calculate_magnitude(int x, int y, int z) {
 	return sqrt(x * x + y * y + z * z);
