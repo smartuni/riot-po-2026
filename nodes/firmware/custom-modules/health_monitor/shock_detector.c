@@ -68,6 +68,15 @@ static void postprocess_fft(shock_detector_t* instance) {
 	moving_freq_avg_finalize(instance->freq_avg);
 }
 
+static bool check_free_fall(shock_detector_t* instance) {
+	for (int i = 0; i < instance->sample_size; i++) {
+		if(instance->input[i].r <= ACCELEROMETER_EARTH_GRAVITY) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static bool check_shock(shock_detector_t* instance) {
 	float sum = 0.0;
 	int accuracy = 1;
@@ -266,10 +275,14 @@ static void* acceleration_thread(void* instance_void) {
 		// }
 
 		for (int i = 0; i < instance->sample_size; i += 3) {
-			LOG_DEBUG(" ; %d ; %d\n", i, (int)(instance->input[i].r) - 10461);
+			LOG_DEBUG(" ; %d ; %d\n", i, (int)(instance->input[i].r) - ACCELEROMETER_EARTH_GRAVITY);
 		}
 
-		if (check_shock(instance)) {
+		if(!instance->running){
+			check_shock(instance);
+		}
+		//if (check_shock(instance)) {
+		if(check_free_fall(instance)) {
 			//instance->callback();
 			mutex_lock(&instance->shock_status_mutex);
 			sem_post(&instance->shock_count_to_report);

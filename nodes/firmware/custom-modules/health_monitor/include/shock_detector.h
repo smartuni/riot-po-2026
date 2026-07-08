@@ -35,6 +35,8 @@
 #include <stdlib.h>
 #include <semaphore.h>
 
+#define ACCELEROMETER_EARTH_GRAVITY 10461
+
 typedef struct {
 	int x;
 	int y;
