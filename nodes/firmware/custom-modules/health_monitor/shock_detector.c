@@ -263,13 +263,13 @@ static bool check_shock(shock_detector_t* instance) {
 static void* acceleration_thread(void* instance_void) {
 	shock_detector_t* instance = (shock_detector_t*)instance_void;
 	while (instance->running) {
-		LOG_DEBUG("[shock_detector.c:%d] Collecting magnitudes...\n", __LINE__);
+		//LOG_DEBUG("[shock_detector.c:%d] Collecting magnitudes...\n", __LINE__);
 		collect_magnitudes(instance);
-		LOG_DEBUG("[shock_detector.c:%d] Processing FFT...\n", __LINE__);
+		//LOG_DEBUG("[shock_detector.c:%d] Processing FFT...\n", __LINE__);
 		process_fft(instance); // process the collected samples with FFT
-		LOG_DEBUG("[shock_detector.c:%d] Post-processing FFT results...\n", __LINE__);
+		//LOG_DEBUG("[shock_detector.c:%d] Post-processing FFT results...\n", __LINE__);
 		postprocess_fft(instance); // post-process the FFT results to find the average over frequency
-		LOG_DEBUG("[shock_detector.c:%d] Frequency ; Magnitude\n", __LINE__);
+		//LOG_DEBUG("[shock_detector.c:%d] Frequency ; Magnitude\n", __LINE__);
 		// for (int i = 0; i < instance->nyquist_domain_size; i += 3) {
 		// 	LOG_DEBUG(" ; %d ; %d\n", i, instance->freq_avg->frequency_domain[i].average);
 		// }
