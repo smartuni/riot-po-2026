@@ -121,7 +121,7 @@ When an end-node device sends an uplink, the backend publishes a plain string to
 
 ## Health Topic (`/topic/health`)
 
-The health topic delivers push-only status updates from SenseGate devices. There is no REST endpoint for health data, no initial fetch, and no persistence. The UI shows "Awaiting first health report" until the first WebSocket message arrives for a given device.
+The health topic delivers push-only status updates from SenseGate devices. On WebSocket connect, the middleware fetches the initial health state via `GET /api/health` (served by `HealthController`), which returns the last-known health data stored in the backend's in-memory `HealthStatusService`. After the initial fetch, live updates arrive via the `/topic/health` WebSocket subscription. Health data is not persisted to the database — the in-memory store resets on backend restart. The UI shows "Awaiting first health report" for devices that have not yet sent any data.
 
 ### Payload Schema
 
