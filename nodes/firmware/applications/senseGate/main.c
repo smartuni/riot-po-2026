@@ -222,7 +222,7 @@ int main(void){
     int put_cnt = 0;
     int put_err_cnt = 0;
 
-   health_monitor_init(&health_monitor_instance, 3700, 5, 10);
+   health_monitor_init(&health_monitor_instance);
    health_monitor_start(&health_monitor_instance);
 
     while(1){
