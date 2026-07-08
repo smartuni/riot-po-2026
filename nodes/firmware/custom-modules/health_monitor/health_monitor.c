@@ -13,14 +13,12 @@
 // 	return instance;
 // }
 
-int health_monitor_init(health_monitor_t* instance, int low_battery_threshold_mv, int battery_update_period_sec, int shock_detector_update_period_sec) {
-	instance->low_battery_threshold_mv = low_battery_threshold_mv;
-	instance->battery_update_period_sec = battery_update_period_sec;
-	instance->is_low_battery = false;
+int health_monitor_init(health_monitor_t* instance) {
 	instance->battery_monitor_running = false;
 	battery_voltage_monitor_init(&instance->battery_instance);
 
-	shock_detector_init(&instance->shock_detector_instance, shock_detector_update_period_sec);
+	instance->shock_detector_running = false;
+	shock_detector_init(&instance->shock_detector_instance, 1); // 10 ms sampling period
 	return 0;
 }
 
@@ -45,12 +43,15 @@ static void serialize_and_send(const health_monitor_payload_t* payload) {
 
 static void* battery_function(void* instance_void) {
 	//LOG_DEBUG("[health_monitor.c:%d] Starting the battery monitoring thread...\n", __LINE__);
-	health_monitor_t* instance = (health_monitor_t*)instance_void;
-	while (instance->battery_monitor_running) {
+	battery_voltage_monitor_t* instance = (battery_voltage_monitor_t*)instance_void;
+	int low_battery_threshold_mv = 3700;
+	int battery_update_period_sec = 5;
+	bool is_low_battery = false;
+	while (true) {
 		//init the payload
 		health_monitor_payload_t payload;
 
-		battery_info_t battery_info = battery_voltage_monitor_fetch_info(&instance->battery_instance);
+		battery_info_t battery_info = battery_voltage_monitor_fetch_info(instance);
 		switch (battery_info.battery_status) {
 			case BATTERY_STATE_CHARGING:
 				payload.header = BATTERY_CHARGING;
@@ -68,29 +69,29 @@ static void* battery_function(void* instance_void) {
 		serialize_and_send(&payload);
 
 		// check for low battery and report if it's not yet reported
-		if (battery_info.voltage_mv < instance->low_battery_threshold_mv && !instance->is_low_battery) {
+		if (battery_info.voltage_mv < low_battery_threshold_mv && !is_low_battery) {
 			//report low battery one time and set the flag
 			payload.header = BATTERY_LOW;
 			payload.body = battery_info.voltage_mv;
 			serialize_and_send(&payload);
-			instance->is_low_battery = true;
+			is_low_battery = true;
 
 			//reset the low battery flag after the battery voltage goes above the threshold
-		} else if (battery_info.voltage_mv >= instance->low_battery_threshold_mv && instance->is_low_battery) {
-			instance->is_low_battery = false;
+		} else if (battery_info.voltage_mv >= low_battery_threshold_mv && is_low_battery) {
+			is_low_battery = false;
 		}
-		ztimer_sleep(ZTIMER_SEC, instance->battery_update_period_sec);
+		ztimer_sleep(ZTIMER_SEC, battery_update_period_sec);
 	}
 	return NULL;
 }
 
 static void* shock_detector_function(void* instance_void) {
 	//LOG_DEBUG("[health_monitor.c:%d] Starting the battery monitoring thread...\n", __LINE__);
-	health_monitor_t* instance = (health_monitor_t*)instance_void;
-	shock_detector_start(&instance->shock_detector_instance);
-	while (instance->shock_detector_running) {
+	shock_detector_t* instance = (shock_detector_t*)instance_void;
+	shock_detector_start(instance);
+	while (instance->running) {
 		LOG_DEBUG("[health_monitor.c:%d] Waiting for shock detection...\n", __LINE__);
-		shock_detector_wait_for_shock(&instance->shock_detector_instance);
+		shock_detector_wait_for_shock(instance);
 		//init the payload
 		health_monitor_payload_t payload;
 		payload.header = SHOCK_STATUS;
@@ -119,14 +120,14 @@ int health_monitor_start(health_monitor_t* instance) {
 												 THREAD_PRIORITY_MAIN - 1,
 												 THREAD_CREATE_STACKTEST,
 												 battery_function,
-												 (void*)instance, "Battery Thread");
+												 (void*) &instance->battery_instance, "Battery Thread");
 	instance->shock_detector_running = true;
 	instance->shock_detector_thread_pid = thread_create(instance->shock_detector_thread_stack,
 														sizeof(instance->shock_detector_thread_stack),
 														THREAD_PRIORITY_MAIN - 1,
 														THREAD_CREATE_STACKTEST,
 														shock_detector_function,
-														(void*)instance, "Shock Detector Thread");
+														(void*) &instance->shock_detector_instance, "Shock Detector Thread");
 
 	return 0;
 }
