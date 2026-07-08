@@ -30,17 +30,20 @@
 
 //#define HEALTH_MONITOR_PAYLOAD_SIZE sizeof(health_monitor_payload_t)
 typedef struct {
+	bool battery_monitor_running;
 	kernel_pid_t battery_thread_pid;
 	char battery_thread_stack[THREAD_STACKSIZE_DEFAULT];
 	battery_voltage_monitor_t battery_instance;
+	
 	int low_battery_threshold_mv;
 	bool is_low_battery;
 	int battery_update_period_sec;
-	bool battery_monitor_running;
+	
 
-	//shock_detector_t shock_instance;
-	volatile int shock_detector_update_period_sec;
-	//volatile bool running;
+	bool shock_detector_running;
+	kernel_pid_t shock_detector_thread_pid;
+	char shock_detector_thread_stack[THREAD_STACKSIZE_DEFAULT];
+	shock_detector_t shock_detector_instance;
 } health_monitor_t;
 
 health_monitor_t* health_monitor_new(int low_battery_threshold_mv, int battery_update_period_sec, int shock_detector_update_period_sec);

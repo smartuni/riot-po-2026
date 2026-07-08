@@ -10,23 +10,17 @@
 // 	//init battery monitoring
 // 	instance->battery_instance = battery_voltage_monitor_new();
 
-	
-
 // 	return instance;
 // }
 
-int health_monitor_init(health_monitor_t* instance, int low_battery_threshold_mv, int battery_update_period_sec, int shock_detector_update_period_sec){
+int health_monitor_init(health_monitor_t* instance, int low_battery_threshold_mv, int battery_update_period_sec, int shock_detector_update_period_sec) {
 	instance->low_battery_threshold_mv = low_battery_threshold_mv;
 	instance->battery_update_period_sec = battery_update_period_sec;
 	instance->is_low_battery = false;
 	instance->battery_monitor_running = false;
 	battery_voltage_monitor_init(&instance->battery_instance);
 
-	instance->shock_detector_update_period_sec = shock_detector_update_period_sec;
-	//init shock detection
-	// int shock_threshold = 15000; // TODO adjust this later
-	// int sampling_period_ms = 1; //to give other threads a chance to run
-	// instance->shock_instance = shock_detector_new(shock_threshold, sampling_period_ms); // TODO adjust parameters later
+	shock_detector_init(&instance->shock_detector_instance, shock_detector_update_period_sec);
 	return 0;
 }
 
@@ -90,6 +84,23 @@ static void* battery_function(void* instance_void) {
 	return NULL;
 }
 
+static void* shock_detector_function(void* instance_void) {
+	//LOG_DEBUG("[health_monitor.c:%d] Starting the battery monitoring thread...\n", __LINE__);
+	health_monitor_t* instance = (health_monitor_t*)instance_void;
+	shock_detector_start(&instance->shock_detector_instance);
+	while (instance->shock_detector_running) {
+		LOG_DEBUG("[health_monitor.c:%d] Waiting for shock detection...\n", __LINE__);
+		shock_detector_wait_for_shock(&instance->shock_detector_instance);
+		//init the payload
+		health_monitor_payload_t payload;
+		payload.header = SHOCK_STATUS;
+		payload.body = SHOCK_DETECTED;
+		LOG_DEBUG("[health_monitor.c:%d] Shock detected, sending payload...\n", __LINE__);
+		serialize_and_send(&payload);
+	}
+	return NULL;
+}
+
 int health_monitor_start(health_monitor_t* instance) {
 	if (instance == NULL) {
 		return -1;
@@ -109,6 +120,13 @@ int health_monitor_start(health_monitor_t* instance) {
 												 THREAD_CREATE_STACKTEST,
 												 battery_function,
 												 (void*)instance, "Battery Thread");
+	instance->shock_detector_running = true;
+	instance->shock_detector_thread_pid = thread_create(instance->shock_detector_thread_stack,
+														sizeof(instance->shock_detector_thread_stack),
+														THREAD_PRIORITY_MAIN - 1,
+														THREAD_CREATE_STACKTEST,
+														shock_detector_function,
+														(void*)instance, "Shock Detector Thread");
 
 	return 0;
 }
