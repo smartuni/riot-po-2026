@@ -38,7 +38,6 @@ static uint32_t battery_voltage_sample2adc_voltage(uint32_t sample) {
 }
 
 static int get_battery_voltage(void) {
-	//TODO adjust based on the voltage divider
 	uint32_t raw_voltage = battery_voltage_sample(AIN7_BAT);
 	uint32_t voltage_mv = battery_voltage_sample2adc_voltage(raw_voltage);
 	return (int)voltage_mv;
