@@ -17,7 +17,6 @@
 #define kiss_fft_scalar int32_t
 #define SAMPLE_SIZE 1024
 
-#include "health_monitor_payload.h"
 #include "moving_freq_avg.h"
 
 #include "saul_reg.h"
@@ -34,6 +33,7 @@
 #include <math.h>
 #include <sched.h>
 #include <stdlib.h>
+#include <semaphore.h>
 
 typedef struct {
 	int x;
@@ -52,13 +52,14 @@ typedef struct {
 	kiss_fft_cpx output[SAMPLE_SIZE];
 	kiss_fft_cfg cfg;
 	moving_freq_avg_t* freq_avg; //rename to frequency domain later
-	void (*callback)(void);
+
 	int threshold;
 	int sample_size;
 	int sampling_period_ms;
 	int nyquist_domain_size;
+	sem_t shock_count_to_report;
 	volatile bool running;
-	volatile shock_status_t shock_status;
+	
 	char accel_thread_stack[THREAD_STACKSIZE_DEFAULT];
 	raw_acceleration_t raw_accel_data[SAMPLE_SIZE];
 } shock_detector_t;
@@ -79,9 +80,7 @@ int shock_detector_init(shock_detector_t* instance, int threshold, int sampling_
  */
 int shock_detector_start(shock_detector_t* instance);
 
-int shock_detector_fetch_status(shock_detector_t* instance, shock_status_t* status);
-
-int shock_detector_reset_status(shock_detector_t* instance);
+void shock_detector_wait_for_shock(shock_detector_t* instance);
 
 /**
  * @brief Deletes the shock detector

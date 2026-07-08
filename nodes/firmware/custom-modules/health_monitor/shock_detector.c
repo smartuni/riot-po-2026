@@ -11,13 +11,10 @@
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
 #include "shock_detector.h"
+#include "include/shock_detector.h"
 
 static int calculate_magnitude(int x, int y, int z) {
 	return sqrt(x * x + y * y + z * z);
-}
-
-static void shock_callback(void) {
-	LOG_DEBUG("[shock_detector.c:%d] Shock!!\n", __LINE__);
 }
 
 static void collect_magnitudes(shock_detector_t* instance) {
@@ -71,70 +68,188 @@ static void postprocess_fft(shock_detector_t* instance) {
 	moving_freq_avg_finalize(instance->freq_avg);
 }
 
-static int find_variance(int data[], int n) {
-    if (n <= 0) return 0;
-
-    int sum = 0;
-    for (int i = 0; i < n; i++) {
-        sum += data[i];
-    }
-    float mean = (float)sum / n;
-
-    float sq_diff_sum = 0.0;
-    for (int i = 0; i < n; i++) {
-        float diff = data[i] - mean;
-        sq_diff_sum += diff * diff;
-    }
-
-    float variance = sq_diff_sum / n;
-    return (int)variance;
-}
-
 static bool check_shock(shock_detector_t* instance) {
-	//it's 
-	//frequency from 0 Hz to 94 Hz must all be above 40000 AND,
-	//frequency from 95 Hz to 500 Hz must contain at least one value that is  below 25000, AND
-	//frequency from 50 Hz to 95 Hz, if the difference between lowest value and the highest value is higher than 40000
-	int frequency_point1 = 50;
-	int frequency_point2 = 95;
-	int magnitude_threshold_low = 44000;
-	int magnitude_threshold_high = 25000;
+	float sum = 0.0;
+	int accuracy = 1;
+	float mean = 0.0;
+	float sq_diff_sum_for_stddev = 0.0;
+	int zeroes_count = 0;
+	float variance = 0.0;
+	float stddev = 0.0;
+	float sq_sum = 0.0; // Renamed from sq_diff_sum
 
-	int lowest_value = INT_MAX;
-	int highest_value = INT_MIN;
-	int delta = 40000;
+	float max_value = 0.0; // Changed from INT_MIN since values are float
 
-	for(int i = 5; i < frequency_point1; i++) {
-		int* magnitude = &instance->freq_avg->frequency_domain[i].average;
-		if(*magnitude <= lowest_value) {
-			lowest_value = *magnitude;
+	//BEGIN VARIANCE CHECK
+	int lower_limit = 0; // Hz - only check variance for frequencies above this limit
+	int upper_limit = 30; // Hz - only check variance for frequencies below this limit
+	int count = 0; // Actual number of samples processed
+
+	for (int i = lower_limit; i < upper_limit; i += accuracy) {
+		float current_value = instance->freq_avg->frequency_domain[i].average;
+		sum += current_value;
+		sq_sum += current_value * current_value; // For RMS calculation
+
+		if (current_value == 0.0f) {
+			zeroes_count++;
 		}
-		if(*magnitude >= highest_value) {
-			highest_value = *magnitude;
+		if (current_value > max_value) {
+			max_value = current_value;
 		}
+		count++;
 	}
 
-	if(highest_value - lowest_value < delta) {
-		LOG_DEBUG("[shock_detector.c:%d] No shock detected: highest_value - lowest_value = %d < %d\n", __LINE__, highest_value - lowest_value, delta);
+	mean = sum / count;
+
+	// Calculate variance and standard deviation
+	for (int i = lower_limit; i < upper_limit; i += accuracy) {
+		float diff = instance->freq_avg->frequency_domain[i].average - mean;
+		sq_diff_sum_for_stddev += diff * diff;
+	}
+
+	// Calculate Spectral Crest Factor (SCF) = max_value / RMS
+	// RMS = sqrt(mean of squared values)
+	float mean_square = sq_sum / count;
+	float rms = sqrt(mean_square);
+
+	if (rms == 0.0f) {
+		LOG_DEBUG("[shock_detector.c:%d] RMS is zero, cannot calculate SCF\n", __LINE__);
 		return false;
 	}
 
-	for (int i = frequency_point1; i < frequency_point2; i++) {
-		int* magnitude = &instance->freq_avg->frequency_domain[i].average;
-		if (*magnitude > magnitude_threshold_low) {
-			LOG_DEBUG("[shock_detector.c:%d] No shock detected: magnitude at frequency %d Hz = %d > %d\n", __LINE__, i, *magnitude, magnitude_threshold_low);
-			return false;
-		}
-	}
-	for (int i = frequency_point2; i < instance->nyquist_domain_size; i++) {
-		int* magnitude = &instance->freq_avg->frequency_domain[i].average;
-		if (*magnitude > magnitude_threshold_high) {
-			LOG_DEBUG("[shock_detector.c:%d] No shock detected: magnitude at frequency %d Hz = %d > %d\n", __LINE__, i, *magnitude, magnitude_threshold_high);
-			return false;
-		}
-	}
-	return true;
+	float scf = max_value / rms;
+
+	variance = sq_diff_sum_for_stddev / count;
+	stddev = sqrt(variance);
+
+	LOG_DEBUG("[shock_detector.c:%d] %d-%d Hz: Mean:%d, StdDev:%d, Zeros:%d, SCF:%d\n",
+			  __LINE__, lower_limit, upper_limit, (int)mean, (int)stddev, zeroes_count, (int)scf);
+	//END VARIANCE CHECK
+
+	// Add your classification logic here based on SCF and/or zeroes_count
+	// For example:
+	// if (scf > SOME_THRESHOLD || zeroes_count > SOME_THRESHOLD) return true;
+
+	return false;
 }
+
+// static bool debug_shock(shock_detector_t* instance) {
+
+// 	int variance = 0;
+// 	int sum = 0;
+// 	int accuracy = 1;
+// 	float mean = 0.0;
+// 	float sq_diff_sum = 0.0;
+// 	int zeroes_count = 0;
+
+// 	//BEGIN VARIANCE CHECK
+// 	variance = 0;
+// 	sum = 0;
+// 	int lower_limit = 5; // only check variance for frequencies above this limit
+// 	int upper_limit = 50; // only check variance for frequencies below this limit
+// 	for (int i = lower_limit; i < upper_limit; i += accuracy) {
+// 		sum += instance->freq_avg->frequency_domain[i].average;
+// 		if (instance->freq_avg->frequency_domain[i].average == 0) {
+// 			zeroes_count++;
+// 		}
+// 	}
+// 	mean = (float)sum / (upper_limit - lower_limit);
+
+// 	for (int i = lower_limit; i < upper_limit; i += accuracy) {
+// 		float diff = instance->freq_avg->frequency_domain[i].average - mean;
+// 		sq_diff_sum += diff * diff;
+
+// 	}
+// 	variance = (int)(sq_diff_sum / (upper_limit - lower_limit));
+// 	variance = variance / 1000000; // scale down the variance for easier comparison
+// 	LOG_DEBUG("[shock_detector.c:%d] %d-%d hz: Mean:%d, Variance:%d, Zeroes:%d\n", __LINE__, lower_limit, upper_limit, (int)mean, variance, zeroes_count);
+// 	//END VARIANCE CHECK
+
+// 	//BEGIN VARIANCE CHECK
+// 	variance = 0;
+// 	sum = 0;
+// 	lower_limit = 50; // only check variance for frequencies above this limit
+// 	upper_limit = 100; // only check variance for frequencies below this limit
+// 	for (int i = lower_limit; i < upper_limit; i += accuracy) {
+// 		sum += instance->freq_avg->frequency_domain[i].average;
+// 		if (instance->freq_avg->frequency_domain[i].average == 0) {
+// 			zeroes_count++;
+// 		}
+// 	}
+// 	mean = (float)sum / (upper_limit - lower_limit);
+
+// 	for (int i = lower_limit; i < upper_limit; i += accuracy) {
+// 		float diff = instance->freq_avg->frequency_domain[i].average - mean;
+// 		sq_diff_sum += diff * diff;
+// 	}
+// 	variance = (int)(sq_diff_sum / (upper_limit - lower_limit));
+// 	variance = variance / 1000000; // scale down the variance for easier comparison
+// 	LOG_DEBUG("[shock_detector.c:%d] %d-%d hz: Mean:%d, Variance:%d, Zeroes:%d\n", __LINE__, lower_limit, upper_limit, (int)mean, variance, zeroes_count);
+// 	//END VARIANCE CHECK
+
+// 	//BEGIN VARIANCE CHECK
+// 	variance = 0;
+// 	sum = 0;
+// 	lower_limit = 100; // only check variance for frequencies above this limit
+// 	upper_limit = 500; // only check variance for frequencies below this limit
+// 	for (int i = lower_limit; i < upper_limit; i += accuracy) {
+// 		sum += instance->freq_avg->frequency_domain[i].average;
+// 		if (instance->freq_avg->frequency_domain[i].average == 0) {
+// 			zeroes_count++;
+// 		}
+// 	}
+// 	mean = (float)sum / (upper_limit - lower_limit);
+
+// 	sq_diff_sum = 0.0;
+// 	for (int i = lower_limit; i < upper_limit; i += accuracy) {
+// 		float diff = instance->freq_avg->frequency_domain[i].average - mean;
+// 		sq_diff_sum += diff * diff;
+// 	}
+// 	variance = (int)(sq_diff_sum / (upper_limit - lower_limit));
+// 	variance = variance / 1000000; // scale down the variance for easier comparison
+// 	LOG_DEBUG("[shock_detector.c:%d] %d-%d hz: Mean:%d, Variance:%d, Zeroes:%d\n", __LINE__, lower_limit, upper_limit, (int)mean, variance, zeroes_count);
+// 	//END VARIANCE CHECK
+
+// 	// int frequency_point1 = 50;
+// 	// int frequency_point2 = 95;
+// 	// int magnitude_threshold_low = 44000;
+// 	// int magnitude_threshold_high = 25000;
+
+// 	// int lowest_value = INT_MAX;
+// 	// int highest_value = INT_MIN;
+// 	// int delta = 40000;
+
+// 	// for (int i = 5; i < frequency_point1; i++) {
+// 	// 	int* magnitude = &instance->freq_avg->frequency_domain[i].average;
+// 	// 	if (*magnitude <= lowest_value) {
+// 	// 		lowest_value = *magnitude;
+// 	// 	}
+// 	// 	if (*magnitude >= highest_value) {
+// 	// 		highest_value = *magnitude;
+// 	// 	}
+// 	// }
+
+// 	// if (highest_value - lowest_value < delta) {
+// 	// 	LOG_DEBUG("[shock_detector.c:%d] No shock detected: highest_value - lowest_value = %d < %d\n", __LINE__, highest_value - lowest_value, delta);
+// 	// 	return false;
+// 	// }
+
+// 	// for (int i = frequency_point1; i < frequency_point2; i++) {
+// 	// 	int* magnitude = &instance->freq_avg->frequency_domain[i].average;
+// 	// 	if (*magnitude > magnitude_threshold_low) {
+// 	// 		LOG_DEBUG("[shock_detector.c:%d] No shock detected: magnitude at frequency %d Hz = %d > %d\n", __LINE__, i, *magnitude, magnitude_threshold_low);
+// 	// 		return false;
+// 	// 	}
+// 	// }
+// 	// for (int i = frequency_point2; i < instance->nyquist_domain_size; i++) {
+// 	// 	int* magnitude = &instance->freq_avg->frequency_domain[i].average;
+// 	// 	if (*magnitude > magnitude_threshold_high) {
+// 	// 		LOG_DEBUG("[shock_detector.c:%d] No shock detected: magnitude at frequency %d Hz = %d > %d\n", __LINE__, i, *magnitude, magnitude_threshold_high);
+// 	// 		return false;
+// 	// 	}
+// 	// }
+// 	return true;
+// }
 
 static void* acceleration_thread(void* instance_void) {
 	shock_detector_t* instance = (shock_detector_t*)instance_void;
@@ -146,22 +261,23 @@ static void* acceleration_thread(void* instance_void) {
 		LOG_DEBUG("[shock_detector.c:%d] Post-processing FFT results...\n", __LINE__);
 		postprocess_fft(instance); // post-process the FFT results to find the average over frequency
 		LOG_DEBUG("[shock_detector.c:%d] Frequency ; Magnitude\n", __LINE__);
-		for (int i = 0; i < instance->nyquist_domain_size; i += 5) {
-			LOG_DEBUG("%d ; %d\n", i, instance->freq_avg->frequency_domain[i].average);
+		// for (int i = 0; i < instance->nyquist_domain_size; i += 3) {
+		// 	LOG_DEBUG(" ; %d ; %d\n", i, instance->freq_avg->frequency_domain[i].average);
+		// }
+
+		for (int i = 0; i < instance->sample_size; i += 3) {
+			LOG_DEBUG(" ; %d ; %d\n", i, (int)(instance->input[i].r) - 10461);
 		}
 
 		if (check_shock(instance)) {
-			if (instance->callback) {
-				instance->callback();
-			} else {
-				LOG_DEBUG("[shock_detector.c:%d] No callback function set for shock detection.\n", __LINE__);
-			}
+			//instance->callback();
+			mutex_lock(&instance->shock_status_mutex);
+			sem_post(&instance->shock_count_to_report);
+			mutex_unlock(&instance->shock_status_mutex);
+			LOG_DEBUG("[shock_detector.c:%d] Shock detected and callback executed.\n", __LINE__);
 		} else {
 			LOG_DEBUG("[shock_detector.c:%d] No shock detected.\n", __LINE__);
 		}
-		// mutex_lock(&instance->shock_status_mutex);
-		// instance->shock_status = NO_SHOCK; //TODO analyze the frequency domain average to determine if there is a shock or not, and set the shock status accordingly
-		// mutex_unlock(&instance->shock_status_mutex);
 	}
 	return NULL;
 }
@@ -172,13 +288,12 @@ int shock_detector_init(shock_detector_t* instance, int threshold, int sampling_
 	instance->threshold = threshold;
 	instance->sample_size = SAMPLE_SIZE;
 	instance->sampling_period_ms = sampling_period_ms;
-	instance->callback = shock_callback;
 	int nyquist = instance->sample_size / 2 + 1;
 	instance->nyquist_domain_size = nyquist; // + 1;
 	instance->freq_avg = moving_freq_avg_new(instance->nyquist_domain_size);
 	instance->cfg = kiss_fft_alloc(instance->sample_size, 0, NULL, NULL);
-	instance->shock_status = NO_SHOCK;
 	instance->shock_status_mutex = (mutex_t)MUTEX_INIT;
+	sem_init(&instance->shock_count_to_report, 0, 0);
 
 	/* [TASK 3: find your device here] */
 	instance->accel_sensor = saul_reg_find_type(SAUL_SENSE_ACCEL);
@@ -217,19 +332,13 @@ int shock_detector_delete(shock_detector_t* instance) {
 	ztimer_sleep(ZTIMER_MSEC, 5000); // give some time for the thread to exit
 	moving_freq_avg_delete(instance->freq_avg);
 	kiss_fft_free(instance->cfg);
+	sem_destroy(&instance->shock_count_to_report);
 	return 0;
 }
 
-int shock_detector_fetch_status(shock_detector_t* instance, shock_status_t* status) {
-	mutex_lock(&instance->shock_status_mutex);
-	*status = instance->shock_status;
-	mutex_unlock(&instance->shock_status_mutex);
-	return 0;
-}
 
-int shock_detector_reset_status(shock_detector_t* instance) {
+void shock_detector_wait_for_shock(shock_detector_t* instance) {
 	mutex_lock(&instance->shock_status_mutex);
-	instance->shock_status = NO_SHOCK;
+	sem_wait(&instance->shock_count_to_report);
 	mutex_unlock(&instance->shock_status_mutex);
-	return 0;
 }
