@@ -274,19 +274,19 @@ static void* acceleration_thread(void* instance_void) {
 		// 	LOG_DEBUG(" ; %d ; %d\n", i, instance->freq_avg->frequency_domain[i].average);
 		// }
 
-		for (int i = 0; i < instance->sample_size; i += 3) {
-			LOG_DEBUG(" ; %d ; %d\n", i, (int)(instance->input[i].r) - ACCELEROMETER_EARTH_GRAVITY);
-		}
+		// for (int i = 0; i < instance->sample_size; i += 3) {
+		// 	LOG_DEBUG(" ; %d ; %d\n", i, (int)(instance->input[i].r) - ACCELEROMETER_EARTH_GRAVITY);
+		// }
 
 		if(!instance->running){
 			check_shock(instance);
 		}
+
 		//if (check_shock(instance)) {
+		LOG_DEBUG("[shock_detector.c:%d] Checking free fall...\n", __LINE__);
 		if(check_free_fall(instance)) {
 			//instance->callback();
-			mutex_lock(&instance->shock_status_mutex);
 			sem_post(&instance->shock_count_to_report);
-			mutex_unlock(&instance->shock_status_mutex);
 			LOG_DEBUG("[shock_detector.c:%d] Shock detected and callback executed.\n", __LINE__);
 		} else {
 			LOG_DEBUG("[shock_detector.c:%d] No shock detected.\n", __LINE__);
@@ -297,7 +297,7 @@ static void* acceleration_thread(void* instance_void) {
 
 int shock_detector_init(shock_detector_t* instance, int sampling_period_ms) {
 	//instance = (shock_detector_t*)malloc(sizeof(shock_detector_t));
-	instance->running = false;
+	instance->running = true;
 	instance->sample_size = SAMPLE_SIZE;
 	instance->sampling_period_ms = sampling_period_ms;
 	int nyquist = instance->sample_size / 2 + 1;
@@ -322,7 +322,6 @@ int shock_detector_init(shock_detector_t* instance, int sampling_period_ms) {
 
 int shock_detector_start(shock_detector_t* instance) {
 	kernel_pid_t* accel_thread_pid = &instance->thread_pid;
-	instance->running = true;
 	*accel_thread_pid = thread_create(instance->accel_thread_stack,
 									  sizeof(instance->accel_thread_stack),
 									  THREAD_PRIORITY_MAIN - 1,
@@ -350,7 +349,5 @@ int shock_detector_delete(shock_detector_t* instance) {
 
 
 void shock_detector_wait_for_shock(shock_detector_t* instance) {
-	mutex_lock(&instance->shock_status_mutex);
 	sem_wait(&instance->shock_count_to_report);
-	mutex_unlock(&instance->shock_status_mutex);
 }
