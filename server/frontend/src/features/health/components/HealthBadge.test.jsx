@@ -16,8 +16,6 @@ const freshHealth = (overrides = {}) => {
 };
 
 describe('HealthBadge', () => {
-  let dateNowSpy;
-
   beforeEach(() => {
     // Freeze "now" so staleness tests are deterministic
     vi.spyOn(Date, 'now').mockReturnValue(1_000_000);

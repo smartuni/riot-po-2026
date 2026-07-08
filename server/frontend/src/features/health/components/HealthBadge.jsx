@@ -25,14 +25,13 @@ const indicatorStyle = (color) => ({
   color,
 });
 
-const dotStyle = (color, pulse) => ({
+const dotStyle = (color) => ({
   width: '8px',
   height: '8px',
   borderRadius: '50%',
   background: color,
   display: 'inline-block',
   flexShrink: 0,
-  ...(pulse ? { className: 'health-pulse-icon' } : {}),
 });
 
 const HealthBadge = ({ health }) => {
@@ -80,11 +79,11 @@ const HealthBadge = ({ health }) => {
         }}
       >
         <span style={indicatorStyle(batt.color)} data-testid="health-battery">
-          <span style={dotStyle(batt.color, false)} />
+          <span style={dotStyle(batt.color)} />
           {batt.label}
         </span>
         <span style={indicatorStyle(sInfo.color)} data-testid="health-shock">
-          <span style={dotStyle(sInfo.color, false)} className={sInfo.pulse ? 'health-pulse-icon' : ''} />
+          <span style={dotStyle(sInfo.color)} className={sInfo.pulse ? 'health-pulse-icon' : ''} />
           {sInfo.label}
         </span>
         <span
