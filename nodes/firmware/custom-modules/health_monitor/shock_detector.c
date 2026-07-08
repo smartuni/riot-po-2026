@@ -282,10 +282,9 @@ static void* acceleration_thread(void* instance_void) {
 	return NULL;
 }
 
-int shock_detector_init(shock_detector_t* instance, int threshold, int sampling_period_ms) {
+int shock_detector_init(shock_detector_t* instance, int sampling_period_ms) {
 	//instance = (shock_detector_t*)malloc(sizeof(shock_detector_t));
 	instance->running = false;
-	instance->threshold = threshold;
 	instance->sample_size = SAMPLE_SIZE;
 	instance->sampling_period_ms = sampling_period_ms;
 	int nyquist = instance->sample_size / 2 + 1;
