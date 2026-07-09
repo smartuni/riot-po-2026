@@ -36,6 +36,9 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
         <NavLink to="/devices" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`} onClick={closeMobile}>
           <span className="nav-icon">📱</span><span className="nav-label">Devices</span>
         </NavLink>
+        <NavLink to="/nodes" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`} onClick={closeMobile}>
+          <span className="nav-icon">🔐</span><span className="nav-label">Nodes</span>
+        </NavLink>
         <NavLink to="/automation" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`} onClick={closeMobile}>
           <span className="nav-icon">⚡</span><span className="nav-label">Gate Control</span>
         </NavLink>

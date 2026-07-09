@@ -12,6 +12,7 @@ import RegisterPage from '../pages/RegisterPage';
 import MapPage from '../pages/MapPage';
 import DiagnosticsPage from '../pages/DiagnosticsPage';
 import DevicesPage from '../pages/DevicesPage';
+import NodesPage from '../pages/NodesPage';
 import AutomationPage from '../pages/AutomationPage';
 import LogsPage from '../pages/LogsPage';
 import SettingsPage from '../pages/SettingsPage';
@@ -53,6 +54,7 @@ function AppContent() {
           <Route path="/map" element={<MapPage />} />
           <Route path="/diagnostics" element={<DiagnosticsPage />} />
           <Route path="/devices" element={<DevicesPage />} />
+          <Route path="/nodes" element={<NodesPage />} />
           <Route path="/automation" element={<AutomationPage />} />
           <Route path="/logs" element={<LogsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
