@@ -2,7 +2,7 @@ package com.riot.matesense.controller;
 
 import com.riot.matesense.enums.StateConfirmation;
 import com.riot.matesense.enums.BatteryStatus;
-import com.riot.matesense.enums.ShockStatus;
+import com.riot.matesense.enums.FreeFallStatus;
 import com.riot.matesense.exceptions.GateNotFoundException;
 import com.riot.matesense.mqtt.MqttMessageHandler;
 import com.riot.matesense.service.GateService;
@@ -55,7 +55,7 @@ public class E2eTestController {
             healthStatusService.updateHealth(
                 entry.senseGateId,
                 BatteryStatus.valueOf(entry.batteryStatus),
-                ShockStatus.valueOf(entry.shockStatus),
+                FreeFallStatus.valueOf(entry.freeFallStatus),
                 entry.voltageMv,
                 entry.version
             );
@@ -105,7 +105,7 @@ public class E2eTestController {
     public static class HealthStatusEntry {
         public int version;
         public int senseGateId;
-        public String shockStatus;
+        public String freeFallStatus;
         public String batteryStatus;
         public int voltageMv;
     }
