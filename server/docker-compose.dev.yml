@@ -2,7 +2,6 @@
 # Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 #
 # Differences from production compose:
-#   - CORS disabled (app.cors.enabled=false) for easy local frontend dev
 #   - Cookie Secure flag off (HTTP locally)
 #   - Backend runs with dev profile (debug logging, stack traces)
 
