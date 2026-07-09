@@ -1,5 +1,5 @@
 import React from 'react';
-import { batteryInfo, freeFallInfo, voltageInfo, isStale } from '../healthUtils';
+import { batteryInfo, freeFallInfo, shockInfo, voltageInfo, isStale } from '../healthUtils';
 
 const PULSE_STYLE = `
 @keyframes health-pulse {
@@ -51,16 +51,17 @@ const HealthBadge = ({ health }) => {
     );
   }
 
-  const { battery, freeFall, voltageMv } = health;
+  const { battery, freeFall, shock, voltageMv } = health;
 
   const batt = batteryInfo(battery?.value);
-  const sInfo = freeFallInfo(freeFall?.value);
+  const ffInfo = freeFallInfo(freeFall?.value);
+  const sInfo = shockInfo(shock?.value);
   const volt = voltageInfo(voltageMv?.value);
 
-  const isAnyStale = isStale(battery?.receivedAt) || isStale(freeFall?.receivedAt) || isStale(voltageMv?.receivedAt);
+  const isAnyStale = isStale(battery?.receivedAt) || isStale(freeFall?.receivedAt) || isStale(shock?.receivedAt) || isStale(voltageMv?.receivedAt);
   const voltageText = volt.display !== '—' ? `${volt.display}${volt.unit}` : '—';
 
-  const ariaLabel = `Battery: ${batt.label}, Free Fall: ${sInfo.label}, Voltage: ${voltageText}`;
+  const ariaLabel = `Battery: ${batt.label}, Free Fall: ${ffInfo.label}, Shock: ${sInfo.label}, Voltage: ${voltageText}`;
 
   return (
     <>
@@ -82,7 +83,11 @@ const HealthBadge = ({ health }) => {
           <span style={dotStyle(batt.color)} />
           {batt.label}
         </span>
-        <span style={indicatorStyle(sInfo.color)} data-testid="health-freefall">
+        <span style={indicatorStyle(ffInfo.color)} data-testid="health-freefall">
+          <span style={dotStyle(ffInfo.color)} className={ffInfo.pulse ? 'health-pulse-icon' : ''} />
+          {ffInfo.label}
+        </span>
+        <span style={indicatorStyle(sInfo.color)} data-testid="health-shock">
           <span style={dotStyle(sInfo.color)} className={sInfo.pulse ? 'health-pulse-icon' : ''} />
           {sInfo.label}
         </span>

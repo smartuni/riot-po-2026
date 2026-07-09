@@ -21,12 +21,14 @@ import type { Page, WebSocketRoute } from '@playwright/test';
 const STOMP_NULL = '\x00';
 
 type FreeFallStatus = 'NO_FALL' | 'FREE_FALL_DETECTED' | 'UNKNOWN';
+type ShockStatus = 'NO_SHOCK' | 'SHOCK_DETECTED' | 'UNKNOWN';
 type BatteryStatus = 'CHARGING' | 'DISCHARGING' | 'LOW_BATTERY' | 'UNKNOWN';
 
 interface HealthStatus {
   version: number;
   senseGateId: number;
   freeFallStatus: FreeFallStatus;
+  shockStatus: ShockStatus;
   batteryStatus: BatteryStatus;
   voltageMv: number;
 }
@@ -123,6 +125,7 @@ test.describe('Health status (issue #113)', () => {
           version: 1,
           senseGateId: 1001,
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
           batteryStatus: 'CHARGING',
           voltageMv: 4200,
         },
@@ -137,7 +140,7 @@ test.describe('Health status (issue #113)', () => {
     await expect(badge).toBeVisible({ timeout: 10000 });
     await expect(badge).toHaveAttribute(
       'aria-label',
-      'Battery: Charging, Free Fall: No Free Fall, Voltage: 4.20V',
+      'Battery: Charging, Free Fall: No Free Fall, Shock: No Shock, Voltage: 4.20V',
     );
     await expect(alphaCard.locator('[data-testid="health-voltage"]')).toHaveText('4.20V');
   });
@@ -169,6 +172,7 @@ test.describe('Health status (issue #113)', () => {
           version: 1,
           senseGateId: 1001,
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
           batteryStatus: 'LOW_BATTERY',
           voltageMv: 3300,
         },
@@ -194,6 +198,7 @@ test.describe('Health status (issue #113)', () => {
           version: 1,
           senseGateId: 1001,
           freeFallStatus: 'UNKNOWN',
+          shockStatus: 'UNKNOWN',
           batteryStatus: 'CHARGING',
           voltageMv: 4200,
         },
@@ -208,7 +213,7 @@ test.describe('Health status (issue #113)', () => {
     await expect(badge).toBeVisible({ timeout: 10000 });
     await expect(badge).toHaveAttribute(
       'aria-label',
-      'Battery: Charging, Free Fall: No Free Fall, Voltage: 4.20V',
+      'Battery: Charging, Free Fall: No Free Fall, Shock: No Shock, Voltage: 4.20V',
     );
 
     sendHealth({
@@ -218,6 +223,7 @@ test.describe('Health status (issue #113)', () => {
           version: 1,
           senseGateId: 1001,
           freeFallStatus: 'FREE_FALL_DETECTED',
+          shockStatus: 'SHOCK_DETECTED',
           batteryStatus: 'UNKNOWN',
           voltageMv: 0,
         },
@@ -226,7 +232,7 @@ test.describe('Health status (issue #113)', () => {
 
     await expect(badge).toHaveAttribute(
       'aria-label',
-      'Battery: Charging, Free Fall: Free Fall Detected, Voltage: 4.20V',
+      'Battery: Charging, Free Fall: Free Fall Detected, Shock: Shock Detected, Voltage: 4.20V',
       { timeout: 10000 },
     );
     const freeFallEl = alphaCard.locator('[data-testid="health-freefall"]');
@@ -248,6 +254,7 @@ test.describe('Health status (issue #113)', () => {
           version: 1,
           senseGateId: 9999,
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
           batteryStatus: 'DISCHARGING',
           voltageMv: 3900,
         },
@@ -266,7 +273,7 @@ test.describe('Health status (issue #113)', () => {
         .locator('[data-testid="health-badge"]'),
     ).toHaveAttribute(
       'aria-label',
-      'Battery: Discharging, Free Fall: No Free Fall, Voltage: 3.90V',
+      'Battery: Discharging, Free Fall: No Free Fall, Shock: No Shock, Voltage: 3.90V',
     );
   });
 });

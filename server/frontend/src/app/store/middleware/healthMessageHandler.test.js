@@ -24,6 +24,7 @@ describe('handleHealthMessage', () => {
           senseGateId: 1,
           batteryStatus: 'CHARGING',
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
           voltageMv: 3950,
           version: 3,
         },
@@ -40,6 +41,7 @@ describe('handleHealthMessage', () => {
             senseGateId: 1,
             batteryStatus: 'CHARGING',
             freeFallStatus: 'NO_FALL',
+            shockStatus: 'NO_SHOCK',
             voltageMv: 3950,
             version: 3,
           },
@@ -80,6 +82,7 @@ describe('handleHealthMessage', () => {
         {
           batteryStatus: 'CHARGING',
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
           voltageMv: 3950,
           version: 3,
         },
@@ -87,6 +90,7 @@ describe('handleHealthMessage', () => {
           senseGateId: 2,
           batteryStatus: 'DISCHARGING',
           freeFallStatus: 'FREE_FALL_DETECTED',
+          shockStatus: 'SHOCK_DETECTED',
           voltageMv: 3800,
           version: 1,
         },
@@ -103,6 +107,7 @@ describe('handleHealthMessage', () => {
             senseGateId: 2,
             batteryStatus: 'DISCHARGING',
             freeFallStatus: 'FREE_FALL_DETECTED',
+            shockStatus: 'SHOCK_DETECTED',
             voltageMv: 3800,
             version: 1,
           },
@@ -120,6 +125,7 @@ describe('handleHealthMessage', () => {
           senseGateId: 1,
           batteryStatus: 'CHARGING',
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
           voltageMv: 3950,
           version: 3,
         },
@@ -140,6 +146,7 @@ describe('handleHealthMessage', () => {
           senseGateId: 1,
           batteryStatus: 'GARBAGE_VALUE',
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
           voltageMv: 3950,
           version: 3,
         },
@@ -162,6 +169,7 @@ describe('handleHealthMessage', () => {
           senseGateId: 1,
           batteryStatus: 'CHARGING',
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
           voltageMv: 3950,
           version: 1,
         },
@@ -169,6 +177,7 @@ describe('handleHealthMessage', () => {
           senseGateId: 2,
           batteryStatus: 'DISCHARGING',
           freeFallStatus: 'FREE_FALL_DETECTED',
+          shockStatus: 'SHOCK_DETECTED',
           voltageMv: 3700,
           version: 2,
         },
@@ -176,6 +185,7 @@ describe('handleHealthMessage', () => {
           senseGateId: 3,
           batteryStatus: 'LOW_BATTERY',
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
           voltageMv: 3500,
           version: 3,
         },
@@ -201,6 +211,7 @@ describe('handleHealthMessage', () => {
           senseGateId: '42',
           batteryStatus: 'CHARGING',
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
           voltageMv: 3950,
           version: 1,
         },
@@ -224,6 +235,7 @@ describe('handleHealthMessage', () => {
           senseGateId: 1,
           batteryStatus: 'charging',
           freeFallStatus: 'no_fall',
+          shockStatus: 'no_shock',
           voltageMv: 3950,
           version: 1,
         },
@@ -235,6 +247,7 @@ describe('handleHealthMessage', () => {
     const dispatched = mockDispatch.mock.calls[0][0];
     expect(dispatched.payload.statuses[0].batteryStatus).toBe('CHARGING');
     expect(dispatched.payload.statuses[0].freeFallStatus).toBe('NO_FALL');
+    expect(dispatched.payload.statuses[0].shockStatus).toBe('NO_SHOCK');
   });
 
   // Additional: missing voltageMv and version -> null in normalized output
@@ -246,6 +259,7 @@ describe('handleHealthMessage', () => {
           senseGateId: 1,
           batteryStatus: 'CHARGING',
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
         },
       ],
     };
@@ -267,6 +281,7 @@ describe('validateHealthPayload', () => {
           senseGateId: 1,
           batteryStatus: 'CHARGING',
           freeFallStatus: 'NO_FALL',
+          shockStatus: 'NO_SHOCK',
           voltageMv: 3950,
           version: 3,
         },
@@ -307,9 +322,9 @@ describe('validateHealthPayload', () => {
     const payload = {
       messageType: 5,
       statuses: [
-        { batteryStatus: 'CHARGING', freeFallStatus: 'NO_FALL' },
-        { senseGateId: 'abc', batteryStatus: 'CHARGING', freeFallStatus: 'NO_FALL' },
-        { senseGateId: 5, batteryStatus: 'CHARGING', freeFallStatus: 'NO_FALL' },
+        { batteryStatus: 'CHARGING', freeFallStatus: 'NO_FALL', shockStatus: 'NO_SHOCK' },
+        { senseGateId: 'abc', batteryStatus: 'CHARGING', freeFallStatus: 'NO_FALL', shockStatus: 'NO_SHOCK' },
+        { senseGateId: 5, batteryStatus: 'CHARGING', freeFallStatus: 'NO_FALL', shockStatus: 'NO_SHOCK' },
       ],
     };
 

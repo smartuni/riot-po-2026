@@ -13,6 +13,12 @@ const VALID_FREE_FALL_ENUMS = new Set([
   'UNKNOWN',
 ]);
 
+const VALID_SHOCK_ENUMS = new Set([
+  'NO_SHOCK',
+  'SHOCK_DETECTED',
+  'UNKNOWN',
+]);
+
 const HEALTH_MESSAGE_TYPE = 5;
 
 export function validateHealthPayload(payload) {
@@ -63,7 +69,8 @@ export function validateHealthPayload(payload) {
     normalized.push({
       senseGateId,
       batteryStatus: normalizeEnum(entry.batteryStatus, VALID_BATTERY_ENUMS),
-      freeFallStatus: normalizeEnum(entry.freeFallStatus !== undefined ? entry.freeFallStatus : entry.shockStatus, VALID_FREE_FALL_ENUMS),
+      freeFallStatus: normalizeEnum(entry.freeFallStatus, VALID_FREE_FALL_ENUMS),
+      shockStatus: normalizeEnum(entry.shockStatus, VALID_SHOCK_ENUMS),
       voltageMv: coerceNumberOrNull(entry.voltageMv),
       version: coerceNumberOrNull(entry.version),
     });

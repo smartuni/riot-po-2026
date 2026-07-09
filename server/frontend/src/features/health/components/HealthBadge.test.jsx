@@ -10,6 +10,7 @@ const freshHealth = (overrides = {}) => {
     version: { value: 1, receivedAt: now },
     battery: { value: 'CHARGING', receivedAt: now },
     freeFall:{ value: 'NO_FALL', receivedAt: now },
+    shock: { value: 'NO_SHOCK', receivedAt: now },
     voltageMv: { value: 3950, receivedAt: now },
     ...overrides,
   };
@@ -118,6 +119,7 @@ describe('HealthBadge', () => {
     const aria = badge.getAttribute('aria-label');
     expect(aria).toContain('Battery: Charging');
       expect(aria).toContain('Free Fall: No Free Fall');
+      expect(aria).toContain('Shock: No Shock');
     expect(aria).toContain('Voltage: 3.95V');
   });
 
@@ -128,6 +130,7 @@ describe('HealthBadge', () => {
     const health = {
       battery: { value: 'CHARGING', receivedAt: staleReceivedAt },
       freeFall:{ value: 'NO_FALL', receivedAt: staleReceivedAt },
+      shock: { value: 'NO_SHOCK', receivedAt: staleReceivedAt },
       voltageMv: { value: 3950, receivedAt: staleReceivedAt },
     };
     render(<HealthBadge health={health} />);
@@ -149,6 +152,7 @@ describe('HealthBadge', () => {
     const health = freshHealth({
       battery: { value: 'DISCHARGING', receivedAt: Date.now() },
       freeFall:{ value: 'FREE_FALL_DETECTED', receivedAt: Date.now() },
+      shock: { value: 'SHOCK_DETECTED', receivedAt: Date.now() },
       voltageMv: { value: 3700, receivedAt: Date.now() },
     });
     render(<HealthBadge health={health} />);
@@ -156,6 +160,7 @@ describe('HealthBadge', () => {
     const badge = screen.getByTestId('health-badge');
     expect(within(badge).getByTestId('health-battery')).toBeInTheDocument();
     expect(within(badge).getByTestId('health-freefall')).toBeInTheDocument();
+    expect(within(badge).getByTestId('health-shock')).toBeInTheDocument();
     expect(within(badge).getByTestId('health-voltage')).toBeInTheDocument();
 
     // Verify correct values for each indicator
