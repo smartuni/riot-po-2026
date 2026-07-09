@@ -303,44 +303,6 @@ int get_self_node_id(uint8_t *kid_buffer, size_t kid_buffer_size) {
     return 0;
 }
 
-int get_self_signed_pubid(signed_identity_t *signed_identity) {
-    uint8_t buffer[MAX_IDENTITY_SIZE];
-    read_public_identity(buffer, sizeof(buffer));
-    
-    size_t length = 0;
-    CborParser parser;
-    CborValue it;
-    CborError err = cbor_parser_init(buffer, sizeof(buffer), 0, &parser, &it);
-    if(err) {
-        printf("%s\n", cbor_error_string(err));
-    }
-    CborType type = cbor_value_get_type(&it);
-    if(type != CborArrayType) {
-        printf("No outer array found\n");
-    }
-    cbor_value_get_array_length(&it, &length);
-    if(length != 2) {
-        printf("Unexpected number of array items\n");
-    }
-    cbor_value_enter_container(&it, &it);
-
-        type = cbor_value_get_type(&it);
-    if(type != CborByteStringType) {
-        printf("Not a byte string\n");
-    }
-    cbor_value_get_string_length(&it, &length);
-    cbor_value_copy_byte_string(&it, signed_identity->cbor_payload, &length, &it);
-
-    type = cbor_value_get_type(&it);
-    if(type != CborByteStringType) {
-        printf("Not a byte string\n");
-    }
-    cbor_value_get_string_length(&it, &length);
-    cbor_value_copy_byte_string(&it, signed_identity->signature, &length, &it);
-
-    return 0;
-}
-
 /*
 int provide_public_keys(void) {
     vfs_DIR dirp;

@@ -35,4 +35,3 @@ int get_root_identity(identity_t *identity);
 int get_private_identity(identity_t *identity);
 int get_public_identity(identity_t *identity);
 int read_public_identity(uint8_t *buffer, size_t buffer_size);
-int get_self_signed_pubid(signed_identity_t *signed_identity);
