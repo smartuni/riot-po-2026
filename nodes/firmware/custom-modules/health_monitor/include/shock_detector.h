@@ -16,6 +16,9 @@
 
 #define kiss_fft_scalar int32_t
 #define SAMPLE_SIZE 1024
+#define SHOCK_THRESHOLD 13 //lower values: more sensitive, higher values: less sensitive
+#define FREE_FALL_THRESHOLD 900 //lower values: less sensitive, higher values: more sensitive
+#define AVG_SLIDING_WINDOW 5
 
 #include "moving_freq_avg.h"
 

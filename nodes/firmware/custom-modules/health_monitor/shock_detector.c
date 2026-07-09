@@ -67,7 +67,7 @@ static void postprocess_fft(shock_detector_t* instance) {
 
 static bool check_free_fall(shock_detector_t* instance) {
 	for (int i = 0; i < instance->sample_size; i+=3) {
-		if(instance->input[i].r < 1000) {
+		if(instance->input[i].r < FREE_FALL_THRESHOLD) {
 			return true;
 		}
 	}
@@ -77,11 +77,14 @@ static bool check_free_fall(shock_detector_t* instance) {
 static bool check_shock(shock_detector_t* instance) {
 
 	//for the values below 100hz: if there's at least one value, which is lower than 10000, return true, else return false
-
-	for(int i = 0; i < 100; i++) {
+	int zeroes_count = 0;
+	for(int i = 0; i < 100; i+= 3) {
 		if(instance->freq_avg->frequency_domain[i].average == 0) {
-			return true;
+			zeroes_count++;
 		}
+	}
+	if(zeroes_count > SHOCK_THRESHOLD) {
+		return true;
 	}
 	return false;
 
@@ -270,7 +273,7 @@ static bool check_shock(shock_detector_t* instance) {
 // 	return true;
 // }
 
-static void moving_avg_efficient(kiss_fft_cpx* data, int data_len, int window, kiss_fft_cpx* result, int* result_len) {    
+static void sliding_avg(kiss_fft_cpx* data, int data_len, int window, kiss_fft_cpx* result, int* result_len) {    
     *result_len = data_len - window + 1;
         
     // Calculate first window sum
@@ -292,7 +295,7 @@ static void* acceleration_thread(void* instance_void) {
 	shock_detector_t* instance = (shock_detector_t*)instance_void;
 	while (instance->running) {
 		collect_magnitudes(instance);
-		moving_avg_efficient(instance->input, instance->sample_size, 5, instance->smoothed_input, &instance->smoothed_size);
+		sliding_avg(instance->input, instance->sample_size, AVG_SLIDING_WINDOW, instance->smoothed_input, &instance->smoothed_size);
 		process_fft(instance); // process the collected samples with FFT
 		postprocess_fft(instance); // post-process the FFT results to find the average over frequency
 		//LOG_DEBUG("[shock_detector.c:%d] Frequency ; Magnitude\n", __LINE__);
