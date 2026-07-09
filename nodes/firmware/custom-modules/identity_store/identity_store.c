@@ -409,13 +409,12 @@ int setup_flash(void) {
 }
 
 int identity_store_setup(void) {
-    /*
     int res = vfs_unmount_by_path(VFS_DEFAULT_NVM(0), false);
     LOG_INFO("unmounting %s %s\n", VFS_DEFAULT_NVM(0), ok(res == 0));
 
     res = vfs_mount_by_path(VFS_DEFAULT_NVM(0));
     LOG_INFO("mounting %s %s\n", VFS_DEFAULT_NVM(0), ok(res == 0));
-    */
+
     for (size_t i = 0; i < ARRAY_SIZE(directory_structure); i++)
     {
         vfs_DIR dirp;
