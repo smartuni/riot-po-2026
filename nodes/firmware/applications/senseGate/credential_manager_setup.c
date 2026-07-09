@@ -1,16 +1,17 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <fcntl.h>
 #include "od.h"
 #include "personalization.h"
 #include "flashdb_store_service.h"
 #include "store_service.h"
-#include "vfs.h"
+#if IS_USED(MODULE_FLASHDB_VFS)
 #include "vfs_default.h"
+#endif
 #include "credential_manager.h"
-#include "identity_store.h"
-#define LOG_LEVEL   LOG_DEBUG
+#include "key_config.h"
+#include "secrets/public_keys.h"
+#define LOG_LEVEL   LOG_INFO
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[credential_manager_setup]: " __VA_ARGS__)
 #define _LOGINF(...) LOG_INFO("[credential_manager_setup]: " __VA_ARGS__)
@@ -47,93 +48,16 @@ int credential_manager_setup(const char *db_path) {
         return -3;
     }
 
-    identity_t root_pubid;
-    identity_t self_prvid;
-    identity_t self_pubid;
-
-    get_root_identity(&root_pubid);
-
-    printf("\n");
-    od_hex_dump(root_pubid.kid, sizeof(root_pubid.kid), 0);
-    printf("\n");
-    od_hex_dump(root_pubid.key, sizeof(root_pubid.key), 0);
-    printf("\n");
-
-    err = credential_manager_add_key(root_pubid.kid, sizeof(root_pubid.kid), CREDENTIAL_PUBLIC,
-            root_pubid.key, sizeof(root_pubid.key));
-    if (err) {
-        _LOGERR("add root public key [FAILED]");
-        return -4;
-    }
-
-    get_private_identity(&self_prvid);
-
-    printf("\n");
-    od_hex_dump(self_prvid.kid, sizeof(self_prvid.kid), 0);
-    printf("\n");
-    od_hex_dump(self_prvid.key, sizeof(self_prvid.key), 0);
-    printf("\n");
-
-    err = credential_manager_add_key(self_prvid.kid, sizeof(self_prvid.kid), CREDENTIAL_PRIVATE,
-            self_prvid.key, sizeof(self_prvid.key));
+    err = credential_manager_add_key(self_node_id, sizeof(self_node_id), CREDENTIAL_PRIVATE,
+            ed25519_secret_key, sizeof(ed25519_secret_key));
     if (err) {
         _LOGERR("add private key [FAILED]");
         return -4;
     }
 
-    get_public_identity(&self_pubid);
+    // public key of the key_config header is added from the known keys already
+    (void)ed25519_public_key;
 
-    printf("\n");
-    od_hex_dump(self_pubid.kid, sizeof(self_pubid.kid), 0);
-    printf("\n");
-    od_hex_dump(self_pubid.key, sizeof(self_pubid.key), 0);
-    printf("\n");
-
-    err = credential_manager_add_key(self_pubid.kid, sizeof(self_pubid.kid), CREDENTIAL_PUBLIC,
-            self_pubid.key, sizeof(self_pubid.key));
-    if (err) {
-        _LOGERR("add self public key [FAILED]");
-        return -4;
-    }
-
-    vfs_DIR dirp;
-    int res = vfs_opendir(&dirp, IDENTITY_STORAGE_PATH "/valid");
-    _LOGDBG("opendir result %d\n", res);
-    if(res == 0) {
-        vfs_dirent_t dirent;
-        while((res = vfs_readdir(&dirp, &dirent)) == 1) {
-            if(strcmp(dirent.d_name, ".") != 0 && strcmp(dirent.d_name, "..") != 0) {
-                puts(dirent.d_name);
-                uint8_t ed25519_public_key[32];
-                read_identity(dirent.d_name, ed25519_public_key, 32);
-
-                for (size_t i = 0; i < 32; i++) {
-                    printf("0x%02x ", ed25519_public_key[i]);
-                }
-                printf("\n");
-
-                char dev_type_value = 0xFF;
-                char dev_id_value = 0xFF;
-                if (memcmp("sensemate", dirent.d_name, strlen("sensemate")) == 0) {
-                    dev_type_value = DEVICE_TYPE_SENSEMATE;
-                    dev_id_value = atoi(&dirent.d_name[strlen("sensemate") + 1]);
-                } else  if (memcmp("sensegate", dirent.d_name, strlen("sensegate")) == 0) {
-                    dev_type_value = DEVICE_TYPE_GATE;
-                    dev_id_value = atoi(&dirent.d_name[strlen("sensegate") + 1]);
-                }
-
-                node_id_t kid = { 0x00, 0x00, dev_type_value, dev_id_value};
-                
-                err = credential_manager_add_key(kid, sizeof(kid), CREDENTIAL_PUBLIC, ed25519_public_key, sizeof(ed25519_public_key));
-                if (err) {
-                    _LOGERR("add public key [FAILED]");
-                    return -5;
-                }
-            }
-        }
-    }
-
-    /*
     for (unsigned i = 0; i < ARRAY_SIZE(known_keys); i++) {
         const ed25519_public_key_entry_t *key = &known_keys[i];
         const uint8_t *legacy_kid = known_keys[i].kid;
@@ -159,8 +83,6 @@ int credential_manager_setup(const char *db_path) {
             return -5;
         }
     }
-    */
-
     return 0;
 }
 

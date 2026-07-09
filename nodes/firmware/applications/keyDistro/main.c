@@ -25,7 +25,7 @@ static int _print_key(int argc, char **argv)
     }
 
     uint8_t buffer[MAX_CERTIFICATE_SIZE];
-    int res = read_certificate(argv[1], buffer, MAX_CERTIFICATE_SIZE);
+    int res = read_certificate(argv[1], &buffer, MAX_CERTIFICATE_SIZE);
     if(res != 0) return res;
 
     for (size_t i = 0; i < MAX_CERTIFICATE_SIZE; i++)
@@ -46,9 +46,6 @@ int main(void)
     puts("[main]: starting");
 
     (void)ed25519_public_key;
-    //(void)ed25519_secret_key;
-
-    //decode_c509_certificate();
 
     int res = vfs_unmount_by_path(VFS_DEFAULT_NVM(0), false);
     LOG_INFO("unmounting %s %s\n", VFS_DEFAULT_NVM(0), ok(res == 0));
@@ -63,10 +60,10 @@ int main(void)
     LOG_INFO("creating directory %s %s\n", VFS_DEFAULT_NVM(0) "/cred", ok(res == 0));
 
     res = vfs_mkdir(VFS_DEFAULT_NVM(0) "/cred/public_certs", 00777);
-    LOG_INFO("creating directory %s %s\n", VFS_DEFAULT_NVM(0) "/cred" "/public_certs", ok(res == 0));
+    LOG_INFO("creating directory %s %s\n", VFS_DEFAULT_NVM(0) "/cred/public_certs", ok(res == 0));
 
     // write private key
-    res = write_private_key(ed25519_secret_key, sizeof(ed25519_secret_key));
+    res = write_private_key(&ed25519_secret_key, sizeof(ed25519_secret_key));
     LOG_INFO("writing private key %s\n", ok(res == 0));
 
     // write public keys
@@ -75,10 +72,9 @@ int main(void)
         char filename[known_keys[i].kid_len + 1];
         memcpy(filename, known_keys[i].kid, known_keys[i].kid_len);
         filename[known_keys[i].kid_len] = 0;
-        res = write_certificate(filename, known_keys[i].public_key, sizeof(known_keys[i].public_key));
+        res = write_certificate(filename, &known_keys[i].public_key, sizeof(known_keys[i].public_key));
         LOG_INFO("writing certificate %s %s\n", filename, ok(res == 0));
     }
-
 
     // drop to shell for inspecting keys and debugging
     char line_buf[SHELL_DEFAULT_BUFSIZE];
