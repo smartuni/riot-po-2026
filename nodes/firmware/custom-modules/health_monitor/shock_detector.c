@@ -49,7 +49,7 @@ static void collect_magnitudes(shock_detector_t* instance) {
 
 static void process_fft(shock_detector_t* instance) {
 	memset(instance->output, 0, sizeof(kiss_fft_cpx) * instance->sample_size);
-	kiss_fft(instance->cfg, instance->input, instance->output);
+	kiss_fft(instance->cfg, instance->smoothed_input, instance->output);
 }
 
 static void postprocess_fft(shock_detector_t* instance) {
@@ -257,24 +257,40 @@ static bool check_shock(shock_detector_t* instance) {
 // 	return true;
 // }
 
+static void moving_avg_efficient(kiss_fft_cpx* data, int data_len, int window, kiss_fft_cpx* result, int* result_len) {    
+    *result_len = data_len - window + 1;
+        
+    // Calculate first window sum
+    int sum = 0;
+    for (int i = 0; i < window; i++) {
+        sum += data[i].r;
+    }
+    result[0].r = (int) (sum / window);
+    
+    // Slide the window
+    for (int i = 1; i < *result_len; i++) {
+        sum = sum - data[i - 1].r + data[i + window - 1].r;
+        result[i].r = (int) (sum / window);
+    }
+
+}
+
 static void* acceleration_thread(void* instance_void) {
 	shock_detector_t* instance = (shock_detector_t*)instance_void;
 	while (instance->running) {
-		//LOG_DEBUG("[shock_detector.c:%d] Collecting magnitudes...\n", __LINE__);
 		collect_magnitudes(instance);
-		//LOG_DEBUG("[shock_detector.c:%d] Processing FFT...\n", __LINE__);
+		moving_avg_efficient(instance->input, instance->sample_size, 5, instance->smoothed_input, &instance->smoothed_size);
 		process_fft(instance); // process the collected samples with FFT
-		//LOG_DEBUG("[shock_detector.c:%d] Post-processing FFT results...\n", __LINE__);
 		postprocess_fft(instance); // post-process the FFT results to find the average over frequency
 		//LOG_DEBUG("[shock_detector.c:%d] Frequency ; Magnitude\n", __LINE__);
-		// for (int i = 0; i < instance->nyquist_domain_size; i += 3) {
-		// 	LOG_DEBUG(" ; %d ; %d\n", i, instance->freq_avg->frequency_domain[i].average);
-		// }
 
+		for (int i = 0; i < instance->nyquist_domain_size; i += 3) {
+			LOG_DEBUG(" ; %d ; %d\n", i, instance->freq_avg->frequency_domain[i].average);
+		}
+		
 		// for (int i = 0; i < instance->sample_size; i += 3) {
 		// 	LOG_DEBUG(" ; %d ; %d\n", i, (int)(instance->input[i].r) - ACCELEROMETER_EARTH_GRAVITY);
 		// }
-
 		
 
 		//if (check_shock(instance)) {
