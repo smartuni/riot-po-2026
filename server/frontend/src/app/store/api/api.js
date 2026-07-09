@@ -199,6 +199,11 @@ export const api = createApi({
       }),
       invalidatesTags: ['Notification'],
     }),
+
+    // ── Health ───────────────────────────────────────────
+    getHealth: builder.query({
+      query: () => '/api/health',
+    }),
   }),
 });
 
@@ -225,4 +230,5 @@ export const {
   useGetActivitiesQuery,
   useGetNotificationsByWorkerIdQuery,
   useMarkNotificationAsReadMutation,
+  useGetHealthQuery,
 } = api;
