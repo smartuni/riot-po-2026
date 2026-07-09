@@ -27,7 +27,6 @@
 #include "personalization.h"
 #include "identity_store.h"
 #include "crypto_service.h"
-#include "credential_manager.h"
 #include "cose_crypto_service.h"
 #define LOG_LEVEL   LOG_DEBUG
 #include "log.h"
@@ -448,21 +447,9 @@ static int _send_id_res(void)
     size_t out_len = MAX_SERIALIZED_ID_REQRES_SIZE;
     uint8_t out_buf[out_len];
     signed_identity_t signed_identity;
-    int res = get_self_signed_pubid(&signed_identity);
-    if (res) {
-        _LOGINF("_send_id_res get_self_signed_pubid failed\n");
-        return -1;
-    }
-    if (LOG_LEVEL == LOG_DEBUG) {
-        _LOGDBG("_send_id_res cbor payload\n");
-        od_hex_dump(signed_identity.cbor_payload, 40, 0);
-    }
-    if (LOG_LEVEL == LOG_DEBUG) {
-        _LOGDBG("_send_id_res signature\n");
-        od_hex_dump(signed_identity.signature, 80, 0);
-    }
+    get_self_signed_pubid(&signed_identity);
     
-    res = cbor_serialize_id_reqres(MESSAGE_ID_RESPONSE, &signed_identity, out_buf, &out_len);
+    int res = cbor_serialize_id_reqres(MESSAGE_ID_RESPONSE, &signed_identity, out_buf, &out_len);
     _LOGDBG("%s serialize:(%d) %s\n", __func__, res, ok(res == 0));
     if (res) {
         _LOGINF("_send_id_res serialize failed!\n");
@@ -697,46 +684,6 @@ void* ble_rx_thread(void* args)
 
             if (res) {
                 _LOGDBG("crypto_service_verify failed: %d\n", res);
-                continue;
-            }
-
-            identity_t identity;
-            size_t length = 0;
-            CborParser inner_parser;
-            CborValue inner_it;
-            CborError err = cbor_parser_init(signed_identity.cbor_payload, sizeof(signed_identity.cbor_payload), 0, &inner_parser, &inner_it);
-            if(err) {
-                printf("%s\n", cbor_error_string(err));
-            }
-            CborType type = cbor_value_get_type(&inner_it);
-            if(type != CborArrayType) {
-                printf("No outer array found\n");
-            }
-            cbor_value_get_array_length(&inner_it, &length);
-            if(length != 2) {
-                printf("Unexpected number of array items\n");
-            }
-            cbor_value_enter_container(&inner_it, &inner_it);
-
-            type = cbor_value_get_type(&inner_it);
-            if(type != CborByteStringType) {
-                printf("Not a byte string\n");
-            }
-            cbor_value_get_string_length(&inner_it, &length);
-            cbor_value_copy_byte_string(&inner_it, identity.kid, &length, &inner_it);
-
-            type = cbor_value_get_type(&inner_it);
-            if(type != CborByteStringType) {
-                printf("Not a byte string\n");
-            }
-            cbor_value_get_string_length(&inner_it, &length);
-            cbor_value_copy_byte_string(&inner_it, identity.key, &length, &inner_it);
-
-
-            err = credential_manager_add_key(identity.kid, sizeof(identity.kid), CREDENTIAL_PUBLIC,
-                    identity.key, sizeof(identity.key));
-            if (err) {
-                _LOGDBG("crypto_service_verify public key addition failed: %d\n", res);
                 continue;
             }
         } else {
