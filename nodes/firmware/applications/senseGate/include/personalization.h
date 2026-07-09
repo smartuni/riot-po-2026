@@ -1,3 +1,3 @@
 #pragma once
 #include "tables/types.h"
-extern node_id_t self_node_id;
+extern const node_id_t self_node_id;
