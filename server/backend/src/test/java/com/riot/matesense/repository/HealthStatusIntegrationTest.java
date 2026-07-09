@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.riot.matesense.enums.BatteryStatus;
 import com.riot.matesense.enums.MsgType;
-import com.riot.matesense.enums.ShockStatus;
+import com.riot.matesense.enums.FreeFallStatus;
 import com.riot.matesense.service.JsonFormatter;
 import org.junit.jupiter.api.Test;
 
@@ -20,13 +20,13 @@ class HealthStatusIntegrationTest {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void testHealthMonitoring_ShockEvent() throws Exception {
+    void testHealthMonitoring_FreeFallEvent() throws Exception {
         // 1. Vorbereitung der Testdaten laut neuem Ticket (Event-basiert)
         int version = 1;
         int messageType = MsgType.HEALTH_MONITORING.getCode(); // 5
         int senseGateId = 1;      // rawData.get(2) -> Kommt jetzt als Zahl/Integer an
-        int eventHeader = 0x03;   // rawData.get(3) -> SHOCK_STATUS
-        int eventBody = 0x01;     // rawData.get(4) -> Shock detected
+        int eventHeader = 0x03;   // rawData.get(3) -> FREE_FALL_STATUS
+        int eventBody = 0x02;     // rawData.get(4) -> Free Fall detected
 
         List<Object> mockRawData = Arrays.asList(
                 version,
@@ -38,7 +38,7 @@ class HealthStatusIntegrationTest {
 
         // 2. Ausführung
         String jsonResult = jsonFormatter.toJsonFormat(mockRawData);
-        System.out.println("Generiertes JSON für Schock-Event:\n" + jsonResult);
+        System.out.println("Generiertes JSON für Free Fall Event:\n" + jsonResult);
 
         // 3. Überprüfung
         JsonNode root = mapper.readTree(jsonResult);
@@ -48,7 +48,7 @@ class HealthStatusIntegrationTest {
         JsonNode healthNode = root.get("statuses").get(0);
         assertEquals(1, healthNode.get("version").asInt());
         assertEquals(1, healthNode.get("senseGateId").asInt());
-        assertEquals("SHOCK_DETECTED", healthNode.get("shockStatus").asText());
+        assertEquals("FREE_FALL_DETECTED", healthNode.get("freeFallStatus").asText());
     }
 
     @Test
