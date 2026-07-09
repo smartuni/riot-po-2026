@@ -143,6 +143,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          cache: maven
 
       - name: Make mvnw executable
         run: chmod +x server/backend/mvnw

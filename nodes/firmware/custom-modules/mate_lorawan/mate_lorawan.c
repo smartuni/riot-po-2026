@@ -45,7 +45,6 @@
 #include "tables/types.h"
 #include "cbor_serialization.h"
 #include "personalization.h"
-#include "crypto_service.h"
 #include "event.h"
 #include "event/thread.h"
 #include "fmt.h"
@@ -336,8 +335,6 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             _LOGDBG("%d bytes: \n", pkt->size);
             print_hex_arr(pkt->data, pkt->size);
 
-            uint8_t signature_buf[MAX_SIGNATURE_SIZE];
-            size_t signature_len = sizeof(signature_buf);
             table_record_t record;
             table_record_data_buffer_t record_data;
             size_t signature_len = 0;
@@ -352,32 +349,24 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             record_tostr(&record, _rx_record_str_buf, sizeof(_rx_record_str_buf));
             _LOGINF("RX: %s\n", _rx_record_str_buf);
 
-            if (signature_len < 64) {
-                break;
-            }
-
-            size_t unsigned_len = MAX_SERIALIZED_RECORD_SIZE;
-            uint8_t unsigned_buf[unsigned_len];
-
-            res = cbor_serialize_record_no_sig(&record, unsigned_buf, &unsigned_len);
+            table_merge_result_t result;
+            res = tables_merge_record(_tables, &record, &result);
             if (res) {
+                _LOGINF("tables_merge_record failed: %d\n", res);
                 break;
             }
+            _LOGDBG("merge result: %d\n", result.updated);
 
-            res = crypto_service_verify(&_tables->crypto_service,
-                    (const uint8_t *)&record.header.writer, NODE_ID_SIZE,
-                    unsigned_buf, unsigned_len,
-                    signature_buf, signature_len);
-
-            if (res) {
-                break;
-            }
-
-            _LOGINF("Downlink verified.\n");
-
+            if (result.updated || result.new) {
 #if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
-            event_post(EVENT_PRIO_MEDIUM, &eventNews);
+                event_post(EVENT_PRIO_MEDIUM, &eventNews);
+                _LOGDBG("Downlink received and table updated.\n");
 #endif
+            } else if (result.rejected_sig || result.invalid_record) {
+                _LOGDBG("Error updating table\n");
+            } else {
+                _LOGDBG("Downlink received. No updates.\n");
+            }
         }
         snip = snip->next;
     }
