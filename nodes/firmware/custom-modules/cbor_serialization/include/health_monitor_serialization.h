@@ -17,6 +17,7 @@
 
 #include "health_monitor_payload.h"
 #include "cbor_serialization.h"
+#include "personalization.h"
 #include "cbor.h"
 #include <stdint.h>
 

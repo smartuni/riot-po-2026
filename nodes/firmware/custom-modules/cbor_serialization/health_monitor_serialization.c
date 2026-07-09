@@ -1,6 +1,7 @@
 #include "health_monitor_serialization.h"
 
 
+
 static int _serialize_with_array_encoding(const health_monitor_payload_t* record, uint8_t* buf, size_t* out_len) {
 	CborEncoder root_encoder;
 	cbor_encoder_init(&root_encoder, buf, *out_len, 0);
@@ -9,7 +10,7 @@ static int _serialize_with_array_encoding(const health_monitor_payload_t* record
 
     cbor_encode_uint(&main_array_encoder, ENCODING_V_1);
     cbor_encode_uint(&main_array_encoder, MESSAGE_TYPE_HEALTH_MONITOR);
-    uint32_t node_id = 0; // TODO Placeholder for node_id, you can replace it with actual value if needed
+    uint32_t node_id = (uint32_t)self_node_id;
     cbor_encode_uint(&main_array_encoder, node_id);
 	cbor_encode_uint(&main_array_encoder, record->header);
     cbor_encode_uint(&main_array_encoder, record->body);
