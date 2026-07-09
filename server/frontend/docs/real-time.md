@@ -132,7 +132,7 @@ The health topic delivers push-only status updates from SenseGate devices. On We
     {
       "version": 1,
       "senseGateId": 42,
-      "shockStatus": "NO_SHOCK",
+      "freeFallStatus": "NO_FALL",
       "batteryStatus": "CHARGING",
       "voltageMv": 3950
     }
@@ -152,11 +152,11 @@ The `messageType` field must equal `5`. The handler rejects any payload where th
 | `LOW_BATTERY` | Battery is low |
 | `UNKNOWN` | Sensor not reporting (sentinel value) |
 
-**ShockStatus:**
+**FreeFallStatus:**
 | Value | Meaning |
 |---|---|
-| `NO_SHOCK` | No shock detected |
-| `SHOCK_DETECTED` | Shock/vibration detected |
+| `NO_FALL` | No free fall detected |
+| `FREE_FALL_DETECTED` | Free fall detected |
 | `UNKNOWN` | Sensor not reporting (sentinel value) |
 
 ### Validation and Normalization
@@ -171,14 +171,14 @@ The `handleHealthMessage` function (in `src/app/store/middleware/healthMessageHa
 
 ### Per-Field Merge Semantics
 
-The backend sends **one event per message**, not a full health snapshot. A shock message includes `batteryStatus: UNKNOWN` and `voltageMv: 0`. A battery message includes `shockStatus: UNKNOWN`. These are sentinel values, not real readings.
+The backend sends **one event per message**, not a full health snapshot. A free fall message includes `batteryStatus: UNKNOWN` and `voltageMv: 0`. A battery message includes `freeFallStatus: UNKNOWN`. These are sentinel values, not real readings.
 
 The `healthSlice` reducer preserves previously-known values when the incoming value is a sentinel:
 
 | Field | Sentinel Value | Behavior |
 |---|---|---|
 | `battery` | `UNKNOWN` | Keep existing value, ignore incoming |
-| `shock` | `UNKNOWN` | Keep existing value, ignore incoming |
+| `freeFall` | `UNKNOWN` | Keep existing value, ignore incoming |
 | `voltageMv` | `0` | Keep existing value, ignore incoming |
 
 If no previous value exists for a field (first message), the sentinel value is stored as-is.
@@ -190,7 +190,7 @@ If no previous value exists for a field (first message), the sentinel value is s
   bySenseGateId: {
     42: {
       battery:  { value: 'CHARGING', receivedAt: 1719900000000 },
-      shock:    { value: 'NO_SHOCK', receivedAt: 1719900000000 },
+      freeFall: { value: 'NO_FALL', receivedAt: 1719900000000 },
       voltageMv:{ value: 3950,       receivedAt: 1719900000000 }
     }
   }
