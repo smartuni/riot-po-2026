@@ -64,6 +64,8 @@ static void* battery_function(void* instance_void) {
 		//report the battery state
 		if(serialize_and_send(&payload) != 0) {
 			LOG_ERROR("[health_monitor.c:%d] Failed to send battery status payload\n", __LINE__);
+		} else {
+			LOG_DEBUG("[health_monitor.c:%d] Sent battery status payload: header=%d, body=%d\n", __LINE__, payload.header, payload.body);
 		}
 
 		// check for low battery and report if it's not yet reported
@@ -73,6 +75,8 @@ static void* battery_function(void* instance_void) {
 			payload.body = battery_info.voltage_mv;
 			if(serialize_and_send(&payload) != 0) {
 				LOG_ERROR("[health_monitor.c:%d] Failed to send low battery payload\n", __LINE__);
+			} else {
+				LOG_DEBUG("[health_monitor.c:%d] Sent low battery payload: header=%d, body=%d\n", __LINE__, payload.header, payload.body);
 			}
 			is_low_battery = true;
 
@@ -98,6 +102,8 @@ static void* shock_detector_function(void* instance_void) {
 		LOG_DEBUG("[health_monitor.c:%d] Shock detected, sending payload...\n", __LINE__);
 		if(serialize_and_send(&payload) != 0) {
 			LOG_ERROR("[health_monitor.c:%d] Failed to send shock status payload\n", __LINE__);
+		} else {
+			LOG_DEBUG("[health_monitor.c:%d] Sent shock status payload: header=%d, body=%d\n", __LINE__, payload.header, payload.body);
 		}
 	}
 	return NULL;
