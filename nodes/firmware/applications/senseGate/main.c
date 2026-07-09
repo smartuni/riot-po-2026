@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "health_monitor.h"
 #include "od.h"
 #include "board.h"
 #include "ztimer.h"
@@ -140,6 +141,7 @@ static void _table_update_cb(tables_context_t *ctx, const table_record_t *record
     // The change may aswell come from a recent RX.
 }
 
+static health_monitor_t health_monitor_instance;
 
 int main(void){
     /* Sleep so that we do not miss this message while connecting */
@@ -224,12 +226,27 @@ int main(void){
     int timeToUpdateTable = 0; // var to update table periodically
     int put_cnt = 0;
     int put_err_cnt = 0;
+
+    health_monitor_init(&health_monitor_instance);
+    health_monitor_start(&health_monitor_instance);
+
+
     while(1){
         ztimer_sleep(ZTIMER_MSEC,1000);
 
         if (timeToUpdateTable == TIME_PERIOD_TABLE_UPDATE) {
             _LOGDBG("get current observer state...\n");
             gate_state_t current_gate_state = gate_observer_get_state(&observer, &obs_state);
+			switch (current_gate_state) {
+				case GATE_STATE_OPEN:
+					LED1_ON;
+					break;
+				case GATE_STATE_CLOSED:
+					LED1_OFF;
+					break;
+				default:
+					break;
+			}
             _LOGDBG("current state: %s\n", gate_state_tostr(current_gate_state));
             _LOGDBG("put new reported state...\n");
             res = tables_put_gate_report(tables, current_gate_state);
