@@ -8,7 +8,7 @@ import com.riot.matesense.entity.GateEntity;
 import com.riot.matesense.enums.ActivityType;
 import com.riot.matesense.enums.BatteryStatus;
 import com.riot.matesense.enums.MsgType;
-import com.riot.matesense.enums.ShockStatus;
+import com.riot.matesense.enums.FreeFallStatus;
 import com.riot.matesense.enums.StateConfirmation;
 import com.riot.matesense.enums.Status;
 import com.riot.matesense.exceptions.GateNotFoundException;
@@ -78,14 +78,14 @@ public class MqttMessageHandler {
                         int version = healthNode.has("version") ? healthNode.get("version").asInt() : 0;
                         int voltageMv = healthNode.has("voltageMv") ? healthNode.get("voltageMv").asInt() : 0;
                         BatteryStatus battery = parseBatteryStatus(healthNode.get("batteryStatus"));
-                        ShockStatus shock = parseShockStatus(healthNode.get("shockStatus"));
+                        FreeFallStatus freeFall = parseFreeFallStatus(healthNode.get("freeFallStatus"));
 
-                        healthStatusService.updateHealth(senseGateId, battery, shock, voltageMv, version);
+                        healthStatusService.updateHealth(senseGateId, battery, freeFall, voltageMv, version);
 
                         System.out.println("Health Update erhalten -> SenseGateID: " + senseGateId +
                                 ", Battery: " + battery +
                                 ", Voltage: " + voltageMv + "mV" +
-                                ", Shock: " + shock);
+                                ", FreeFall: " + freeFall);
                     }
                 }
                 case IST_STATE -> {
@@ -180,12 +180,12 @@ public class MqttMessageHandler {
         }
     }
 
-    private static ShockStatus parseShockStatus(JsonNode node) {
-        if (node == null || node.isNull()) return ShockStatus.UNKNOWN;
+    private static FreeFallStatus parseFreeFallStatus(JsonNode node) {
+        if (node == null || node.isNull()) return FreeFallStatus.UNKNOWN;
         try {
-            return ShockStatus.valueOf(node.asText());
+            return FreeFallStatus.valueOf(node.asText());
         } catch (IllegalArgumentException e) {
-            return ShockStatus.UNKNOWN;
+            return FreeFallStatus.UNKNOWN;
         }
     }
 }

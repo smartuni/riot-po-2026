@@ -6,7 +6,7 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.riot.matesense.enums.BatteryStatus;
 import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.RecordType;
-import com.riot.matesense.enums.ShockStatus;
+import com.riot.matesense.enums.FreeFallStatus;
 import com.riot.matesense.model.HealthStatusDTO;
 import org.springframework.stereotype.Service;
 
@@ -86,7 +86,7 @@ public class JsonFormatter {
             int eventHeader = ((Number) rawData.get(3)).intValue();
             int eventBody = ((Number) rawData.get(4)).intValue();
 
-            ShockStatus shockStatus = ShockStatus.UNKNOWN;
+            FreeFallStatus freeFallStatus = FreeFallStatus.UNKNOWN;
             BatteryStatus batteryStatus = BatteryStatus.UNKNOWN;
             int voltageMv = 0;
 
@@ -103,16 +103,13 @@ public class JsonFormatter {
                     batteryStatus = BatteryStatus.fromCode(2);
                     voltageMv = eventBody;
                 }
-                case 0x03 -> { // SHOCK_STATUS
-                    shockStatus = ShockStatus.fromCode(eventBody);
-                }
-                case 0x04 -> {
-                    System.out.println("FREE_FALL Event empfangen (noch nicht voll implementiert)");
+                case 0x03 -> { // FREE_FALL_STATUS
+                    freeFallStatus = FreeFallStatus.fromCode(eventBody);
                 }
                 default -> System.err.println("Unbekannter Health Event Header: " + eventHeader);
             }
 
-            HealthStatusDTO healthDTO = new HealthStatusDTO(version, senseGateId, shockStatus, batteryStatus, voltageMv);
+            HealthStatusDTO healthDTO = new HealthStatusDTO(version, senseGateId, freeFallStatus, batteryStatus, voltageMv);
             Message message = new Message(messageType, List.of(healthDTO));
 
             // Verlässt die Methode sofort für Typ 5. Der alte Code darunter wird nie erreicht!
