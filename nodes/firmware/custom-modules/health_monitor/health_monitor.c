@@ -78,7 +78,6 @@ static void* battery_function(void* instance_void) {
 }
 
 static void* shock_detector_function(void* instance_void) {
-	//LOG_DEBUG("[health_monitor.c:%d] Starting the battery monitoring thread...\n", __LINE__);
 	shock_detector_t* instance = (shock_detector_t*)instance_void;
 	shock_detector_start(instance);
 	while (instance->running) {
@@ -100,12 +99,7 @@ int health_monitor_start(health_monitor_t* instance) {
 	if (instance == NULL) {
 		return -1;
 	}
-	//start shock detection
-	// if (instance->shock_instance != NULL) {
-	// 	shock_detector_start(instance->shock_instance);
-	// } else {
-	// 	return -1;
-	// }
+
 
 	instance->shock_detector_running = true;
 	instance->shock_detector_thread_pid = thread_create(instance->shock_detector_thread_stack,
@@ -131,10 +125,5 @@ int health_monitor_delete(health_monitor_t* instance) {
 	if (instance == NULL) {
 		return -1;
 	}
-	// shock_detector_delete(instance->shock_detector);
-	// free(instance->shock_detector);
-	// battery_voltage_monitor_delete(instance->battery_monitor);
-	// free(instance->battery_monitor);
-	// free(instance);
 	return 0;
 }
