@@ -320,11 +320,11 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             table_record_t record;
             table_record_data_buffer_t record_data;
             size_t signature_len = 0;
-            int res = cbor_deserialize_record(pkt->data, pkt->size, &record,
-                                              &record_data, NULL, &signature_len);
+            int res = cbor_deserialize(pkt->data, pkt->size, &record,
+                                        &record_data, NULL, &signature_len);
 
             if (res) {
-                _LOGINF("cbor_deserialize_record failed: %d\n", res);
+                _LOGINF("cbor_deserialize failed: %d\n", res);
                 break;
             }
 

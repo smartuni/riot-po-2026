@@ -3,8 +3,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "identity_store.h"
-
 /**
  * @defgroup Crypto service interface
  * @{

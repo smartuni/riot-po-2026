@@ -435,7 +435,6 @@ int identity_store_setup(void) {
         || !vfs_file_exists(IDENTITY_STORAGE_PATH "self/self.prvid")
     ) {
         char buffer[512];
-        printf("paste provision base64 now\n");
         fgets(buffer, 512, stdin);
         size_t decoded_buffer_size = 2 * base64_estimate_decode_size(strlen(buffer));
         uint8_t decoded_buffer[decoded_buffer_size];

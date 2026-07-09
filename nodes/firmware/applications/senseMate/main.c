@@ -194,18 +194,17 @@ void* shell_thread(void* arg)
 
 int main(void) {
     ztimer_sleep(ZTIMER_SEC, 10);
+    printf("init menu...\n");
+    sensemate_ui_init(&_ui_data_cbs);
+    ui_data_t *ui_state = sensemate_ui_get_state();
+    ui_state->ble_state = ESTABLISHING_CONNECTION;
+    sensemate_ui_update();
 
     int res = identity_store_setup();
     printf("%d\n", res);
 
     get_self_node_id(self_node_id, sizeof(self_node_id));
     od_hex_dump(self_node_id, sizeof(self_node_id), 0);
-
-    printf("init menu...\n");
-    sensemate_ui_init(&_ui_data_cbs);
-    ui_data_t *ui_state = sensemate_ui_get_state();
-    ui_state->ble_state = ESTABLISHING_CONNECTION;
-    sensemate_ui_update();
 
     //ztimer_sleep(ZTIMER_MSEC, 3000);
     res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);

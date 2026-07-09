@@ -1,2 +1,1 @@
 USEPKG += tinycbor
-USEMODULE += identity_store
