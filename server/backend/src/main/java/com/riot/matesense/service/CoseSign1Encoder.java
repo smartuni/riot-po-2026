@@ -28,6 +28,7 @@ final class CoseSign1Encoder {
             message.AddProtected(HeaderKeys.Algorithm, AlgorithmID.EDDSA.AsCBOR());
             message.AddProtected(HeaderKeys.KID, kid);
             message.SetContent(unsignedCbor);
+            message.setExternal(new byte[0]);
             message.sign(createSigningKey(signingKeySeed));
             return message.EncodeToBytes();
         } catch (CoseException e) {
