@@ -1,5 +1,7 @@
 import { Client } from '@stomp/stompjs';
 import { uplinkReceived } from '../slices/gatesSlice';
+import { handleHealthMessage } from './healthMessageHandler';
+import { healthReceived } from '../slices/healthSlice';
 import { api } from '../api/api';
 
 const INITIAL_RECONNECT_DELAY = 1000;
@@ -135,6 +137,29 @@ function createWsMiddleware() {
         stompClient.subscribe('/topic/uplinks', (message) => {
           store.dispatch(uplinkReceived(message.body));
         });
+
+        stompClient.subscribe('/topic/health', (message) => {
+          handleHealthMessage(message.body, store.dispatch);
+        });
+
+        store.dispatch(
+          api.endpoints.getHealth.initiate(undefined, {
+            subscribe: false,
+          })
+        ).then(({ data }) => {
+          if (data) {
+            const statuses = Object.entries(data).map(([id, dto]) => ({
+              version: dto.version,
+              senseGateId: Number(id),
+              shockStatus: dto.shockStatus,
+              batteryStatus: dto.batteryStatus,
+              voltageMv: dto.voltageMv,
+            }));
+            if (statuses.length > 0) {
+              store.dispatch(healthReceived({ statuses }));
+            }
+          }
+        }).catch(() => {});
       },
       onStompError: (frame) => {
         console.error('STOMP error:', frame.headers?.message || frame.body);

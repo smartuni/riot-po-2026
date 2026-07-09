@@ -237,6 +237,10 @@ export const api = createApi({
       }),
       invalidatesTags: ['RootKey'],
     }),
+    // ── Health ───────────────────────────────────────────
+    getHealth: builder.query({
+      query: () => '/api/health',
+    }),
   }),
 });
 
@@ -268,4 +272,5 @@ export const {
   useDeleteNodeMutation,
   useGetRootKeyQuery,
   useUploadRootKeyMutation,
+  useGetHealthQuery,
 } = api;
