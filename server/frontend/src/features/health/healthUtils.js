@@ -9,10 +9,10 @@ export const BATTERY_STATUS = {
   UNKNOWN: 'UNKNOWN',
 };
 
-// ShockStatus enum constants
-export const SHOCK_STATUS = {
-  NO_SHOCK: 'NO_SHOCK',
-  SHOCK_DETECTED: 'SHOCK_DETECTED',
+// FreeFallStatus enum constants
+export const FREE_FALL_STATUS = {
+  NO_FALL: 'NO_FALL',
+  FREE_FALL_DETECTED: 'FREE_FALL_DETECTED',
   UNKNOWN: 'UNKNOWN',
 };
 
@@ -32,17 +32,17 @@ export function batteryInfo(value) {
   }
 }
 
-// Returns { icon, color, label, pulse } for a shock status value
-export function shockInfo(value) {
+// Returns { icon, color, label, pulse } for a free fall status value
+export function freeFallInfo(value) {
   switch (value) {
-    case 'NO_SHOCK':
-      return { icon: 'Vibration', color: 'var(--blue-500)', label: 'No Shock', pulse: false };
-    case 'SHOCK_DETECTED':
-      return { icon: 'Vibration', color: 'var(--red-600)', label: 'Shock Detected', pulse: true };
+    case 'NO_FALL':
+      return { icon: 'ArrowDropDown', color: 'var(--blue-500)', label: 'No Free Fall', pulse: false };
+    case 'FREE_FALL_DETECTED':
+      return { icon: 'ArrowDropDown', color: 'var(--red-600)', label: 'Free Fall Detected', pulse: true };
     case 'UNKNOWN':
-      return { icon: 'Vibration', color: 'var(--slate-400)', label: 'Unknown', pulse: false };
+      return { icon: 'ArrowDropDown', color: 'var(--slate-400)', label: 'Unknown', pulse: false };
     default:
-      return { icon: 'Vibration', color: 'var(--slate-400)', label: '—', pulse: false };
+      return { icon: 'ArrowDropDown', color: 'var(--slate-400)', label: '—', pulse: false };
   }
 }
 
@@ -64,7 +64,7 @@ export function getHealthSummary(healthEntry) {
   if (!healthEntry) return { hasAlert: false, alertCount: 0, summaryText: 'No health data' };
   let alerts = 0;
   if (healthEntry.battery?.value === 'LOW_BATTERY') alerts++;
-  if (healthEntry.shock?.value === 'SHOCK_DETECTED') alerts++;
+  if (healthEntry.freeFall?.value === 'FREE_FALL_DETECTED') alerts++;
   return {
     hasAlert: alerts > 0,
     alertCount: alerts,

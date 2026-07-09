@@ -1,5 +1,5 @@
 import React from 'react';
-import { batteryInfo, shockInfo, voltageInfo, isStale } from '../healthUtils';
+import { batteryInfo, freeFallInfo, voltageInfo, isStale } from '../healthUtils';
 
 const PULSE_STYLE = `
 @keyframes health-pulse {
@@ -51,16 +51,16 @@ const HealthBadge = ({ health }) => {
     );
   }
 
-  const { battery, shock, voltageMv } = health;
+  const { battery, freeFall, voltageMv } = health;
 
   const batt = batteryInfo(battery?.value);
-  const sInfo = shockInfo(shock?.value);
+  const sInfo = freeFallInfo(freeFall?.value);
   const volt = voltageInfo(voltageMv?.value);
 
-  const isAnyStale = isStale(battery?.receivedAt) || isStale(shock?.receivedAt) || isStale(voltageMv?.receivedAt);
+  const isAnyStale = isStale(battery?.receivedAt) || isStale(freeFall?.receivedAt) || isStale(voltageMv?.receivedAt);
   const voltageText = volt.display !== '—' ? `${volt.display}${volt.unit}` : '—';
 
-  const ariaLabel = `Battery: ${batt.label}, Shock: ${sInfo.label}, Voltage: ${voltageText}`;
+  const ariaLabel = `Battery: ${batt.label}, Free Fall: ${sInfo.label}, Voltage: ${voltageText}`;
 
   return (
     <>
@@ -82,7 +82,7 @@ const HealthBadge = ({ health }) => {
           <span style={dotStyle(batt.color)} />
           {batt.label}
         </span>
-        <span style={indicatorStyle(sInfo.color)} data-testid="health-shock">
+        <span style={indicatorStyle(sInfo.color)} data-testid="health-freefall">
           <span style={dotStyle(sInfo.color)} className={sInfo.pulse ? 'health-pulse-icon' : ''} />
           {sInfo.label}
         </span>
