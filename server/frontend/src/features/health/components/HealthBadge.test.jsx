@@ -9,7 +9,7 @@ const freshHealth = (overrides = {}) => {
   return {
     version: { value: 1, receivedAt: now },
     battery: { value: 'CHARGING', receivedAt: now },
-    shock: { value: 'NO_SHOCK', receivedAt: now },
+    freeFall:{ value: 'NO_FALL', receivedAt: now },
     voltageMv: { value: 3950, receivedAt: now },
     ...overrides,
   };
@@ -47,23 +47,23 @@ describe('HealthBadge', () => {
     expect(batteryIcon.getAttribute('style')).toContain('var(--red-600)');
   });
 
-  // 3. Renders shock with pulse class for SHOCK_DETECTED
-  it('adds pulse class to shock dot when shock status is SHOCK_DETECTED', () => {
-    const health = freshHealth({ shock: { value: 'SHOCK_DETECTED', receivedAt: Date.now() } });
+  // 3. Renders free fall with pulse class for FREE_FALL_DETECTED
+  it('adds pulse class to free fall dot when free fall status is FREE_FALL_DETECTED', () => {
+    const health = freshHealth({ freeFall:{ value: 'FREE_FALL_DETECTED', receivedAt: Date.now() } });
     render(<HealthBadge health={health} />);
 
-    const shockEl = screen.getByTestId('health-shock');
-    const dot = shockEl.querySelector('.health-pulse-icon');
+    const freeFallEl = screen.getByTestId('health-freefall');
+    const dot = freeFallEl.querySelector('.health-pulse-icon');
     expect(dot).not.toBeNull();
   });
 
-  // 4. Renders shock without pulse class for NO_SHOCK
-  it('does not add pulse class to shock dot when shock status is NO_SHOCK', () => {
-    const health = freshHealth({ shock: { value: 'NO_SHOCK', receivedAt: Date.now() } });
+  // 4. Renders free fall without pulse class for NO_FALL
+  it('does not add pulse class to free fall dot when free fall status is NO_FALL', () => {
+    const health = freshHealth({ freeFall:{ value: 'NO_FALL', receivedAt: Date.now() } });
     render(<HealthBadge health={health} />);
 
-    const shockEl = screen.getByTestId('health-shock');
-    const dot = shockEl.querySelector('.health-pulse-icon');
+    const freeFallEl = screen.getByTestId('health-freefall');
+    const dot = freeFallEl.querySelector('.health-pulse-icon');
     expect(dot).toBeNull();
   });
 
@@ -105,10 +105,10 @@ describe('HealthBadge', () => {
   });
 
   // 8. Has role="img" and descriptive aria-label
-  it('has role="img" and a descriptive aria-label including battery, shock, and voltage', () => {
+  it('has role="img" and a descriptive aria-label including battery, free fall, and voltage', () => {
     const health = freshHealth({
       battery: { value: 'CHARGING', receivedAt: Date.now() },
-      shock: { value: 'NO_SHOCK', receivedAt: Date.now() },
+      freeFall:{ value: 'NO_FALL', receivedAt: Date.now() },
       voltageMv: { value: 3950, receivedAt: Date.now() },
     });
     render(<HealthBadge health={health} />);
@@ -117,7 +117,7 @@ describe('HealthBadge', () => {
     expect(badge).toBeInTheDocument();
     const aria = badge.getAttribute('aria-label');
     expect(aria).toContain('Battery: Charging');
-    expect(aria).toContain('Shock: No Shock');
+      expect(aria).toContain('Free Fall: No Free Fall');
     expect(aria).toContain('Voltage: 3.95V');
   });
 
@@ -127,7 +127,7 @@ describe('HealthBadge', () => {
     const staleReceivedAt = now - STALE_THRESHOLD_MS - 1;
     const health = {
       battery: { value: 'CHARGING', receivedAt: staleReceivedAt },
-      shock: { value: 'NO_SHOCK', receivedAt: staleReceivedAt },
+      freeFall:{ value: 'NO_FALL', receivedAt: staleReceivedAt },
       voltageMv: { value: 3950, receivedAt: staleReceivedAt },
     };
     render(<HealthBadge health={health} />);
@@ -145,26 +145,26 @@ describe('HealthBadge', () => {
   });
 
   // 10. Renders all indicators together when all fields have values
-  it('renders battery, shock, and voltage indicators together when all fields have values', () => {
+  it('renders battery, free fall, and voltage indicators together when all fields have values', () => {
     const health = freshHealth({
       battery: { value: 'DISCHARGING', receivedAt: Date.now() },
-      shock: { value: 'SHOCK_DETECTED', receivedAt: Date.now() },
+      freeFall:{ value: 'FREE_FALL_DETECTED', receivedAt: Date.now() },
       voltageMv: { value: 3700, receivedAt: Date.now() },
     });
     render(<HealthBadge health={health} />);
 
     const badge = screen.getByTestId('health-badge');
     expect(within(badge).getByTestId('health-battery')).toBeInTheDocument();
-    expect(within(badge).getByTestId('health-shock')).toBeInTheDocument();
+    expect(within(badge).getByTestId('health-freefall')).toBeInTheDocument();
     expect(within(badge).getByTestId('health-voltage')).toBeInTheDocument();
 
     // Verify correct values for each indicator
     const battery = within(badge).getByTestId('health-battery');
     expect(battery.getAttribute('style')).toContain('var(--blue-500)');
 
-    const shock = within(badge).getByTestId('health-shock');
-    expect(shock.querySelector('.health-pulse-icon')).not.toBeNull();
-    expect(shock.getAttribute('style')).toContain('var(--red-600)');
+    const freeFall = within(badge).getByTestId('health-freefall');
+    expect(freeFall.querySelector('.health-pulse-icon')).not.toBeNull();
+    expect(freeFall.getAttribute('style')).toContain('var(--red-600)');
 
     const voltage = within(badge).getByTestId('health-voltage');
     expect(voltage.textContent).toBe('3.70V');

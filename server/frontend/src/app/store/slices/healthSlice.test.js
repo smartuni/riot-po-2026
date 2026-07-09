@@ -24,7 +24,7 @@ describe('healthSlice reducer', () => {
           {
             senseGateId: 1,
             batteryStatus: 'CHARGING',
-            shockStatus: 'NO_SHOCK',
+            freeFallStatus: 'NO_FALL',
             voltageMv: 3950,
             version: 3,
           },
@@ -37,14 +37,14 @@ describe('healthSlice reducer', () => {
         1: {
           version: { value: 3, receivedAt: now },
           battery: { value: 'CHARGING', receivedAt: now },
-          shock: { value: 'NO_SHOCK', receivedAt: now },
+          freeFall: { value: 'NO_FALL', receivedAt: now },
           voltageMv: { value: 3950, receivedAt: now },
         },
       },
     });
   });
 
-  // Test 11: shock message (battery=UNKNOWN) -> battery PRESERVED, shock UPDATED
+  // Test 11: free fall message (battery=UNKNOWN) -> battery PRESERVED, free fall UPDATED
   it('preserves battery value when incoming batteryStatus is UNKNOWN and previous exists', () => {
     const now1 = 1000;
     const now2 = 2000;
@@ -59,7 +59,7 @@ describe('healthSlice reducer', () => {
           {
             senseGateId: 1,
             batteryStatus: 'CHARGING',
-            shockStatus: 'NO_SHOCK',
+            freeFallStatus: 'NO_FALL',
             voltageMv: 3950,
             version: 3,
           },
@@ -75,7 +75,7 @@ describe('healthSlice reducer', () => {
           {
             senseGateId: 1,
             batteryStatus: 'UNKNOWN',
-            shockStatus: 'SHOCK_DETECTED',
+            freeFallStatus: 'FREE_FALL_DETECTED',
             voltageMv: 0,
             version: 4,
           },
@@ -87,14 +87,14 @@ describe('healthSlice reducer', () => {
       value: 'CHARGING',
       receivedAt: now1,
     });
-    expect(state.bySenseGateId[1].shock).toEqual({
-      value: 'SHOCK_DETECTED',
+    expect(state.bySenseGateId[1].freeFall).toEqual({
+      value: 'FREE_FALL_DETECTED',
       receivedAt: now2,
     });
   });
 
-  // Test 12: battery message (shock=UNKNOWN) -> shock PRESERVED, battery UPDATED
-  it('preserves shock value when incoming shockStatus is UNKNOWN and previous exists', () => {
+  // Test 12: battery message (freeFall=UNKNOWN) -> free fall PRESERVED, battery UPDATED
+  it('preserves free fall value when incoming freeFallStatus is UNKNOWN and previous exists', () => {
     const now1 = 1000;
     const now2 = 2000;
 
@@ -108,7 +108,7 @@ describe('healthSlice reducer', () => {
           {
             senseGateId: 1,
             batteryStatus: 'CHARGING',
-            shockStatus: 'NO_SHOCK',
+            freeFallStatus: 'NO_FALL',
             voltageMv: 3950,
             version: 3,
           },
@@ -124,7 +124,7 @@ describe('healthSlice reducer', () => {
           {
             senseGateId: 1,
             batteryStatus: 'LOW_BATTERY',
-            shockStatus: 'UNKNOWN',
+            freeFallStatus: 'UNKNOWN',
             voltageMv: 0,
             version: 4,
           },
@@ -132,8 +132,8 @@ describe('healthSlice reducer', () => {
       })
     );
 
-    expect(state.bySenseGateId[1].shock).toEqual({
-      value: 'NO_SHOCK',
+    expect(state.bySenseGateId[1].freeFall).toEqual({
+      value: 'NO_FALL',
       receivedAt: now1,
     });
     expect(state.bySenseGateId[1].battery).toEqual({
@@ -157,7 +157,7 @@ describe('healthSlice reducer', () => {
           {
             senseGateId: 1,
             batteryStatus: 'CHARGING',
-            shockStatus: 'NO_SHOCK',
+            freeFallStatus: 'NO_FALL',
             voltageMv: 3950,
             version: 3,
           },
@@ -173,7 +173,7 @@ describe('healthSlice reducer', () => {
           {
             senseGateId: 1,
             batteryStatus: 'UNKNOWN',
-            shockStatus: 'UNKNOWN',
+            freeFallStatus: 'UNKNOWN',
             voltageMv: 0,
             version: 4,
           },
@@ -202,7 +202,7 @@ describe('healthSlice reducer', () => {
           {
             senseGateId: 1,
             batteryStatus: 'CHARGING',
-            shockStatus: 'NO_SHOCK',
+            freeFallStatus: 'NO_FALL',
             voltageMv: 3950,
             version: 3,
           },
@@ -226,7 +226,7 @@ describe('healthSlice reducer', () => {
           {
             senseGateId: 5,
             batteryStatus: 'UNKNOWN',
-            shockStatus: 'SHOCK_DETECTED',
+            freeFallStatus: 'FREE_FALL_DETECTED',
             voltageMv: 0,
             version: 1,
           },
@@ -256,14 +256,14 @@ describe('healthSlice reducer', () => {
           {
             senseGateId: 1,
             batteryStatus: 'CHARGING',
-            shockStatus: 'NO_SHOCK',
+            freeFallStatus: 'NO_FALL',
             voltageMv: 3950,
             version: 1,
           },
           {
             senseGateId: 2,
             batteryStatus: 'DISCHARGING',
-            shockStatus: 'SHOCK_DETECTED',
+            freeFallStatus: 'FREE_FALL_DETECTED',
             voltageMv: 3700,
             version: 2,
           },
