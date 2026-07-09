@@ -75,68 +75,81 @@ static bool check_free_fall(shock_detector_t* instance) {
 }
 
 static bool check_shock(shock_detector_t* instance) {
-	float sum = 0.0;
-	int accuracy = 1;
-	float mean = 0.0;
-	float sq_diff_sum_for_stddev = 0.0;
-	int zeroes_count = 0;
-	float variance = 0.0;
-	float stddev = 0.0;
-	float sq_sum = 0.0; // Renamed from sq_diff_sum
 
-	float max_value = 0.0; // Changed from INT_MIN since values are float
+	//for the values below 100hz: if there's at least one value, which is lower than 10000, return true, else return false
 
-	//BEGIN VARIANCE CHECK
-	int lower_limit = 0; // Hz - only check variance for frequencies above this limit
-	int upper_limit = 30; // Hz - only check variance for frequencies below this limit
-	int count = 0; // Actual number of samples processed
-
-	for (int i = lower_limit; i < upper_limit; i += accuracy) {
-		float current_value = instance->freq_avg->frequency_domain[i].average;
-		sum += current_value;
-		sq_sum += current_value * current_value; // For RMS calculation
-
-		if (current_value == 0.0f) {
-			zeroes_count++;
+	for(int i = 0; i < 100; i++) {
+		if(instance->freq_avg->frequency_domain[i].average == 0) {
+			return true;
 		}
-		if (current_value > max_value) {
-			max_value = current_value;
-		}
-		count++;
 	}
-
-	mean = sum / count;
-
-	// Calculate variance and standard deviation
-	for (int i = lower_limit; i < upper_limit; i += accuracy) {
-		float diff = instance->freq_avg->frequency_domain[i].average - mean;
-		sq_diff_sum_for_stddev += diff * diff;
-	}
-
-	// Calculate Spectral Crest Factor (SCF) = max_value / RMS
-	// RMS = sqrt(mean of squared values)
-	float mean_square = sq_sum / count;
-	float rms = sqrt(mean_square);
-
-	if (rms == 0.0f) {
-		LOG_DEBUG("[shock_detector.c:%d] RMS is zero, cannot calculate SCF\n", __LINE__);
-		return false;
-	}
-
-	float scf = max_value / rms;
-
-	variance = sq_diff_sum_for_stddev / count;
-	stddev = sqrt(variance);
-
-	LOG_DEBUG("[shock_detector.c:%d] %d-%d Hz: Mean:%d, StdDev:%d, Zeros:%d, SCF:%d\n",
-			  __LINE__, lower_limit, upper_limit, (int)mean, (int)stddev, zeroes_count, (int)scf);
-	//END VARIANCE CHECK
-
-	// Add your classification logic here based on SCF and/or zeroes_count
-	// For example:
-	// if (scf > SOME_THRESHOLD || zeroes_count > SOME_THRESHOLD) return true;
-
 	return false;
+
+
+
+
+	// float sum = 0.0;
+	// int accuracy = 1;
+	// float mean = 0.0;
+	// float sq_diff_sum_for_stddev = 0.0;
+	// int zeroes_count = 0;
+	// float variance = 0.0;
+	// float stddev = 0.0;
+	// float sq_sum = 0.0; // Renamed from sq_diff_sum
+
+	// float max_value = 0.0; // Changed from INT_MIN since values are float
+
+	// //BEGIN VARIANCE CHECK
+	// int lower_limit = 0; // Hz - only check variance for frequencies above this limit
+	// int upper_limit = 30; // Hz - only check variance for frequencies below this limit
+	// int count = 0; // Actual number of samples processed
+
+	// for (int i = lower_limit; i < upper_limit; i += accuracy) {
+	// 	float current_value = instance->freq_avg->frequency_domain[i].average;
+	// 	sum += current_value;
+	// 	sq_sum += current_value * current_value; // For RMS calculation
+
+	// 	if (current_value == 0.0f) {
+	// 		zeroes_count++;
+	// 	}
+	// 	if (current_value > max_value) {
+	// 		max_value = current_value;
+	// 	}
+	// 	count++;
+	// }
+
+	// mean = sum / count;
+
+	// // Calculate variance and standard deviation
+	// for (int i = lower_limit; i < upper_limit; i += accuracy) {
+	// 	float diff = instance->freq_avg->frequency_domain[i].average - mean;
+	// 	sq_diff_sum_for_stddev += diff * diff;
+	// }
+
+	// // Calculate Spectral Crest Factor (SCF) = max_value / RMS
+	// // RMS = sqrt(mean of squared values)
+	// float mean_square = sq_sum / count;
+	// float rms = sqrt(mean_square);
+
+	// if (rms == 0.0f) {
+	// 	LOG_DEBUG("[shock_detector.c:%d] RMS is zero, cannot calculate SCF\n", __LINE__);
+	// 	return false;
+	// }
+
+	// float scf = max_value / rms;
+
+	// variance = sq_diff_sum_for_stddev / count;
+	// stddev = sqrt(variance);
+
+	// LOG_DEBUG("[shock_detector.c:%d] %d-%d Hz: Mean:%d, StdDev:%d, Zeros:%d, SCF:%d\n",
+	// 		  __LINE__, lower_limit, upper_limit, (int)mean, (int)stddev, zeroes_count, (int)scf);
+	// //END VARIANCE CHECK
+
+	// // Add your classification logic here based on SCF and/or zeroes_count
+	// // For example:
+	// // if (scf > SOME_THRESHOLD || zeroes_count > SOME_THRESHOLD) return true;
+
+	// return false;
 }
 
 // static bool debug_shock(shock_detector_t* instance) {
@@ -284,9 +297,9 @@ static void* acceleration_thread(void* instance_void) {
 		postprocess_fft(instance); // post-process the FFT results to find the average over frequency
 		//LOG_DEBUG("[shock_detector.c:%d] Frequency ; Magnitude\n", __LINE__);
 
-		for (int i = 0; i < instance->nyquist_domain_size; i += 3) {
-			LOG_DEBUG(" ; %d ; %d\n", i, instance->freq_avg->frequency_domain[i].average);
-		}
+		// for (int i = 0; i < instance->nyquist_domain_size; i += 3) {
+		// 	LOG_DEBUG(" ; %d ; %d\n", i, instance->freq_avg->frequency_domain[i].average);
+		// }
 		
 		// for (int i = 0; i < instance->sample_size; i += 3) {
 		// 	LOG_DEBUG(" ; %d ; %d\n", i, (int)(instance->input[i].r) - ACCELEROMETER_EARTH_GRAVITY);
