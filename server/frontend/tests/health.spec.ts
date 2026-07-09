@@ -198,7 +198,7 @@ test.describe('Health status (issue #113)', () => {
           version: 1,
           senseGateId: 1001,
           freeFallStatus: 'UNKNOWN',
-          shockStatus: 'UNKNOWN',
+          shockStatus: 'NO_SHOCK',
           batteryStatus: 'CHARGING',
           voltageMv: 4200,
         },
