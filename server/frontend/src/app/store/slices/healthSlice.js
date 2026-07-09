@@ -6,7 +6,7 @@ const initialState = {
 
 const SENTINEL_VALUES = {
   battery: 'UNKNOWN',
-  shock: 'UNKNOWN',
+  freeFall: 'UNKNOWN',
   voltageMv: 0,
 };
 
@@ -35,8 +35,8 @@ function mergeStatusIntoEntry(state, status, now) {
   if (status.batteryStatus !== null && status.batteryStatus !== undefined) {
     entry.battery = mergeField(entry, 'battery', status.batteryStatus, now);
   }
-  if (status.shockStatus !== null && status.shockStatus !== undefined) {
-    entry.shock = mergeField(entry, 'shock', status.shockStatus, now);
+  if (status.freeFallStatus !== null && status.freeFallStatus !== undefined) {
+    entry.freeFall = mergeField(entry, 'freeFall', status.freeFallStatus, now);
   }
   if (status.voltageMv !== null && status.voltageMv !== undefined) {
     entry.voltageMv = mergeField(entry, 'voltageMv', status.voltageMv, now);
