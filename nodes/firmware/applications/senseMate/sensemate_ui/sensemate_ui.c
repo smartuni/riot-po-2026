@@ -675,8 +675,8 @@ static void slider_event_cb(lv_event_t *e)
     lv_snprintf(buf, sizeof(buf), "%d dBm", rssi);
     lv_label_set_text(slider_label, buf);
 
-    if (_data_cbs && _data_cbs->set_min_rssi) {
-        _data_cbs->set_min_rssi(rssi);
+    if (_data_cbs && _data_cbs->set_min_visible_rssi) {
+        _data_cbs->set_min_visible_rssi(rssi);
     }
 }
 
@@ -709,15 +709,15 @@ static void _settings_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
     lv_obj_t *slider_label = lv_label_create(list1);
     int8_t visible_rssi = -100;
 
-    if (_data_cbs && _data_cbs->get_min_rssi) {
-        rssi = _data_cbs->get_min_rssi();
+    if (_data_cbs && _data_cbs->get_min_visible_rssi) {
+        visible_rssi = _data_cbs->get_min_visible_rssi();
     }
 
     lv_slider_set_range(slider, -100, -30);
-    lv_slider_set_value(slider, rssi, LV_ANIM_OFF);
+    lv_slider_set_value(slider, visible_rssi, LV_ANIM_OFF);
 
     char buf[16];
-    lv_snprintf(buf, sizeof(buf), "%d dBm", rssi);
+    lv_snprintf(buf, sizeof(buf), "%d dBm", visible_rssi);
     lv_label_set_text(slider_label, buf);
     lv_obj_align(slider_label, LV_ALIGN_CENTER, 0, 0);
     lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
