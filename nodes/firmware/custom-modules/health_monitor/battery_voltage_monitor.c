@@ -43,16 +43,6 @@ static int get_battery_voltage(void) {
 	return (int)voltage_mv;
 }
 
-battery_voltage_monitor_t* battery_voltage_monitor_new(void) {
-	battery_voltage_monitor_t* instance = (battery_voltage_monitor_t*) malloc(sizeof(battery_voltage_monitor_t));
-	if (instance == NULL) {
-		LOG_DEBUG("[battery_voltage_monitor.c:%d] Failed to allocate memory for battery voltage monitor", __LINE__);
-		return NULL;
-	}
-	battery_voltage_monitor_init(instance);
-	return instance;
-}
-
 int battery_voltage_monitor_init(battery_voltage_monitor_t* instance) {
 	gpio_t adc_pin = GPIO_PIN(0, 14);
 	int res = voltage_adc_setup(adc_pin, AIN7_BAT);

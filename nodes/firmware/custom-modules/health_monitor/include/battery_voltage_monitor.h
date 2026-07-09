@@ -70,11 +70,7 @@ typedef struct {
 	//4. bool and char
 } battery_voltage_monitor_t;
 
-/**
- * @brief Creates a new battery voltage monitor to the heap
- * @return Pointer to the new battery voltage monitor, or NULL if memory allocation failed
- */
-battery_voltage_monitor_t* battery_voltage_monitor_new(void);
+
 int battery_voltage_monitor_init(battery_voltage_monitor_t* instance);
 
 battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* instance);

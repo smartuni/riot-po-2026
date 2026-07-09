@@ -1,17 +1,5 @@
 #include "health_monitor.h"
 
-// health_monitor_t* health_monitor_new(int low_battery_threshold_mv, int battery_update_period_sec, int shock_detector_update_period_sec) {
-// 	health_monitor_t* instance = (health_monitor_t*)malloc(sizeof(health_monitor_t));
-// 	instance->low_battery_threshold_mv = low_battery_threshold_mv;
-// 	instance->battery_update_period_sec = battery_update_period_sec;
-// 	instance->shock_detector_update_period_sec = shock_detector_update_period_sec;
-
-// 	instance->is_low_battery = false;
-// 	//init battery monitoring
-// 	instance->battery_instance = battery_voltage_monitor_new();
-
-// 	return instance;
-// }
 
 int health_monitor_init(health_monitor_t* instance) {
 	instance->battery_monitor_running = false;

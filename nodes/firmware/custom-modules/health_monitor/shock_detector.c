@@ -298,7 +298,6 @@ static void* acceleration_thread(void* instance_void) {
 }
 
 int shock_detector_init(shock_detector_t* instance, int sampling_period_ms) {
-	//instance = (shock_detector_t*)malloc(sizeof(shock_detector_t));
 	instance->shock_status = NO_SHOCK;
 	instance->running = true;
 	instance->sample_size = SAMPLE_SIZE;
