@@ -19,7 +19,7 @@ static int calculate_magnitude(int x, int y, int z) {
 static void collect_magnitudes(shock_detector_t* instance) {
 	phydat_t acceleration;
 	memset(instance->raw_accel_data, 0, sizeof(raw_acceleration_t) * instance->sample_size);
-	LED1_ON;
+	// LED1_ON;
 	for (int i = 0; i < instance->sample_size; i++) {
 		int acc_dim = saul_reg_read(instance->accel_sensor, &acceleration);
 		if (acc_dim < 1) {
@@ -44,7 +44,7 @@ static void collect_magnitudes(shock_detector_t* instance) {
 		instance->input[i].r = calculate_magnitude(*x, *y, *z);
 		instance->input[i].i = 0;
 	}
-	LED1_OFF;
+	//LED1_OFF;
 }
 
 static void process_fft(shock_detector_t* instance) {

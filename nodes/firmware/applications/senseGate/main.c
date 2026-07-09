@@ -231,6 +231,16 @@ int main(void){
         if (timeToUpdateTable == TIME_PERIOD_TABLE_UPDATE) {
             _LOGDBG("get current observer state...\n");
             gate_state_t current_gate_state = gate_observer_get_state(&observer, &obs_state);
+			switch (current_gate_state) {
+				case GATE_STATE_OPEN:
+					LED1_ON;
+					break;
+				case GATE_STATE_CLOSED:
+					LED1_OFF;
+					break;
+				default:
+					break;
+			}
             _LOGDBG("current state: %s\n", gate_state_tostr(current_gate_state));
             _LOGDBG("put new reported state...\n");
             res = tables_put_gate_report(tables, current_gate_state);
