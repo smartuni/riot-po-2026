@@ -6,6 +6,8 @@ import com.riot.matesense.service.DownlinkService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/downlink")
 public class DownlinkController {
@@ -17,9 +19,9 @@ public class DownlinkController {
     }
 
     @PostMapping
-    public ResponseEntity<String> sendDownlink(
+    public ResponseEntity<Map<String, String>> sendDownlink(
             @RequestBody DownPayload payload) {
         downlinkService.sendDownlinkToDevice(payload);
-        return ResponseEntity.ok("Downlink vorbereitet.");
+        return ResponseEntity.ok(Map.of("message", "Downlink vorbereitet."));
     }
 }
