@@ -20,13 +20,13 @@ import type { Page, WebSocketRoute } from '@playwright/test';
 
 const STOMP_NULL = '\x00';
 
-type ShockStatus = 'NO_SHOCK' | 'SHOCK_DETECTED' | 'UNKNOWN';
+type FreeFallStatus = 'NO_FALL' | 'FREE_FALL_DETECTED' | 'UNKNOWN';
 type BatteryStatus = 'CHARGING' | 'DISCHARGING' | 'LOW_BATTERY' | 'UNKNOWN';
 
 interface HealthStatus {
   version: number;
   senseGateId: number;
-  shockStatus: ShockStatus;
+  freeFallStatus: FreeFallStatus;
   batteryStatus: BatteryStatus;
   voltageMv: number;
 }
@@ -122,7 +122,7 @@ test.describe('Health status (issue #113)', () => {
         {
           version: 1,
           senseGateId: 1001,
-          shockStatus: 'NO_SHOCK',
+          freeFallStatus: 'NO_FALL',
           batteryStatus: 'CHARGING',
           voltageMv: 4200,
         },
@@ -137,7 +137,7 @@ test.describe('Health status (issue #113)', () => {
     await expect(badge).toBeVisible({ timeout: 10000 });
     await expect(badge).toHaveAttribute(
       'aria-label',
-      'Battery: Charging, Shock: No Shock, Voltage: 4.20V',
+      'Battery: Charging, Free Fall: No Free Fall, Voltage: 4.20V',
     );
     await expect(alphaCard.locator('[data-testid="health-voltage"]')).toHaveText('4.20V');
   });
@@ -168,7 +168,7 @@ test.describe('Health status (issue #113)', () => {
         {
           version: 1,
           senseGateId: 1001,
-          shockStatus: 'NO_SHOCK',
+          freeFallStatus: 'NO_FALL',
           batteryStatus: 'LOW_BATTERY',
           voltageMv: 3300,
         },
@@ -179,7 +179,7 @@ test.describe('Health status (issue #113)', () => {
     expect(true).toBe(true);
   });
 
-  test('per-field merge: shock message preserves previous battery + voltage', async ({
+  test('per-field merge: free fall message preserves previous battery + voltage', async ({
     page,
     sendHealth,
   }) => {
@@ -193,7 +193,7 @@ test.describe('Health status (issue #113)', () => {
         {
           version: 1,
           senseGateId: 1001,
-          shockStatus: 'UNKNOWN',
+          freeFallStatus: 'UNKNOWN',
           batteryStatus: 'CHARGING',
           voltageMv: 4200,
         },
@@ -208,7 +208,7 @@ test.describe('Health status (issue #113)', () => {
     await expect(badge).toBeVisible({ timeout: 10000 });
     await expect(badge).toHaveAttribute(
       'aria-label',
-      'Battery: Charging, Shock: No Shock, Voltage: 4.20V',
+      'Battery: Charging, Free Fall: No Free Fall, Voltage: 4.20V',
     );
 
     sendHealth({
@@ -217,7 +217,7 @@ test.describe('Health status (issue #113)', () => {
         {
           version: 1,
           senseGateId: 1001,
-          shockStatus: 'SHOCK_DETECTED',
+          freeFallStatus: 'FREE_FALL_DETECTED',
           batteryStatus: 'UNKNOWN',
           voltageMv: 0,
         },
@@ -226,11 +226,11 @@ test.describe('Health status (issue #113)', () => {
 
     await expect(badge).toHaveAttribute(
       'aria-label',
-      'Battery: Charging, Shock: Shock Detected, Voltage: 4.20V',
+      'Battery: Charging, Free Fall: Free Fall Detected, Voltage: 4.20V',
       { timeout: 10000 },
     );
-    const shockEl = alphaCard.locator('[data-testid="health-shock"]');
-    await expect(shockEl.locator('.health-pulse-icon')).toBeVisible();
+    const freeFallEl = alphaCard.locator('[data-testid="health-freefall"]');
+    await expect(freeFallEl.locator('.health-pulse-icon')).toBeVisible();
   });
 
   test('unmapped device appears in Unmapped Health Devices section', async ({
@@ -247,7 +247,7 @@ test.describe('Health status (issue #113)', () => {
         {
           version: 1,
           senseGateId: 9999,
-          shockStatus: 'NO_SHOCK',
+          freeFallStatus: 'NO_FALL',
           batteryStatus: 'DISCHARGING',
           voltageMv: 3900,
         },
@@ -266,7 +266,7 @@ test.describe('Health status (issue #113)', () => {
         .locator('[data-testid="health-badge"]'),
     ).toHaveAttribute(
       'aria-label',
-      'Battery: Discharging, Shock: No Shock, Voltage: 3.90V',
+      'Battery: Discharging, Free Fall: No Free Fall, Voltage: 3.90V',
     );
   });
 });
