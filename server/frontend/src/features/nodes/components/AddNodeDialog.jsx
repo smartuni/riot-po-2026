@@ -21,7 +21,7 @@ const AddNodeDialog = ({ open, onClose }) => {
       setFormData({ name: '', publicKey: '' });
       onClose();
     } catch (err) {
-      setErrorMessage('Failed to add node. Please try again.');
+      setErrorMessage(err?.data?.error || 'Failed to add node. Please try again.');
     } finally {
       setSubmitting(false);
     }

@@ -41,6 +41,8 @@ const RootKeySection = () => {
 
   if (isLoading) return <LoadingCard label="Loading root key…" />;
 
+  if (!isController) return null;
+
   return (
     <div className="card">
       <div className="card-header">

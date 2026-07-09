@@ -21,6 +21,7 @@ public class NodeManagementService {
 
     private static final String ROOT_KEY_KID = "server";
     private static final int ED25519_PUBLIC_KEY_BYTES = 32;
+    private static final int ED25519_PRIVATE_KEY_BYTES = 64;
 
     private final RootKeyRepository rootKeyRepository;
     private final NodeRepository nodeRepository;
@@ -33,6 +34,7 @@ public class NodeManagementService {
     @Transactional
     public void saveRootKey(RootKey rootKey) {
         validatePublicKey(rootKey.getPublicKey());
+        validatePrivateKey(rootKey.getPrivateKey());
         RootKeyEntity entity = rootKeyRepository.findFirstByOrderByIdAsc()
                 .orElseGet(() -> {
                     RootKeyEntity newEntity = new RootKeyEntity();
@@ -49,7 +51,7 @@ public class NodeManagementService {
     public RootKey getRootKey() {
         RootKeyEntity entity = rootKeyRepository.findFirstByOrderByIdAsc()
                 .orElseThrow(RootKeyNotFoundException::new);
-        return new RootKey(entity.getKid(), entity.getPublicKey(), entity.getPrivateKey());
+        return new RootKey(entity.getKid(), entity.getPublicKey(), null);
     }
 
     public List<Node> getAllNodes() {
@@ -94,6 +96,27 @@ public class NodeManagementService {
         if (decoded.length != ED25519_PUBLIC_KEY_BYTES) {
             throw new IllegalArgumentException(
                     "Public key must be exactly " + ED25519_PUBLIC_KEY_BYTES + " bytes (raw), got " + decoded.length
+            );
+        }
+    }
+
+    /**
+     * Validates that the private key is a valid Base64-encoded string that decodes
+     * to exactly 64 bytes (Ed25519 private key size: 32-byte seed + 32-byte public key).
+     */
+    private void validatePrivateKey(String privateKey) {
+        if (privateKey == null || privateKey.isBlank()) {
+            throw new IllegalArgumentException("Private key must not be blank");
+        }
+        byte[] decoded;
+        try {
+            decoded = Base64.getDecoder().decode(privateKey.trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Private key must be valid Base64");
+        }
+        if (decoded.length != ED25519_PRIVATE_KEY_BYTES) {
+            throw new IllegalArgumentException(
+                    "Private key must be exactly " + ED25519_PRIVATE_KEY_BYTES + " bytes (raw), got " + decoded.length
             );
         }
     }
