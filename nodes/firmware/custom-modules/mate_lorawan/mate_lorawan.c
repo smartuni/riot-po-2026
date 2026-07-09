@@ -497,3 +497,8 @@ bool mate_lorawan_joined(void)
 {
     return _joined;
 }
+
+int send_lorawan_packet(const uint8_t *buf, size_t len)
+{
+    return _send_lorawan_packet(netif, buf, len);
+}
