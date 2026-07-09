@@ -4,16 +4,18 @@ FROM maven:3.9-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 
-# Copy Maven configuration files
+# Copy Maven wrapper and configuration
 COPY pom.xml .
 COPY mvnw .
 COPY mvnw.cmd .
+COPY .mvn .mvn
+RUN chmod +x mvnw
 
 # Copy source code
 COPY src ./src
 
 # Build the application
-RUN mvn clean package -DskipTests
+RUN ./mvnw --batch-mode --errors -DskipTests clean package
 
 # Stage 2: Runtime Stage
 FROM eclipse-temurin:17-jre
