@@ -35,8 +35,6 @@ static void collect_magnitudes(shock_detector_t* instance) {
 			ztimer_sleep(ZTIMER_MSEC, instance->sampling_period_ms);
 		}
 	}
-	LOG_DEBUG("[shock_detector.c:%d] Collected samples\n", __LINE__);
-
 	memset(instance->input, 0, sizeof(kiss_fft_cpx) * instance->sample_size);
 
 	for (int i = 0; i < instance->sample_size; i++) {
