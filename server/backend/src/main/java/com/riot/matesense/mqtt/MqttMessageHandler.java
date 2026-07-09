@@ -73,8 +73,15 @@ public class MqttMessageHandler {
             switch (type) {
                 case IST_STATE -> {
                     for (JsonNode statusNode : root.get("statuses")) {
+                        //System.out.println("this is the expected node:"+statusNode.toPrettyString());
+
+
                         long gateId = statusNode.get("gateId").asLong();
+                        //System.out.println("gate id : is "+ gateId);
+
                         int statusCode = statusNode.get("status").asInt();
+                        //System.out.println("status is "+ statusCode);
+
                         // physical is when it actually happened at the gate ,
                         // willl be used here just as additional information, time for ordering will be hlc_time
                         Long gatePhysicalTime = statusNode.get("hlc_phy").asLong();

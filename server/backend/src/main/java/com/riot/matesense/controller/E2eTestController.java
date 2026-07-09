@@ -52,7 +52,9 @@ public class E2eTestController {
     public static class StatusEntry {
         public long gateId;
         public int status;
-        public long timestamp;
+
+        public long hlc_phy;
+        public long hlc_log;
     }
 
     // --- Internal payload for JSON serialization ---
