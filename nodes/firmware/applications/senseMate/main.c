@@ -67,13 +67,13 @@ bool _set_min_visible_rssi_cb(int8_t rssi)
 {
     LOG_INFO("New minimum RSSI: %d\n", rssi);
 
-    min_rssi = rssi;
+    min_visible_rssi = rssi;
 
     return true;
 }
 
 int8_t _get_min_visible_rssi_cb(void){
-    return min_rssi;
+    return min_visible_rssi;
 }
 
 uint32_t _get_known_gate_count_by_type(table_record_type_t type)
@@ -214,8 +214,8 @@ static bool _put_gate_observation_cb(ui_data_element_t *elem)
 static ui_data_cbs_t _ui_data_cbs = {
     .all_gates_iter = _all_gates_iter,
     .put_gate_observation = _put_gate_observation_cb,
-    .set_min_rssi = _set_min_rssi_cb,
-    .get_min_rssi = _get_min_rssi_cb,
+    .set_min_visible_rssi = _set_min_visible_rssi_cb,
+    .get_min_visible_rssi = _get_min_visible_rssi_cb,
     .jobs_iter = NULL,
 };
 
@@ -296,7 +296,7 @@ int main(void) {
     while (1)
     {
         ui_state->visible_gate_cnt = _get_known_gate_count();
-        ui_state->visible_mate_cnt = _get_visible_mate_count(min_rssi);
+        ui_state->visible_mate_cnt = _get_visible_mate_count(min_visible_rssi);
         ui_state->pending_jobs_cnt = _get_known_gate_count_by_type(RECORD_GATE_JOB);
 
         bool updateui = false;
