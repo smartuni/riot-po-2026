@@ -1,4 +1,4 @@
 MODULE := cbor_serialization
-SRC := health_monitor_serialization.c
+SRC := $(wildcard $(CURDIR)/*.c)
 
 include $(RIOTBASE)/Makefile.base
