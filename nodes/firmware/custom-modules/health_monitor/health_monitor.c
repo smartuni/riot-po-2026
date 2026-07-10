@@ -24,7 +24,7 @@ static int serialize_and_send(const health_monitor_payload_t* payload) {
 	return status;
 }
 
-static void* battery_function(void* instance_void) {
+static void* thread_battery_function(void* instance_void) {
 	battery_voltage_monitor_t* instance = (battery_voltage_monitor_t*)instance_void;
 	int low_battery_threshold_mv = LOW_BATTERY_THRESHOLD_MV;
 	int battery_update_period_sec = BATTERY_UPDATE_PERIOD_SEC;
@@ -74,7 +74,7 @@ static void* battery_function(void* instance_void) {
 	return NULL;
 }
 
-static void* shock_detector_function(void* instance_void) {
+static void* thread_shock_detector_function(void* instance_void) {
 	shock_detector_t* instance = (shock_detector_t*)instance_void;
 	shock_detector_start(instance);
 	while (instance->running) {
@@ -101,13 +101,13 @@ int health_monitor_start(health_monitor_t* instance) {
 														sizeof(instance->shock_detector_thread_stack),
 														THREAD_PRIORITY_MAIN - 1,
 														THREAD_CREATE_STACKTEST,
-														shock_detector_function,
+														thread_shock_detector_function,
 														(void*) &instance->shock_detector_instance, "Shock Detector Thread");
 	instance->battery_thread_pid = thread_create(instance->battery_thread_stack,
 												 sizeof(instance->battery_thread_stack),
 												 THREAD_PRIORITY_MAIN - 1,
 												 THREAD_CREATE_STACKTEST,
-												 battery_function,
+												 thread_battery_function,
 												 (void*) &instance->battery_instance, "Battery Thread");
 	
 
