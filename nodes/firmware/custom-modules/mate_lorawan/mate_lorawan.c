@@ -339,7 +339,6 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             size_t signature_len = sizeof(signature_buf);
             table_record_t record;
             table_record_data_buffer_t record_data;
-            size_t signature_len = 0;
             int res = cbor_deserialize_record(pkt->data, pkt->size, &record,
                                               &record_data, NULL, &signature_len);
 
