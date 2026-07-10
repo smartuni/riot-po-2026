@@ -25,7 +25,7 @@
 
 #define AIN7_BAT 7
 
-#define LOG_LEVEL LOG_INFO
+#define LOG_LEVEL LOG_DEBUG
 #include "log.h"
 
 #include <math.h>
