@@ -11,7 +11,6 @@
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  * @author      Colin Johnson <colinedward.johnson@haw-hamburg.de>
  */
-#pragma once
 #ifndef BATTERY_VOLTAGE_MONITOR_H
 #define BATTERY_VOLTAGE_MONITOR_H
 
@@ -26,7 +25,7 @@
 
 #define AIN7_BAT 7
 
-#define LOG_LEVEL LOG_DEBUG
+#define LOG_LEVEL LOG_INFO
 #include "log.h"
 
 #include <math.h>
