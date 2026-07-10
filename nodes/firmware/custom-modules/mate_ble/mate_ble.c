@@ -103,7 +103,7 @@ static uint8_t id_addr_type;
 /* Singleton reference to the tables instance. Is provided on init. */
 static tables_context_t *_tables = NULL;
 
-static const char adv_name[] = BLE_ADVERTISE_NAME;
+static char adv_name[11 + 8]; // "SenseGate-"/"SenseMate-" + maximum device id digits
 
 /* The first two bytes of the manufacturer specific data type contain
  * a company ID code which for a final product must be requested from
@@ -328,6 +328,12 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
 
 int mate_ble_init(tables_context_t *tables, kernel_pid_t *txpid)
 {
+#if (RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_GATE)
+    snprintf(adv_name, sizeof(adv_name), "SenseGate-%d", self_node_id[3]);
+#else
+    snprintf(adv_name, sizeof(adv_name), "SenseMate-%d", self_node_id[3]);
+#endif
+
     _LOGDBG("Initializing BLE extended advertisement...\n");
     _tables = tables;
 
