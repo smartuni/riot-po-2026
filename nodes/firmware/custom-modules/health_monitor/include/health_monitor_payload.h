@@ -10,7 +10,6 @@
  * @brief       Payload structure for the health monitoring for SenseGate
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
-#pragma once
 #ifndef HEALTH_MONITOR_PAYLOAD_H
 #define HEALTH_MONITOR_PAYLOAD_H
 

@@ -10,7 +10,6 @@
  * @brief       Health Monitoring for SenseGate
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
-#pragma once
 #ifndef HEALTH_MONITOR_H
 #define HEALTH_MONITOR_H
 
@@ -21,14 +20,11 @@
 #include "health_monitor_serialization.h"
 #include "health_monitor_payload.h"
 
-
-
-#define LOG_LEVEL LOG_DEBUG
+#define LOG_LEVEL LOG_INFO
 #include "log.h"
 #include "thread.h"
 #include <stdlib.h>
 
-//#define HEALTH_MONITOR_PAYLOAD_SIZE sizeof(health_monitor_payload_t)
 typedef struct {
 	bool battery_monitor_running;
 	kernel_pid_t battery_thread_pid;
