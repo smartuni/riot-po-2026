@@ -14,7 +14,7 @@ SenseMate is a handheld device that:
 
 ### Deployment
 
-Before flashing make sure [signature keys](../custom-modules/key-distro/README.md) are generated! 
+After flashing, use the [identity-manager](../../identity-manager/README.md) to generate a node identity and provision it to the node.
 
 #### Building and Flashing
 

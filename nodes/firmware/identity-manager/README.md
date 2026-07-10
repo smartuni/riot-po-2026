@@ -11,9 +11,32 @@ Script for managing identities as well as related functionality:
 - Provisioning of nodes.
 - Wiping of nodes.
 
-See the help page of the command for more information on the commands and how to use them.  
+See the help page of the command for more information on the commands and how to use them. Also see the [Quickstart](#quickstart).  
 Note that a [configuration file](#configuration) needs to be provided under `config.yaml` next to the script.  
 The generated identity information will be stored in [identity information files](#_id_info-files) in the [`identities` directory](#identities-directory) next to the script.
+
+## Quickstart
+
+To set up a new node, the following steps should be taken:
+
+1. If one doesn't already exist, create a new root identity using:
+   ```shell
+   ./identity-manager.py root create
+   ```
+2. Generate a new identity for the node using the following command (e.g. provisioning a new senseMate):
+   ```shell
+   ./identity-manager.py node create senseMate
+   ```
+   Ensure a [configuration](#configuration) is present under the `config.yaml` for this.
+3. If the node is already provisioned, wipe it using:
+   ```shell
+   ./identity-manager.py node wipe
+   ```
+4. Finally provision the node using the following command (e.g. provisioning a new senseMate):
+   ```shell
+   ./identity-manager.py node provision senseMate ID
+   ```
+   The ID should be the ID generated in step 1.
 
 ## Configuration
 
