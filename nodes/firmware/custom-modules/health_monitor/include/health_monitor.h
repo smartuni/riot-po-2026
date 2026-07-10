@@ -20,7 +20,7 @@
 #include "health_monitor_serialization.h"
 #include "health_monitor_payload.h"
 
-#define LOG_LEVEL LOG_INFO
+#define LOG_LEVEL LOG_DEBUG
 #include "log.h"
 #include "thread.h"
 #include <stdlib.h>
