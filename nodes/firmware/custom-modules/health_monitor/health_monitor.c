@@ -2,37 +2,34 @@
 
 
 int health_monitor_init(health_monitor_t* instance) {
-	instance->battery_monitor_running = false;
-	battery_voltage_monitor_init(&instance->battery_instance);
+	int result;
+	result = battery_voltage_monitor_init(&instance->battery_instance);
+	if(result != 0) {
+		return result;
+	}
 
-	instance->shock_detector_running = false;
-	shock_detector_init(&instance->shock_detector_instance, 1); // 10 ms sampling period
+	
+	result = shock_detector_init(&instance->shock_detector_instance, 1);
+	if(result != 0) {
+		return result;
+	}
 	return 0;
 }
 
 static int serialize_and_send(const health_monitor_payload_t* payload) {
-	//serialize the payload
 	uint8_t buffer[HEALTH_MONITOR_CBOR_SIZE_BYTES];
 	size_t buff_size = sizeof(buffer);
 	health_monitor_serialize(payload, buffer, &buff_size);
-	// LOG_DEBUG("[health_monitor.c:%d] Serialized health monitor payload, size: %d bytes\n", __LINE__, buff_size);
-	// for (size_t i = 0; i < buff_size; i++) {
-	// 	LOG_DEBUG("0x%02X ", buffer[i]);
-	// }
-	// LOG_DEBUG("\n");
-	//send the payload via lorawan
 	int status = send_lorawan_packet(buffer, buff_size);
 	return status;
 }
 
 static void* battery_function(void* instance_void) {
-	//LOG_DEBUG("[health_monitor.c:%d] Starting the battery monitoring thread...\n", __LINE__);
 	battery_voltage_monitor_t* instance = (battery_voltage_monitor_t*)instance_void;
 	int low_battery_threshold_mv = 3700;
 	int battery_update_period_sec = 5;
 	bool is_low_battery = false;
 	while (true) {
-		//init the payload
 		health_monitor_payload_t payload;
 
 		battery_info_t battery_info = battery_voltage_monitor_fetch_info(instance);
@@ -100,16 +97,12 @@ int health_monitor_start(health_monitor_t* instance) {
 		return -1;
 	}
 
-
-	instance->shock_detector_running = true;
 	instance->shock_detector_thread_pid = thread_create(instance->shock_detector_thread_stack,
 														sizeof(instance->shock_detector_thread_stack),
 														THREAD_PRIORITY_MAIN - 1,
 														THREAD_CREATE_STACKTEST,
 														shock_detector_function,
 														(void*) &instance->shock_detector_instance, "Shock Detector Thread");
-
-	instance->battery_monitor_running = true;
 	instance->battery_thread_pid = thread_create(instance->battery_thread_stack,
 												 sizeof(instance->battery_thread_stack),
 												 THREAD_PRIORITY_MAIN - 1,
