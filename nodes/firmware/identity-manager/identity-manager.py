@@ -7,6 +7,7 @@
 #     "click>=8.4.2",
 #     "cryptography>=49.0.0",
 #     "pycose>=1.1.0",
+#     "pyserial>=3.5",
 #     "pyyaml>=6.0.3",
 #     "requests>=2.34.2",
 # ]
@@ -19,7 +20,10 @@ import os
 from pathlib import Path
 import random
 import sys
+from time import sleep
 from typing import List, NoReturn, TypedDict
+
+import serial
 
 import cbor2
 import click
@@ -256,6 +260,58 @@ def validate_base_identity_information(id_info: BaseIdentityInformation):
 
     if id_info["privateKey"].public_key().public_bytes_raw() != id_info["publicKey"].public_bytes_raw():
         raise Exception("publicKey in id info doesn't match public key derived from privateKey.")
+
+def validate_node_identity_information(id_info: NodeIdentityInformation):
+    """Validates the given node identity information to be valid NodeIdentityInformation."""
+    validate_base_identity_information(id_info)
+
+    if "signedPublicIdentity" not in id_info:
+        raise Exception("signedPublicIdentity not in id info.")
+    if not isinstance(id_info["signedPublicIdentity"], dict):
+        raise Exception("signedPublicIdentity isn't of expected format (dict).")
+
+    signed_public_identity_attrs = ["publicIdentity", "signature"]
+    for attr in signed_public_identity_attrs:
+        if attr not in id_info["signedPublicIdentity"]:
+            raise Exception(f"signedPublicIdentity.{attr} not in id info.")
+        if not isinstance(id_info["signedPublicIdentity"][attr], bytes):
+            raise Exception(f"signedPublicIdentity.{attr} isn't of expected format (bytes).")
+
+    if "rootKey" not in id_info:
+        raise Exception("rootKey not in id info.")
+    if not isinstance(id_info["rootKey"], Ed25519PublicKey):
+        raise Exception("rootKey isn't of expected format (Ed25519PublicKey).")
+
+    if "ttn" not in id_info:
+        raise Exception("ttn not in id info.")
+    if not isinstance(id_info["ttn"], dict):
+        raise Exception("ttn isn't of expected format (dict).")
+
+    # Attributes and their expected lengths.
+    ttn_attrs = {
+        "joinEUI": 16,
+        "devEUI": 16,
+        "appKey": 32
+    }
+    for attr, attr_len in ttn_attrs.items():
+        if attr not in id_info["ttn"]:
+            raise Exception(f"ttn.{attr} not in id info.")
+        if not isinstance(id_info["ttn"][attr], str):
+            raise Exception(f"ttn.{attr} isn't of expected format (str).")
+        if len(id_info["ttn"][attr]) != attr_len:
+            raise Exception(f"ttn.{attr} should have a size of 16.")
+        
+    if "provisioningPayload" not in id_info:
+        raise Exception("provisioningPayload not in id info.")
+    if not isinstance(id_info["provisioningPayload"], str):
+        raise Exception("provisioningPayload isn't of expected format (str).")
+    try:
+        base64.b64decode(
+            id_info["provisioningPayload"],
+            validate=True
+        )
+    except Exception as e:
+        raise Exception(f"Error trying to decode provisioningPayload as base64: {e}")
 
 def load_root_identity_info() -> RootIdentityInformation:
     """Loads the root identity info for id 0."""
@@ -501,9 +557,14 @@ def identity_manager():
         print_error("[!] Exiting.")
         sys.exit(1)
 
-@identity_manager.command()
+@identity_manager.group()
+def root():
+    """Root identity management."""
+    pass
+
+@root.command()
 @click.option("-f", "--force", is_flag=True, help="Forcefully create the identity, even if one with the same ID already exists.")
-def root(force):
+def create(force):
     """Create a root identity."""
 
     # Only support a single root identity with id 0 for now.
@@ -545,11 +606,16 @@ def root(force):
         + f"      identity info path: {save_path}"
     )
 
-@identity_manager.command()
+@identity_manager.group()
+def node():
+    """Node identity management."""
+    pass
+
+@node.command()
 @click.option("-i", "--device-id", type=click.INT, help="The device ID for which to create the identity information.")
 @click.option("-f", "--force", is_flag=True, help="Forcefully create the identity, even if one with the same ID already exists.")
 @click.argument("type", type=click.Choice(SupportedNodeType, case_sensitive=False))
-def node(device_id, force, type):
+def create(device_id, force, type):
     """Create a node identity."""
 
     # Load the root identity information.
@@ -729,6 +795,61 @@ def node(device_id, force, type):
         "[i] Node provisioning payload:\n"
         + node_identity_information["provisioningPayload"]
     )
+
+@node.command()
+@click.argument("type", type=click.Choice(SupportedNodeType, case_sensitive=False))
+@click.argument("device_id", type=click.INT)
+def provision(type, device_id):
+    """Sends the provision payload of the specified node via serial."""
+
+    kid = create_kid(type, device_id)
+
+    # Where to load the node identity information from.
+    node_id_info_dir = f"{identity_dir}/node"
+    node_id_info_file_name = kid_to_filename(kid)
+    node_id_info_path = f"{node_id_info_dir}/{node_id_info_file_name}"
+
+    # Load the node identity information.
+    if not Path(node_id_info_path).exists():
+        raise Exception(f"Node identity with ID {device_id} doesn't exist.")
+    with open(node_id_info_path) as f:
+        node_id_info: NodeIdentityInformation = json.load(
+            f,
+            cls=IdentityDecoder,
+        )
+    try:
+        validate_node_identity_information(node_id_info)
+    except Exception as e:
+        print_error(f"[!] Error while validating the node identity information at {node_id_info_path}:")
+        print_error(f"[!] {e}")
+        print_error("[!] Exiting.")
+
+    # Send the payload using serial.
+    with serial.Serial(port="/dev/ttyACM0", baudrate=115200) as ser:
+        ser.write(
+            data="\n".encode()
+        )
+        # Call the provision function.
+        print_info(f"[i] Sending command: provision_own_identity")
+        ser.write(
+            data="provision_own_identity\n".encode()
+        )
+        sleep(1)
+        # Send the payload.
+        for i in range(0, len(node_id_info["provisioningPayload"]), 128):
+            to_write = node_id_info["provisioningPayload"][i:i+128]
+            print_info(f"[i] Sending data: {to_write}")
+            res = ser.write(
+                data=to_write.encode()
+            )
+            print_info(f"[i] Written {res} bytes.")
+        sleep(1)
+        # Reboot the node.
+        print_info(f"[i] Rebooting...")
+        ser.write(
+            data="\nreboot\n".encode()
+        )
+        print_info(f"[i] Node provisioned.")
 
 if __name__ == "__main__":
     identity_manager()
