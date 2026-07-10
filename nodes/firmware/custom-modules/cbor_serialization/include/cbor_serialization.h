@@ -28,6 +28,12 @@
 #define ARRAY_SIZE_RECORD_DATA_GATE_COMMAND 2
 #define ARRAY_SIZE_RECORD_DATA_GATE_JOB 3
 
+#define ARRAY_SIZE_ID_PUBID 1           // signed public identity as byte string
+#define ARRAY_SIZE_ID_PUBID_SIGNATURE 1 // signed public identity as byte string
+#define ARRAY_SIZE_ID_SIGNATURE 1       // signature as byte string
+#define ARRAY_SIZE_KID 1
+#define ARRAY_SIZE_KEY 1
+
 /**
  * @brief Serialize in CBOR a given record as a message of single record type
  *
@@ -53,6 +59,10 @@ int cbor_serialize_record(const table_record_t *record, uint8_t *out, size_t *ou
  * @retval negative value on error
  */
 int cbor_serialize_record_no_sig(const table_record_t *record, uint8_t *out, size_t *out_len);
+
+int cbor_serialize_signed_public_identity(const signed_identity_t *signed_identity, uint8_t *out, size_t *out_len);
+
+int cbor_serialize_identity(const identity_t *identity, uint8_t *out, size_t *out_len);
 
 /**
  * @brief Deserialize a CBOR message (only records for now)
@@ -92,3 +102,7 @@ int cbor_deserialize(const uint8_t *buffer, size_t buffer_len, table_record_t *r
 int cbor_decode_record(CborValue *array_item, table_record_t *record,
                        table_record_data_buffer_t *record_data, uint8_t *signature,
                        size_t *signature_len);
+
+int cbor_deserialize_identity(const uint8_t *data, size_t data_size, identity_t *identity_out);
+int cbor_deserialize_signed_identity(const uint8_t *data, size_t data_size, signed_identity_t *signed_identity_out);
+int cbor_deserialize_provisioning_data(const uint8_t *data, size_t data_size, provisioning_data_t *provisioning_data_out);
