@@ -486,6 +486,28 @@ int _delete_known_identities(int argc, char **argv)
     return 0;
 }
 
+int _print_identity(int argc, char **argv) {
+    if (argc != 2) {
+        printf("Usage: %s /path/to/file\n", argv[0]);
+        return -1;
+    }
+
+    uint8_t buffer[MAX_IDENTITY_SIZE];
+    int res = _read_file(argv[1], buffer, sizeof(buffer));
+
+    if(res < 0) {
+        _LOGERR("failed reading file %s", argv[1]);
+        return -1;
+    }
+
+    for (int i = 0; i < res; i++) {
+        printf("%02X", buffer[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
+
 SHELL_COMMAND(delete_learned_identities, "Delete learned identities from external flash", _delete_known_identities);
 SHELL_COMMAND(provision_own_identity, "Provision own identity", _provision_own_identity);
 SHELL_COMMAND(print_identity, "Print identity as hex-encoded bytestring", _print_identity);
