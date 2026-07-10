@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vfs.h"
+#include "net/loramac.h"
 
 #define IDENTITY_STORAGE_PATH VFS_DEFAULT_NVM(0) "/identities/"
 #define MAX_IDENTITY_SIZE 256
@@ -9,6 +10,8 @@
 #define PUBID_LEN 40
 #define PUBID_SIGNATURE_LEN 80
 #define MAX_FILENAME_LEN 10 + 8 + 1 // "sensemate-"/"sensegate-" + id + \0
+
+#define LORAMAC_KEY_STORAGE_PATH VFS_DEFAULT_NVM(0) "/config/loramac/"
 
 typedef struct {
     uint8_t kid[KID_LEN];
@@ -21,12 +24,20 @@ typedef struct {
 } signed_identity_t;
 
 typedef struct {
+    uint8_t joineui[LORAMAC_JOINEUI_LEN];
+    uint8_t deveui[LORAMAC_DEVEUI_LEN];
+    uint8_t nwkkey[LORAMAC_NWKKEY_LEN];
+} loramac_keys_t;
+
+typedef struct {
     identity_t root_identity;
     identity_t private_identity;
     signed_identity_t own_signed_identity;
+    loramac_keys_t loramac_keys;
 } provisioning_data_t;
 
 int identity_store_init(void);
+int get_loramac_keys(loramac_keys_t *loramac_keys_out);
 int get_root_identity(identity_t *identity_out);
 int get_own_node_id(uint8_t *kid_buffer, size_t kid_buffer_size);
 int get_own_private_identity(identity_t *identity_out);

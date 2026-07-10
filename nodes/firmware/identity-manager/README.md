@@ -6,11 +6,24 @@ Script for managing identities as well as related functionality:
 - Creation of node identities for setting up nodes (like senseMates and senseGates) providing:
     - Private key for the node.
     - Signed public identity for the node, so it can be gossiped successfully to other nodes.
-    - TODO: TTN configuration for the node for The Things Network (LoraWAN).
+    - The Things Network (LoraWAN) configuration.
     - Provisioning payload holding all this information for node setup.
 
 See the help page of the command for more information on the commands and how to use them.  
+Note that a [configuration file](#configuration) needs to be provided under `config.yaml` next to the script.  
 The generated identity information will be stored in [identity information files](#_id_info-files) in the [`identities` directory](#identities-directory) next to the script.
+
+## Configuration
+
+A configuration file should be present next to the script under `config.yaml`. It's easiest to just copy the provided `config.example.yaml` and change the values as necessary.
+
+The configuration file has the following structure:
+
+- `ttn`:
+    - `instance`: The Things Network instance to use. Should most likely be left as is.  
+      Defaults to: `eu1.cloud.thethings.network`.
+    - `applicationID`: The Things Network application ID to use. Can be found in The Things Network web interface.
+    - `authToken`: The Things Network auth token to use. Can be created in The Things Network web interface (https://eu1.cloud.thethings.network/console/applications/YOUR-APPLICATION-ID/api-keys).
 
 ## `identities` directory
 
@@ -64,6 +77,11 @@ JSON files for node identity information with the following structure:
         "publicIdentity": "8244...",
         "signature": "d284..."
     },
+    "ttn": {
+        "joinEUI": "00...",
+        "devEUI": "45...",
+        "appKey": "E9..."
+    },
     "rootKey": "-----BEGIN PUBLIC KEY-----\n...",
     "provisioningPayload": "..."
 }
@@ -76,4 +94,8 @@ JSON files for node identity information with the following structure:
     - `publicIdentity`: The node public identity as a CBOR message represented as a hex string.
     - `signature`: The signature of the node public identity. More accurately this is a COSE Sign1 message represented as a hex string, where the `publicIdentity` is a detached payload.
 - `rootKey`: Root key in PEM format used for signing the node public identity.
+- `ttn`: The Things Network (LoraWAN) configuration.
+    - `joinEUI`: JoinEUI
+    - `devEUI`: DevEUI
+    - `appKey`: AppKey
 - `provisioningPayload`: base64 encoded payload holding all the information for provisioning the node.

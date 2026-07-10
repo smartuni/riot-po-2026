@@ -7,6 +7,8 @@
 #     "click>=8.4.2",
 #     "cryptography>=49.0.0",
 #     "pycose>=1.1.0",
+#     "pyyaml>=6.0.3",
+#     "requests>=2.34.2",
 # ]
 # ///
 
@@ -15,6 +17,7 @@ from enum import Enum
 import json
 import os
 from pathlib import Path
+import random
 import sys
 from typing import List, NoReturn, TypedDict
 
@@ -25,6 +28,8 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey,
 import pycose
 from pycose.keys import CoseKey
 from pycose.messages import Sign1Message
+import requests
+import yaml
 
 
 # Helper functions and classes.
@@ -40,6 +45,16 @@ class SupportedNodeType(Enum):
     senseGate = DeviceType.gate.value
     senseMate = DeviceType.mate.value
 
+class TTNConfig(TypedDict):
+    """TTN config structure."""
+    instance: str
+    applicationID: str
+    authToken: str
+
+class Config(TypedDict):
+    """Config structure."""
+    ttn: TTNConfig
+
 class BaseIdentityInformation(TypedDict):
     """Base identity information structure shared by all identity information variants."""
     kid: bytes
@@ -49,15 +64,22 @@ class BaseIdentityInformation(TypedDict):
 class RootIdentityInformation(BaseIdentityInformation):
     """Root identity information."""
 
-class SignedPublicIdentity(TypedDict):
+class SignedPublicIdentityIDInfo(TypedDict):
     """Signed public identity structure. For use in identity information."""
     publicIdentity: bytes
     signature: bytes
 
+class TTNIDInfo(TypedDict):
+    """TTN structure. For use in identity information."""
+    joinEUI: str
+    devEUI: str
+    appKey: str
+
 class NodeIdentityInformation(BaseIdentityInformation):
     """Node identity information."""
-    signedPublicIdentity: SignedPublicIdentity
+    signedPublicIdentity: SignedPublicIdentityIDInfo
     rootKey: Ed25519PublicKey
+    ttn: TTNIDInfo
     provisioningPayload: str
 
 class IdentityEncoder(json.JSONEncoder):
@@ -143,9 +165,44 @@ def print_info(msg: str) -> NoReturn:
     """Prints an info message."""
     click.secho(msg, err=True, fg="blue")
 
-def get_identity_dir() -> str:
-    """Gets the path of the identity directory relative to this script file."""
-    return f"{os.path.dirname(os.path.realpath(__file__))}/identities"
+def get_base_dir() -> str:
+    """Gets the path of the base directory, which is the directory this script file is in."""
+    return f"{os.path.dirname(os.path.realpath(__file__))}"
+
+def get_config() -> Config:
+    """"Loads the configuration, validates it and sets default values, if necessary."""
+    # Ensure config exists and can be loaded.
+    config_path = f"{base_dir}/config.yaml"
+    if not Path(config_path).exists():
+        raise Exception(f"No configuration file ({config_path}) exists.")
+    with open(config_path, "r") as f:
+        config: Config = yaml.safe_load(f)
+    if config is None:
+        raise Exception("Couldn't load configuration.")
+
+    # Validate config and set default values, if necessary.
+    if "ttn" not in config:
+        raise Exception("No ttn config in configuration.")
+    if not isinstance(config["ttn"], dict):
+        raise Exception("ttn config isn't of expected format.")
+    
+    if "instance" not in config["ttn"]:
+        # Default to "eu1.cloud.thethings.network" for TTN instance.
+        config["ttn"]["instance"] = "eu1.cloud.thethings.network"
+    if not isinstance(config["ttn"]["instance"], str):
+        raise Exception("ttn.instance isn't of expected format.")
+    
+    if "applicationID" not in config["ttn"]:
+        raise Exception("ttn.applicationID missing in configuration.")
+    if not isinstance(config["ttn"]["applicationID"], str):
+        raise Exception("ttn.applicationID isn't of expected format.")
+
+    if "authToken" not in config["ttn"]:
+        raise Exception("ttn.authToken missing in configuration.")
+    if not isinstance(config["ttn"]["authToken"], str):
+        raise Exception("ttn.authToken isn't of expected format.")
+    
+    return config
 
 def create_kid(device_type: DeviceType, device_id: int) -> bytes:
     """Creates a kid from a device type and device id."""
@@ -227,12 +284,222 @@ def load_root_identity_info() -> RootIdentityInformation:
 
     return root_id_info
 
+def kid_to_ttn_device_id(kid: bytes) -> str:
+    """Creates a device ID for use in TTN from a kid."""
+    if kid[2] == DeviceType.gate.value:
+        device_type_str = "sensegate"
+    elif kid[2] == DeviceType.mate.value:
+        device_type_str = "sensemate"
+    elif (kid[2] == DeviceType.server.value) or (kid[2] == DeviceType.root.value):
+        raise Exception(f"Device type {DeviceType.server.name} not supported.")
+    else:
+        raise Exception(f"Device type {kid[2]} not implemented.")
+    
+    return f"{device_type_str}-{kid[3]:03d}"
+
+def ttn_get_api_base() -> str:
+    return f"https://{config["ttn"]["instance"]}/api/v3"
+
+def ttn_get_headers_with_auth() -> dict:
+    return {
+        "Authorization": f"Bearer {config["ttn"]["authToken"]}",
+        "Content-Type": "application/json"
+    }
+
+def ttn_check_device_exists(ttn_device_id: str) -> bool:
+    """Checks if the specified device exists in TTN. Returns true, if it does, false, if not."""
+    url = f"{ttn_get_api_base()}/applications/{config["ttn"]["applicationID"]}/devices/{ttn_device_id}"
+    response = requests.get(
+        url,
+        headers=ttn_get_headers_with_auth()
+    )
+
+    if response.status_code == 200:
+        return True
+    elif response.status_code == 404:
+        return False
+    else:
+        raise Exception(f"Received unexpected status code checking if device ({ttn_device_id}) exists: {response.status_code}\n{response.text}")
+
+def ttn_delete_device(ttn_device_id: str) -> NoReturn:
+    # https://www.thethingsindustries.com/docs/api/reference/grpc/end_device/
+    # Delete the device from the Identity Server (IS), Join Server (JS), Network Server (NS) and Application Server (AS).
+    # Order AS -> NS -> JS -> IS recommended.
+
+    # First delete from the AS, NS and JS.
+    for server in ["js", "ns", "as"]:
+        url = f"{ttn_get_api_base()}/{server}/applications/{config["ttn"]["applicationID"]}/devices/{ttn_device_id}"
+        response = requests.delete(
+            url,
+            headers=ttn_get_headers_with_auth()
+        )
+        if response.status_code not in [200, 404]:
+            raise Exception(f"Received unexpected status code while trying to delete device ({ttn_device_id}) from TTN {server}: {response.status_code}\n{response.text}")
+    
+    # Then delete from the IS.
+    url = f"{ttn_get_api_base()}/applications/{config["ttn"]["applicationID"]}/devices/{ttn_device_id}"
+    response = requests.delete(
+        url,
+        headers=ttn_get_headers_with_auth()
+    )
+    if response.status_code not in [200, 404]:
+        raise Exception(f"Received unexpected status code while trying to delete device ({ttn_device_id}) from TTN Identity Server: {response.status_code}\n{response.text}")
+
+def ttn_create_device(ttn_device_id: str, ttn_join_eui: str, ttn_dev_eui: str, ttn_app_key: str) -> NoReturn:
+    # https://www.thethingsindustries.com/docs/api/reference/grpc/end_device/
+    # Add the device to the Identity Server (IS), Join Server (JS), Network Server (NS) and Application Server (AS).
+
+    # First Identity Server.
+    url = f"{ttn_get_api_base()}/applications/{config["ttn"]["applicationID"]}/devices"
+    data = {
+        "end_device": {
+            "ids": {
+                "device_id": ttn_device_id,
+                "dev_eui": ttn_dev_eui,
+                "join_eui": ttn_join_eui,
+                "application_ids": {
+                    "application_id": config["ttn"]["applicationID"]
+                }
+            },
+            "name": ttn_device_id,
+            "description": "Created by identity-manager.py script.",
+            "supports_join": True,
+            "lorawan_version": "1.0.3",
+            "lorawan_phy_version": "1.0.3-a",
+            "network_server_address": config["ttn"]["instance"],
+            "application_server_address": config["ttn"]["instance"],
+            "join_server_address": config["ttn"]["instance"]
+        },
+        "field_mask": {
+            "paths": [
+                "ids",
+                "name",
+                "description",
+                "supports_join",
+                "lorawan_version",
+                "lorawan_phy_version",
+                "network_server_address",
+                "application_server_address",
+                "join_server_address"
+            ]
+        }
+    }
+    response = requests.post(
+        url,
+        headers=ttn_get_headers_with_auth(),
+        json=data
+    )
+    if response.status_code != 200:
+        raise Exception(f"Received unexpected status code while trying to create device ({ttn_device_id}) in TTN Identity Server: {response.status_code}\n{response.text}")
+
+    # Then Join Server.
+    url = f"{ttn_get_api_base()}/js/applications/{config["ttn"]["applicationID"]}/devices/{ttn_device_id}"
+    data = {
+        "end_device": {
+            "ids": {
+                "device_id": ttn_device_id,
+                "dev_eui": ttn_dev_eui,
+                "join_eui": ttn_join_eui
+            },
+            "root_keys": {
+                "app_key": {
+                    "key": ttn_app_key
+                }
+            }
+        },
+        "field_mask": {
+            "paths": [
+                "ids",
+                "root_keys"
+            ]
+        }
+    }
+    response = requests.put(
+        url,
+        headers=ttn_get_headers_with_auth(),
+        json=data
+    )
+    if response.status_code != 200:
+        raise Exception(f"Received unexpected status code while trying to create device ({ttn_device_id}) in TTN Join Server: {response.status_code}\n{response.text}")
+
+    # Then Network Server.
+    url = f"{ttn_get_api_base()}/ns/applications/{config["ttn"]["applicationID"]}/devices/{ttn_device_id}"
+    data = {
+        "end_device": {
+            "ids": {
+                "device_id": ttn_device_id,
+                "dev_eui": ttn_dev_eui,
+                "join_eui": ttn_join_eui
+            },
+            "supports_join": True,
+            "lorawan_version": "1.0.3",
+            "lorawan_phy_version": "1.0.3-a",
+            "frequency_plan_id": "EU_863_870",
+            "mac_settings": {
+                "resets_f_cnt": True
+            },
+        },
+        "field_mask": {
+            "paths": [
+                "ids",
+                "supports_join",
+                "lorawan_version",
+                "lorawan_phy_version",
+                "frequency_plan_id",
+                "mac_settings.resets_f_cnt",
+            ]
+        }
+    }
+    response = requests.put(
+        url,
+        headers=ttn_get_headers_with_auth(),
+        json=data
+    )
+    if response.status_code != 200:
+        raise Exception(f"Received unexpected status code while trying to create device ({ttn_device_id}) in TTN Network Server: {response.status_code}\n{response.text}")
+
+    # Finally Application Server.
+    url = f"{ttn_get_api_base()}/as/applications/{config["ttn"]['applicationID']}/devices/{ttn_device_id}"
+    data = {
+        "end_device": {
+            "ids": {
+                "device_id": ttn_device_id
+            },
+        },
+        "field_mask": {
+            "paths": [
+                "ids"
+            ]
+        }
+    }
+    response = requests.put(
+        url,
+        headers=ttn_get_headers_with_auth(),
+        json=data
+    )
+    if response.status_code != 200:
+        raise Exception(f"Received unexpected status code while trying to create device ({ttn_device_id}) in TTN Application Server: {response.status_code}\n{response.text}")
+
 
 # CLI
 @click.group()
 def identity_manager():
+    global base_dir
     global identity_dir
-    identity_dir = get_identity_dir()
+    global config
+
+    # Set directories.
+    base_dir = get_base_dir()
+    identity_dir = f"{base_dir}/identities"
+
+    # Load the config file.
+    try:
+        config = get_config()
+    except Exception as e:
+        print_error("[!] Error loading configuration:")
+        print_error(f"[!] {e}")
+        print_error("[!] Exiting.")
+        sys.exit(1)
 
 @identity_manager.command()
 @click.option("-f", "--force", is_flag=True, help="Forcefully create the identity, even if one with the same ID already exists.")
@@ -325,11 +592,34 @@ def node(device_id, force, type):
                 break
 
             device_id += 1
+
+    # Set the nodes TTN device id.
+    node_ttn_device_id = kid_to_ttn_device_id(node_kid)
     
     # Check if the node identity information already exists.
     if Path(save_path).exists() and not force:
         print_error(f"[!] Node identity information for device ID {id} ({save_file_name}) already exists. Exiting.")
         sys.exit(1)
+    # Check if node already exists in TTN.
+    try:
+        ttn_device_exists = ttn_check_device_exists(node_ttn_device_id)
+    except Exception as e:
+        print_error(f"[!] Error while checking, if device already exists in TTN:")
+        print_error(f"[!] {e}")
+        print_error("[!] Exiting.")
+        sys.exit(1)
+    if ttn_device_exists and not force:
+        print_error(f"[!] Device with TTN device ID {node_ttn_device_id} already exists in The Things Network. Exiting.")
+        sys.exit(1)
+    if ttn_device_exists:
+        try:
+            print_info(f"[!] Deleting existing device with TTN device ID {node_ttn_device_id} from The Things Network...")
+            ttn_delete_device(node_ttn_device_id)
+        except Exception as e:
+            print_error(f"[!] Error while deleting device from The Things Network:")
+            print_error(f"[!] {e}")
+            print_error("[!] Exiting.")
+            sys.exit(1)
 
     # Generate the node key.
     node_key = Ed25519PrivateKey.generate()
@@ -358,6 +648,26 @@ def node(device_id, force, type):
         detached_payload=node_pubid_cbor
     )
 
+    # Create node in TTN.
+    try:
+        # https://www.thethingsindustries.com/docs/getting-started/glossary/
+        ttn_join_eui = "0000000000000000"  # e.g. für TTI Standard
+        ttn_dev_eui = ''.join(random.choice('0123456789ABCDEF') for _ in range(16))
+        ttn_app_key = ''.join(random.choice('0123456789ABCDEF') for _ in range(32))
+
+        ttn_create_device(node_ttn_device_id, ttn_join_eui, ttn_dev_eui, ttn_app_key)
+    except Exception as e:
+        print_error(f"[!] Error while trying to create device in The Things Network:")
+        print_error(f"[!] {e}")
+        try:
+            print_info(f"[!] Cleaning up, trying to delete device from The Things Network...")
+            ttn_delete_device(node_ttn_device_id)
+        except Exception as e:
+            print_error(f"[!] Error while deleting device from The Things Network:")
+            print_error(f"[!] {e}")
+        print_error("[!] Exiting.")
+        sys.exit(1)
+
     # Create the provisioning payload.
     provisioning_payload_raw = [
         # root public identity:
@@ -368,7 +678,11 @@ def node(device_id, force, type):
         node_key.private_bytes_raw(),                               # private key
         # node signed public identity:
         node_pubid_cbor,                                            # public identity
-        node_pubid_cbor_cose_sign1_msg_with_signature               # cose sign1 message with signatur0
+        node_pubid_cbor_cose_sign1_msg_with_signature,              # cose sign1 message with signatur0
+        # ttn configuration:
+        bytes.fromhex(ttn_join_eui),                                # JoinEUI
+        bytes.fromhex(ttn_dev_eui),                                 # DevEUI
+        bytes.fromhex(ttn_app_key)                                  # AppKey
     ]
     provisioning_payload_cbor = cbor2.dumps(provisioning_payload_raw)
     provisioning_payload_base64_str = base64.b64encode(provisioning_payload_cbor).decode("utf-8")
@@ -383,6 +697,11 @@ def node(device_id, force, type):
             "signature": node_pubid_cbor_cose_sign1_msg_with_signature
         },
         "rootKey": root_identity_information["publicKey"],
+        "ttn": {
+            "joinEUI": ttn_join_eui,
+            "devEUI": ttn_dev_eui,
+            "appKey": ttn_app_key
+        },
         "provisioningPayload": provisioning_payload_base64_str
     }
     os.makedirs(save_dir, exist_ok=True)
@@ -394,6 +713,12 @@ def node(device_id, force, type):
         ))
 
     # Print information about the identity.
+    print_info(
+        "[i] Successfully created device in The Things Network.\n"
+        + f"      JoinEUI: {ttn_join_eui}\n"
+        + f"      DevEUI:  {ttn_dev_eui}\n"
+        + f"      AppKey:  {ttn_app_key}\n"
+    )
     print_info(
         "[i] Successfully created a node identity.\n"
         + f"      id:                 {node_identity_information["kid"][3]:03d}\n"

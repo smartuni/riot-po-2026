@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "net/loramac.h"
 #include "cbor.h"
 #include "tables/types.h"
 #include "tables/records.h"
@@ -940,6 +941,85 @@ int _cbor_decode_key(CborValue *value, identity_t *identity_out) {
     return 0;
 }
 
+int _cbor_decode_loramac_keys(CborValue *value, loramac_keys_t *loramac_keys_out) {
+    assert(value != NULL);
+    assert(loramac_keys_out != NULL);
+
+    CborError error;
+    size_t key_len;
+
+    if (!cbor_value_is_byte_string(value)) {
+        DEBUG("_cbor_decode_loramac_keys: expected byte string for key\n");
+        return -1;
+    }
+
+    error = cbor_value_get_string_length(value, &key_len);
+    if (error != CborNoError) {
+        DEBUG("_cbor_decode_loramac_keys: error getting joineui key length (%d)\n", error);
+        return -1;
+    }
+
+    if (key_len != LORAMAC_JOINEUI_LEN) {
+        DEBUG("_cbor_decode_loramac_keys: wrong joineui key length."
+              " Got %zu, expected %d\n", key_len, LORAMAC_JOINEUI_LEN);
+        return -1;
+    }
+
+    error = cbor_value_copy_byte_string(value, loramac_keys_out->joineui, &key_len, value);
+    if (error != CborNoError) {
+        DEBUG("_cbor_decode_loramac_keys: error getting joineui key (%d)\n", error);
+        return -1;
+    }
+
+    if (!cbor_value_is_byte_string(value)) {
+        DEBUG("_cbor_decode_loramac_keys: expected byte string for deveui key\n");
+        return -1;
+    }
+
+    error = cbor_value_get_string_length(value, &key_len);
+    if (error != CborNoError) {
+        DEBUG("_cbor_decode_loramac_keys: error getting deveui key length (%d)\n", error);
+        return -1;
+    }
+
+    if (key_len != LORAMAC_DEVEUI_LEN) {
+        DEBUG("_cbor_decode_loramac_keys: wrong deveui key length."
+              " Got %zu, expected %d\n", key_len, LORAMAC_DEVEUI_LEN);
+        return -1;
+    }
+
+    error = cbor_value_copy_byte_string(value, loramac_keys_out->deveui, &key_len, value);
+    if (error != CborNoError) {
+        DEBUG("_cbor_decode_loramac_keys: error getting deveui key (%d)\n", error);
+        return -1;
+    }
+
+    if (!cbor_value_is_byte_string(value)) {
+        DEBUG("_cbor_decode_loramac_keys: expected byte string for nwkkey\n");
+        return -1;
+    }
+
+    error = cbor_value_get_string_length(value, &key_len);
+    if (error != CborNoError) {
+        DEBUG("_cbor_decode_loramac_keys: error getting nwkkey length (%d)\n", error);
+        return -1;
+    }
+
+    if (key_len != LORAMAC_NWKKEY_LEN) {
+        DEBUG("_cbor_decode_loramac_keys: wrong nwkkey length."
+              " Got %zu, expected %d\n", key_len, LORAMAC_NWKKEY_LEN);
+        return -1;
+    }
+
+    error = cbor_value_copy_byte_string(value, loramac_keys_out->nwkkey, &key_len, value);
+    if (error != CborNoError) {
+        DEBUG("_cbor_decode_loramac_keys: error getting nwkkey (%d)\n", error);
+        return -1;
+    }
+
+    return 0;
+}
+
 int cbor_deserialize_identity(const uint8_t *data, size_t data_size, identity_t *identity_out) {
     assert(data != NULL);
     assert(identity_out != NULL);
@@ -1102,6 +1182,12 @@ int cbor_deserialize_provisioning_data(const uint8_t *data, size_t data_size, pr
     result = _cbor_decode_signed_pubid_signature(&array_item, &provisioning_data_out->own_signed_identity);
     if (result != 0) {
         DEBUG("cbor_deserialize_identity: error decoding own signed identity signature\n");
+        return -1;
+    }
+
+    result = _cbor_decode_loramac_keys(&array_item, &provisioning_data_out->loramac_keys);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_identity: error decoding loramac keys\n");
         return -1;
     }
 

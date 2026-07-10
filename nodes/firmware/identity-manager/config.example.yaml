@@ -1,0 +1,4 @@
+ttn:
+  instance: "eu1.cloud.thethings.network"
+  applicationID: "hawriotfloodgates26"
+  authToken: "NNSXS.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
