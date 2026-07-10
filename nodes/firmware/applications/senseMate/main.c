@@ -266,7 +266,7 @@ int main(void) {
     //event_post(&sound_queue, &start_sound_event);
 
     printf("Device Type: %d device id: %d\n", RIOT_CONFIG_DEVICE_TYPE,
-                                              RIOT_CONFIG_DEVICE_ID);
+                                              self_node_id[3]);
     init_event();
 
     thread_create(

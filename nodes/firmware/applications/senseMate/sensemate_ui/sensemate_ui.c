@@ -13,6 +13,7 @@
 #include "periph/gpio.h"
 #include "include/sensemate_ui.h"
 #include "timex.h"
+#include "personalization.h"
 #define LOG_LEVEL   LOG_NONE
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[ui]: " __VA_ARGS__)
@@ -529,7 +530,9 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_set_style_pad_all(header_pad, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     
     /* right part of the header symbols */
-    lv_obj_t *dev_id_lbl = _add_header_label(header_cont, "Mate-" STR(RIOT_CONFIG_DEVICE_ID));
+    char buffer[sizeof("Mate-") + 8];
+    snprintf(buffer, sizeof(buffer), "Mate-%d", self_node_id[3]);
+    lv_obj_t *dev_id_lbl = _add_header_label(header_cont, buffer);
     lv_obj_set_style_text_font(dev_id_lbl, &font_goldfish, 0);
 
     //alert_lbl = _add_header_label(header_cont, LV_SYMBOL_BELL);
