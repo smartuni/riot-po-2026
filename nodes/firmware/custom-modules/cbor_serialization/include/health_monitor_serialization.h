@@ -11,7 +11,6 @@
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
 
-#pragma once
 #ifndef HEALTH_MONITOR_SERIALIZATION_H
 #define HEALTH_MONITOR_SERIALIZATION_H
 
