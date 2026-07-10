@@ -1,0 +1,2 @@
+USEMODULE += periph_adc
+USEMODULE += periph_gpio

@@ -41,6 +41,11 @@ USEMODULE += event_timeout
 USEMODULE += mate_lorawan
 USEMODULE += mate_ble
 USEMODULE += inductive_sensor
+USEMODULE += cbor_serialization
+USEMODULE += health_monitor
+USEMODULE += posix_semaphore
+# for shock-detection
+USEMODULE += saul_default
 
 CFLAGS += -DRIOT_CONFIG_DEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
 CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=$(RIOT_CONFIG_DEVICE_TYPE)

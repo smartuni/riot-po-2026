@@ -151,6 +151,7 @@ function createWsMiddleware() {
             const statuses = Object.entries(data).map(([id, dto]) => ({
               version: dto.version,
               senseGateId: Number(id),
+              freeFallStatus: dto.freeFallStatus,
               shockStatus: dto.shockStatus,
               batteryStatus: dto.batteryStatus,
               voltageMv: dto.voltageMv,

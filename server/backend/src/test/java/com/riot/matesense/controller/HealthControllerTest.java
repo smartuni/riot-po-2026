@@ -1,7 +1,7 @@
 package com.riot.matesense.controller;
 
 import com.riot.matesense.enums.BatteryStatus;
-import com.riot.matesense.enums.ShockStatus;
+import com.riot.matesense.enums.FreeFallStatus;
 import com.riot.matesense.model.HealthStatusDTO;
 import com.riot.matesense.service.HealthStatusService;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +34,7 @@ class HealthControllerTest {
     void getAllHealth_returnsOkAndJsonBody_whenServiceHasData() throws Exception {
         // Given: service holds one health entry for gate 1
         HealthStatusDTO dto = new HealthStatusDTO(
-                1, 1, ShockStatus.NO_SHOCK, BatteryStatus.CHARGING, 4200);
+                1, 1, FreeFallStatus.NO_FALL, BatteryStatus.CHARGING, 4200);
         when(healthStatusService.getAll()).thenReturn(Map.of(1, dto));
 
         // When + Then: GET /health returns 200 with correct JSON
@@ -42,7 +42,7 @@ class HealthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.1.senseGateId").value(1))
                 .andExpect(jsonPath("$.1.batteryStatus").value("CHARGING"))
-                .andExpect(jsonPath("$.1.shockStatus").value("NO_SHOCK"))
+                .andExpect(jsonPath("$.1.freeFallStatus").value("NO_FALL"))
                 .andExpect(jsonPath("$.1.voltageMv").value(4200))
                 .andExpect(jsonPath("$.1.version").value(1));
     }
@@ -62,9 +62,9 @@ class HealthControllerTest {
     void getAllHealth_returnsMultipleEntries_whenServiceHasMultipleGates() throws Exception {
         // Given: service holds health entries for two gates
         HealthStatusDTO dto1 = new HealthStatusDTO(
-                1, 1, ShockStatus.NO_SHOCK, BatteryStatus.CHARGING, 4200);
+                1, 1, FreeFallStatus.NO_FALL, BatteryStatus.CHARGING, 4200);
         HealthStatusDTO dto2 = new HealthStatusDTO(
-                1, 2, ShockStatus.SHOCK_DETECTED, BatteryStatus.LOW_BATTERY, 3200);
+                1, 2, FreeFallStatus.FREE_FALL_DETECTED, BatteryStatus.LOW_BATTERY, 3200);
         when(healthStatusService.getAll()).thenReturn(Map.of(1, dto1, 2, dto2));
 
         // When + Then: GET /health returns both entries keyed by senseGateId
@@ -72,7 +72,7 @@ class HealthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.1.senseGateId").value(1))
                 .andExpect(jsonPath("$.2.senseGateId").value(2))
-                .andExpect(jsonPath("$.2.shockStatus").value("SHOCK_DETECTED"))
+                .andExpect(jsonPath("$.2.freeFallStatus").value("FREE_FALL_DETECTED"))
                 .andExpect(jsonPath("$.2.batteryStatus").value("LOW_BATTERY"));
     }
 

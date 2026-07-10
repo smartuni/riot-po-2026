@@ -1,7 +1,7 @@
 package com.riot.matesense.service;
 
 import com.riot.matesense.enums.BatteryStatus;
-import com.riot.matesense.enums.ShockStatus;
+import com.riot.matesense.enums.FreeFallStatus;
 import com.riot.matesense.model.HealthStatusDTO;
 import org.springframework.stereotype.Service;
 
@@ -19,17 +19,17 @@ public class HealthStatusService {
 
     private final Map<Integer, HealthStatusDTO> store = new ConcurrentHashMap<>();
 
-    public void updateHealth(int senseGateId, BatteryStatus battery, ShockStatus shock, int voltageMv, int version) {
+    public void updateHealth(int senseGateId, BatteryStatus battery, FreeFallStatus freeFall, int voltageMv, int version) {
         HealthStatusDTO existing = store.get(senseGateId);
         BatteryStatus mergedBattery = (existing != null && battery == BatteryStatus.UNKNOWN && existing.getBatteryStatus() != BatteryStatus.UNKNOWN)
                 ? existing.getBatteryStatus() : battery;
-        ShockStatus mergedShock = (existing != null && shock == ShockStatus.UNKNOWN && existing.getShockStatus() != ShockStatus.UNKNOWN)
-                ? existing.getShockStatus() : shock;
+        FreeFallStatus mergedFreeFall = (existing != null && freeFall == FreeFallStatus.UNKNOWN && existing.getFreeFallStatus() != FreeFallStatus.UNKNOWN)
+                ? existing.getFreeFallStatus() : freeFall;
         int mergedVoltage = (existing != null && voltageMv == 0 && existing.getVoltageMv() != 0)
                 ? existing.getVoltageMv() : voltageMv;
         int mergedVersion = version != 0 ? version : (existing != null ? existing.getVersion() : 1);
 
-        store.put(senseGateId, new HealthStatusDTO(mergedVersion, senseGateId, mergedShock, mergedBattery, mergedVoltage));
+        store.put(senseGateId, new HealthStatusDTO(mergedVersion, senseGateId, mergedFreeFall, mergedBattery, mergedVoltage));
     }
 
     public Map<Integer, HealthStatusDTO> getAll() {

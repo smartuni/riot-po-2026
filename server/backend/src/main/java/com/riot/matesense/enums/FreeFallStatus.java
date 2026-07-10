@@ -1,13 +1,13 @@
 package com.riot.matesense.enums;
 
-public enum ShockStatus {
-    NO_SHOCK(0x00),
-    SHOCK_DETECTED(0x01),
+public enum FreeFallStatus {
+    NO_FALL(0x00),
+    FREE_FALL_DETECTED(0x02),
     UNKNOWN(-1); // Fallback für unerwartete Werte
 
     private final int code;
 
-    ShockStatus(int code) {
+    FreeFallStatus(int code) {
         this.code = code;
     }
 
@@ -16,8 +16,8 @@ public enum ShockStatus {
     }
 
     // Wandelt den Byte-Wert direkt in das passende Enum um
-    public static ShockStatus fromCode(int code) {
-        for (ShockStatus status : values()) {
+    public static FreeFallStatus fromCode(int code) {
+        for (FreeFallStatus status : values()) {
             if (status.code == code) {
                 return status;
             }
