@@ -1,3 +1,12 @@
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "pyserial>=3.5",
+# ]
+# ///
+
 import serial
 
 s = serial.Serial(port="/dev/ttyACM0", baudrate=115200)

@@ -16,10 +16,6 @@ SenseMate is a handheld device that:
 
 Before flashing make sure [signature keys](../custom-modules/key-distro/README.md) are generated! 
 
-#### Testing 
+#### Building and Flashing
 
-```make all flash RIOT_CONFIG_USE_TEST=1```
-
-#### Production
-
-```make all flash RIOT_CONFIG_DEVICE_ID=<GATE_ID>```
+```make all flash```

@@ -23,7 +23,9 @@ static const char *ok(bool condition)
 }
 
 char *directory_structure[] = {
-    "/nvm0/identities",
+    VFS_DEFAULT_NVM(0) "/config",
+    LORAMAC_KEY_STORAGE_PATH,
+    VFS_DEFAULT_NVM(0) "/identities",
     IDENTITY_STORAGE_PATH "self",
     IDENTITY_STORAGE_PATH "valid",
     IDENTITY_STORAGE_PATH "revoked"
@@ -151,6 +153,56 @@ int _read_public_signed_identity_file(const char filename[], uint8_t *buffer, si
     strcat(path, filename);
 
     return _read_file(path, buffer, buffer_size);;
+}
+
+int _write_loramac_key_files(const loramac_keys_t *loramac_keys) {
+    int res = _write_file(LORAMAC_KEY_STORAGE_PATH "joineui", loramac_keys->joineui, sizeof(loramac_keys->joineui));
+
+    if (res < 0) {
+        _LOGERR("_write_loramac_key_files: failed writing joineui\n");
+        return -1;
+    }
+
+    res = _write_file(LORAMAC_KEY_STORAGE_PATH "deveui", loramac_keys->deveui, sizeof(loramac_keys->deveui));
+
+    if (res < 0) {
+        _LOGERR("_write_loramac_key_files: failed writing deveui\n");
+        return -1;
+    }
+
+    res = _write_file(LORAMAC_KEY_STORAGE_PATH "nwkkey", loramac_keys->nwkkey, sizeof(loramac_keys->nwkkey));
+
+    if (res < 0) {
+        _LOGERR("_write_loramac_key_files: failed writing nwkkey\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int get_loramac_keys(loramac_keys_t *loramac_keys_out) {
+    int res = _read_file(LORAMAC_KEY_STORAGE_PATH "joineui", loramac_keys_out->joineui, sizeof(loramac_keys_out->joineui));
+
+    if (res < 0) {
+        _LOGERR("get_loramac_keys: failed getting joineui\n");
+        return -1;
+    }
+
+    res = _read_file(LORAMAC_KEY_STORAGE_PATH "deveui", loramac_keys_out->deveui, sizeof(loramac_keys_out->deveui));
+
+    if (res < 0) {
+        _LOGERR("get_loramac_keys: failed getting deveui\n");
+        return -1;
+    }
+
+    res = _read_file(LORAMAC_KEY_STORAGE_PATH "nwkkey", loramac_keys_out->nwkkey, sizeof(loramac_keys_out->nwkkey));
+
+    if (res < 0) {
+        _LOGERR("get_loramac_keys: failed getting nwkkey\n");
+        return -1;
+    }
+
+    return 0;
 }
 
 int get_root_identity(identity_t *identity_out) {
@@ -387,6 +439,9 @@ int identity_store_init(void) {
         !vfs_file_exists(IDENTITY_STORAGE_PATH "self/root.pubid")
         || !vfs_file_exists(IDENTITY_STORAGE_PATH "self/self.pubid")
         || !vfs_file_exists(IDENTITY_STORAGE_PATH "self/self.prvid")
+        || !vfs_file_exists(LORAMAC_KEY_STORAGE_PATH "joineui")
+        || !vfs_file_exists(LORAMAC_KEY_STORAGE_PATH "deveui")
+        || !vfs_file_exists(LORAMAC_KEY_STORAGE_PATH "nwkkey")
     ) {
         _LOGINF("Identitiy store not set up yet, dropping to shell.\n");
         char line_buf[SHELL_DEFAULT_BUFSIZE];
@@ -456,6 +511,12 @@ int _provision_own_identity(int argc, char **argv) {
     res = _write_own_public_identity_file(&provisioning_data.own_signed_identity);
     if (res < 0) {
         _LOGERR("identity_store_setup: error writing own public identity file [ERROR]\n");
+        return -1;
+    }
+
+    res = _write_loramac_key_files(&provisioning_data.loramac_keys);
+    if (res < 0) {
+        _LOGERR("identity_store_setup: error writing loramac key files [ERROR]\n");
         return -1;
     }
 
