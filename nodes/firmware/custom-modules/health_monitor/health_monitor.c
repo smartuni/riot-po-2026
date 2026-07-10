@@ -113,10 +113,3 @@ int health_monitor_start(health_monitor_t* instance) {
 
 	return 0;
 }
-
-int health_monitor_delete(health_monitor_t* instance) {
-	if (instance == NULL) {
-		return -1;
-	}
-	return 0;
-}

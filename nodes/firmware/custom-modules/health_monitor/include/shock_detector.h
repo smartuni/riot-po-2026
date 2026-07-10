@@ -95,11 +95,5 @@ int shock_detector_start(shock_detector_t* instance);
 
 shock_status_t shock_detector_wait_for_shock(shock_detector_t* instance);
 
-/**
- * @brief Deletes the shock detector
- * @param instance Pointer to the shock detector
- * @return always return 0
- */
-int shock_detector_delete(shock_detector_t* instance);
 
 #endif

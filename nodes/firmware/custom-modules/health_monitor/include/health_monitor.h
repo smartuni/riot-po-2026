@@ -43,6 +43,5 @@ typedef struct {
 
 int health_monitor_init(health_monitor_t* instance);
 int health_monitor_start(health_monitor_t* instance);
-int health_monitor_delete(health_monitor_t* instance);
 
 #endif
