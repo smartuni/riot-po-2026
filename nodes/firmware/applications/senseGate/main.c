@@ -94,7 +94,7 @@ gate_observer_t observer = {
     .config = {
         .limit_switch_confs = {
                                 { .pin = REED_0_PIN_0,
-                                  .pull_conf = GPIO_IN_PU,
+                                  .pull_conf = GPIO_IN,
                                   .closed_level = false }
                               },
     },
