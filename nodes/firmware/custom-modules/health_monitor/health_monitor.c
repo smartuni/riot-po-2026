@@ -26,8 +26,8 @@ static int serialize_and_send(const health_monitor_payload_t* payload) {
 
 static void* battery_function(void* instance_void) {
 	battery_voltage_monitor_t* instance = (battery_voltage_monitor_t*)instance_void;
-	int low_battery_threshold_mv = 3700;
-	int battery_update_period_sec = 5;
+	int low_battery_threshold_mv = LOW_BATTERY_THRESHOLD_MV;
+	int battery_update_period_sec = BATTERY_UPDATE_PERIOD_SEC;
 	bool is_low_battery = false;
 	while (true) {
 		health_monitor_payload_t payload;
