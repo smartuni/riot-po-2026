@@ -219,8 +219,6 @@ int main(void){
     res = health_monitor_init(&health_monitor_instance);
     if (res != 0) {
         _LOGDBG("failed to initialize health monitor\n");
-    } else {
-        health_monitor_start(&health_monitor_instance);
     }
     
 

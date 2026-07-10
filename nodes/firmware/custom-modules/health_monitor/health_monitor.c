@@ -1,20 +1,7 @@
 #include "health_monitor.h"
 
 
-int health_monitor_init(health_monitor_t* instance) {
-	int result;
-	result = battery_voltage_monitor_init(&instance->battery_instance);
-	if(result != 0) {
-		return result;
-	}
 
-	
-	result = shock_detector_init(&instance->shock_detector_instance, 1);
-	if(result != 0) {
-		return result;
-	}
-	return 0;
-}
 
 static int serialize_and_send(const health_monitor_payload_t* payload) {
 	uint8_t buffer[HEALTH_MONITOR_CBOR_SIZE_BYTES];
@@ -93,9 +80,16 @@ static void* thread_shock_detector_function(void* instance_void) {
 	return NULL;
 }
 
-int health_monitor_start(health_monitor_t* instance) {
-	if (instance == NULL) {
-		return -1;
+int health_monitor_init(health_monitor_t* instance) {
+	assert(instance != NULL);
+	int result;
+	result = battery_voltage_monitor_init(&instance->battery_instance);
+	if(result != 0) {
+		return result;
+	}
+	result = shock_detector_init(&instance->shock_detector_instance, 1);
+	if(result != 0) {
+		return result;
 	}
 
 	instance->shock_detector_thread_pid = thread_create(instance->shock_detector_thread_stack,
@@ -110,7 +104,6 @@ int health_monitor_start(health_monitor_t* instance) {
 												 THREAD_CREATE_STACKTEST,
 												 thread_battery_function,
 												 (void*) &instance->battery_instance, "Battery Thread");
-	
 
 	return 0;
 }
