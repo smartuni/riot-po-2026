@@ -1,4 +1,4 @@
--- Migration: V11__Add_node_management_tables.sql
+-- Migration: V15__Add_node_management_tables.sql
 -- Description: Create tables for node management (root keys and nodes)
 
 -- ============================================================================

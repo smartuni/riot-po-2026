@@ -335,9 +335,10 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             _LOGDBG("%d bytes: \n", pkt->size);
             print_hex_arr(pkt->data, pkt->size);
 
+            uint8_t signature_buf[MAX_SIGNATURE_SIZE];
+            size_t signature_len = sizeof(signature_buf);
             table_record_t record;
             table_record_data_buffer_t record_data;
-            size_t signature_len = 0;
             int res = cbor_deserialize_record(pkt->data, pkt->size, &record,
                                               &record_data, NULL, &signature_len);
 
@@ -362,7 +363,7 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
                 event_post(EVENT_PRIO_MEDIUM, &eventNews);
                 _LOGDBG("Downlink received and table updated.\n");
 #endif
-            } else if (result.rejected_sig || result.invalid_record){
+            } else if (result.rejected_sig || result.invalid_record) {
                 _LOGDBG("Error updating table\n");
             } else {
                 _LOGDBG("Downlink received. No updates.\n");

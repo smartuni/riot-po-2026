@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
 
 /**
  * An Entity for storing the Gates
@@ -51,6 +52,8 @@ public class GateEntity {
     private boolean manualOverride;
     @Column(name = "height_above_nn")
     private Double heightAboveNN;
+
+
 
 
     public GateEntity(Long gateID, Status status, Timestamp lastTimeStamp,

@@ -1,13 +1,15 @@
 package com.riot.matesense.service;
 
-import com.fasterxml.jackson.dataformat.cbor.CBORSimpleValue;
 import com.riot.matesense.config.DownPayload;
 import com.riot.matesense.config.MqttProperties;
 import com.riot.matesense.mqtt.TTNMqttPublisher;
 import com.riot.matesense.registry.DeviceRegistry;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HexFormat;
+import java.util.List;
 
 import static com.riot.matesense.enums.RecordType.GATE_COMMAND;
 
@@ -15,97 +17,114 @@ import static com.riot.matesense.enums.RecordType.GATE_COMMAND;
 public class DownlinkService {
 
     private final TTNMqttPublisher mqttPublisher;
-    private final CborConverter cborConverter;
     private final MqttProperties mqttProperties;
-
     private final DeviceRegistry deviceRegistry;
-    public DownlinkService(TTNMqttPublisher mqttPublisher, CborConverter cborConverter, MqttProperties mqttProperties, DeviceRegistry deviceRegistry) {
+    private final KeyStoreService keyStoreService;
+
+    public DownlinkService(TTNMqttPublisher mqttPublisher,
+                           MqttProperties mqttProperties, DeviceRegistry deviceRegistry,
+                           KeyStoreService keyStoreService) {
         this.mqttPublisher = mqttPublisher;
-        this.cborConverter = cborConverter;
         this.mqttProperties = mqttProperties;
         this.deviceRegistry = deviceRegistry;
+        this.keyStoreService = keyStoreService;
     }
 
     public void sendDownlinkToDevice(DownPayload payloadData) {
         try {
-            List<String> allDevices = new ArrayList<>();
-            allDevices.addAll(deviceRegistry.getAllGateDevices());
-            allDevices.addAll(deviceRegistry.getAllMateDevices());
-
-            // === Soll-Status vorbereiten ===
             List<List<Integer>> sollStatusList = payloadData.getStatuses().stream()
                     .map(statusEntry -> Arrays.asList(statusEntry.get(0), statusEntry.get(1)))
                     .toList();
-            for (List<Integer> gateStatePair: sollStatusList){
-                //===== HEADER vvvv
-                byte version = 0x01; // fixed for now
-                byte message_type = 0x01; // message type single report (fixed for now)
-                byte record_type = (byte)GATE_COMMAND.getCode();
-                byte[] writerId = { 0x12, 0x12, 0x12, 0x12 };
-                //byte[] sequence = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, (byte)0x88};
-                Long sequence = 12345678L;
-                long msSinceEpoch = System.currentTimeMillis();
-                int hlc_phy =  (int)(msSinceEpoch / 1000);
-                int hlc_log =  (int)(msSinceEpoch % 1000);
-                //===== HEADER ^^^^
-
-                byte device_type_gate = 0x00;
-                int gate_num = gateStatePair.get(0);
-
-                //===== Gate Command vvvv
-                byte[] target_gate_id = { 0x00, 0x00, device_type_gate, (byte)gate_num};
-                int target_state = gateStatePair.get(1);
-                //===== Gate Command ^^^^
-
-                List<Object> sollStatusPayload = Arrays.asList(
-                        //0, payloadData.getTimestamp(), 2, 0, sollStatusList
-                        version,
-                        message_type,
-                        record_type, writerId, sequence, hlc_phy,
-                        hlc_log, target_gate_id, target_state
-                );
-
-                String sollJson = encodePayloadToBase64Json(sollStatusPayload);
-                System.out.println("Soll-Status JSON: " + sollJson);
+            for (List<Integer> gateStatePair : sollStatusList) {
+                int gateNum = gateStatePair.get(0);
+                int targetState = gateStatePair.get(1);
+                String base64Payload = buildSignedGateCommandCbor(gateNum, targetState,
+                        getServerSigningKeySeed(), getServerKid());
 
                 for (String gateDevice : deviceRegistry.getAllGateDevices()) {
                     String topic = mqttProperties.buildDeviceDownlinkTopic(gateDevice);
-                    mqttPublisher.publishDownlink(sollJson.getBytes(), topic);
-                    System.out.println("Soll-Status gesendet an: " + topic);
+                    String ttnJson = buildTtnJsonPayload(base64Payload);
+                    mqttPublisher.publishDownlink(ttnJson.getBytes(), topic);
                 }
             }
-            //List<Object> sollStatusPayload = Arrays.asList(
-            //        0, payloadData.getTimestamp(), 2, 0, sollStatusList
-            //);
-
         } catch (Exception e) {
             System.err.println("Fehler beim Downlink-Senden: " + e.getMessage());
         }
     }
 
-    private String encodePayloadToBase64Json(List<Object> payload) throws Exception {
-        byte[] cbor = cborConverter.toCbor(payload);
-        System.out.println("CBOR-Payload lenght: " + cbor.length);
-        //need to be send to the frontend and need to be handle
-        if (cbor.length > 255) {
-            throw new IllegalArgumentException("CBOR-Payload überschreitet 255-Byte-Limit: " + cbor.length + " Bytes");
-        }
+    public String sendSignedDownlink(String deviceId, int gateNum, int targetState) {
+        String base64Payload = buildSignedGateCommandCbor(gateNum, targetState,
+                getServerSigningKeySeed(), getServerKid());
 
-        String base64 = Base64.getEncoder().encodeToString(cbor);
+        String ttnJson = buildTtnJsonPayload(base64Payload);
+
+        String topic = mqttProperties.buildDeviceDownlinkTopic(deviceId);
+        mqttPublisher.publishDownlink(ttnJson.getBytes(), topic);
+
+        return base64Payload;
+    }
+
+    static String buildSignedGateCommandCbor(int gateNum, int targetState,
+                                              byte[] signingKeySeed, byte[] kid) {
+        GateCommandRecord record = toGateCommandRecord(gateNum, targetState);
+
+        byte[] unsignedCbor = FirmwareCborSerializer.serialize(record, null);
+
+        byte[] coseSignature = CoseSign1Encoder.buildCoseSign1(kid, unsignedCbor, signingKeySeed);
+
+        byte[] signedCbor = FirmwareCborSerializer.serialize(record, coseSignature);
+
+        return Base64.getEncoder().encodeToString(signedCbor);
+    }
+
+    private byte[] getServerSigningKeySeed() {
+        var serverKey = keyStoreService.getServerKey()
+                .orElseThrow(() -> new IllegalStateException("No server signing key configured"));
+        return Arrays.copyOf(serverKey.getPrivateKey(), 32);
+    }
+
+    private byte[] getServerKid() {
+        var serverKey = keyStoreService.getServerKey()
+                .orElseThrow(() -> new IllegalStateException("No server signing key configured"));
+        return HexFormat.of().parseHex(serverKey.getKid());
+    }
+
+    static GateCommandRecord toGateCommandRecord(int gateNum, int targetState) {
+        long nowMs = System.currentTimeMillis();
+        long epochSeconds = nowMs / 1000;
+
+        return new GateCommandRecord(
+                0x01,
+                0x01,
+                GATE_COMMAND.getCode(),
+                new byte[]{0x12, 0x12, 0x12, 0x12},
+                epochSeconds,
+                epochSeconds,
+                0,
+                new byte[]{0x00, 0x00, 0x00, (byte) gateNum},
+                mapGateState(targetState)
+        );
+    }
+
+    static int mapGateState(int backendState) {
+        return switch (backendState) {
+            case 0 -> 0;
+            case 1 -> 1;
+            default -> throw new IllegalArgumentException("Unsupported gate state: " + backendState);
+        };
+    }
+
+    private String buildTtnJsonPayload(String base64Payload) {
         return String.format("""
-    {
-      "downlinks": [
-        {
-          "f_port": 15,
-          "frm_payload":"%s",
-          "priority": "NORMAL"
-        }
-      ]
+                {
+                  "downlinks": [
+                    {
+                      "f_port": 15,
+                      "frm_payload": "%s",
+                      "priority": "NORMAL"
+                    }
+                  ]
+                }
+                """, base64Payload);
     }
-    """, base64);
-    }
-
-
-
-
 }
