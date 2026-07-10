@@ -11,6 +11,8 @@ Script for managing identities as well as related functionality:
 - Provisioning of nodes.
 - Wiping of nodes.
 
+To run the script, make sure [uv](https://docs.astral.sh/uv/) is installed. Then uv will take care of installing the required dependencies automatically as they are defined as [uv script dependencies](https://docs.astral.sh/uv/guides/scripts/#declaring-script-dependencies).
+
 See the help page of the command for more information on the commands and how to use them. Also see the [Quickstart](#quickstart).  
 Note that a [configuration file](#configuration) needs to be provided under `config.yaml` next to the script.  
 The generated identity information will be stored in [identity information files](#_id_info-files) in the [`identities` directory](#identities-directory) next to the script.
