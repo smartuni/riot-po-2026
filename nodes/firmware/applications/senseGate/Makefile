@@ -107,6 +107,11 @@ USEMODULE += ps
 USEMODULE += shell_cmd_genfile
 USEMODULE += shell_cmds_default
 
+# required modules for identity store
+USEMODULE += identity_store
+USEMODULE += vfs_default
+USEMODULE += vfs_util
+
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 CFLAGS += -DDEBUG_ASSERT_VERBOSE

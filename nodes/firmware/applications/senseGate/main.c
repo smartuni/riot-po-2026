@@ -13,6 +13,7 @@
 #include "inductive_sensor.h"
 #include "include/gate_observer.h"
 #include "mtd.h"
+#include "identity_store.h"
 #define LOG_LEVEL   LOG_DEBUG
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[main]: " __VA_ARGS__)
@@ -146,6 +147,12 @@ int main(void){
     ztimer_sleep(ZTIMER_SEC, 3);
     puts("[main]: starting");
 
+    int res = identity_store_init();
+    _LOGDBG("identity_store_init: %s\n", ok(res == 0));
+
+    res = get_own_node_id(self_node_id, sizeof(self_node_id));
+    _LOGDBG("get_own_node_id: %s\n", ok(res == 0));
+
     thread_create(
         shell_stack,
         sizeof(shell_stack),
@@ -156,7 +163,7 @@ int main(void){
        "shell"
     );
 
-    int res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
+    res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
     _LOGDBG("storage_setup_ram_mtd: %s\n", ok(res == 0));
 
     res = credential_manager_setup(STORAGE_MOUNT_PATH "/cred");
