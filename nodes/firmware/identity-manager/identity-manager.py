@@ -851,5 +851,36 @@ def provision(type, device_id):
         )
         print_info(f"[i] Node provisioned.")
 
+@node.command()
+def wipe():
+    """Wipes the connected node via serial."""
+
+    with serial.Serial(port="/dev/ttyACM0", baudrate=115200) as ser:
+        ser.write(
+            data="\n".encode()
+        )
+        # Remove the files.
+        file_remove_commands = [
+            "vfs rm /nvm0/identities/self/root.pubid",
+            "vfs rm /nvm0/identities/self/self.pubid",
+            "vfs rm /nvm0/identities/self/self.prvid",
+            "vfs rm /nvm0/config/loramac/joineui",
+            "vfs rm /nvm0/config/loramac/deveui",
+            "vfs rm /nvm0/config/loramac/nwkkey"
+        ]
+        for cmd in file_remove_commands:
+            print_info(f"[i] Sending command: {cmd}")
+            ser.write(
+                data=f"{cmd}\n".encode()
+            )
+            sleep(.5)
+        # Reboot.
+        sleep(1)
+        print_info(f"[i] Rebooting...")
+        ser.write(
+            data="\nreboot\n".encode()
+        )
+        print_info(f"[i] Node wiped.")
+
 if __name__ == "__main__":
     identity_manager()
