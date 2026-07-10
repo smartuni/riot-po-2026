@@ -9,6 +9,7 @@ Script for managing identities as well as related functionality:
     - The Things Network (LoraWAN) configuration.
     - Provisioning payload holding all this information for node setup.
 - Provisioning of nodes.
+- Wiping of nodes.
 
 See the help page of the command for more information on the commands and how to use them.  
 Note that a [configuration file](#configuration) needs to be provided under `config.yaml` next to the script.  
