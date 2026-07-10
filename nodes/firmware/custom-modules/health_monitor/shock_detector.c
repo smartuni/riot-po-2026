@@ -76,7 +76,7 @@ static bool check_free_fall(shock_detector_t* instance) {
 
 static bool check_shock(shock_detector_t* instance) {
 
-	//for the values below 100hz: if there's at least one value, which is lower than 10000, return true, else return false
+	//for the values below 100hz: count zeroes in the frequency domain, if more than SHOCK_THRESHOLD zeroes, then return true
 	int zeroes_count = 0;
 	for(int i = 0; i < 100; i+= 3) {
 		if(instance->freq_avg->frequency_domain[i].average == 0) {
@@ -111,22 +111,27 @@ static void sliding_avg(kiss_fft_cpx* data, int data_len, int window, kiss_fft_c
 static void* acceleration_thread(void* instance_void) {
 	shock_detector_t* instance = (shock_detector_t*)instance_void;
 	while (instance->running) {
+		//collect the accelerometer data
 		collect_magnitudes(instance);
+		//convolve the data to remove the noise
 		sliding_avg(instance->input, instance->sample_size, AVG_SLIDING_WINDOW, instance->smoothed_input, &instance->smoothed_size);
-		process_fft(instance); // process the collected samples with FFT
-		postprocess_fft(instance); // post-process the FFT results to find the average over frequency
-		//LOG_DEBUG("[shock_detector.c:%d] Frequency ; Magnitude\n", __LINE__);
+		// process the collected samples with FFT
+		process_fft(instance); 
+		// post-process the FFT results to round the frequency domain and calculate the average magnitude for each frequency
+		postprocess_fft(instance);
 
+		//to read the convolved accelerometer data, uncomment the following lines
+		//LOG_DEBUG("[shock_detector.c:%d] Frequency ; Magnitude\n", __LINE__);
 		// for (int i = 0; i < instance->nyquist_domain_size; i += 3) {
 		// 	LOG_DEBUG(" ; %d ; %d\n", i, instance->freq_avg->frequency_domain[i].average);
 		// }
-		
+
+		//to perform calibration, uncomment the following lines and plot them to csv to see the frequency domain and the magnitude of each frequency
+		//LOG_DEBUG("[shock_detector.c:%d] Sample ; Magnitude\n", __LINE__);
 		// for (int i = 0; i < instance->sample_size; i += 3) {
 		// 	LOG_DEBUG(" ; %d ; %d\n", i, (int)(instance->input[i].r) - ACCELEROMETER_EARTH_GRAVITY);
 		// }
 		
-
-		//if (check_shock(instance)) {
 		LOG_DEBUG("[shock_detector.c:%d] Checking accelerometer data...\n", __LINE__);
 		if(check_free_fall(instance)) {
 			mutex_lock(&instance->shock_status_mutex);
@@ -158,13 +163,11 @@ int shock_detector_init(shock_detector_t* instance, int sampling_period_ms) {
 	instance->shock_status_mutex = (mutex_t)MUTEX_INIT;
 	sem_init(&instance->shock_count_to_report, 0, 0);
 
-	/* [TASK 3: find your device here] */
 	instance->accel_sensor = saul_reg_find_type(SAUL_SENSE_ACCEL);
 	if (!instance->accel_sensor) {
 		LOG_DEBUG("[shock_detector:%d] No accelerometer sensor found!\n", __LINE__);
 		return -1;
 	} else {
-		//commented out for now to reduce console output, but can be useful for debugging
 		LOG_DEBUG("[shock_detector:%d] Accelerometer sensor found: %s\n", __LINE__, instance->accel_sensor->name);
 	}
 
@@ -184,7 +187,6 @@ int shock_detector_start(shock_detector_t* instance) {
 		LOG_DEBUG("[shock_detector:%d] Error creating acceleration thread - %s:%d\n", __LINE__, __FILE__, __LINE__);
 		return -1;
 	}
-	// ... and also commented out
 	LOG_DEBUG("[shock_detector:%d] Acceleration thread started with PID %d\n", __LINE__, *accel_thread_pid);
 	return 0;
 }
