@@ -25,6 +25,9 @@
 #include "thread.h"
 #include <stdlib.h>
 
+#define LOW_BATTERY_THRESHOLD_MV 3700
+#define BATTERY_UPDATE_PERIOD_SEC 5
+
 typedef struct {
 	bool battery_monitor_running;
 	kernel_pid_t battery_thread_pid;
