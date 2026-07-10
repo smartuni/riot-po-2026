@@ -72,7 +72,7 @@ typedef struct {
 
 int battery_voltage_monitor_init(battery_voltage_monitor_t* instance);
 
-battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* instance);
+void battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* instance, battery_info_t* info);
 
 
 #endif

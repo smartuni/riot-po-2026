@@ -31,8 +31,9 @@ static void* thread_battery_function(void* instance_void) {
 	bool is_low_battery = false;
 	while (true) {
 		health_monitor_payload_t payload;
+		battery_info_t battery_info;
 
-		battery_info_t battery_info = battery_voltage_monitor_fetch_info(instance);
+		battery_voltage_monitor_fetch_info(instance, &battery_info);
 		switch (battery_info.battery_status) {
 			case BATTERY_STATE_CHARGING:
 				payload.header = BATTERY_CHARGING;
