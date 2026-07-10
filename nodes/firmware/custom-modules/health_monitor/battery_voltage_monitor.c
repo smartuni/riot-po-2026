@@ -11,7 +11,6 @@
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
 #include "battery_voltage_monitor.h"
-#include "include/battery_voltage_monitor.h"
 
 static int voltage_adc_setup(gpio_t pwr_pin, adc_t line) {
 	int res = adc_init(line);
