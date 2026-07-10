@@ -100,11 +100,3 @@ battery_info_t battery_voltage_monitor_fetch_info(battery_voltage_monitor_t* ins
 	return info;
 }
 
-int battery_voltage_monitor_delete(battery_voltage_monitor_t* instance) {
-	if (instance == NULL) {
-		LOG_DEBUG("[battery_voltage_monitor.c:%d] Invalid battery voltage monitor", __LINE__);
-		return -1;
-	}
-	free(instance);
-	return 0;
-}

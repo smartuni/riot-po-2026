@@ -191,14 +191,6 @@ int shock_detector_start(shock_detector_t* instance) {
 	return 0;
 }
 
-int shock_detector_delete(shock_detector_t* instance) {
-	instance->running = false;
-	ztimer_sleep(ZTIMER_MSEC, 5000); // give some time for the thread to exit
-	moving_freq_avg_delete(instance->freq_avg);
-	kiss_fft_free(instance->cfg);
-	sem_destroy(&instance->shock_count_to_report);
-	return 0;
-}
 
 
 shock_status_t shock_detector_wait_for_shock(shock_detector_t* instance) {
