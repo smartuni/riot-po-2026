@@ -76,6 +76,10 @@ int cbor_serialize_record(const table_record_t *record, uint8_t *out, size_t *ou
  */
 int cbor_serialize_record_no_sig(const table_record_t *record, uint8_t *out, size_t *out_len);
 
+int cbor_serialize_signed_public_identity(const signed_identity_t *signed_identity, uint8_t *out, size_t *out_len);
+
+int cbor_serialize_identity(const identity_t *identity, uint8_t *out, size_t *out_len);
+
 /**
  * @brief Serialize in CBOR an identification request or response as a message.
  *

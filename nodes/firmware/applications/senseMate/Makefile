@@ -121,6 +121,7 @@ USEMODULE += cose_crypto_service
 USEMODULE += hlc_ztimer
 
 # required modules for identity store
+USEMODULE += identity_store
 USEMODULE += vfs_default
 USEMODULE += vfs_util
 
