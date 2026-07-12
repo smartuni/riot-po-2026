@@ -22,7 +22,8 @@
 #include "timex.h"
 #include "ztimer.h"
 #include "cbor.h"
-#include "cbor_serialization.h"
+#include "cbor_serialization/record.h"
+#include "cbor_serialization/identity.h"
 #include "personalization.h"
 #define LOG_LEVEL   LOG_INFO
 #include "identity_store.h"

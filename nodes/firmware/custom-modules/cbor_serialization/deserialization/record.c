@@ -2,42 +2,15 @@
 #include <stdint.h>
 
 #include "cbor.h"
-#include "tables/types.h"
 #include "tables/records.h"
 
-#include "cbor_serialization.h"
+#include "cbor_serialization/common.h"
+#include "cbor_serialization/record.h"
 
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
 #include "od.h"
-
-CborError cbor_deserialize_simple_or_u8(CborValue *value, uint8_t *val)
-{
-    CborError error;
-    if (cbor_value_is_simple_type(value)) {
-        error = cbor_value_get_simple_type(value, val);
-        if (error != CborNoError) {
-            DEBUG("%s cbor_value_get_simple_type error: (%d)\n", __func__, error);
-            return error;
-        }
-        return CborNoError;
-    } else if (cbor_value_is_unsigned_integer(value)) {
-        uint64_t tmp;
-        error = cbor_value_get_uint64(value, &tmp);
-        if (error != CborNoError) {
-            DEBUG("%s cbor_value_get_uint64 (%d)\n", __func__, error);
-            return error;
-        }
-        if (tmp > 255) {
-            DEBUG("%s cbor_value_get_uint64 larger than uint8_t!\n", __func__);
-            return CborErrorIllegalType;
-        }
-        *val = (uint8_t)tmp;
-        return CborNoError;
-    }
-    return CborErrorIllegalType;
-}
 
 static int _cbor_decode_hlc_timestamp(CborValue *value, hlc_timestamp_t *hlc)
 {
@@ -92,40 +65,6 @@ static int _cbor_decode_hlc_timestamp(CborValue *value, hlc_timestamp_t *hlc)
     return 0;
 }
 
-static int _cbor_decode_node_id(CborValue *value, node_id_t *node_id)
-{
-    assert(value != NULL);
-    assert(node_id != NULL);
-
-    CborError error;
-    size_t id_len;
-
-    if (!cbor_value_is_byte_string(value)) {
-        DEBUG("_cbor_decode_node_id: expected byte string for writer ID\n");
-        return -1;
-    }
-
-    error = cbor_value_get_string_length(value, &id_len);
-    if (error != CborNoError) {
-        DEBUG("_cbor_decode_node_id: error getting writer ID length (%d)\n", error);
-        return -1;
-    }
-
-    if (id_len != NODE_ID_SIZE) {
-        DEBUG("_cbor_decode_node_id: wrong writer ID length."
-              " Got %zu, expected %d\n", id_len, NODE_ID_SIZE);
-        return -1;
-    }
-
-    error = cbor_value_copy_byte_string(value, *node_id, &id_len, value);
-    if (error != CborNoError) {
-        DEBUG("_cbor_decode_node_id: error getting writer ID (%d)\n", error);
-        return -1;
-    }
-
-    return 0;
-}
-
 static int _cbor_decode_record_header(CborValue *value, table_record_header_t *header)
 {
     CborError error;
@@ -133,7 +72,7 @@ static int _cbor_decode_record_header(CborValue *value, table_record_header_t *h
     int result;
     memset(header, 0, sizeof(table_record_header_t));
 
-    error = cbor_deserialize_simple_or_u8(value, &simple_value);
+    error = _cbor_deserialize_simple_or_u8(value, &simple_value);
     if (error != CborNoError) {
         DEBUG("%s expected simple or unsigned value for record type (%d)\n", __func__, error);
         return -1;
@@ -201,7 +140,7 @@ static int _cbor_decode_gate_report(CborValue *array_item, table_gate_report_t *
     assert(report != NULL);
 
     uint8_t gate_state;
-    CborError error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
+    CborError error = _cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
         DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
@@ -237,7 +176,7 @@ static int _cbor_decode_gate_observation(CborValue *array_item,
     }
 
     uint8_t gate_state;
-    error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
+    error = _cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
         DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
@@ -273,7 +212,7 @@ static int _cbor_decode_gate_command(CborValue *array_item,
     }
 
     uint8_t gate_state;
-    error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
+    error = _cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
         DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
@@ -315,7 +254,7 @@ static int _cbor_decode_gate_job(CborValue *array_item,
     }
 
     uint8_t gate_state;
-    error = cbor_deserialize_simple_or_u8(array_item, &gate_state);
+    error = _cbor_deserialize_simple_or_u8(array_item, &gate_state);
     if (error != CborNoError) {
         DEBUG("%s expected simple or unsigned value for gate state (%d)\n", __func__, error);
         return -1;
@@ -430,7 +369,7 @@ static int _cbor_decode_record_signature(CborValue *array_item, table_record_t *
     return 0;
 }
 
-int cbor_decode_record(CborValue *array_item, table_record_t *record,
+int _cbor_decode_record(CborValue *array_item, table_record_t *record,
                        table_record_data_buffer_t *record_data, uint8_t *signature,
                        size_t *signature_len)
 {
@@ -448,25 +387,25 @@ int cbor_decode_record(CborValue *array_item, table_record_t *record,
 
     result = _cbor_decode_record_header(array_item, &record->header);
     if (result != 0) {
-        DEBUG("cbor_decode_record: error decoding record header\n");
+        DEBUG("_cbor_decode_record: error decoding record header\n");
         return -1;
     }
 
     error = cbor_value_advance(array_item);
     if (error != CborNoError) {
-        DEBUG("cbor_decode_record: error advancing to record data (%d)\n", error);
+        DEBUG("_cbor_decode_record: error advancing to record data (%d)\n", error);
         return -1;
     }
 
     result = _cbor_decode_record_data(array_item, record, record_data);
     if (result != 0) {
-        DEBUG("cbor_decode_record: error decoding record data\n");
+        DEBUG("_cbor_decode_record: error decoding record data\n");
         return -1;
     }
 
     error = cbor_value_advance(array_item);
     if (error != CborNoError) {
-        DEBUG("cbor_decode_record: error advancing to record signature (%d)\n", error);
+        DEBUG("_cbor_decode_record: error advancing to record signature (%d)\n", error);
         return -1;
     }
 
@@ -481,9 +420,93 @@ int cbor_decode_record(CborValue *array_item, table_record_t *record,
     } else {
         result = _cbor_decode_record_signature(array_item, record, signature, signature_len);
         if (result != 0) {
-            DEBUG("cbor_decode_record: error decoding record signature\n");
+            DEBUG("_cbor_decode_record: error decoding record signature\n");
             return -1;
         }
+    }
+
+    return 0;
+}
+
+int cbor_deserialize_record(const uint8_t *buffer, size_t buffer_len, table_record_t *record,
+                            table_record_data_buffer_t *record_data, uint8_t *signature,
+                            size_t *signature_len)
+{
+    assert(buffer != NULL);
+    assert(record != NULL);
+    assert(record_data != NULL);
+    assert(signature_len != NULL);
+    // signature CAN be NULL
+
+    DEBUG("cbor_deserialize_record: decoding buffer of %zu bytes\n", buffer_len);
+
+    CborParser parser;
+    CborValue main_array_iterator;
+    CborError error;
+    int result;
+
+    error = cbor_parser_init(buffer, buffer_len, CborValidateStrictMode, &parser,
+                             &main_array_iterator);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_record: error initializing parser (%d)\n", error);
+        return -1;
+    }
+
+    if (!cbor_value_is_array(&main_array_iterator)) {
+        DEBUG("cbor_deserialize_record: expected main array\n");
+        return -1;
+    }
+
+    CborValue array_item;
+    error = cbor_value_enter_container(&main_array_iterator, &array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_record: error entering main array (%d)\n", error);
+        return -1;
+    }
+
+    uint8_t version;
+    result = _cbor_decode_version(&array_item, &version);
+    if (result != 0) {
+        return -1;
+    }
+
+    error = cbor_value_advance(&array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_record: error advancing to message type (%d)\n", error);
+        return -1;
+    }
+
+    uint8_t message_type;
+    result = _cbor_decode_message_type(&array_item, &message_type);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_record: error getting message type\n");
+        return -1;
+    }
+
+    // For now, we only support single report message type
+    if (message_type != MESSAGE_TYPE_SINGLE_REPORT) {
+        DEBUG("cbor_deserialize_record: expected message type %d, got %d\n",
+              MESSAGE_TYPE_SINGLE_REPORT, message_type);
+        return -1;
+    }
+
+    error = cbor_value_advance(&array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_record: error advancing to record (%d)\n", error);
+        return -1;
+    }
+
+    result = _cbor_decode_record(&array_item, record, record_data, signature,
+                                signature_len);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_record: error decoding record\n");
+        return -1;
+    }
+
+    error = cbor_value_leave_container(&main_array_iterator, &array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_record: error leaving container (%d)\n", error);
+        return -1;
     }
 
     return 0;

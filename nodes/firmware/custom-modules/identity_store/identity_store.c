@@ -7,7 +7,8 @@
 #include "identity_store.h"
 #include "base64.h"
 #include "od.h"
-#include "cbor_serialization.h"
+#include "cbor_serialization/identity.h"
+#include "tables/types.h"
 #include "errno.h"
 #include "shell.h"
 
