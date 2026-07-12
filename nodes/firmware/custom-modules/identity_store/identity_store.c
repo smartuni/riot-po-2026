@@ -549,6 +549,19 @@ int _delete_known_identities(int argc, char **argv)
     return 0;
 }
 
+int _wipe_flash(int argc, char **argv)
+{
+    if (argc > 1) {
+        printf("Usage: %s\n", argv[0]);
+        return -1;
+    }
+
+    _setup_flash();
+
+    _LOGINF("wiped the flash\n");
+    return 0;
+}
+
 int _print_identity(int argc, char **argv) {
     if (argc != 2) {
         printf("Usage: %s /path/to/file\n", argv[0]);
@@ -572,5 +585,6 @@ int _print_identity(int argc, char **argv) {
 }
 
 SHELL_COMMAND(delete_learned_identities, "Delete learned identities from external flash", _delete_known_identities);
+SHELL_COMMAND(wipe, "Wipe the external flash", _wipe_flash);
 SHELL_COMMAND(provision_own_identity, "Provision own identity", _provision_own_identity);
 SHELL_COMMAND(print_identity, "Print identity as hex-encoded bytestring", _print_identity);
