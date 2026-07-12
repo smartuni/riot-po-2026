@@ -25,6 +25,7 @@ To set up a new node, the following steps should be taken:
    ```shell
    ./identity-manager.py root create
    ```
+   > Note: When working in a team you might want to instead copy your teams root identity file to `./identities/root/root_000.root_id_info.json` to use that.
 2. Generate a new identity for the node using the following command (e.g. provisioning a new senseMate):
    ```shell
    ./identity-manager.py node create senseMate
