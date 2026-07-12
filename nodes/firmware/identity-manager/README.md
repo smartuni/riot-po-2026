@@ -13,7 +13,7 @@ Script for managing identities as well as related functionality:
 
 To run the script, make sure [uv](https://docs.astral.sh/uv/) is installed. Then uv will take care of installing the required dependencies automatically as they are defined as [uv script dependencies](https://docs.astral.sh/uv/guides/scripts/#declaring-script-dependencies).
 
-See the help page of the command for more information on the commands and how to use them. Also see the [Quickstart](#quickstart).  
+See the help page of the command or the [Commands section](#commands) for more information on the commands and how to use them. Also see the [Quickstart](#quickstart).  
 Note that a [configuration file](#configuration) needs to be provided under `config.yaml` next to the script.  
 The generated identity information will be stored in [identity information files](#_id_info-files) in the [`identities` directory](#identities-directory) next to the script.
 
@@ -39,6 +39,25 @@ To set up a new node, the following steps should be taken:
    ./identity-manager.py node provision senseMate ID
    ```
    The ID should be the ID generated in step 1.
+
+## Commands
+
+The script provides the following commands:
+
+### `root`
+
+- `./identity-manager.py root create`: Allows for creating a root identity.
+    - The optional `--force` option allows for overwriting an existing root identity.
+
+### `node`
+
+- `./identity-manager.py node create senseMate|senseGate`: Allows for creating a node identity.
+    - A [configuration file](#configuration) needs to exist as this command creates a device in The Things Network.
+    - Creating `senseMate` or `senseGate` identities is supported, one of them needs to be specified.
+    - An optional ID can be provided to create a device with a specific ID (e.g.: `./identity-manager.py node create senseMate 10` to create senseMate 10).
+    - The optional `--force` option allows for overwriting an existing device identity.
+- `./identity-manager.py node wipe`: Wipes the connected node (e.g. to re-provision it).
+- `./identity-manager.py node provision`: Provisions the connected node.
 
 ## Configuration
 
