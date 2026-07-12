@@ -612,10 +612,10 @@ def node():
     pass
 
 @node.command()
-@click.option("-i", "--device-id", type=click.INT, help="The device ID for which to create the identity information.")
 @click.option("-f", "--force", is_flag=True, help="Forcefully create the identity, even if one with the same ID already exists.")
 @click.argument("type", type=click.Choice(SupportedNodeType, case_sensitive=False))
-def create(device_id, force, type):
+@click.argument("device-id", type=click.INT, required=False)
+def create(force, type, device_id):
     """Create a node identity."""
 
     # Load the root identity information.
