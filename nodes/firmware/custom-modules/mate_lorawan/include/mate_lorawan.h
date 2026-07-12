@@ -43,8 +43,6 @@ int mate_lorawan_start(tables_context_t *tables);
  */
 bool mate_lorawan_joined(void);
 
-int send_lorawan_packet(const uint8_t *buf, size_t len);
-
 #endif /* MATE_LORAWAN_H */
 /** @} */
 
