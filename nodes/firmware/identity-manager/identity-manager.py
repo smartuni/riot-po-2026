@@ -642,6 +642,7 @@ def create(device_id, force, type):
         node_kid = create_kid(type, device_id)
         save_file_name = kid_to_filename(node_kid)
         save_path = f"{save_dir}/{save_file_name}"
+        node_ttn_device_id = kid_to_ttn_device_id(node_kid)
     else:
         # If no device ID was provided, find the next free device ID.
         device_id = 1
@@ -653,14 +654,21 @@ def create(device_id, force, type):
             node_kid = create_kid(type, device_id)
             save_file_name = kid_to_filename(node_kid)
             save_path = f"{save_dir}/{save_file_name}"
+            node_ttn_device_id = kid_to_ttn_device_id(node_kid)
 
-            if not Path(save_path).exists():
+            id_info_exists = Path(save_path).exists()
+            try:
+                ttn_device_exists = ttn_check_device_exists(node_ttn_device_id)
+            except Exception as e:
+                print_error(f"[!] Error while checking, if device already exists in TTN:")
+                print_error(f"[!] {e}")
+                print_error("[!] Exiting.")
+                sys.exit(1)
+
+            if not id_info_exists and not ttn_device_exists:
                 break
 
             device_id += 1
-
-    # Set the nodes TTN device id.
-    node_ttn_device_id = kid_to_ttn_device_id(node_kid)
     
     # Check if the node identity information already exists.
     if Path(save_path).exists() and not force:
