@@ -859,23 +859,13 @@ def wipe():
         ser.write(
             data="\n".encode()
         )
-        # Remove the files.
-        file_remove_commands = [
-            "vfs rm /nvm0/identities/self/root.pubid",
-            "vfs rm /nvm0/identities/self/self.pubid",
-            "vfs rm /nvm0/identities/self/self.prvid",
-            "vfs rm /nvm0/config/loramac/joineui",
-            "vfs rm /nvm0/config/loramac/deveui",
-            "vfs rm /nvm0/config/loramac/nwkkey"
-        ]
-        for cmd in file_remove_commands:
-            print_info(f"[i] Sending command: {cmd}")
-            ser.write(
-                data=f"{cmd}\n".encode()
-            )
-            sleep(.5)
-        # Reboot.
+        # Wipe the node.
+        print_info(f"[i] Sending command: wipe")
+        ser.write(
+            data="wipe\n".encode()
+        )
         sleep(1)
+        # Reboot.
         print_info(f"[i] Rebooting...")
         ser.write(
             data="\nreboot\n".encode()
