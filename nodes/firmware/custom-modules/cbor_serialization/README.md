@@ -21,6 +21,7 @@ The following message types are available:
 - **single report** (`MESSAGE_TYPE_SINGLE_REPORT`, `0x01`)
 - **ID request** (`MESSAGE_TYPE_ID_REQUEST`, `0x02`)
 - **ID response** (`MESSAGE_TYPE_ID_RESPONSE`, `0x03`)
+- **health monitor** (`MESSAGE_TYPE_HEALTH_MONITOR`, `0x05`)
 
 ### single report (`MESSAGE_TYPE_SINGLE_REPORT`, `0x01`)
 
