@@ -9,133 +9,168 @@ Currently, the methods for ensuring floodgates are closed in the event of a floo
 ## Our Proposed Solution
 
 The solution proposed and developed by our team is as follows: 
-<ul>
-  <li>Floodgates will be fitted with sensors, called "GateMates," which autonomously report the state of the gate (open or closed) to a server located in the central office.</li>
-  <li>Field workers will be issued devices, called "SenseMates," which receive orders from the central office. SenseMates will also record the state of nearby gates by communicating with the GateMates, enabling workers to confirm or refute the state reported by the GateMate.</li>
-  <li>The workers at the office will be given a web app with a user interface, allowing them to track the status of gates in real time, as well as providing a digital record of the status of gates and allowing them to issue orders without the need for walkie-talkie communication.</li>
-</ul>
+
+- Floodgates will be fitted with sensors, called "GateMates," which autonomously report the state of the gate (open or closed) to a server located in the central office.
+- Field workers will be issued devices, called "SenseMates," which receive orders from the central office. SenseMates will also record the state of nearby gates by communicating with the GateMates, enabling workers to confirm or refute the state reported by the GateMate.
+- The workers at the office will be given a web app with a user interface, allowing them to track the status of gates in real time, as well as providing a digital record of the status of gates and allowing them to issue orders without the need for walkie-talkie communication.
 
 Our proposed solution replaces the inefficient methods currently used by the city of Hamburg with fast and reliable digital methods, saving crucial time in the event of a flood.
 
 
 ## How to start the project
 
-### SenseGate
+### Nodes
 
-- Connect to Power
-- Wait until blue LED is on
-- Red LED indicates if door is open (LED off) or closed (LED on)
-- Blue LED indicates, if a state update is in progress (LED off). 
-- There is a time runoff, which is triggered/restarted on any sensor input. When blue LED is on, the update is processed and sent via LoraWAN.    
+#### Build prerequisities
 
-#### Deployment
+First, make sure that the riot submodule is downloaded:
+```bash
+git submodule init
+git submodule update
+```
 
-Before flashing make sure [signature keys](nodes/firmware/custom-modules/key-distro/README.md) are generated! 
+To build the firmware, flash, and provision the nodes, the following tools need to be installed
+```
+make
+docker
+uv
+```
 
-#### Testing 
+To use a python venv, run the following commands in the root directory of the project:
+```bash
+uv venv --seed
+source .venv/bin/activate
+```
+Note: some linux distributions no longer allow installing python packages via pip directly. It is recommended to use a venv instead for easier package management.
 
-```make all flash RIOT_CONFIG_USE_TEST=1```
+#### Building firmware
 
-#### Production
+Navigate to the respective folders for senseMate or senseGate in `nodes/firmware/applications/sense{Mate|Gate}`
 
-```make all flash RIOT_CONFIG_DEVICE_ID=<GATE_ID>```
+If the target device is not the current (v2) hardware revision, make sure to set the `BOARD=` variable in the respective Makefile correctly. The value for the older v1 boards should be nearby but commented out in the Makefile.
 
-### SenseMate
+Set environment variable to use the docker build stack:
+```bash
+export BUILD_IN_DOCKER=1
+```
 
-#### Startup
-- Use power switch
-- Wait until screen is ready
+Build the firmware using 
+```bash
+make all -j
+```
+Note: when building for the first time, the entire build toolchain will be set up in the docker container automatically. This will take some time and download several GB of data. Make sure to have at least 20 GB of storage available for this.
 
-#### Deployment
+#### Flashing firmware
 
-Before flashing make sure [signature keys](nodes/firmware/custom-modules/key-distro/README.md) are generated! 
+To flash, make sure to install the following python dependencies using `pip install` (ideally in the uv venv set up ealier):
+- pyserial
+- psutil
 
-#### Testing 
+Make sure that the user account doing the flashing has the necessary permission, e.G. being in the `dialout` group on linux or similar for other operating systems.
 
-```make all flash RIOT_CONFIG_USE_TEST=1```
+Flash the previously built firmware using
+```bash
+make flash
+```
 
-#### Production
+If no identity key is provisioned on the external flash (like after inital flashing of a new board), the screen will stay blank after successfully flashing.
 
-```make all flash RIOT_CONFIG_DEVICE_ID=<GATE_ID>```
+#### Provisioning devices
 
-### How to start frontend and backend
+Provisioning of devices is done via the identity-manager module found at `/nodes/firmware/identity-manager/`
 
+The uv venv set up in previous step is required to use the identity manager.
 
-#### Requirements to Start the Frontend
-- nodejs installed
-- npm installed
+##### Setup
 
+To use the credential manager, it needs to be set up.
+First, create the config for the credential manager at `nodes/firmware/identity-manager/config.yaml`. See the example config (`config.examle.yaml) for reference.
 
-#### Frontend StartUp
-[frontend StartUp](server/frontend/README.md)
+Now, log in to the [TTN Console](https://eu1.cloud.thethings.network) and navigate to Applications → your application → API keys, create a new api key, and put it into the config. Update your application ID if necessary. 
 
-#### Backend StartUp
-[backend StartUp](server/backend/README.md)
+Next, either import an existing root key into `nodes/firmware/identity-manager/identities/root`, or create a new key using the identity manager as follows:
 
-## Nodes
+```bash
+./identity-manager.py root create
+```
+Note: the same root key must be used for all nodes for them to be able to communicate with eachother successfully.
 
-### Overview <div id='overview'/>
+Next, individual nodes need to be configured. These can either be imported by putting their respective configurations into `nodes/firmware/identity-manager/identities/node/` or by creating them using the identity manager as follows:
 
-SenseMate <div id='overview-sensemate'/>
+```bash
+./identity-manager.py node create [senseMate|senseGate] [-i 1]
+```
+These commands creates a new configurations for either a senseMate or a senseGate with the ID 1.
+The ID parameter (`-i [id]`) is optional and can be omitted, in that case the id just counts up from 1.
 
-- node carried around by workers
-- receive from and propagate data to other nodes via BLE-module
-- receive from and send data to server via LoRa-module
+###### Provisioning
 
+When provisioning a node, it is best practice to wipe the external storage before just to make sure that it does not contain other data.
 
-SenseGate <div id='overview-sensegate'/>
+This is done by running
+```bash
+./identity-manager.py node wipe
+```
 
-- node attached to flood gates
-- receive from and propagate data to other nodes via BLE-module
-- receive from and send data to server via LoRa-module
+Now the node can be provisioned with the previously generated keys:
+```bash
+./identity-manager.py node provision [senseMate|senseGate] ID
+```
 
+Warning: the wipe and provision commands try to communicate with the node via `/dev/ttyACM0`. Make sure to only have one node connected at a time to avoid confusion. If the communication fails, check if another device is already registered.
 
-Server <div id='overview-server'/>
-
-- receive from and send data to nodes via LoRa-Module
-- display real-time accumulated data
-
-## Used Hardware <div id='used-hardware'/>
-
-- Board: Nordic nRF52840
-- Power Switch​
-- Battery​
-- Thumbwheel​
-- Navigation​
-- Display​
-- Soundbuzzer​
-- Vibrationmotor​
-
-**SenseMate** is a battery-powered IoT device for monitoring and controlling floodgates. It communicates over BLE and LoRaWAN and provides tactile, visual, and acoustic feedback.
-
-## Key Features <div id='key-features'/>
-
-- **MCU**: [Adafruit Feather nRF52840 Sense](https://www.digikey.de/de/products/detail/adafruit-industries-llc/4516/11684829) (nRF52840 with BLE)
-- **LoRa Module**: [Adafruit RFM95W](https://www.digikey.de/de/products/detail/adafruit-industries-llc/3231/6193593)
-- **LoRa Antenna**: [Molex 2111400100](https://www.digikey.de/de/products/detail/molex/2111400100/9953925)
-- **OLED Display**: [AZDelivery 0.96" SSD1306 I2C](https://www.amazon.de/AZDelivery-Display-Arduino-Raspberry-gratis/dp/B074NJMPYJ?th=1)
-- **Thumbwheel Switch**: [SparkFun COM-08184](https://www.digikey.de/de/products/detail/sparkfun-electronics/08184/8543391)
-- **Buzzer**: [TDK PS1240P02BT](https://www.digikey.de/de/products/detail/tdk-corporation/PS1240P02BT/935924) (connected to A2)
-- **Vibration Motor**: [Seeed 316040004](https://www.digikey.de/de/products/detail/seeed-technology-co-ltd/316040004/5487673) (via NPN + GPIO D3)
-- **Power Switch**: [C&K OS102011MA1QN1](https://www.digikey.de/de/products/detail/c-k/OS102011MA1QN1/1981430)
-- **Battery**: [Amazon LiPo 1S 450mAh](https://www.amazon.de/dp/B0C5LD55HN) 
-
-## Pinout Summary <div id='pin-summary'/>
-
-| Peripheral         | Connection Type   | MCU Pin       |
-|--------------------|-------------------|----------------|
-| LoRa SPI           | SPI               | SCK / MOSI / MISO |
-| LoRa CS            | GPIO              | D10            |
-| LoRa RST           | GPIO              | D9             |
-| LoRa IRQ (DIO0)    | GPIO              | D6             |
-| LoRa DIO1 / DIO2   | GPIO              | D5 / D4        |
-| OLED Display       | I²C               | SDA / SCL      |
-| Thumbwheel         | Digital Inputs    | A0 / A1 / A3   |
-| Buzzer             | PWM/GPIO          | A2             |
-| Vibration Motor    | GPIO (via NPN)    | D3             |
-| Battery Voltage    | Analog Input      | A6             |
+Note: once a node is provisioned, flashing a new firmware on it does not affect the keys as they are stored on the flash. This provisioning step only needs to be done once (unless the keys get deleted from the flash somehow).
 
 
----
+More info can be found in the README for the identity-manager module at `nodes/firmware/identity-manager/README.md`
 
-This document is intended for firmware developers. All components are prewired—just refer to the pinout and RIOT board support to begin implementing logic.
+### Dashboard
+
+Required dependencies
+
+- docker
+
+#### MQTT connection setup
+
+to obtain MQTT credentials for the connection to the things network, log into the [TTN Console](https://eu1.cloud.thethings.network)
+
+Navigate to Applications → your application → other integrations → MQTT
+Generate a new api key here, and insert the following into `server/backend/src/main/resources/application.yml`:
+
+```
+mqtt:
+  broker: ssl://eu1.cloud.thethings.network:8883
+  clientId: testing ← this does not matter
+  username: hawriotfloodgates@ttn ← you find this on the mqtt page
+  applicationId: hawriotfloodgates ← your application ID
+  password: NNSXS.XXXXXXXXXX.XXXXXXX ← the API key goes here
+  subscribeTopic: v3/hawriotfloodgates@ttn/devices/+/up  ← put the username in here
+```
+
+
+Hint: when starting the backend container, look for the following lines in the output:
+
+```
+MQTT Publisher verbunden
+MQTT-Client gestartet, warte auf Nachrichten...
+```
+If these don't appear, double check your configuration and make sure that the MQTT broker is reachable via the network. As of summer 2026, port 8883 is blocked in the HAW network, so use a VPN or mobile hotspot if necessary. 
+
+#### Starting the Dashboard
+
+Start the containers with `docker compose up`
+
+Note: when testing out new changes to the code, make sure to delete the built container images using `docker image rm <image>` before running them again to get the latest state.
+
+After full startup, the dashboard is reachable via the browser at http://localhost:3000
+
+To stop the containers, use `docker compose down`.
+To stop and delete the volumes with the database state, use `docker compose down -v`.
+
+
+## Notes for future reference:
+Notes from the summer 2026 project group to future contributors.
+
+The working state presented at the summer 2026 presentation can be found at the git tag `presentation-summer-2026`
+
+### Incomplete features:
