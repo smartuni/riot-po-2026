@@ -12,6 +12,7 @@
 #include "tables/records.h"
 #include "tables/keys.h"
 #include "tables.h"
+#include "mate_ble.h"
 
 #include "tables/records.h"
 
@@ -381,6 +382,9 @@ int tables_merge_record(tables_context_t *ctx, const table_record_t *record,
     if (merge) {
         // verify the signature on the record
         res = verify_record(ctx, record);
+        if (res == PUBLIC_KEY_NOT_FOUND_ERR) {
+            send_id_request((const uint8_t *)&record->header.writer);
+        }
         if (res != 0) {
             result->rejected_sig = true;
             LOG_DEBUG("tables_merge_record: rejected signature\n");

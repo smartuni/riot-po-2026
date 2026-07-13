@@ -44,5 +44,6 @@ int get_own_private_identity(identity_t *identity_out);
 int get_own_public_identity(identity_t *identity_out);
 int get_own_signed_public_identity(signed_identity_t *signed_identity_out);
 int add_signed_public_identity(const signed_identity_t *signed_identity);
+int get_known_signed_public_identity(uint8_t *kid, signed_identity_t *signed_identity_out);
 int get_public_identities_init(vfs_DIR *dirp);
 int get_public_identities_next(vfs_DIR *dirp, identity_t *identity_out);

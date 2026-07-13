@@ -7,7 +7,7 @@
 #include "cbor_serialization/common.h"
 #include "cbor_serialization/identity.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG (1)
 #include "debug.h"
 
 static int _cbor_decode_signed_pubid(CborValue *value, signed_identity_t *signed_identity)
@@ -78,9 +78,8 @@ static int _cbor_decode_signed_pubid_signature(CborValue *value, signed_identity
     return 0;
 }
 
-int _cbor_decode_kid(CborValue *value, identity_t *identity_out) {
+int _cbor_decode_kid(CborValue *value, uint8_t* kid_out) {
     assert(value != NULL);
-    assert(identity_out != NULL);
 
     CborError error;
     size_t kid_len;
@@ -102,7 +101,7 @@ int _cbor_decode_kid(CborValue *value, identity_t *identity_out) {
         return -1;
     }
 
-    error = cbor_value_copy_byte_string(value, identity_out->kid, &kid_len, value);
+    error = cbor_value_copy_byte_string(value, kid_out, &kid_len, value);
     if (error != CborNoError) {
         DEBUG("_cbor_decode_kid: error getting key id (%d)\n", error);
         return -1;
@@ -223,13 +222,11 @@ int _cbor_decode_loramac_keys(CborValue *value, loramac_keys_t *loramac_keys_out
     return 0;
 }
 
-int cbor_deserialize_id_reqres(const uint8_t *buffer, size_t buffer_len,
-                               signed_identity_t *signed_identity, uint8_t *msg_type)
+int cbor_deserialize_id_request(const uint8_t *buffer, size_t buffer_len, id_request_t *id_request)
 {
     assert(buffer != NULL);
-    assert(signed_identity != NULL);
 
-    DEBUG("cbor_deserialize_id_reqres: decoding buffer of %zu bytes\n", buffer_len);
+    DEBUG("cbor_deserialize_id_request: decoding buffer of %zu bytes\n", buffer_len);
 
     CborParser parser;
     CborValue main_array_iterator;
@@ -239,61 +236,182 @@ int cbor_deserialize_id_reqres(const uint8_t *buffer, size_t buffer_len,
     error = cbor_parser_init(buffer, buffer_len, CborValidateStrictMode, &parser,
                              &main_array_iterator);
     if (error != CborNoError) {
-        DEBUG("cbor_deserialize_id_reqres: error initializing parser (%d)\n", error);
+        DEBUG("cbor_deserialize_id_request: error initializing parser (%d)\n", error);
         return -1;
     }
 
     if (!cbor_value_is_array(&main_array_iterator)) {
-        DEBUG("cbor_deserialize_id_reqres: expected main array\n");
+        DEBUG("cbor_deserialize_id_request: expected main array\n");
         return -1;
     }
 
     CborValue array_item;
     error = cbor_value_enter_container(&main_array_iterator, &array_item);
     if (error != CborNoError) {
-        DEBUG("cbor_deserialize_id_reqres: error entering main array (%d)\n", error);
+        DEBUG("cbor_deserialize_id_request: error entering main array (%d)\n", error);
         return -1;
     }
 
     uint8_t version;
     result = _cbor_decode_version(&array_item, &version);
     if (result != 0) {
+        DEBUG("cbor_deserialize_id_reqres: error decoding version (%d)\n", result);
         return -1;
     }
 
     error = cbor_value_advance(&array_item);
     if (error != CborNoError) {
-        DEBUG("cbor_deserialize_id_reqres: error advancing to message type (%d)\n", error);
+        DEBUG("cbor_deserialize_id_request: error advancing to message type (%d)\n", error);
         return -1;
     }
 
-    result = _cbor_decode_message_type(&array_item, msg_type);
+    message_type_t msg_type;
+    result = _cbor_decode_message_type(&array_item, &msg_type);
     if (result != 0) {
-        DEBUG("cbor_deserialize_id_reqres: error getting message type\n");
+        DEBUG("cbor_deserialize_id_request: error getting message type\n");
         return -1;
     }
 
-    if (*msg_type != MESSAGE_ID_REQUEST && *msg_type != MESSAGE_ID_RESPONSE) {
-        DEBUG("cbor_deserialize_id_reqres: expected message type %d or %d, got %d\n",
-              MESSAGE_ID_REQUEST, MESSAGE_ID_RESPONSE, *msg_type);
+    if (msg_type != MESSAGE_ID_REQUEST) {
+        DEBUG("cbor_deserialize_id_request: expected message type %d, got %d\n",
+              MESSAGE_ID_REQUEST, msg_type);
         return -1;
     }
 
     error = cbor_value_advance(&array_item);
     if (error != CborNoError) {
-        DEBUG("cbor_deserialize_id_reqres: error advancing to record (%d)\n", error);
+        DEBUG("cbor_deserialize_id_request: error advancing to record signed pubid (%d)\n", error);
         return -1;
     }
 
-    result = _cbor_decode_signed_pubid(&array_item, signed_identity);
+    result = _cbor_decode_signed_pubid(&array_item, &id_request->sender_signed_identity);
     if (result != 0) {
-        DEBUG("cbor_deserialize_id_reqres: error decoding signed pubid\n");
+        DEBUG("cbor_deserialize_id_request: error decoding sender signed pubid\n");
         return -1;
     }
 
-    result = _cbor_decode_signed_pubid_signature(&array_item, signed_identity);
+    result = _cbor_decode_signed_pubid_signature(&array_item, &id_request->sender_signed_identity);
     if (result != 0) {
-        DEBUG("cbor_deserialize_id_reqres: error decoding signed pubid signature\n");
+        DEBUG("cbor_deserialize_id_request: error decoding sender signed pubid signature\n");
+        return -1;
+    }
+
+    // error = cbor_value_advance(&array_item);
+    // if (error != CborNoError) {
+    //     DEBUG("cbor_deserialize_id_request: error advancing to kid (%d)\n", error);
+    //     return -1;
+    // }
+
+    result = _cbor_decode_kid(&array_item, id_request->kid);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_id_request: error decoding kid\n");
+        return -1;
+    }
+
+    error = cbor_value_leave_container(&main_array_iterator, &array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_id_reqres: error leaving container (%d)\n", error);
+        return -1;
+    }
+
+    return 0;
+}
+
+int cbor_deserialize_id_response(const uint8_t *buffer, size_t buffer_len, id_response_t *id_response)
+{
+    assert(buffer != NULL);
+
+    DEBUG("cbor_deserialize_id_response: decoding buffer of %zu bytes\n", buffer_len);
+
+    CborParser parser;
+    CborValue main_array_iterator;
+    CborError error;
+    int result;
+
+    error = cbor_parser_init(buffer, buffer_len, CborValidateStrictMode, &parser,
+                             &main_array_iterator);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_id_response: error initializing parser (%d)\n", error);
+        return -1;
+    }
+
+    if (!cbor_value_is_array(&main_array_iterator)) {
+        DEBUG("cbor_deserialize_id_response: expected main array\n");
+        return -1;
+    }
+
+    CborValue array_item;
+    error = cbor_value_enter_container(&main_array_iterator, &array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_id_response: error entering main array (%d)\n", error);
+        return -1;
+    }
+
+    uint8_t version;
+    result = _cbor_decode_version(&array_item, &version);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_id_reqres: error decoding version (%d)\n", result);
+        return -1;
+    }
+
+    error = cbor_value_advance(&array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_id_response: error advancing to message type (%d)\n", error);
+        return -1;
+    }
+
+    message_type_t msg_type;
+    result = _cbor_decode_message_type(&array_item, &msg_type);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_id_response: error getting message type\n");
+        return -1;
+    }
+
+    if (msg_type != MESSAGE_ID_RESPONSE) {
+        DEBUG("cbor_deserialize_id_response: expected message type %d, got %d\n",
+              MESSAGE_ID_RESPONSE, msg_type);
+        return -1;
+    }
+
+    error = cbor_value_advance(&array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_id_response: error advancing to signed pubid (%d)\n", error);
+        return -1;
+    }
+
+    result = _cbor_decode_signed_pubid(&array_item, &id_response->sender_signed_identity);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_id_response: error decoding sender signed pubid\n");
+        return -1;
+    }
+
+    result = _cbor_decode_signed_pubid_signature(&array_item, &id_response->sender_signed_identity);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_id_response: error decoding sender signed pubid signature\n");
+        return -1;
+    }
+
+    result = _cbor_decode_kid(&array_item, id_response->kid);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_id_response: error decoding kid\n");
+        return -1;
+    }
+
+    error = cbor_value_advance(&array_item);
+    if (error != CborNoError) {
+        DEBUG("cbor_deserialize_id_response: error advancing to requested signed pubid (%d)\n", error);
+        return -1;
+    }
+
+    result = _cbor_decode_signed_pubid(&array_item, &id_response->requested_signed_identity);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_id_response: error decoding requested signed pubid\n");
+        return -1;
+    }
+
+    result = _cbor_decode_signed_pubid_signature(&array_item, &id_response->requested_signed_identity);
+    if (result != 0) {
+        DEBUG("cbor_deserialize_id_response: error decoding requested signed pubid signature\n");
         return -1;
     }
 
@@ -335,7 +453,7 @@ int cbor_deserialize_identity(const uint8_t *data, size_t data_size, identity_t 
         return -1;
     }
 
-    result = _cbor_decode_kid(&array_item, identity_out);
+    result = _cbor_decode_kid(&array_item, identity_out->kid);
     if (result != 0) {
         DEBUG("cbor_deserialize_identity: error decoding key id\n");
         return -1;
@@ -435,7 +553,7 @@ int cbor_deserialize_provisioning_data(const uint8_t *data, size_t data_size, pr
         return -1;
     }
 
-    result = _cbor_decode_kid(&array_item, &provisioning_data_out->root_identity);
+    result = _cbor_decode_kid(&array_item, provisioning_data_out->root_identity.kid);
     if (result != 0) {
         DEBUG("cbor_deserialize_identity: error decoding root key id\n");
         return -1;
@@ -447,7 +565,7 @@ int cbor_deserialize_provisioning_data(const uint8_t *data, size_t data_size, pr
         return -1;
     }
 
-    result = _cbor_decode_kid(&array_item, &provisioning_data_out->private_identity);
+    result = _cbor_decode_kid(&array_item, provisioning_data_out->private_identity.kid);
     if (result != 0) {
         DEBUG("cbor_deserialize_identity: error decoding private key id\n");
         return -1;

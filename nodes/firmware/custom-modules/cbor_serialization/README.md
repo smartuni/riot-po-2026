@@ -71,7 +71,8 @@ The following message types are available:
   01, # version
   02, # message type
   bstr(), # sender public identity
-  bstr() # sender public identity signature
+
+  01, 02, 03, 04 # KID of the requested public identity as bytestr
 ]
 ```
 
@@ -82,6 +83,8 @@ The following message types are available:
   01, # version
   03, # message type
   bstr(), # sender public identity
-  bstr() # sender public identity signature
+
+  01, 02, 03, 04 # KID of the requested public identity (included in this response) as bytestr
+  bstr() # requested public identity
 ]
 ```

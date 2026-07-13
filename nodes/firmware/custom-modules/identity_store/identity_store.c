@@ -293,6 +293,34 @@ int get_own_node_id(uint8_t *kid_buffer, size_t kid_buffer_size) {
     return 0;
 }
 
+int get_known_signed_public_identity(uint8_t *kid, signed_identity_t *signed_identity_out) {
+    uint8_t buffer[MAX_IDENTITY_SIZE];
+
+    char filename[MAX_FILENAME_LEN];
+    if (kid[2] == DEVICE_TYPE_GATE) {
+        snprintf(filename, sizeof(filename), "sensegate-%d", kid[3]);
+    } else if (kid[2] == DEVICE_TYPE_SENSEMATE) {
+        snprintf(filename, sizeof(filename), "sensegate-%d", kid[3]);
+    } else {
+        _LOGERR("unknown device type [ERROR]\n");
+        return -1;
+    }
+
+    int res = _read_public_signed_identity_file(filename, buffer, sizeof(buffer));
+    if (res < 0) {
+        _LOGERR("error reading public identity file [ERROR]\n");
+        return -1;
+    } 
+
+    res = cbor_deserialize_signed_identity(buffer, res, signed_identity_out);
+    if (res < 0) {
+        _LOGERR("error deserializing signed identity [ERROR]\n");
+        return -1;
+    }
+
+    return 0;
+}
+
 int get_public_identities_init(vfs_DIR *dirp) {
     assert(dirp != NULL);
 

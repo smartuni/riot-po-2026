@@ -25,7 +25,7 @@
 #include "cbor_serialization/record.h"
 #include "cbor_serialization/identity.h"
 #include "personalization.h"
-#define LOG_LEVEL   LOG_INFO
+#define LOG_LEVEL   LOG_DEBUG
 #include "identity_store.h"
 #include "crypto_service.h"
 #include "credential_manager.h"
@@ -72,7 +72,7 @@ void* ble_rx_thread(void* args);
 #define MAX_SIGNATURE_SIZE 80
 #define MAX_SERIALIZED_RECORD_SIZE 128
 
-#define MAX_SERIALIZED_ID_REQRES_SIZE 256
+#define MAX_SERIALIZED_ID_REQRES_SIZE 384
 
 #define MATE_BLE_TX_POWER_UNDEF (127)
 
@@ -450,33 +450,98 @@ static int _send_record(const table_record_t *record)
     return _ble_send(out_buf, out_len);
 }
 
-static int _send_id_res(void)
+int send_id_request(const uint8_t *kid)
 {
+    _LOGDBG("send_id_request: requesting kid\n");
+    od_hex_dump(kid, 4, 0);
+
+    id_request_t id_request;
     size_t out_len = MAX_SERIALIZED_ID_REQRES_SIZE;
     uint8_t out_buf[out_len];
-    signed_identity_t signed_identity;
-    int res = get_own_signed_public_identity(&signed_identity);
+
+    int res = get_own_signed_public_identity(&id_request.sender_signed_identity);
     if (res != 0) {
-        _LOGERR("_send_id_res get_self_signed_public_identity failed\n");
+        _LOGERR("send_id_request: get_own_signed_public_identity failed\n");
         return -1;
     }
     if (LOG_LEVEL == LOG_DEBUG) {
-        _LOGDBG("_send_id_res cbor payload\n");
-        od_hex_dump(signed_identity.cbor_payload, 40, 0);
+        _LOGDBG("send_id_request: own public identity\n");
+        od_hex_dump(id_request.sender_signed_identity.cbor_payload, 40, 0);
+        _LOGDBG("send_id_request: own public identity signature\n");
+        od_hex_dump(id_request.sender_signed_identity.signature, 80, 0);
     }
-    if (LOG_LEVEL == LOG_DEBUG) {
-        _LOGDBG("_send_id_res signature\n");
-        od_hex_dump(signed_identity.signature, 80, 0);
-    }
-    res = cbor_serialize_id_reqres(MESSAGE_ID_RESPONSE, &signed_identity, out_buf, &out_len);
+    memcpy(id_request.kid, kid, KID_LEN);
+
+    res = cbor_serialize_id_request(&id_request, out_buf, &out_len);
     _LOGDBG("%s serialize:(%d) %s\n", __func__, res, ok(res == 0));
     if (res != 0) {
-        _LOGERR("_send_id_res serialize failed!\n");
+        _LOGERR("send_id_request: serialize failed!\n");
         return -1;
     }
 
     if (LOG_LEVEL == LOG_DEBUG) {
-        _LOGDBG("_send_id_res: \n");
+        _LOGDBG("send_id_request: \n");
+        od_hex_dump(out_buf, out_len, 0);
+    }
+    return _ble_send(out_buf, out_len);
+}
+
+static int _send_id_response(const uint8_t *kid)
+{
+    if (LOG_LEVEL == LOG_DEBUG) {
+        _LOGDBG("_send_id_response: requested kid\n");
+        od_hex_dump(kid, 4, 0);
+    }
+
+    id_response_t id_response;
+    size_t out_len = MAX_SERIALIZED_ID_REQRES_SIZE;
+    uint8_t out_buf[out_len];
+
+    memcpy(id_response.kid, kid, KID_LEN);
+    // First check with the credential manager, if a public key is known for the kid as it's faster than reading from flash.
+    uint8_t requested_key[ED25519_KEY_LEN];
+    size_t requested_key_len = ED25519_KEY_LEN;
+    int res = credential_manager_get_key(id_response.kid, sizeof(id_response.kid), CREDENTIAL_PUBLIC, requested_key, &requested_key_len);
+    if (res == 0) {
+        _LOGDBG("_send_id_response: no key for kid found in credential_manager, aborting\n");
+        return -1;
+    }
+    _LOGDBG("_send_id_response: requested public key found\n");
+    // Get the signed public identity.
+    get_known_signed_public_identity(id_response.kid, &id_response.requested_signed_identity);
+    if (res == 0) {
+        _LOGDBG("_send_id_response: no signed public identity for kid found in identity store, aborting\n");
+        return -1;
+    }
+    if (LOG_LEVEL == LOG_DEBUG) {
+        _LOGDBG("_send_id_response: own public identity\n");
+        od_hex_dump(id_response.requested_signed_identity.cbor_payload, 40, 0);
+        _LOGDBG("_send_id_response: own public identity signature\n");
+        od_hex_dump(id_response.requested_signed_identity.signature, 80, 0);
+    }
+
+    // Get our own signed public identity.
+    res = get_own_signed_public_identity(&id_response.sender_signed_identity);
+    if (res != 0) {
+        _LOGERR("_send_id_response: get_own_signed_public_identity failed\n");
+        return -1;
+    }
+    if (LOG_LEVEL == LOG_DEBUG) {
+        _LOGDBG("_send_id_response: own public identity\n");
+        od_hex_dump(id_response.sender_signed_identity.cbor_payload, 40, 0);
+        _LOGDBG("_send_id_response: own public identity signature\n");
+        od_hex_dump(id_response.sender_signed_identity.signature, 80, 0);
+    }
+
+    res = cbor_serialize_id_response(&id_response, out_buf, &out_len);
+    _LOGDBG("%s serialize:(%d) %s\n", __func__, res, ok(res == 0));
+    if (res != 0) {
+        _LOGERR("_send_id_response: serialize failed!\n");
+        return -1;
+    }
+
+    if (LOG_LEVEL == LOG_DEBUG) {
+        _LOGDBG("_send_id_response: \n");
         od_hex_dump(out_buf, out_len, 0);
     }
     return _ble_send(out_buf, out_len);
@@ -538,11 +603,6 @@ void* ble_tx_thread(void* arg)
             q = &send_all_query;
         }
         mateble_send_query_matches(q);
-        
-        // For now just send identification responses here.
-        // TODO: build proper request-response-mechanism.
-        res = _send_id_res();
-        _LOGDBG("%s _send_id_res: %d\n", __func__, res);
 
         if (received_msg) {
             free(q);
@@ -658,23 +718,14 @@ static int _handle_record(payload_descriptor_t *pd)
     return 0;
 }
 
-static int _handle_id_res(payload_descriptor_t *pd)
+static int _learn_signed_identity(signed_identity_t *signed_identity)
 {
-    // Get the signed identity from the reqres message.
-    signed_identity_t signed_identity;
-    message_type_t msg_type = MESSAGE_ID_RESPONSE;
-    int res = cbor_deserialize_id_reqres(pd->buf, pd->buf_len, &signed_identity, &msg_type);
-    if (res != 0) {
-        _LOGDBG("cbor_deserialize_id_reqres failed: %d\n", res);
-        return -1;
-    }
-
     // Verify the signed identity.
     uint8_t root_kid[NODE_ID_SIZE] = { 0x00, 0x00, 0x03, 0x00 };
-    res = crypto_service_verify(&crypto_service,
+    int res = crypto_service_verify(&crypto_service,
                                 root_kid, NODE_ID_SIZE,
-                                signed_identity.cbor_payload, PUBID_LEN,
-                                signed_identity.signature, PUBID_SIGNATURE_LEN);
+                                signed_identity->cbor_payload, PUBID_LEN,
+                                signed_identity->signature, PUBID_SIGNATURE_LEN);
     if (res != 0) {
         _LOGDBG("crypto_service_verify failed: %d\n", res);
         return -1;
@@ -682,7 +733,7 @@ static int _handle_id_res(payload_descriptor_t *pd)
 
     // Get the identity from the signed identity.
     identity_t identity;
-    res = cbor_deserialize_identity(signed_identity.cbor_payload, sizeof(signed_identity.cbor_payload), &identity);
+    res = cbor_deserialize_identity(signed_identity->cbor_payload, sizeof(signed_identity->cbor_payload), &identity);
     if (res != 0) {
         _LOGERR("cbor_deserialize_identity failed: %d\n", res);
         return -1;
@@ -695,10 +746,10 @@ static int _handle_id_res(payload_descriptor_t *pd)
             existing_key, &existing_key_len);
     if (res == 0) {
         if (memcmp(existing_key, identity.key, ED25519_KEY_LEN) == 0) {
-            _LOGDBG("_handle_id_res: learned identity key already exists, skipping\n");
+            _LOGDBG("_learn_signed_identity: learned identity key already exists, skipping\n");
             return 0;
         } else {
-            _LOGINF("_handle_id_res: learned identity key already exists, but is different, adding new key\n");
+            _LOGINF("_learn_signed_identity: learned identity key already exists, but is different, adding new key\n");
         }
     } else {
         _LOGDBG("credential_manager_get_key: failed, likely because no key was found, so adding new key: %d\n", res);
@@ -714,9 +765,61 @@ static int _handle_id_res(payload_descriptor_t *pd)
         return -1;
     }
 
-    res = add_signed_public_identity(&signed_identity);
+    res = add_signed_public_identity(signed_identity);
     if (res != 0) {
         _LOGERR("add_signed_public_identity: adding new identity failed: %d\n", res);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int _handle_id_request(payload_descriptor_t *pd) {
+    // Get the id request from the id request message.
+    id_request_t id_request;
+    int res = cbor_deserialize_id_request(pd->buf, pd->buf_len, &id_request);
+    if (res != 0) {
+        _LOGDBG("cbor_deserialize_id_request failed: %d\n", res);
+        return -1;
+    }
+
+    // Learn the sender signed public identity.
+    res = _learn_signed_identity(&id_request.sender_signed_identity);
+    if (res != 0) {
+        _LOGDBG("_learn_signed_identity failed: %d\n", res);
+        return -1;
+    }
+
+    // Try to respond with the requested signed public identity.
+    res = _send_id_response(id_request.kid);
+    if (res != 0) {
+        _LOGDBG("_send_id_response failed: %d\n", res);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int _handle_id_response(payload_descriptor_t *pd) {
+    // Get the id request from the id request message.
+    id_response_t id_response;
+    int res = cbor_deserialize_id_response(pd->buf, pd->buf_len, &id_response);
+    if (res != 0) {
+        _LOGDBG("cbor_deserialize_id_response failed: %d\n", res);
+        return -1;
+    }
+
+    // Learn the sender signed public identity.
+    res = _learn_signed_identity(&id_response.sender_signed_identity);
+    if (res != 0) {
+        _LOGDBG("_learn_signed_identity (sender) failed: %d\n", res);
+        return -1;
+    }
+
+    // Learn the requested signed public identity.
+    res = _learn_signed_identity(&id_response.requested_signed_identity);
+    if (res != 0) {
+        _LOGDBG("_learn_signed_identity (requested) failed: %d\n", res);
         return -1;
     }
 
@@ -761,10 +864,15 @@ void* ble_rx_thread(void* args)
             if (res != 0) {
                 _LOGDBG("_handle_record failed: %d\n", res);
             }
-        } else if (msg_type == MESSAGE_ID_RESPONSE) {
-            res = _handle_id_res(pd);
+        } else if (msg_type == MESSAGE_ID_REQUEST) {
+            res = _handle_id_request(pd);
             if (res != 0) {
-                _LOGDBG("_handle_id_res failed: %d\n", res);
+                _LOGDBG("_handle_id_request failed: %d\n", res);
+            }
+        } else if (msg_type == MESSAGE_ID_RESPONSE) {
+            res = _handle_id_response(pd);
+            if (res != 0) {
+                _LOGDBG("_handle_id_response failed: %d\n", res);
             }
         } else {
             _LOGDBG("Can't handle message of type %d. Ignoring.\n", msg_type);

@@ -71,5 +71,13 @@ typedef struct ble_tx_thread_args {
  * @return          0 on success, negative error code on failure
  */
 int mate_ble_init(tables_context_t *tables, kernel_pid_t *txpid);
+/**
+ * @brief           Send ID request for the given key id.
+ *
+ * @param   kid     The key id to send an ID request for.
+ *
+ * @return          0 on success, negative error code on failure
+ */
+int send_id_request(const uint8_t* kid);
 
 #endif /* MATE_BLE_H */

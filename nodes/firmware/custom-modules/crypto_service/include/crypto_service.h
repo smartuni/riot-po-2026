@@ -5,6 +5,8 @@
 
 #include "identity_store.h"
 
+#define PUBLIC_KEY_NOT_FOUND_ERR -2
+
 /**
  * @defgroup Crypto service interface
  * @{

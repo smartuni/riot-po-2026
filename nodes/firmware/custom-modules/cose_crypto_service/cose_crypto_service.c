@@ -183,7 +183,7 @@ static int _cose_crypto_service_verify(const void *context, const uint8_t *kid,
                                         CREDENTIAL_PUBLIC, public_key, &public_key_len);
     if (result != 0) {
         DEBUG("_cose_crypto_service_verify: public key not found\n");
-        result = -1;
+        result = PUBLIC_KEY_NOT_FOUND_ERR;
         goto unlock_and_return;
     }
 

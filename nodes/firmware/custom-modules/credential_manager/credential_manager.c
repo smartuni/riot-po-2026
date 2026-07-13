@@ -1,7 +1,9 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
+#include "od.h"
 #include "include/credential_manager.h"
 #include "mutex.h"
 #include "store_service.h"
@@ -40,6 +42,9 @@ int credential_manager_get_key(const uint8_t *kid, size_t kid_len,
 {
     assert(kid != NULL);
     assert(key_len != NULL);
+    
+    od_hex_dump(kid, 4, 0);
+    printf("mew: %d", kid_len);
 
     int result = 0;
     size_t store_key_len = kid_len + 1;
