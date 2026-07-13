@@ -1,0 +1,45 @@
+name: Firmware Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The type of node to compile the firmware for.
+        # This will be used as the directory name to switch to.
+        type:
+          - senseMate
+          - senseGate
+        # The type of board to compile the firmware for.
+        # The BOARD environment variable will be set to this when building the firmware.
+        board:
+          # v1 board:
+          - adafruit-feather-nrf52840-sense
+          # v2 board:
+          - seeedstudio-xiao-nrf52840-sense
+    env:
+      BOARD: "${{ matrix.board }}"
+        
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      # As long as we don't use the output of this job, using this action of unknown trust is fine.
+      # https://github.com/marketplace/actions/arm-none-eabi-gcc-gnu-arm-embedded-toolchain
+      - name: Install Arm GNU Toolchain (arm-none-eabi-gcc)
+        uses: carlosperate/arm-none-eabi-gcc-action@v1
+
+      - name: Build the firmware
+        shell: bash
+        working-directory: "${{ github.workspace }}/nodes/firmware/applications/${{ matrix.type }}"
+        run: |
+          make all
