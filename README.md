@@ -45,6 +45,7 @@ git submodule update
 ```
 
 **Install make (Linux - bash)**
+
 ```bash
 sudo apt update
 sudo apt install make build-essential
@@ -52,15 +53,15 @@ sudo apt install make build-essential
 
 **Install Docker Engine**
 
-[All Installation Guides](https://docs.docker.com/engine/install/)
+- [All Installation Guides](https://docs.docker.com/engine/install/)
 
 **Alternative - Docker Desktop**
 
-[Install on Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
+- [Install on Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
 
-[Install on Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+- [Install on Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
 
-[Install on Linux](https://docs.docker.com/desktop/setup/install/linux/)
+- [Install on Linux](https://docs.docker.com/desktop/setup/install/linux/)
 
 **Install UV**
 
@@ -73,7 +74,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-[more Information](https://github.com/astral-sh/uv)
+[more installation guides and information](https://github.com/astral-sh/uv)
 
 
 To use a python venv, run the following commands in the root directory of the project:
@@ -286,24 +287,14 @@ To stop and delete the volumes with the database state, use `docker compose down
 
 ## 5. Documentation Index
 
-### Domain: Firmware
+
 
 | Document | What You'll Find |
 |----------|------------------|
 | [SenseGate Firmware](./documentation/Firmware/SenseGate/README.md) | Sensor logic, gate observer state machine, LoRaWAN uplink, COSE/CBOR data flow |
 | [SenseMate Firmware](./documentation/Firmware/SenseMate/README.md) | LVGL OLED UI, BLE communication, sound/vibration subsystems, HLC timestamps |
-
-### Domain: Hardware
-
-| Document | What You'll Find |
-|----------|------------------|
 | [SenseGate Hardware](./documentation/Hardware/SenseGate/README.md) | PCB components, pin mapping table with firmware references, RIOT board hierarchy |
 | [SenseMate Hardware](./documentation/Hardware/SenseMate/README.md) | PCB v2 components, 28-pin XIAO mapping, LoRa/display/buzzer pinout |
-
-### Domain: Server
-
-| Document | What You'll Find |
-|----------|------------------|
 | [Backend](./documentation/Backend/README.md) | REST API endpoints (Auth, Gates, Nodes, Notifications), JPA entities, Flyway migrations, MQTT/WebSocket setup |
 | [Frontend](./documentation/Frontend/README.md) | React 19 + Redux Toolkit architecture, feature-based structure, STOMP WebSocket middleware, auth flow |
 
@@ -311,7 +302,6 @@ To stop and delete the volumes with the database state, use `docker compose down
 
 | Resource | Purpose |
 |----------|---------|
-| [AGENTS.md](./AGENTS.md) | AI agent instructions — build commands, project conventions, CI pipeline overview |
 | [Identity Manager](./nodes/firmware/identity-manager/README.md) | Python tool for provisioning node identities and LoRaWAN credentials |
 | [Key Distribution](./nodes/firmware/custom-modules/key-distro/README.md) | Cryptographic key generation for COSE signing |
 | [CI Pipeline](./.gitlab-ci.yml) | GitLab CI — firmware tests, compilations, web tests, Docker builds |
