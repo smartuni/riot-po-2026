@@ -74,7 +74,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-[more installation guides and information](https://github.com/astral-sh/uv)
+[More installation guides and information](https://github.com/astral-sh/uv)
 
 
 To use a python venv, run the following commands in the root directory of the project:
@@ -168,11 +168,13 @@ Now the node can be provisioned with the previously generated identity:
 
 More info can be found in the [README of the identity-manager module](nodes/firmware/identity-manager/README.md).
 
+---
+
 ### Hardware
 
-> **SenseGate** — 2-layer carrier PCB for XIAO nRF52840 Sense, with 4× reed switches, inductive sensor, power management (KiCad 10.0, gerbers ready).
+**SenseGate** — 2-layer carrier PCB for XIAO nRF52840 Sense, with 4× reed switches, inductive sensor, power management (KiCad 10.0, gerbers ready).
 
-> **SenseMate** — 4-layer PCB integrating XIAO nRF52840 Sense Plus, LoRa module (RFM95W-868S2), SSD1306 OLED, buzzer, vibration motor (KiCad 10.0, gerbers ready).
+**SenseMate** — 4-layer PCB integrating XIAO nRF52840 Sense Plus, LoRa module (RFM95W-868S2), SSD1306 OLED, buzzer, vibration motor (KiCad 10.0, gerbers ready).
 
 No physical modifications needed — both PCBs are designed for the XIAO module with standard pin headers. See:
 
@@ -182,11 +184,11 @@ No physical modifications needed — both PCBs are designed for the XIAO module 
 
 **Install Kicad**
 
-[Install for Linux](https://www.kicad.org/download/linux/)
+- [Install for Linux](https://www.kicad.org/download/linux/)
 
-[Install for Mac](https://www.kicad.org/download/macos/)
+- [Install for Mac](https://www.kicad.org/download/macos/)
 
-[Install for Windows](https://www.kicad.org/download/windows/)
+- [Install for Windows](https://www.kicad.org/download/windows/)
 
 **Arch Linux**
 ```
@@ -197,10 +199,9 @@ sudo pacman -Syu --asdeps kicad-library kicad-library-3d
 ```
 
 
-> Note that KiCad has a Lightversion without 3D components. We recommend the Full version that includes 3D components. 
+> Note: KiCad has a Lightversion without 3D components. We recommend the Full version that includes 3D components. 
 
-
-
+---
 
 ### Dashboard - Server (Frontend & Backend)
 
@@ -254,7 +255,9 @@ After full startup, the dashboard is reachable via the browser at http://localho
 To stop the containers, use `docker compose down`.
 To stop and delete the volumes with the database state, use `docker compose down -v`.
 
-## 4. Troubleshooting & FAQ
+---
+
+## 2. Troubleshooting & FAQ
 
 ### Flashing / Firmware
 
@@ -285,9 +288,7 @@ To stop and delete the volumes with the database state, use `docker compose down
 
 ---
 
-## 5. Documentation Index
-
-
+## 3. Documentation Index
 
 | Document | What You'll Find |
 |----------|------------------|
@@ -308,7 +309,7 @@ To stop and delete the volumes with the database state, use `docker compose down
 | [Architecture Diagrams](./documentation/) | System context, technical views, backend architecture (PNG) |
 
 
-## Notes for future reference:
+## 4. Notes for future reference:
 Notes from the summer 2026 project group to future contributors.
 
 The working state presented at the summer 2026 presentation can be found at the git tag `presentation-summer-2026`
