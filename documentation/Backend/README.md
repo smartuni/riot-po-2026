@@ -18,7 +18,7 @@ This folder contains beginner-friendly documentation for the **MateSense Backend
 
 ---
 
-## Suggested Reading Order (for beginners)
+## Suggested Reading Order
 
 1. **`01-overview.md`** — Start here. Understand what the Backend does and how it fits into the bigger picture.
 2. **`02-setup.md`** — Learn how to get the Backend running on your machine.

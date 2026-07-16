@@ -30,7 +30,7 @@ The **SenseMate** is a custom 4-layer handheld PCB integrating the XIAO nRF52840
 | **Diode 1N4148** | 1 | Signal protection |
 
 
-Detailed firmware documentation: [`Dokumentation/Firmware/SenseMate/`](../Firmware/SenseMate/README.md).
+Detailed firmware documentation: [`documentation/Firmware/SenseMate/`](../Firmware/SenseMate/README.md).
 
 ---
 
@@ -100,7 +100,7 @@ All 28 pins of the XIAO nRF52840 Sense Plus module are used. Mapping verified ag
 
 ## Links
 
-- **Firmware documentation:** [`Dokumentation/Firmware/SenseMate/`](../Firmware/SenseMate/README.md)
+- **Firmware documentation:** [`documentation/Firmware/SenseMate/`](../Firmware/SenseMate/README.md)
 - **Firmware source:** [`nodes/firmware/applications/senseMate/`](../../nodes/firmware/applications/senseMate/)
 - **Hardware design files:** [`nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/`](../../nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/)
 - **Parts & datasheets:** [`nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/Parts_Material/`](../../nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/Parts_Material/)

@@ -175,8 +175,8 @@ More info can be found in the [README of the identity-manager module](nodes/firm
 
 No physical modifications needed — both PCBs are designed for the XIAO module with standard pin headers. See:
 
-- [SenseGate Hardware Documentation](./Dokumentation/Hardware/SenseGate/README.md) — full component list, pin mapping, schematic references
-- [SenseMate Hardware Documentation](./Dokumentation/Hardware/SenseMate/README.md) — full component list, pin mapping, schematic references
+- [SenseGate Hardware Documentation](./documentation/Hardware/SenseGate/README.md) — full component list, pin mapping, schematic references
+- [SenseMate Hardware Documentation](./documentation/Hardware/SenseMate/README.md) — full component list, pin mapping, schematic references
 - [Hardware Design Files](./nodes/hardware/) — KiCad schematics, PCB layouts, gerber files
 
 **Install Kicad**
@@ -273,7 +273,7 @@ To stop and delete the volumes with the database state, use `docker compose down
 | Backend won't start (port conflict) | Port 8080 already in use | Kill process or change port in `application.yml` |
 | Frontend can't reach backend | Vite proxy misconfigured | Check `vite.config.js` — `/api` should proxy to `localhost:8080` |
 | MQTT connection refused | Wrong TTN broker or API key | Verify `.env` credentials, check TTN Console |
-| WebSocket not updating | Wrong WebSocket endpoint | Backend uses STOMP at `/ws` — see [Frontend real-time docs](./Dokumentation/Frontend/04-state-management.md) |
+| WebSocket not updating | Wrong WebSocket endpoint | Backend uses STOMP at `/ws` — see [Frontend real-time docs](./documentation/Frontend/04-state-management.md) |
 | Database migration fails | Wrong Spring profile | Use `e2e` (H2) for testing, `dev` (PostgreSQL) with running DB |
 
 ### General
@@ -290,22 +290,22 @@ To stop and delete the volumes with the database state, use `docker compose down
 
 | Document | What You'll Find |
 |----------|------------------|
-| [SenseGate Firmware](./Dokumentation/Firmware/SenseGate/README.md) | Sensor logic, gate observer state machine, LoRaWAN uplink, COSE/CBOR data flow |
-| [SenseMate Firmware](./Dokumentation/Firmware/SenseMate/README.md) | LVGL OLED UI, BLE communication, sound/vibration subsystems, HLC timestamps |
+| [SenseGate Firmware](./documentation/Firmware/SenseGate/README.md) | Sensor logic, gate observer state machine, LoRaWAN uplink, COSE/CBOR data flow |
+| [SenseMate Firmware](./documentation/Firmware/SenseMate/README.md) | LVGL OLED UI, BLE communication, sound/vibration subsystems, HLC timestamps |
 
 ### Domain: Hardware
 
 | Document | What You'll Find |
 |----------|------------------|
-| [SenseGate Hardware](./Dokumentation/Hardware/SenseGate/README.md) | PCB components, pin mapping table with firmware references, RIOT board hierarchy |
-| [SenseMate Hardware](./Dokumentation/Hardware/SenseMate/README.md) | PCB v2 components, 28-pin XIAO mapping, LoRa/display/buzzer pinout |
+| [SenseGate Hardware](./documentation/Hardware/SenseGate/README.md) | PCB components, pin mapping table with firmware references, RIOT board hierarchy |
+| [SenseMate Hardware](./documentation/Hardware/SenseMate/README.md) | PCB v2 components, 28-pin XIAO mapping, LoRa/display/buzzer pinout |
 
 ### Domain: Server
 
 | Document | What You'll Find |
 |----------|------------------|
-| [Backend](./Dokumentation/Backend/README.md) | REST API endpoints (Auth, Gates, Nodes, Notifications), JPA entities, Flyway migrations, MQTT/WebSocket setup |
-| [Frontend](./Dokumentation/Frontend/README.md) | React 19 + Redux Toolkit architecture, feature-based structure, STOMP WebSocket middleware, auth flow |
+| [Backend](./documentation/Backend/README.md) | REST API endpoints (Auth, Gates, Nodes, Notifications), JPA entities, Flyway migrations, MQTT/WebSocket setup |
+| [Frontend](./documentation/Frontend/README.md) | React 19 + Redux Toolkit architecture, feature-based structure, STOMP WebSocket middleware, auth flow |
 
 ### External References
 

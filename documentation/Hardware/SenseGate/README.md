@@ -27,7 +27,7 @@ The **SenseGate** is a custom 2-layer PCB designed as a sensor interface carrier
 | **Battery** | BT | 1 | Multiple-cell battery input |
 | **DPDT switch** | SW | 1 | Power / mode configuration |
 
-Detailed firmware documentation: [`Dokumentation/Firmware/SenseGate/`](../Firmware/SenseGate/README.md).
+Detailed firmware documentation: [`documentation/Firmware/SenseGate/`](../Firmware/SenseGate/README.md).
 
 ---
 
@@ -113,7 +113,7 @@ Key configuration files and what they define:
 | `RIOT/boards/common/seeedstudio-xiao-nrf52840/include/gpio_params.h` | SAUL GPIO params for RGB LEDs |
 | `RIOT/boards/common/seeedstudio-xiao-nrf52840/mtd.c` | External 2 MB P25Q16H NOR flash (SPI_DEV(1)) |
 
-For full details, see `Dokumentation/Firmware/SenseGate/03-architecture.md`.
+For full details, see `documentation/Firmware/SenseGate/03-architecture.md`.
 
 ---
 
@@ -132,7 +132,7 @@ For full details, see `Dokumentation/Firmware/SenseGate/03-architecture.md`.
 
 ## Links
 
-- **Firmware documentation:** [`Dokumentation/Firmware/SenseGate/`](../Firmware/SenseGate/README.md)
+- **Firmware documentation:** [`documentation/Firmware/SenseGate/`](../Firmware/SenseGate/README.md)
 - **Firmware source:** [`nodes/firmware/applications/senseGate/`](../../nodes/firmware/applications/senseGate/)
 - **Hardware design files:** [`nodes/hardware/SenseGate/SenseGatePCB/`](../../nodes/hardware/SenseGate/SenseGatePCB/)
 - **RIOT board config:** [`nodes/firmware/RIOT/boards/seeedstudio-xiao-nrf52840-sense/`](../../nodes/firmware/RIOT/boards/seeedstudio-xiao-nrf52840-sense/)
