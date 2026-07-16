@@ -88,6 +88,12 @@ Example with custom options:
 make all flash RIOT_CONFIG_DEVICE_ID=3 USE_FLASHDB_ON_VFS=1 DEVELHELP=0
 ```
 
+Additional Commands
+`make all flash` or with terminal output `make all flash term`
+
+ Complete Flashing
+ `make all flash -j BUILD_IN_DOCKER=1`
+
 ## Step 3: Provision a Node Identity
 
 After flashing, each SenseGate device needs a unique **identity** including cryptographic keys and LoRaWAN network credentials. This is done with the **identity-manager** Python script.
