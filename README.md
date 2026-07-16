@@ -1,32 +1,5 @@
 # RIOT im Internet of Things, Sommersemester 2026
 
-**Document Index**
-- [RIOT im Internet of Things, Sommersemester 2026](#riot-im-internet-of-things-sommersemester-2026)
-  - [Project Introduction](#project-introduction)
-  - [The Current Situation](#the-current-situation)
-    - [Propesed Solution](#propesed-solution)
-  - [1. Getting started](#1-getting-started)
-    - [Nodes](#nodes)
-      - [Build prerequisities](#build-prerequisities)
-      - [Building firmware](#building-firmware)
-      - [Flashing firmware](#flashing-firmware)
-      - [Provisioning devices](#provisioning-devices)
-        - [Setup](#setup)
-          - [Provisioning](#provisioning)
-    - [Hardware](#hardware)
-    - [Dashboard - Server (Frontend \& Backend)](#dashboard---server-frontend--backend)
-      - [Prerequisites \& Installation](#prerequisites--installation)
-      - [MQTT connection setup](#mqtt-connection-setup)
-      - [Starting the Dashboard](#starting-the-dashboard)
-  - [2. Troubleshooting](#2-troubleshooting)
-    - [Flashing / Firmware](#flashing--firmware)
-    - [Backend / Frontend](#backend--frontend)
-    - [General](#general)
-  - [3. Documentation Index](#3-documentation-index)
-    - [External References](#external-references)
-  - [4. Notes for future reference:](#4-notes-for-future-reference)
-    - [Incomplete features:](#incomplete-features)
-
 ## Project Introduction
 
 Welcome to the primary repository of the RIOT im Internet of Things project for the Summer 2026 semester at HAW Hamburg. The project is concerned with designing, implementing and presenting technologies to improve the city of Hamburg's methods of managing its harbor's floodgates.
