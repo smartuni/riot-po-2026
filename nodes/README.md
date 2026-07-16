@@ -19,4 +19,5 @@ SenseMate Hardware Documentation - [documentation/Hardware/SenseMate](../documen
 SenseGate Firmware Documentation - [documentation/Firmware/SenseGate](../documentation/Firmware/SenseGate/README.md)
 SenseGate Hardware Documentation - [documentation/Hardware/SenseGate](../documentation/Hardware/SenseGate/README.md)
 
-
+## Datasheets
+Data sheets or SenseGate components can be found in the [datasheets folder](\nodes\hardware\SenseMate\SenseMatePCB\SenseMate_v2\parts_datasheets)
