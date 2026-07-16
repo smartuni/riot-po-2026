@@ -1,27 +1,42 @@
 # RIOT im Internet of Things, Sommersemester 2026
 
+## Project Introduction
+
 Welcome to the primary repository of the RIOT im Internet of Things project for the Summer 2026 semester at HAW Hamburg. The project is concerned with designing, implementing and presenting technologies to improve the city of Hamburg's methods of managing its harbor's floodgates.
 
 ## The Current Situation
 
-Currently, the methods for ensuring floodgates are closed in the event of a flood are inefficient. Field workers receive orders, send updates and otherwise communicate with the central office via walkie-talkies. The central office relies on pen-and-paper record-keeping to log events, such as gates being opened or closed.
+Field workers use walkie-talkies to report floodgate status. Central office logs everything on paper. This is slow, error-prone, and creates no digital trail — a critical risk during floods.
 
-## Our Proposed Solution
+### Propesed Solution
 
-The solution proposed and developed by our team is as follows: 
+An IoT system with three tiers:
 
-- Floodgates will be fitted with sensors, called "senseGates," which autonomously report the state of the gate (open or closed) to a server located in the central office.
-- Field workers will be issued devices, called "senseMates," which receive orders from the central office. senseMates will also record the state of nearby gates by communicating with the senseGates, enabling workers to confirm or refute the state reported by the senseGate.
-- The workers at the office will be given a web app with a user interface, allowing them to track the status of gates in real time, as well as providing a digital record of the status of gates and allowing them to issue orders without the need for walkie-talkie communication.
+| Tier | Device | Role |
+|------|--------|------|
+| **SenseGate** | Fixed sensor node (nRF52840 + LoRaWAN) | Mounted on flood gates, detects open/closed state, reports via LoRaWAN |
+| **SenseMate** | Handheld device (nRF52840 + BLE + OLED) | Field workers see gate states, record observations, receive alerts |
+| **Server** | Spring Boot + React Dashboard | Central data hub: REST API, real-time WebSocket, MQTT from TTN |
 
-Our proposed solution replaces the inefficient methods currently used by the city of Hamburg with fast and reliable digital methods, saving crucial time in the event of a flood.
+**Data flow:** Gate movement → SenseGate sensor → CBOR+COSE sign → LoRaWAN uplink → TTN → MQTT → Backend → WebSocket → Frontend dashboard.
 
+---
 
-## How to start the project
+## 1. Getting started
 
 ### Nodes
 
 #### Build prerequisities
+
+| Tool | Purpose | 
+|------|---------|
+| **RIOT OS** | Operating system for the firmware |
+| **Make** | Automates the Build Process |
+| **Docker** | `riot/riotbuild:2025.07` — prebuilt toolchain |
+| **Python 3 + uv** | Runs the identity-manager provisioning script |
+
+
+**RIOT Submodule**
 
 First, make sure that the riot submodule is downloaded:
 ```bash
@@ -29,12 +44,37 @@ git submodule init
 git submodule update
 ```
 
-To build the firmware, flash, and provision the nodes, the following tools need to be installed
+**Install make (Linux - bash)**
+```bash
+sudo apt update
+sudo apt install make build-essential
 ```
-make
-docker
-uv
+
+**Install Docker Engine**
+
+[All Installation Guides](https://docs.docker.com/engine/install/)
+
+**Alternative - Docker Desktop**
+
+[Install on Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
+
+[Install on Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+
+[Install on Linux](https://docs.docker.com/desktop/setup/install/linux/)
+
+**Install UV**
+
 ```
+# On macOS and Linux.
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+```
+# On Windows.
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+[more Information](https://github.com/astral-sh/uv)
+
 
 To use a python venv, run the following commands in the root directory of the project:
 ```bash
@@ -127,11 +167,54 @@ Now the node can be provisioned with the previously generated identity:
 
 More info can be found in the [README of the identity-manager module](nodes/firmware/identity-manager/README.md).
 
-### Dashboard
+### Hardware
 
-Required dependencies
+> **SenseGate** — 2-layer carrier PCB for XIAO nRF52840 Sense, with 4× reed switches, inductive sensor, power management (KiCad 10.0, gerbers ready).
 
-- docker
+> **SenseMate** — 4-layer PCB integrating XIAO nRF52840 Sense Plus, LoRa module (RFM95W-868S2), SSD1306 OLED, buzzer, vibration motor (KiCad 10.0, gerbers ready).
+
+No physical modifications needed — both PCBs are designed for the XIAO module with standard pin headers. See:
+
+- [SenseGate Hardware Documentation](./Dokumentation/Hardware/SenseGate/README.md) — full component list, pin mapping, schematic references
+- [SenseMate Hardware Documentation](./Dokumentation/Hardware/SenseMate/README.md) — full component list, pin mapping, schematic references
+- [Hardware Design Files](./nodes/hardware/) — KiCad schematics, PCB layouts, gerber files
+
+**Install Kicad**
+
+[Install for Linux](https://www.kicad.org/download/linux/)
+
+[Install for Mac](https://www.kicad.org/download/macos/)
+
+[Install for Windows](https://www.kicad.org/download/windows/)
+
+**Arch Linux**
+```
+#Install on Arch Linux with Libraries
+sudo pacman -Syu kicad
+# if you want to install the official libraries (recommended):
+sudo pacman -Syu --asdeps kicad-library kicad-library-3d
+```
+
+
+> Note that KiCad has a Lightversion without 3D components. We recommend the Full version that includes 3D components. 
+
+
+
+
+### Dashboard - Server (Frontend & Backend)
+
+#### Prerequisites & Installation
+
+| Tool | Version | Purpose | Installation |
+|------|---------|---------|-------------|
+| **Java** | 17+ | Runs the Spring Boot backend | [OpenJDK 17](https://adoptium.net/) |
+| **Node.js** | 20+ | Runs the React frontend | [nodejs.org](https://nodejs.org/) |
+| **Docker** (optional) | latest | Containerized full-stack startup | [docker.com](https://www.docker.com/) |
+| **Maven** (optional) | 3.9+ | Java build tool (wrapper included) | Bundled as `./mvnw` |
+
+> **Windows / Mac:** Install Java 17 and Node.js 20+. Maven wrapper (`mvnw`) works cross-platform.
+> **Linux:** Same — install via package manager (`apt install openjdk-17-jdk nodejs npm`).
+
 
 #### MQTT connection setup
 
@@ -170,6 +253,70 @@ After full startup, the dashboard is reachable via the browser at http://localho
 To stop the containers, use `docker compose down`.
 To stop and delete the volumes with the database state, use `docker compose down -v`.
 
+## 4. Troubleshooting & FAQ
+
+### Flashing / Firmware
+
+| Problem | Cause | Solution |
+|---------|-------|----------|
+| `make flash` fails with linker errors | Signature keys missing | Generate keys in `key-distro/include/secrets/` |
+| LoRaWAN join fails | Wrong TTN credentials | Check DevEUI/JoinEUI/AppKey in identity-manager and TTN Console |
+| Device doesn't appear on dashboard | Not provisioned | Run `identity-manager node provision` |
+| Blue LED never turns on | Main loop crashed | Re-flash, check serial output (115200 baud) |
+| `periph_pwm` build error | Board doesn't support PWM (SenseMate) | Use `seeedstudio-xiao-nrf52840-sense` board |
+| Bootloader not found | Wrong board selected | Default: `BOARD=seeedstudio-xiao-nrf52840-sense` |
+
+### Backend / Frontend
+
+| Problem | Cause | Solution |
+|---------|-------|----------|
+| Backend won't start (port conflict) | Port 8080 already in use | Kill process or change port in `application.yml` |
+| Frontend can't reach backend | Vite proxy misconfigured | Check `vite.config.js` — `/api` should proxy to `localhost:8080` |
+| MQTT connection refused | Wrong TTN broker or API key | Verify `.env` credentials, check TTN Console |
+| WebSocket not updating | Wrong WebSocket endpoint | Backend uses STOMP at `/ws` — see [Frontend real-time docs](./Dokumentation/Frontend/04-state-management.md) |
+| Database migration fails | Wrong Spring profile | Use `e2e` (H2) for testing, `dev` (PostgreSQL) with running DB |
+
+### General
+
+- **Git submodules not cloned?** Run `./submodules_linux.sh`
+- **Docker not starting?** Ensure Docker daemon is running (`systemctl start docker`)
+- **Windows line endings?** Use `git config core.autocrlf input` before cloning
+
+---
+
+## 5. Documentation Index
+
+### Domain: Firmware
+
+| Document | What You'll Find |
+|----------|------------------|
+| [SenseGate Firmware](./Dokumentation/Firmware/SenseGate/README.md) | Sensor logic, gate observer state machine, LoRaWAN uplink, COSE/CBOR data flow |
+| [SenseMate Firmware](./Dokumentation/Firmware/SenseMate/README.md) | LVGL OLED UI, BLE communication, sound/vibration subsystems, HLC timestamps |
+
+### Domain: Hardware
+
+| Document | What You'll Find |
+|----------|------------------|
+| [SenseGate Hardware](./Dokumentation/Hardware/SenseGate/README.md) | PCB components, pin mapping table with firmware references, RIOT board hierarchy |
+| [SenseMate Hardware](./Dokumentation/Hardware/SenseMate/README.md) | PCB v2 components, 28-pin XIAO mapping, LoRa/display/buzzer pinout |
+
+### Domain: Server
+
+| Document | What You'll Find |
+|----------|------------------|
+| [Backend](./Dokumentation/Backend/README.md) | REST API endpoints (Auth, Gates, Nodes, Notifications), JPA entities, Flyway migrations, MQTT/WebSocket setup |
+| [Frontend](./Dokumentation/Frontend/README.md) | React 19 + Redux Toolkit architecture, feature-based structure, STOMP WebSocket middleware, auth flow |
+
+### External References
+
+| Resource | Purpose |
+|----------|---------|
+| [AGENTS.md](./AGENTS.md) | AI agent instructions — build commands, project conventions, CI pipeline overview |
+| [Identity Manager](./nodes/firmware/identity-manager/README.md) | Python tool for provisioning node identities and LoRaWAN credentials |
+| [Key Distribution](./nodes/firmware/custom-modules/key-distro/README.md) | Cryptographic key generation for COSE signing |
+| [CI Pipeline](./.gitlab-ci.yml) | GitLab CI — firmware tests, compilations, web tests, Docker builds |
+| [Architecture Diagrams](./documentation/) | System context, technical views, backend architecture (PNG) |
+
 
 ## Notes for future reference:
 Notes from the summer 2026 project group to future contributors.
@@ -177,3 +324,7 @@ Notes from the summer 2026 project group to future contributors.
 The working state presented at the summer 2026 presentation can be found at the git tag `presentation-summer-2026`
 
 ### Incomplete features:
+
+- SenseMate: The Vibration works and is tested but not activated in the firmware
+- DockingStation: Data connection between computer and SenseMate isn't working. The Pins for Communication with Pogopins needs to be tested and activated in the firmware of the SenseMate. 
+- Dockingstation: USB Connection is a quickfix - Connection to the pogo pins should be improved. Maybe a dedicated PCB.
