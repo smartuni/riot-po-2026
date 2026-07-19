@@ -3,12 +3,12 @@
 The **SenseMate** is a custom 4-layer handheld PCB integrating the XIAO nRF52840 Sense Plus MCU module, a LoRa transceiver, an OLED display, haptic feedback (buzzer + vibration motor), a 5-way navigation switch, and an SD card slot.
 
 - **PCB Design:** KiCad 10.0, 4-layer FR4, 0.127 mm min track
-- **Gerbers:** `nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/gerber_v1_1/` (13 files, ready for fabrication)
-- **Schematic:** `nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/SenseMatePCB.kicad_sch`
-- **Layout:** `nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/SenseMatePCB.kicad_pcb`
-- **Parts material:** `nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/Parts_Material/`
-  - LoRa module datasheets: `Material_LoRa127X-C1/`
-  - XIAO/nRF52840 documentation: `Material_nRF52840SensePlus/`
+- **Gerbers:** `nodes/hardware/SenseMate/SenseMatePCB/gerber_v1_1/` (13 files, ready for fabrication)
+- **Schematic:** `nodes/hardware/SenseMate/SenseMatePCB/SenseMatePCB.kicad_sch`
+- **Layout:** `nodes/hardware/SenseMate/SenseMatePCB/SenseMatePCB.kicad_pcb`
+- **Parts material:** `nodes/hardware/SenseMate/SenseMatePCB/components_datasheets/`
+  - LoRa module datasheets: `LoRa127X-C1/`
+  - XIAO/nRF52840 documentation: `XIAO-seedstudio-nRF52840SensePlus/`
 
 ---
 
@@ -30,7 +30,7 @@ The **SenseMate** is a custom 4-layer handheld PCB integrating the XIAO nRF52840
 | **Diode 1N4148** | 1 | Signal protection |
 
 
-Detailed firmware documentation: [`documentation/Firmware/SenseMate/`](../Firmware/SenseMate/README.md).
+Detailed firmware documentation: [`documentation/Firmware/SenseMate/`](../../Firmware/SenseMate/README.md).
 
 ---
 
@@ -42,26 +42,26 @@ All 28 pins of the XIAO nRF52840 Sense Plus module are used. Mapping verified ag
 
 | MCU Pin | Arduino | Function (SenseMate) | Connected To | Firmware Module | Firmware Reference |
 |---------|---------|---------------------|--------------|-----------------|-------------------|
-| **P0.02** | A0/D0 | **Buzzer PWM** (BUZ_EN) | Piezo buzzer via SS8050 | `sound.c` | [`main.c:48-52`](../../nodes/firmware/applications/senseMate/main.c#L48) — `PWM_DEV(0)`, channel 0 |
+| **P0.02** | A0/D0 | **Buzzer PWM** (BUZ_EN) | Piezo buzzer via SS8050 | `sound.c` | [`main.c:48-52`](../../../nodes/firmware/applications/senseMate/main.c#L48) — `PWM_DEV(0)`, channel 0 |
 | **P0.03** | A1/D1 | **LoRa RST** (reset) | LoRa module RST | `mate_lorawan` | Schematic net `lora_rst` |
-| **P0.04** | A4/D4 | **I2C SDA** | SSD1306 OLED display | `sensemate_ui` / LVGL | [`periph_conf.h: I2C_DEV(0)`](../../nodes/firmware/RIOT/boards/common/seeedstudio-xiao-nrf52840/include/periph_conf.h) |
+| **P0.04** | A4/D4 | **I2C SDA** | SSD1306 OLED display | `sensemate_ui` / LVGL | [`periph_conf.h: I2C_DEV(0)`](../../../nodes/firmware/RIOT/boards/common/seeedstudio-xiao-nrf52840/include/periph_conf.h) |
 | **P0.05** | A5/D5 | **I2C SCL** | SSD1306 OLED display | `sensemate_ui` / LVGL | same as above |
-| **P0.09** | D14 | **Thumbwheel DOWN** (TMB2) | Nav switch DOWN contact | `sensemate_ui.c` | [`sensemate_ui.c:42`](../../nodes/firmware/applications/senseMate/sensemate_ui/sensemate_ui.c#L42) |
-| **P0.10** | D15 | **Vibration motor** (VIB_EN) | Vibration motor via SS8050 | `vibrationModule.c` | [`vibrationModule.c:11`](../../nodes/firmware/applications/senseMate/vibrationModule.c#L11) |
+| **P0.09** | D14 | **Thumbwheel DOWN** (TMB2) | Nav switch DOWN contact | `sensemate_ui.c` | [`sensemate_ui.c:42`](../../../nodes/firmware/applications/senseMate/sensemate_ui/sensemate_ui.c#L42) |
+| **P0.10** | D15 | **Vibration motor** (VIB_EN) | Vibration motor via SS8050 | `vibrationModule.c` | [`vibrationModule.c:11`](../../../nodes/firmware/applications/senseMate/vibrationModule.c#L11) |
 | **P0.15** | D11 | **LoRa DIO0** (interrupt) | LoRa module DIO0 | `mate_lorawan` | Schematic net `lora_dio0` |
-| **P0.19** | D12 | **Thumbwheel UP** (TMB1) | Nav switch UP contact | `sensemate_ui.c` | [`sensemate_ui.c:44`](../../nodes/firmware/applications/senseMate/sensemate_ui/sensemate_ui.c#L44) |
+| **P0.19** | D12 | **Thumbwheel UP** (TMB1) | Nav switch UP contact | `sensemate_ui.c` | [`sensemate_ui.c:44`](../../../nodes/firmware/applications/senseMate/sensemate_ui/sensemate_ui.c#L44) |
 | **P0.28** | A2/D2 | **LoRa DIO1** | LoRa module DIO1 | `mate_lorawan` | Schematic net `lora_dio1` |
 | **P0.29** | A3/D3 | **LoRa DIO2** | LoRa module DIO2 | `mate_lorawan` | Schematic net `lora_dio2` |
 | **P0.31** | D16 | **Battery voltage monitor** (VBAT_MON) | Voltage divider from VBAT | `tables` / system | ADC input for battery status |
-| **P1.01** | D13 | **Thumbwheel SELECT** (TMBT1) | Nav switch SELECT contact | `sensemate_ui.c` | [`sensemate_ui.c:43`](../../nodes/firmware/applications/senseMate/sensemate_ui/sensemate_ui.c#L43) |
+| **P1.01** | D13 | **Thumbwheel SELECT** (TMBT1) | Nav switch SELECT contact | `sensemate_ui.c` | [`sensemate_ui.c:43`](../../../nodes/firmware/applications/senseMate/sensemate_ui/sensemate_ui.c#L43) |
 
 ### Communication Interfaces
 
 | MCU Pin | Arduino | Function | Connected To | Firmware Module | Firmware Reference |
 |---------|---------|----------|-------------|-----------------|-------------------|
-| **P1.11** | D6/TX | **UART TX** | Pogo pin (docking station) | `periph_uart` | [`periph_conf.h`](../../nodes/firmware/RIOT/boards/common/seeedstudio-xiao-nrf52840/include/periph_conf.h) |
+| **P1.11** | D6/TX | **UART TX** | Pogo pin (docking station) | `periph_uart` | [`periph_conf.h`](../../../nodes/firmware/RIOT/boards/common/seeedstudio-xiao-nrf52840/include/periph_conf.h) |
 | **P1.12** | D7/RX | **UART RX** | Pogo pin (docking station) | `periph_uart` | same as above |
-| **P1.13** | D8/SCK | **SPI SCK** (LoRa) | LoRa module SCK | `mate_lorawan` | [`periph_conf.h: SPI_DEV(0)`](../../nodes/firmware/RIOT/boards/common/seeedstudio-xiao-nrf52840/include/periph_conf.h) |
+| **P1.13** | D8/SCK | **SPI SCK** (LoRa) | LoRa module SCK | `mate_lorawan` | [`periph_conf.h: SPI_DEV(0)`](../../../nodes/firmware/RIOT/boards/common/seeedstudio-xiao-nrf52840/include/periph_conf.h) |
 | **P1.14** | D9/MISO | **SPI MISO** (LoRa) | LoRa module MISO | `mate_lorawan` | same as above |
 | **P1.15** | D10/MOSI | **SPI MOSI** (LoRa) | LoRa module MOSI | `mate_lorawan` | same as above |
 | **P1.03** | D17/SCK1 | **SPI1 SCK** (SD card) | SD card slot SCK | — | Schematic net `spi_miso1` / `spi_mosi1` / `spi_sck1` |
@@ -100,8 +100,8 @@ All 28 pins of the XIAO nRF52840 Sense Plus module are used. Mapping verified ag
 
 ## Links
 
-- **Firmware documentation:** [`documentation/Firmware/SenseMate/`](../Firmware/SenseMate/README.md)
-- **Firmware source:** [`nodes/firmware/applications/senseMate/`](../../nodes/firmware/applications/senseMate/)
-- **Hardware design files:** [`nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/`](../../nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/)
-- **Parts & datasheets:** [`nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/Parts_Material/`](../../nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/Parts_Material/)
-- **RIOT board config:** [`nodes/firmware/RIOT/boards/seeedstudio-xiao-nrf52840-sense/`](../../nodes/firmware/RIOT/boards/seeedstudio-xiao-nrf52840-sense/)
+- **Firmware documentation:** [`documentation/Firmware/SenseMate/`](../../Firmware/SenseMate/README.md)
+- **Firmware source:** [`nodes/firmware/applications/senseMate/`](../../../nodes/firmware/applications/senseMate/)
+- **Hardware design files:** [`nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/`](../../../nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/)
+- **Parts & datasheets:** [`nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/Parts_Material/`](../../../nodes/hardware/SenseMate/SenseMatePCB/SenseMate_v2/Parts_Material/)
+- **RIOT board config:** [`nodes/firmware/RIOT/boards/seeedstudio-xiao-nrf52840-sense/`](../../../nodes/firmware/RIOT/boards/seeedstudio-xiao-nrf52840-sense/)

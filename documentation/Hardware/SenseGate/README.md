@@ -27,7 +27,7 @@ The **SenseGate** is a custom 2-layer PCB designed as a sensor interface carrier
 | **Battery** | BT | 1 | Multiple-cell battery input |
 | **DPDT switch** | SW | 1 | Power / mode configuration |
 
-Detailed firmware documentation: [`documentation/Firmware/SenseGate/`](../Firmware/SenseGate/README.md).
+Detailed firmware documentation: [`documentation/Firmware/SenseGate/`](../../Firmware/SenseGate/README.md).
 
 ---
 
@@ -39,9 +39,9 @@ The MCU connects to the SenseGate carrier via a 24-pin castellation connector (`
 |---------|---------------------|--------------|-----------------|-------------------|
 | **P0.02** (A0/D0) | ADC reference / sensor bias | SenseGate PCB | — | — |
 | **P0.03** (A1/D1) | LoRa RST | LoRa module RST pin | `mate_lorawan` | LoRa module datasheet |
-| **P0.04** (A4/D4) | **Sensor power control** (DCDC enable) | Inductive sensor power MOSFET | `inductive_sensor` | [`main.c:56`](../../nodes/firmware/applications/senseGate/main.c#L56) |
+| **P0.04** (A4/D4) | **Sensor power control** (DCDC enable) | Inductive sensor power MOSFET | `inductive_sensor` | [`main.c:56`](../../../nodes/firmware/applications/senseGate/main.c#L56) |
 | **P0.05** (A5/D5) | Battery monitor ADC | Voltage divider from battery | `inductive_sensor` | `INDUCTIVE_SENSOR_ADC_LINE (4)` — see below |
-| **P0.09** (D14) | **Limit switch input** (reed switch) | Reed switch SW1–SW4 (via pull-up) | `gate_observer` | [`main.c:51`](../../nodes/firmware/applications/senseGate/main.c#L51) |
+| **P0.09** (D14) | **Limit switch input** (reed switch) | Reed switch SW1–SW4 (via pull-up) | `gate_observer` | [`main.c:51`](../../../nodes/firmware/applications/senseGate/main.c#L51) |
 | **P0.10** (D15) | Vibration motor enable | — | *(unused on SenseGate)* | — |
 | **P0.15** (D11) | LoRa DIO0 (interrupt) | LoRa module DIO0 pin | `mate_lorawan` | LoRa module datasheet |
 | **P0.19** (D12) | Thumbwheel (n.c. on SenseGate) | — | — | — |
@@ -49,9 +49,9 @@ The MCU connects to the SenseGate carrier via a 24-pin castellation connector (`
 | **P0.29** (A3/D3) | LoRa DIO2 | LoRa module DIO2 pin | `mate_lorawan` | LoRa module datasheet |
 | **P0.31** (D16) | GPIO (spare) | — | — | — |
 | **P1.01** (D13) | Thumbwheel touch (n.c. on SenseGate) | — | — | — |
-| **P1.11** (D6/TX) | UART TX (debug / pogo) | Pogo pin (programming) | `periph_uart` | [`periph_conf.h: UART0`](../../nodes/firmware/RIOT/boards/common/seeedstudio-xiao-nrf52840/include/periph_conf.h) |
+| **P1.11** (D6/TX) | UART TX (debug / pogo) | Pogo pin (programming) | `periph_uart` | [`periph_conf.h: UART0`](../../../nodes/firmware/RIOT/boards/common/seeedstudio-xiao-nrf52840/include/periph_conf.h) |
 | **P1.12** (D7/RX) | UART RX (debug / pogo) | Pogo pin (programming) | `periph_uart` | same as above |
-| **P1.13** (D8/SCK) | SPI SCK | LoRa module SCK | `mate_lorawan` | [`periph_conf.h: SPI_DEV(0)`](../../nodes/firmware/RIOT/boards/common/seeedstudio-xiao-nrf52840/include/periph_conf.h) |
+| **P1.13** (D8/SCK) | SPI SCK | LoRa module SCK | `mate_lorawan` | [`periph_conf.h: SPI_DEV(0)`](../../../nodes/firmware/RIOT/boards/common/seeedstudio-xiao-nrf52840/include/periph_conf.h) |
 | **P1.14** (D9/MISO) | SPI MISO | LoRa module MISO | `mate_lorawan` | same as above |
 | **P1.15** (D10/MOSI) | SPI MOSI | LoRa module MOSI | `mate_lorawan` | same as above |
 | **VBAT** | Battery voltage input | Battery + terminal via power path | — | — |
@@ -132,7 +132,7 @@ For full details, see `documentation/Firmware/SenseGate/03-architecture.md`.
 
 ## Links
 
-- **Firmware documentation:** [`documentation/Firmware/SenseGate/`](../Firmware/SenseGate/README.md)
-- **Firmware source:** [`nodes/firmware/applications/senseGate/`](../../nodes/firmware/applications/senseGate/)
-- **Hardware design files:** [`nodes/hardware/SenseGate/SenseGatePCB/`](../../nodes/hardware/SenseGate/SenseGatePCB/)
-- **RIOT board config:** [`nodes/firmware/RIOT/boards/seeedstudio-xiao-nrf52840-sense/`](../../nodes/firmware/RIOT/boards/seeedstudio-xiao-nrf52840-sense/)
+- **Firmware documentation:** [`documentation/Firmware/SenseGate/`](../../Firmware/SenseGate/README.md)
+- **Firmware source:** [`nodes/firmware/applications/senseGate/`](../../../nodes/firmware/applications/senseGate/)
+- **Hardware design files:** [`nodes/hardware/SenseGate/SenseGatePCB/`](../../../nodes/hardware/SenseGate/SenseGatePCB/)
+- **RIOT board config:** [`nodes/firmware/RIOT/boards/seeedstudio-xiao-nrf52840-sense/`](../../../nodes/firmware/RIOT/boards/seeedstudio-xiao-nrf52840-sense/)

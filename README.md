@@ -129,7 +129,7 @@ Provisioning of devices is done via the identity-manager module found at `/nodes
 ##### Setup
 
 To use the credential manager, it needs to be set up.
-First, create the config for the credential manager at `nodes/firmware/identity-manager/config.yaml`. See the example config (`config.examle.yaml`) for reference.
+First, create the config for the credential manager at `nodes/firmware/identity-manager/config.yaml`. See the example config (`config.example.yaml`) for reference.
 
 Now, log in to the [TTN Console](https://eu1.cloud.thethings.network) and navigate to Applications → your application → API keys, create a new API key, and put it into the config. Update your application ID if necessary. 
 
@@ -304,7 +304,6 @@ To stop and delete the volumes with the database state, use `docker compose down
 | Resource | Purpose |
 |----------|---------|
 | [Identity Manager](./nodes/firmware/identity-manager/README.md) | Python tool for provisioning node identities and LoRaWAN credentials |
-| [Key Distribution](./nodes/firmware/custom-modules/key-distro/README.md) | Cryptographic key generation for COSE signing |
 | [CI Pipeline](./.gitlab-ci.yml) | GitLab CI — firmware tests, compilations, web tests, Docker builds |
 | [Architecture Diagrams](./documentation/) | System context, technical views, backend architecture (PNG) |
 

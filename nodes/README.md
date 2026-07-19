@@ -5,11 +5,11 @@
 This is the directory of the SenseMate and SenseGate regarding the Firmware and Hardware. 
 
 ## Installation and Configuration
-For a complet instruction to install and setup please follow the guide in the main [Readme.md](../README.md#nodes)
+For a complete instruction to install and setup please follow the guide in the main [Readme.md](../README.md#nodes)
 
 Build the Firmware - [Instructions](../README.md#building-firmware)
 Flash the Firmware - [Instructions](../README.md#flashing-firmware)
-Identiy Manager - [Instructions](../README.md#provisioning-devices)
+Identity Manager - [Instructions](../README.md#provisioning-devices)
 
 
 ## Documentation
@@ -20,4 +20,4 @@ SenseGate Firmware Documentation - [documentation/Firmware/SenseGate](../documen
 SenseGate Hardware Documentation - [documentation/Hardware/SenseGate](../documentation/Hardware/SenseGate/README.md)
 
 ## Datasheets
-Data sheets or SenseGate components can be found in the [datasheets folder](\nodes\hardware\SenseMate\SenseMatePCB\SenseMate_v2\parts_datasheets)
+Data sheets or SenseGate components can be found in the [datasheets folder](./hardware/SenseMate/SenseMatePCB/components_datasheets) 
