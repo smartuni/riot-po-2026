@@ -38,7 +38,6 @@ USEMODULE += event_timeout
 USEMODULE += mate_lorawan
 USEMODULE += mate_ble
 USEMODULE += inductive_sensor
-USEMODULE += cbor_serialization
 USEMODULE += health_monitor
 USEMODULE += posix_semaphore
 # for shock-detection
