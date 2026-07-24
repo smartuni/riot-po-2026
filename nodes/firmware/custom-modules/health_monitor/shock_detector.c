@@ -193,10 +193,10 @@ int shock_detector_start(shock_detector_t* instance) {
 
 
 
-shock_status_t shock_detector_wait_for_shock(shock_detector_t* instance) {
+accelerometer_status shock_detector_wait_for_accel_sig(shock_detector_t* instance) {
 	sem_wait(&instance->shock_count_to_report);
 	mutex_lock(&instance->shock_status_mutex);
-	shock_status_t status = instance->shock_status;
+	accelerometer_status status = instance->shock_status;
 	mutex_unlock(&instance->shock_status_mutex);
 	return status;
 }

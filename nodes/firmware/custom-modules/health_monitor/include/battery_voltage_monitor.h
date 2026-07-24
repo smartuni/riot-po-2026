@@ -56,17 +56,8 @@ typedef struct {
 } battery_info_t; //1+2 bytes
 
 typedef struct {
-	//Structure for memory alignment and to avoid padding
-	//1. classes, structs, STL containers, arrays
-	// char thread_stack[THREAD_STACKSIZE_DEFAULT];
-	// kernel_pid_t thread_pid;
-	//2. pointers
-	// void (*callback)(void);
-	//3. primitive types (int, double)
-	//int threshold_mv;
 	int prev_voltage_mv;
 	battery_status_t last_battery_status;
-	//4. bool and char
 } battery_voltage_monitor_t;
 
 

@@ -4,10 +4,10 @@
 
 
 static int serialize_and_send(const health_monitor_payload_t* payload) {
-	uint8_t buffer[HEALTH_MONITOR_CBOR_SIZE_BYTES];
-	size_t buff_size = sizeof(buffer);
-	health_monitor_serialize(payload, buffer, &buff_size);
-	int status = send_lorawan_packet(buffer, buff_size);
+	uint8_t serialized_buffer[HEALTH_MONITOR_CBOR_SIZE_BYTES];
+	size_t buff_size = sizeof(serialized_buffer);
+	health_monitor_serialize(payload, serialized_buffer, &buff_size);
+	int status = send_lorawan_packet(serialized_buffer, buff_size);
 	return status;
 }
 
@@ -69,7 +69,7 @@ static void* thread_shock_detector_function(void* instance_void) {
 		LOG_DEBUG("[health_monitor.c:%d] Waiting for shock detection...\n", __LINE__);
 		health_monitor_payload_t payload;
 		payload.header = ACCELEROMETER;
-		payload.body = (int16_t) shock_detector_wait_for_shock(instance);
+		payload.body = (int16_t) shock_detector_wait_for_accel_sig(instance);
 	
 		if(serialize_and_send(&payload) != 0) {
 			LOG_ERROR("[health_monitor.c:%d] Failed to send accelerometer payload\n", __LINE__);
