@@ -15,7 +15,7 @@
 
 #include <stdint.h>
 
-#define HEALTH_MONITOR_PAYLOAD_ELEMENTS 2
+#define HEALTH_MONITOR_PAYLOAD_ELEMENTS 2 //1. Header; 2. Body
 
 typedef uint8_t health_monitor_header_t;
 enum {

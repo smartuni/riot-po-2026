@@ -13,29 +13,29 @@ int health_monitor_serialize(const health_monitor_payload_t* record, uint8_t* bu
 	cbor_encoder_init(&root_encoder, buf, *out_len, 0);
 	CborEncoder main_array_encoder;
     int result;
-	result = cbor_encoder_create_array(&root_encoder, &main_array_encoder, HEALTH_MONITOR_CBOR_SIZE_COUNT); // +3 for version, msg_type, and node_id
+	result = cbor_encoder_create_array(&root_encoder, &main_array_encoder, HEALTH_MONITOR_CBOR_SIZE_COUNT);
     if(result != 0){
         DEBUG("[health_monitor_serialization.c:%d] Failed to create CBOR array\n", __LINE__);
     }
 
-    result = cbor_encode_uint(&main_array_encoder, ENCODING_V_1);
+    result = cbor_encode_uint(&main_array_encoder, ENCODING_V_1); //1 byte(s)
     if(result != 0){
         DEBUG("[health_monitor_serialization.c:%d] Failed to encode version\n", __LINE__);
     }
-    result = cbor_encode_uint(&main_array_encoder, MESSAGE_TYPE_HEALTH_MONITOR);
+    result = cbor_encode_uint(&main_array_encoder, MESSAGE_TYPE_HEALTH_MONITOR); //1 byte(s)
     if(result != 0){
         DEBUG("[health_monitor_serialization.c:%d] Failed to encode message type\n", __LINE__);
     }
     uint32_t node_id = (uint32_t)self_node_id;
-    result = cbor_encode_uint(&main_array_encoder, node_id);
+    result = cbor_encode_uint(&main_array_encoder, node_id); //4 byte(s)
     if(result != 0){
         DEBUG("[health_monitor_serialization.c:%d] Failed to encode node ID\n", __LINE__);
     }
-    result = cbor_encode_uint(&main_array_encoder, record->header);
+    result = cbor_encode_uint(&main_array_encoder, record->header); //1 byte(s)
     if(result != 0){
         DEBUG("[health_monitor_serialization.c:%d] Failed to encode header\n", __LINE__);
     }
-    result = cbor_encode_uint(&main_array_encoder, record->body);
+     result = cbor_encode_uint(&main_array_encoder, record->body); //2 byte(s)
     if(result != 0){
         DEBUG("[health_monitor_serialization.c:%d] Failed to encode body\n", __LINE__);
     }
