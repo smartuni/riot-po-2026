@@ -148,6 +148,8 @@ This component samples the accelerometer and runs a lightweight detection pipeli
 	- free fall, based on low acceleration magnitude in the time domain
 	- shock, based on sparsity in the frequency domain
 - `shock_detector_wait_for_accel_sig()` blocks until a detection event is available.
+- The noise of the accelerometer data has been reduced by utilizing convolve (sliding average) to the values. To tune this, modify the Macro `AVG_SLIDING_WINDOW`
+- We use FFT in order to differentiate between shock caused by the heavy gate behavior and shock caused by vandalism-hit
 
 
 The shock detector keeps the detection logic isolated from the reporting logic, which lets the health monitor consume events without knowing the FFT details.

@@ -7,7 +7,7 @@
  */
 
 /**
- * @brief       Shock detector for senseGate
+ * @brief       Rounds the frequency domain by using average
  * @author      Maverick Widjaja <Maverick.widjaja@haw-hamburg.de>
  */
 #pragma once

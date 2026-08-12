@@ -93,6 +93,13 @@ int shock_detector_init(shock_detector_t* instance,  int sampling_period_ms);
  */
 int shock_detector_start(shock_detector_t* instance);
 
+
+/**
+ * @brief Waits for an accelerometer signal indicating a shock or free fall event.
+ * This function blocks until one of those events occurs. The IPC mechanism is done via semaphore.
+ * @param instance Pointer to the shock detector
+ * @return The status of the accelerometer (NO_SHOCK, SHOCK_DETECTED, or FREE_FALL)
+*/
 accelerometer_status shock_detector_wait_for_accel_sig(shock_detector_t* instance);
 
 
