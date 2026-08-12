@@ -30,6 +30,6 @@ enum {
 typedef struct {
 	health_monitor_header_t header;
 	int16_t body;
-} health_monitor_payload_t; // total 6 elements
+} health_monitor_payload_t;
 
 #endif
