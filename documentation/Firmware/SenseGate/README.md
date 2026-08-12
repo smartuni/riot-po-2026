@@ -10,6 +10,7 @@ Welcome. This folder documents the **SenseGate** firmware -- the embedded softwa
 | `02-setup.md` | Prerequisites, building, flashing, identity provisioning, and troubleshooting. |
 | `03-architecture.md` | Code structure, component tree, RIOT OS integration, and custom modules. |
 | `04-sensor-logic.md` | Sensor detection, gate state machine, interrupt handling, secure messaging, and LoRaWAN communication. |
+| `05-health-monitoring.md` | Health monitoring that wraps both battery voltage monitoring and shock detection. |
 
 ## Suggested Reading Order
 
@@ -19,6 +20,7 @@ If you are new to this project, read in this order:
 2. **02-setup.md** -- Learn how to get the firmware onto a real device.
 3. **03-architecture.md** -- See how the code is organized and which modules do what.
 4. **04-sensor-logic.md** -- Dive into how the sensor detects gate position and sends data to the cloud.
+5. **05-sensor-logic.md** -- Learn how the health monitor works, including battery and shock detection, which communicate each other via IPC mechanisms.
 
 ## Glossary
 
