@@ -17,8 +17,8 @@ Before running the Backend, you need:
 ## Step 1: Clone the Repository
 
 ```bash
-git clone --recurse-submodules https://github.com/.../BAI5-Project_RIOT26.git
-cd BAI5-Project_RIOT26
+git clone --recurse-submodules https://github.com/smartuni/riot-po-2026.git
+cd riot-po-2026
 ```
 
 If you already cloned without submodules, run:
