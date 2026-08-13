@@ -27,6 +27,8 @@ test.describe('WebSocket regression — stale lastTimeStamp bug', () => {
     });
     expect(response.status()).toBe(200);
 
+
+
     // 3. Wait for Gate 1001 status to change to CLOSED in the UI (WS pushes update)
     const row = page.locator('table.gate-table tbody tr', {
       hasText: 'E2E Gate Alpha',
@@ -42,8 +44,8 @@ test.describe('WebSocket regression — stale lastTimeStamp bug', () => {
     // 5. Verify via API that DB has a fresh timestamp
     const gatesAfter = await (await request.get(`${BACKEND_URL}/gates`)).json();
     const alphaAfter = gatesAfter.find((g: { id: number }) => g.id === 1001);
-    expect(new Date(alphaAfter.lastTimeStamp).getTime()).toBeGreaterThan(
-      new Date(alphaBefore.lastTimeStamp).getTime(),
+    expect(new Date(alphaAfter.gateTimeStamp).getTime()).toBeGreaterThan(
+      new Date(alphaBefore.gateTimeStamp).getTime(),
     );
 
     // 6. Verify an activity entry was added for gate 1001
