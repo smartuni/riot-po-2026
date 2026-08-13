@@ -46,7 +46,7 @@ public class GateService {
         );
         List<Gate> customGates = new ArrayList<>();
         gates.forEach(e -> {
-            Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getLastTimeStamp(), e.getStatus(), e.getStateConfirmation(),
+            Gate gate = new Gate(e.getId(), e.getDeviceId(), e.getGateTimeStamp(), e.getStatus(), e.getStateConfirmation(),
                     e.getLatitude(), e.getLongitude(), e.getLocation(), 
                     e.getWorkerConfidence(), e.getSensorConfidence(), e.getRequestedStatus(), e.getConfidence(), e.getQuality(), e.getPendingJob(), e.getPriority(),
                     e.isManualOverride(), e.getHeightAboveNN());
@@ -91,7 +91,7 @@ public class GateService {
      */
     public void updateGate(GateEntity gate, MsgType reportType) {
         gate.setRequestedStatus(gate.getRequestedStatus());
-        gate.setLastTimeStamp(gate.getLastTimeStamp());
+        gate.setGateTimeStamp(gate.getGateTimeStamp());
         gate.setDeviceId(gate.getDeviceId());
         gate.setStatus(gate.getStatus());
         //Set confidence
@@ -136,7 +136,7 @@ public class GateService {
      */
     public Gate getGateById(Long id) throws GateNotFoundException {
         GateEntity gate = gateRepository.findById(id).orElseThrow(() -> new GateNotFoundException(id));
-        return new Gate(gate.getId(), gate.getDeviceId(), gate.getLastTimeStamp(), gate.getStatus(), gate.getStateConfirmation(),
+        return new Gate(gate.getId(), gate.getDeviceId(), gate.getGateTimeStamp(), gate.getStatus(), gate.getStateConfirmation(),
                 gate.getLatitude(), gate.getLongitude(), gate.getLocation(), gate.getWorkerConfidence(),
                 gate.getSensorConfidence(), gate.getRequestedStatus(), gate.getConfidence(), gate.getQuality(), gate.getPendingJob(), gate.getPriority(),
                 gate.isManualOverride(), gate.getHeightAboveNN());
@@ -178,7 +178,7 @@ public class GateService {
             }
         }
 
-        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        gate.setGateTimeStamp(new Timestamp(System.currentTimeMillis()));
         gateRepository.save(gate);
     }
 
@@ -191,7 +191,7 @@ public class GateService {
         //dont be surprised if pending job didn't change after the first status change! It need to be 100% confidence
         calculator.changeConfidence(gate, confidence, reportType);
 
-        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        gate.setGateTimeStamp(new Timestamp(System.currentTimeMillis()));
         gateRepository.save(gate);
         messagingTemplate.convertAndSend("/topic/gates/updates", gate);
     }
@@ -199,7 +199,7 @@ public class GateService {
     public void changeGateStateConfirmation(Long gateId, StateConfirmation state) throws GateNotFoundException {
         GateEntity gate = gateRepository.findById(gateId).orElseThrow(() -> new GateNotFoundException(gateId));
         gate.setStateConfirmation(state);
-        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        gate.setGateTimeStamp(new Timestamp(System.currentTimeMillis()));
         gateRepository.save(gate);
         messagingTemplate.convertAndSend("/topic/gates/updates", gate);
     }
@@ -282,7 +282,7 @@ public class GateService {
         gate.setManualOverride(true);
         gate.setRequestedStatus(null);
         gate.setPendingJob("None");
-        gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        gate.setGateTimeStamp(new Timestamp(System.currentTimeMillis()));
         gateRepository.save(gate);
         messagingTemplate.convertAndSend("/topic/gates/updates", gate);
     }
@@ -315,10 +315,10 @@ public class GateService {
             gate.setId(getIdForGate());
         }
         gate.setPriority(3);
-        if (gate.getLastTimeStamp() == null) {
-            gate.setLastTimeStamp(new Timestamp(System.currentTimeMillis()));
+        if (gate.getGateTimeStamp() == null) {
+            gate.setGateTimeStamp(new Timestamp(System.currentTimeMillis()));
         }
-        gate.setLastTimeStamp(gate.getLastTimeStamp());
+        gate.setGateTimeStamp(gate.getGateTimeStamp());
         gate.setRequestedStatus("REQUESTED_NONE");
         gate.setPendingJob("PENDING_NONE");
         gateRepository.save(gate);
