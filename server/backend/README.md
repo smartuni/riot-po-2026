@@ -1,228 +1,423 @@
-# Server Team Back-End
-This is the readme for the back-end of the Server side team. It will describe the structure of the directory and where to find important files and functions.
+# Rescue-Mate Backend
 
-## Intro
-The back-end of this project serves to provide communication between front-end and nodes. It also handles storing information, such as gates, users, notifications, etc into in-memory databases. It converts data from front-end and sends it to the nodes and vice-versa.
+The backend for **Rescue-Mate**, an IoT flood-gate monitoring system built as part of the RIOT project course `riot-po-2026`. It sits at the centre of the system between the field hardware and the dashboard:
 
-Rescue‑Mate is an IoT-powered backend system that connects emergency devices via **The Things Network (TTN)**. It uses **Spring Boot**, **MQTT**, and **Java 17** to receive and process data efficiently from LoRaWAN devices.
+```
+SenseGate / SenseMate  ⇄  LoRaWAN  ⇄  TTN  ⇄  MQTT  ⇄  [ BACKEND ]  ⇄  REST + WebSocket  ⇄  React Frontend
+```
+
+- **Java 17 · Spring Boot 3.4.4 · Maven** (`com.riot:matesense`)
+- Receives **uplinks** from gates and worker devices over **MQTT (The Things Network)**
+- Publishes **downlinks** (gate commands / jobs) back to the devices
+- Exposes a **REST API** and **STOMP WebSocket** channel to the frontend
+- Persists gates, activities, notifications, nodes and keys in **PostgreSQL** managed by **Flyway**
+
+> Architectural documentation for the whole project (arc42) lives in the [project wiki](https://github.com/smartuni/riot-po-2026/wiki).
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Architecture](#architecture)
+- [Directory Structure](#directory-structure)
+- [Technology Stack](#technology-stack)
+- [Database](#database)
+- [MQTT / TTN Integration](#mqtt--ttn-integration)
+- [API Overview](#api-overview)
+- [WebSockets](#websockets)
+- [Security](#security)
+- [Spring Profiles](#spring-profiles)
+- [Running Locally](#running-locally)
+- [Running with Docker](#running-with-docker)
+- [Testing](#testing)
+- [E2E Environment](#e2e-environment)
+- [CI/CD](#cicd)
+- [Troubleshooting](#troubleshooting)
+
+---
+
+## Features
+
+- **Gate monitoring & control** — track gate status (`OPEN` / `CLOSED` / `OUT_OF_SERVICE`), request status changes, manual overrides, priority and height above NN.
+- **Worker state confirmation** — SenseMate worker reports are aggregated into a per-gate `StateConfirmation` and a **0–100 confidence score** with a quality rating.
+- **Health monitoring** — last-known health state (battery, shock/free-fall, voltage) per SenseGate, served over REST and pushed live over WebSockets.
+- **Node management** — register/delete nodes and manage the singleton Ed25519 **root key** used for device identity.
+- **Gate metadata** — arbitrary `key/value` metadata per gate (persistent, upsert, broadcast over WS).
+- **Downlink scheduling** — build a CBOR gate-command payload and publish it to every registered gate device via TTN, rate-limited by a daily counter.
+- **Authentication** — full register/login/logout with **HttpOnly JWT cookies**, server-side token store, BCrypt password hashing, CSRF protection and `controller` / `viewer` roles.
+- **Deterministic E2E environment** — a self-contained profile + seed data so Playwright tests run reproducibly in CI.
+
+---
+
+## Architecture
+
+The backend is organised in layers:
+
+```
+┌─────────────────────────── HTTP + WebSocket API ───────────────────────────┐
+│                        AuthController · GateController ·                    │
+│   controllers   HealthController · NodeManagementController · ...          │
+├────────────────────────────────────────────────────────────────────────────┤
+│   services      GateService · GateActivityService · DownlinkService ·      │
+│                 HealthStatusService · NodeManagementService · ...          │
+├────────────────────────────────────────────────────────────────────────────┤
+│   mqtt          TTNMqttListener · MqttMessageHandler · TTNMqttPublisher    │
+├────────────────────────────────────────────────────────────────────────────┤
+│   repository / entity / model   (JPA + PostgreSQL + Flyway)                │
+├────────────────────────────────────────────────────────────────────────────┤
+│   security / config / exceptions / enums / registry                        │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Message flow (uplink, device → backend):**
+
+1. `TTNMqttListener` receives the LoRaWAN uplink envelope from TTN via MQTT.
+2. The base64 `frm_payload` is decoded and deserialised from **CBOR** (`Base64ToList`).
+3. `JsonFormatter` normalises it to `{ messageType, statuses }` (IST_STATE, SEEN_TABLE_STATE or HEALTH_MONITORING).
+4. `MqttMessageHandler` routes each message type: updates gate state, logs activities, recomputes confidence/state-confirmation, or stores health data.
+5. Live updates are pushed to the frontend over `/topic/uplinks`, `/topic/gates/updates`, `/topic/health`, etc.
+
+**Message flow (downlink, backend → device):**
+
+1. `POST /downlink` (or internal services) builds a gate-command **CBOR** payload (`DownlinkService`).
+2. The payload is base64-wrapped in a TTN downlink envelope (`f_port: 15`).
+3. `TTNMqttPublisher` publishes it to `v3/{app}@ttn/devices/{device}/down/push` for every registered gate device.
+
+---
 
 ## Directory Structure
-The structure of this back-end directory contains a number of sub-folders with distinct purposes.
 
-Within the /backend directory there is a few important files, namely pom.xml that holds all of the dependeces and the (/src) source directory that contains all the working implementation.
-
-The /src directory is where almost all of the files are located. It has a number of important files and subdirectories within it, such as the resources folder, which contains information about configuring the application, the databases, and connecting it to the mqtt broker.
-
-Config subdirectory is responsible for templates for the rest of application to work off of such as well as handling the setup of parts of the application.
-
-Controller and service subdirectories are very closely related. They are responsible for communication between front-end and back-end. Files in the service subdirectory handle initializing, updating, and removing information from the applications' database and controller files provide interfaces for front-end to communicate with service files.
-
-Entity and model subdirectories are also closely related and they are responsible for providing a format for communication between front-end and back-end. Entities are what back-end works with and modes are what front-end works with. Entities also provide methods for converting entities to models.
-
-Enums subdirectory is reponsible for providing user defined data types to ensure standards are met across the entire application.
-
-Exeptions subdirectory enables us to handle errors. By defining these errors, it allows us tell the application what to do, should one of the errors occur.
-
-Registry subdirectory tracks gatemates and sensemates on the network.
-
-Repository subdirectory initializes repositories which store information used when the application is running.
+```
+server/backend
+├── Dockerfile                     # Multi-stage build (Maven 3.9 + Temurin 17)
+├── mvnw / mvnw.cmd                # Maven wrapper
+├── pom.xml                        # Dependencies & build config
+├── .env.example                   # Template for environment variables
+├── scripts/
+│   └── e2e-reset.sh               # Reset the deterministic E2E backend
+└── src/
+    ├── main/
+    │   ├── java/com/riot/matesense/
+    │   │   ├── config/            # MQTT, WebSocket, Security, Web (CORS), properties
+    │   │   ├── controller/        # REST endpoints (see API Overview)
+    │   │   ├── entity/            # JPA entities (Gates, Users, Nodes, ...)
+    │   │   ├── enums/             # Status, ActivityType, BatteryStatus, ...
+    │   │   ├── exceptions/        # Domain exceptions + ApiExceptionHandler
+    │   │   ├── model/             # DTOs exchanged with the frontend
+    │   │   ├── mqtt/              # TTN listener/handler/publisher
+    │   │   ├── registry/          # In-memory registry of sensegate-*/sensemate-* devices
+    │   │   ├── repository/        # Spring Data JPA repositories
+    │   │   ├── security/          # JWT filter, cookie extractor, JwtService
+    │   │   └── service/           # Business logic layer
+    │   └── resources/
+    │       ├── application.properties     # Default PostgreSQL + Flyway config
+    │       ├── application.yml            # MQTT, test-credentials, jwt-secrets
+    │       ├── application-{dev,prod,test,e2e,integration}.{properties,yml}
+    │       ├── db/migration/              # Flyway migrations V1–V14
+    │       ├── db/migration-e2e/          # E2E seed (PostgreSQL dialect)
+    │       └── data-e2e.sql               # E2E seed (H2 dialect)
+    └── test/
+        ├── java/com/riot/matesense/       # Unit, repository & integration tests
+        └── resources/                     # Test profile config
+```
 
 ---
 
-## Requirements to Start the Backend
+## Technology Stack
 
-- Java 17
-- Maven
-- Spring Boot
-- TTN Account
-- (Optional) Local Mosquitto MQTT Broker
-- (Optional) Node.js *(only if required for frontend or downlink services)*
+| Concern | Choice |
+|---|---|
+| Language / Runtime | Java 17 (Temurin) |
+| Framework | Spring Boot 3.4.4 (Web, Data JPA, WebSocket, Security, Validation, Actuator) |
+| Build | Maven 3.9 (wrapper included) |
+| Database | PostgreSQL 15 + **Flyway** migrations |
+| MQTT | Eclipse Paho `org.eclipse.paho.client.mqttv3` 1.2.5 |
+| CBOR | Jackson `jackson-dataformat-cbor` 2.15.2 |
+| Auth | jjwt 0.11.5 (HS256) + BCrypt |
+| Serialisation | Jackson (JSON), Jackson CBOR |
+| Tests | JUnit 5, Mockito, Spring Security Test, H2, Playwright (frontend e2e) |
 
 ---
 
-## Setup Guide
+## Database
 
-### 1.  Set Up TTN
+**PostgreSQL** with **Flyway** for versioned migrations. Migrations live in `src/main/resources/db/migration/` and run automatically on startup (`spring.flyway.enabled=true`).
 
-To connect Rescue‑Mate to TTN, you first need to access the **TTN Console**, where you can manage your applications and devices.
+| Migration | Purpose |
+|---|---|
+| `V1__Initial_schema.sql` | Core tables (`users`, `gates`, `gate_activities`, `notifications`, `gate_for_downlink`, `downlink_counter`), indexes and views |
+| `V2__Insert_seed_data.sql` | Seeds 6 Hamburg gates, notifications and activities |
+| `V3__Fix_enum_array_columns.sql` | `status_enum[]` → `smallint[]` |
+| `V4__Fix_quality_enum_column.sql` | `quality` enum → `VARCHAR` |
+| `V5__Fix_state_confirmation_column.sql` | `state_confirmation` enum → `VARCHAR` |
+| `V6__Add_updated_at_triggers.sql` | `updated_at` auto-update triggers |
+| `V7__Add_foreign_key_constraints.sql` | FK constraints + cascade rules |
+| `V8__Fix_status_column.sql` | `gates.status` enum → `VARCHAR` |
+| `V9__Fix_notifications_status_column.sql` | `notifications.status` enum → `VARCHAR` |
+| `V10__Fix_gate_activities_activity_type_column.sql` | `activity_type` enum → `VARCHAR` |
+| `V11__Create_gate_metadata_table.sql` | `gate_metadata` table |
+| `V12__Add_gate_override_height_fk_unique.sql` | `manual_override`, `height_above_nn`, FK cascade + unique `(gate_id, key)` |
+| `V13__Add_node_management_tables.sql` | `root_keys` + `nodes` tables |
+| `V14__Add_kid_and_triggers.sql` | `kid` on `root_keys`, singleton unique index, triggers |
 
-#### How to open the TTN Console:
+Environment overrides via `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` (defaults: `postgres:5432/matesense`).
 
-1. Go to [https://www.thethingsnetwork.org](https://www.thethingsnetwork.org)
-2. Click **“Login”** in the top right and sign in with your TTN account
-3. Once logged in, click on your **profile icon (top right)**
-4. Select **“Console”** from the dropdown
-5. In the console, choose your cluster (e.g. **Europe 1 / eu1**)
+---
 
-> You are now inside the **The Things Stack Console**, where you can register applications, devices, and generate API keys.
+## MQTT / TTN Integration
 
-Continue with the following steps:
+The backend subscribes to uplinks and publishes downlinks through **The Things Network** over MQTT (QoS 0 for uplinks, QoS 1 for downlink pushes).
 
-2. **Create an Application**
-    - On the left sidebar, select **“Applications”**        
-    - On the top right, click **“+ Add application”**
-    - Give your application a unique ID, e.g. `rescue-mate-app`
-    - Click **“Create application”**
-
-
-3. **Register Your Device**
-    - Inside the application, go to the **“End devices”** tab
-    - Click **“+ Add end device”**
-    - Choose manual setup or a template
-    - Fill in the LoRaWAN settings: **DevEUI**, **AppEUI**, **AppKey**
-    - Save and ensure the device sends **uplink** messages
-
-
-4. **Generate an API Key**
-    - Inside your application, go to **“API Keys”**
-    - Click **“+ Add API key”**
-    - Select permission: **“Read application traffic”**
-    - Copy and store the API key — this will be used as your **MQTT password**
-    -
-
-5. **Configure MQTT in `application.yml`**
-
-After setting up your TTN application and generating an API key, configure your MQTT connection in Spring Boot using the `application.yml` file.  
-You can find this file here: `src/main/resources/application.yml`
+Config (`application.yml`, overridable via env vars):
 
 ```yaml
 mqtt:
   broker: ssl://eu1.cloud.thethings.network:8883
-  clientId: mqtt-client-1234 <-- don't need to be changed
+  clientId: mqtt-client-1234
   username: your-app-id@ttn
   applicationId: your-app-id
   password: your-ttn-api-key
   subscribeTopic: v3/your-app-id@ttn/devices/+/up
 ```
 
-More info: [TTN MQTT Integration Guide](https://www.thethingsindustries.com/docs/integrations/)
+- Uplink topic: `v3/{app}@ttn/devices/+/up`
+- Downlink topic: `v3/{app}@ttn/devices/{deviceId}/down/push`
+- Set `mqtt.enabled=false` to run without a broker (used by the `e2e` profile).
+- Payloads are **CBOR**, base64-encoded by TTN and decoded on the backend.
 
 ---
 
-### 2. Maven & Spring Boot Setup
+## API Overview
 
-Add the following dependencies to your `pom.xml`:
+> All endpoints are under the backend origin (port `8080`, or `/api` via the frontend nginx proxy). Paths below are the raw Spring routes.
 
-```xml
-<dependency>
-    <groupId>org.eclipse.paho</groupId>
-    <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
-    <version>1.2.5</version>
-</dependency>
-<dependency>
-<groupId>org.springframework.integration</groupId>
-<artifactId>spring-integration-mqtt</artifactId>
-<version>6.5.0</version>
-</dependency>
+### Auth — `/auth`
 
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| POST | `/auth/login` | Login, sets HttpOnly JWT cookie | public |
+| POST | `/auth/register` | Create account, sets JWT cookie | public |
+| POST | `/auth/logout` | Invalidate token & clear cookie | public |
+| GET | `/auth/user-details` | Current user details | authenticated |
+| PUT | `/auth/user-change` | Update name / password | authenticated |
 
-```
+### Gates
 
-## What MQTT Does & What to Keep in Mind
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| GET | `/gates` | All gates | public |
+| POST | `/add-gate-ui` | Create a gate from the UI | authenticated |
+| PUT | `/update-gate` | Update a gate | authenticated |
+| DELETE | `/gates/{id}` | Delete a gate | authenticated |
+| POST | `/{gateId}/{workerId}/request-status-change/` | Request target status | authenticated |
+| GET | `/gates_for_downlink` | Gates mapped for downlink commands | authenticated |
+| PUT | `/update-priority/{gateId}` | Update gate priority | authenticated |
+| PUT | `/update-height/{gateId}` | Update height above NN | authenticated |
+| POST | `/gates/{gateId}/{workerId}/set-status` | Manual status override | authenticated |
 
-### How Rescue‑Mate Webteam Uses MQTT
+### Gate Metadata
 
-**MQTT** is a lightweight publish‑subscribe messaging protocol ideal for IoT, where devices (clients) communicate exclusively through a central broker rather than directly.
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| GET | `/gates/{gateId}/metadata` | List metadata for a gate | authenticated |
+| POST | `/gates/{gateId}/metadata` | Add/upsert metadata entry | authenticated |
+| PUT | `/gates/{gateId}/metadata/{metadataId}` | Update entry | authenticated |
+| DELETE | `/gates/{gateId}/metadata/{metadataId}` | Delete entry | authenticated |
 
-- **Publishers** (e.g. devices) publish data to structured topics.
-- **Mosquitto broker** receives and routes these messages to all subscribers that match the topic filter.
-- **Subscribers** (the backend) subscribe to relevant topics and process incoming payloads accordingly.
+### Health
 
-### Key Considerations with TTN
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| GET | `/health` | Last-known health per SenseGate | public |
 
-1. **TTN only allows QoS 0**  
-   The Things Stack supports MQTT 3.1.1 and QoS 0 only. Any higher QoS set by the client will be downgraded when passing through TTN.
-2. **Topic strategy**  
-   Subscribe selectively, e.g. `v3/{app}@{tenant}/devices/+/up`, to avoid unnecessary traffic.
-3. **Security**  
-   Authenticate with TTN using API key; use TLS on both TTN and Mosquitto endpoints (port 8883).
+### Node Management
 
-For more Information follow the link:
-**https://www.thethingsindustries.com/docs/integrations/other-integrations/mqtt/**
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| GET | `/nodes` | List registered nodes | authenticated |
+| POST | `/nodes` | Register a node (Ed25519 public key) | `controller` |
+| DELETE | `/nodes/{id}` | Delete a node | `controller` |
+| POST | `/nodes/root-key` | Upload/upsert root key pair | `controller` |
+| GET | `/nodes/root-key` | Get root key (private key redacted) | `controller` |
 
+### Downlink
 
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| POST | `/downlink` | Prepare & publish a gate-command downlink | authenticated |
+| GET | `/downlinkcounter/counter` | Current downlink counter | authenticated |
+| POST | `/downlinkcounter/try-increment` | Increment if below limit (10/day) | authenticated |
+| POST | `/downlinkcounter/reset` | Reset counter | `controller` |
 
-## Known Issues & Troubleshooting
+### Activities & Notifications
 
-Even with correct setup and credentials, some problems may still occur. Here are some known issues and how to resolve them:
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| GET | `/gate-activities` | All activities | public |
+| POST | `/add-activity` / `/add-activities` | Log activity(ies) | authenticated |
+| DELETE | `/delete-activitiy` | Delete an activity | authenticated |
+| GET | `/activities/{gateId}` | Activities for a gate | authenticated |
+| GET | `/activities-latest/{gateId}` | Latest worker report per gate | authenticated |
+| GET | `/notifications` | All notifications | authenticated |
+| POST | `/notifications/add` | Create notification | authenticated |
+| DELETE | `/notifications/delete` | Delete notification | authenticated |
+| GET | `/notifications/{workerId}` | Notifications for a worker | authenticated |
+| POST | `/notifications/{notificationId}/request-read-change` | Mark read/unread | authenticated |
 
-### 1. MQTT Connection Fails Despite Correct Setup
+### Misc
 
-Sometimes the MQTT connection to TTN fails, even when `application.yml` is correct and the API key is valid. This could be caused by **network interference or restrictions** (e.g. corporate firewalls, university networks).
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| GET | `/` | Health banner | public |
+| GET | `/secured` | Auth check | authenticated |
+| GET | `/actuator/health` | Actuator health (used by Docker HEALTHCHECK) | public |
 
-**Solutions:**
-- Try using a different network (e.g. mobile hotspot or private Wi-Fi)
-- Make sure port **8883** is not blocked
-- Ensure your system clock is accurate (some TLS setups require time sync)
-
----
-
-### 2. `application.yml` Not Loaded or Ignored
-
-If your configuration seems correct but is not applied, it may be due to incorrect **project structure** or **resource folder setup**.
-
-**Solutions:**
-- Make sure `src/main/resources/` is marked as a **Resource Root** in your IDE
-- In IntelliJ IDEA: right-click the `resources` folder → *Mark Directory as* → *Resources Root*
-- In other IDEs, you may need to configure the classpath manually
-
----
-
-### 3. Maven Project Not Recognized
-
-If Maven dependencies are not resolved:
-
-**Solutions:**
-- Ensure your project is properly imported as a **Maven project**
-- In IntelliJ: right-click `pom.xml` → *Add as Maven Project*
-- Run `mvn clean install` to verify the build
-
----
-
-### Recommendation: Use IntelliJ IDEA
-
-We recommend using **IntelliJ IDEA** for this project, as it was used during development and supports:
-- Easy marking of `resources` and `sources`
-- Maven integration
-- YAML highlighting
-- Spring Boot auto-completion
-
-> Other IDEs can be used, but may require additional manual configuration.
+> The `/e2e/**` endpoints (`simulate-uplink`, `simulate-state-confirmation`, `simulate-health`) exist **only** under the `e2e` profile for deterministic testing.
 
 ---
 
-## E2E Backend (Deterministischer Zustand)
+## WebSockets
 
-Für reproduzierbare E2E-Tests gibt es ein separates Profil und Seed-Daten. Dieses Setup startet Postgres und das Backend mit einem festen Datenzustand.
+STOMP endpoint at `/ws` (native WebSocket, no SockJS), simple broker on `/topic`, app prefix `/app`. JWT is validated on the STOMP `CONNECT` frame.
 
-### Profil
+| Topic | Payload |
+|---|---|
+| `/topic/gates/updates` | Gate state changes |
+| `/topic/gates/delete` | Deleted gates |
+| `/topic/uplinks` | Processed uplink messages |
+| `/topic/health` | Live health updates |
+| `/topic/gate-metadata/{gateId}` | Metadata create/update |
+| `/topic/gate-metadata/{gateId}/delete` | Metadata deletion |
+| `/topic/notifications` | Notification updates |
 
-- Profil: `e2e`
-- Seed-Daten: `src/main/resources/db/migration-e2e/V100__e2e_seed.sql`
-- MQTT ist im E2E-Profil deaktiviert (`mqtt.enabled=false`), damit Tests stabil laufen.
+---
 
-### Start & Reset
+## Security
 
-Ein Reset entfernt das Datenbank-Volume und startet neu, sodass die Seeds immer wieder identisch eingespielt werden.
+- **JWT auth** — HS256 tokens stored in an **HttpOnly, SameSite=Lax cookie** (`jwt`); server-side token store with scheduled eviction; logout truly invalidates.
+- **CSRF** — enabled via `CookieCsrfTokenRepository` (login/logout/e2e exempt).
+- **WebSocket auth** — the same JWT cookie is validated by a STOMP `CONNECT` interceptor; the handshake forwards the `Cookie` header into session attributes for browsers.
+- **Roles** — `controller` (admin: node/root-key management, counter reset, metadata mutations) and `viewer`.
+- **Passwords** — BCrypt hashing.
+- **CORS** — globally open (`allowedOriginPatterns("*")`) for development.
+- **Production hardening** — `prod` profile forces `Secure` cookies and suppresses error details; set `JWT_SECRET` to a strong 64+ char value.
+
+---
+
+## Spring Profiles
+
+| Profile | Database | Flyway | Notes |
+|---|---|---|---|
+| *(default)* | PostgreSQL | on | `ddl-auto=none`, Flyway `classpath:db/migration` |
+| `dev` | PostgreSQL | on | Verbose logging, SQL output |
+| `prod` | PostgreSQL | on | Secure cookies, no error details |
+| `test` | H2 in-memory | off | `create-drop`, used by unit/repository tests |
+| `e2e` | H2 in-memory | off | Deterministic seed (`data-e2e.sql`), MQTT disabled, `/e2e/**` active |
+| `integration` | PostgreSQL | on | `ddl-auto=validate`, env-gated (`RUN_POSTGRES_INTEGRATION_TESTS=true`) |
+
+---
+
+## Running Locally
+
+**Prerequisites:** Java 17, Maven (or the included `./mvnw`), PostgreSQL 15 (or Docker).
+
+1. Create the database and copy `.env.example` to `.env`; export the values (or rely on defaults `postgres/postgres`).
+2. Configure MQTT in `application.yml` (see [MQTT / TTN Integration](#mqtt--ttn-integration)).
+3. Start PostgreSQL: `docker compose -f server/docker-compose.yml up -d postgres`
+4. Run the app:
 
 ```bash
+cd server/backend
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+The API is now at `http://localhost:8080`.
+
+---
+
+## Running with Docker
+
+```bash
+# Full stack (postgres + backend + frontend)
+docker compose -f server/docker-compose.yml up -d --build
+
+# Backend only
+docker compose -f server/docker-compose.yml up -d --build postgres backend
+
+# Dev profile override
+docker compose -f server/docker-compose.yml -f server/docker-compose.dev.yml up -d --build
+```
+
+| Service | Port | Notes |
+|---|---|---|
+| `postgres` | `5432` | PostgreSQL 15, volume `postgres_data` |
+| `backend` | `8080` | `SPRING_PROFILES_ACTIVE=prod`, HEALTHCHECK via `/actuator/health` |
+| `frontend` | `3000` | nginx, proxies to `backend:8080` |
+
+---
+
+## Testing
+
+```bash
+cd server/backend
+./mvnw test                                  # Unit + repository tests (H2)
+./mvnw verify -DskipTests=false              # Full build
+# PostgreSQL integration tests (requires a running Postgres):
+RUN_POSTGRES_INTEGRATION_TESTS=true ./mvnw test
+```
+
+Coverage includes:
+- `HealthControllerTest`, `HealthStatusIntegrationTest` — health REST + CBOR parsing
+- `NodeManagementServiceTest`, `NodeRepositoryTest`, `RootKeyRepositoryTest` — node & key management
+- `UserRepositoryTest` — auth persistence
+- `PostgreSqlMigrationIntegrationTest` — Flyway migrations against a real PostgreSQL
+
+Frontend e2e tests (Playwright) run against the `e2e` backend in CI.
+
+---
+
+## E2E Environment
+
+For reproducible end-to-end tests there is a dedicated `e2e` profile with deterministic seed data (users `test@example.com/test123` with `controller` role, `test2@example.com/test234` as viewer; gates `1001`–`1004`).
+
+```bash
+# Reset to a clean, freshly-seeded state
 server/backend/scripts/e2e-reset.sh
+# or manually:
+docker compose -f server/docker-compose.e2e.yml down
+docker compose -f server/docker-compose.e2e.yml up -d --build backend
 ```
 
-Manuell:
+- Backend: `localhost:8080` · Postgres (e2e): `localhost:5433`
+- MQTT is disabled (`mqtt.enabled=false`) so tests run deterministically.
+- Simulation endpoints under `/e2e/**` let Playwright inject uplinks, state confirmations and health updates.
 
-```bash
-docker compose -f server/docker-compose.yml -f server/docker-compose.e2e.yml down -v
-docker compose -f server/docker-compose.yml -f server/docker-compose.e2e.yml up -d postgres backend
-```
+---
 
-### Ports
+## CI/CD
 
-- Postgres (E2E): `localhost:5433`
-- Backend: `localhost:8080`
+GitHub Actions pipeline builds and tests the backend, spins up PostgreSQL, runs Flyway migrations and integration tests, then runs the frontend Playwright suite against the deterministic `e2e` backend. See `.github/workflows/` for details.
 
-### Test-Accounts
+---
 
-Die Test-Accounts kommen aus `application.yml` (`test-credentials`). Beispiel:
-- `test@example.com` / `test123`
-- `test2@example.com` / `test234`
+## Troubleshooting
+
+**MQTT connection fails despite correct setup**
+Network restrictions (corporate firewall/university Wi-Fi) or a blocked port `8883` can prevent the TLS connection. Try a different network, verify the API key, and ensure the system clock is accurate.
+
+**`application.yml` settings ignored**
+Make sure `src/main/resources` is marked as a **Resource Root** (IntelliJ: right-click → *Mark Directory as* → *Resources Root*).
+
+**Maven dependencies not resolving**
+Import the project as a Maven project (IntelliJ: right-click `pom.xml` → *Add as Maven Project*) and run `./mvnw clean install`.
+
+**Database migrations fail on startup**
+PostgreSQL must be reachable on `5432` before the backend starts (the Docker Compose `depends_on: condition: service_healthy` handles this in containers). Use `docker compose logs postgres` to check readiness.
+
+**401 on WebSocket connection**
+The STOMP `CONNECT` frame must carry the JWT cookie. If testing with a tool, include the `jwt` cookie value in the connection headers.
+
+---
+
+> **Security note:** `src/main/resources/application.yml` currently contains a committed TTN API key and default credentials. These should be moved to environment variables / secrets before production deployment (see `.env.example`).
