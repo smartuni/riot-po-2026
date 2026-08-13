@@ -1,28 +1,23 @@
-# Description
+# SenseMate and SenseGate
 
-This is the node directory of the project. It contains all necessary modules and functions of the SenseMate and SenseGate node.
+## Description
 
-# Overview
+This is the directory of the SenseMate and SenseGate regarding the Firmware and Hardware. 
 
-## Custom Modules
+## Installation and Configuration
+For a complete instruction to install and setup please follow the guide in the main [Readme.md](../README.md#nodes)
 
-custom-modules takes from the available RIOT modules and adapts these to suit the SenseMate project's needs.
+Build the Firmware - [Instructions](../README.md#building-firmware)
+Flash the Firmware - [Instructions](../README.md#flashing-firmware)
+Identity Manager - [Instructions](../README.md#provisioning-devices)
 
-These include:
-- COSE for CBOR signing
-- KEY-DISTRO for secure data signing and verification
-- BLE for node-to-node communication via Bluetooth
-- LORAWAN for server-to-node and node-to-server communication via LoRaWan
-- TABLES to manage state tables and encode them to and decode them from CBOR
 
-## Hardware
+## Documentation
 
-SenseMate hardware components and drawings 
+SenseMate Firmware Documentation - [documentation/Firmware/SenseMate](../documentation/Firmware/SenseMate/README.md)
+SenseMate Hardware Documentation - [documentation/Hardware/SenseMate](../documentation/Hardware/SenseMate/README.md)
+SenseGate Firmware Documentation - [documentation/Firmware/SenseGate](../documentation/Firmware/SenseGate/README.md)
+SenseGate Hardware Documentation - [documentation/Hardware/SenseGate](../documentation/Hardware/SenseGate/README.md)
 
-## Firmware
-
-SenseMate and SenseGate source code
-
-### Deployment
-
-`make all flash` or with terminal output `make all flash term` TODO
+## Datasheets
+Data sheets or SenseGate components can be found in the [datasheets folder](./hardware/SenseMate/SenseMatePCB/components_datasheets) 

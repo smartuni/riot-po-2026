@@ -114,3 +114,7 @@ AGENTS.md
 
 # databases
 *.fdb
+
+# Ai
+AGENTS.md
+.claude/
