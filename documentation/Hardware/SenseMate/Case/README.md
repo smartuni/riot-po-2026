@@ -61,6 +61,28 @@ This locks bottom and top shell together very securely.
 
 > **Read fully before starting.** Assembly is tricky due to display tolerances. Take care not to squash or shift the display — it can break.
 
+### Soldering the XIAO Sense
+
+The XIAO Sense is soldered to the SenseMate PCB using its castellated edges.
+This connects the XIAO Sense battery pads and debug pins to the corresponding
+SenseMate PCB connections.
+
+1. Apply flux to the XIAO Sense battery pads and debug pins.
+2. Solder the XIAO Sense castellated edges to the SenseMate PCB.
+3. Flip the PCB over and apply solder through the corresponding holes for
+   approximately `10 seconds` so the XIAO Sense bottom pads make an electrical
+   connection with the SenseMate PCB.
+4. Test the connection over USB. Apply USB power and measure the voltage at the
+   battery pins; this tests whether the battery connection can receive charging
+   voltage.
+
+> **Connection test:** If no voltage is present at the battery pins, the solder
+> connection is not sufficient. Apply more heat and test again.
+
+> **Future PCB revision:** Add a cutout on the XIAO Sense side of the PCB and
+> treat the battery pads more like castellated edges. This should make the
+> soldering process easier and the electrical connection more reliable.
+
 ### Preparation
 
 #### Cut Pinhole Components Flush (Critical)
