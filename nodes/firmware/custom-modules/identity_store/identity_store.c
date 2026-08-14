@@ -287,6 +287,8 @@ int get_own_node_id(uint8_t *kid_buffer, size_t kid_buffer_size) {
         return -1;
     }
 
+    // TODO: Instead of doing this, check if `kid_buffer` is large enough by comparing
+    // against `kid_buffer_size` and copy the entirety of `identity.kid` into `kid_buffer`.
     memcpy(kid_buffer, identity.kid, kid_buffer_size);
 
     return 0;

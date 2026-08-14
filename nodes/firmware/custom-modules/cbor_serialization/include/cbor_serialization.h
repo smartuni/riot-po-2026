@@ -91,8 +91,28 @@ int cbor_serialize_record_no_sig(const table_record_t *record, uint8_t *out, siz
  */
 int cbor_serialize_id_reqres(message_type_t msg_type, signed_identity_t *signed_identity, uint8_t *out, size_t *out_len);
 
+/**
+ * @brief Serialize in CBOR a CBOR encoded public key and key ID, and its signature.
+ *
+ * @param signed_identity Pointer to the signed identity to serialize.
+ * @param out             Pointer to the buffer that holds enough bytes to store the data.
+ * @param out_len         Pointer to the size of @p out, it will return with the amount of used bytes.
+ *
+ * @retval 0 on success
+ * @retval negative value on error
+ */
 int cbor_serialize_signed_public_identity(const signed_identity_t *signed_identity, uint8_t *out, size_t *out_len);
 
+/**
+ * @brief Serialize in CBOR a public or private key and its key ID.
+ *
+ * @param identity Pointer to the identity serialize.
+ * @param out      Pointer to the buffer that holds enough bytes to store the data.
+ * @param out_len  Pointer to the size of @p out, it will return with the amount of used bytes.
+ *
+ * @retval 0 on success
+ * @retval negative value on error
+ */
 int cbor_serialize_identity(const identity_t *identity, uint8_t *out, size_t *out_len);
 
 /**
@@ -160,6 +180,38 @@ int cbor_decode_record(CborValue *array_item, table_record_t *record,
 int cbor_deserialize_id_reqres(const uint8_t *buffer, size_t buffer_len,
                                signed_identity_t *signed_identity, uint8_t *msg_type);
 
+/**
+ * @brief Deserialize a CBOR array containing a public or private key and a key ID.
+ *
+ * @param data              Buffer containing the CBOR data.
+ * @param data_size         Length of @p data.
+ * @param identity_out      Pointer to the identity to populate.
+ *
+ * @retval 0 on success
+ * @retval negative value on error
+ */
 int cbor_deserialize_identity(const uint8_t *data, size_t data_size, identity_t *identity_out);
+
+/**
+ * @brief Deserialize a CBOR array containing a CBOR encoded public key and key ID, and its signature.
+ *
+ * @param data                Buffer containing the CBOR data.
+ * @param data_size           Length of @p data.
+ * @param signed_identity_out Pointer to the signed identity to populate.
+ *
+ * @retval 0 on success
+ * @retval negative value on error
+ */
 int cbor_deserialize_signed_identity(const uint8_t *data, size_t data_size, signed_identity_t *signed_identity_out);
+
+/**
+ * @brief Deserialize a CBOR array containing all necessary data to setup a node.
+ *
+ * @param data                  Buffer containing the CBOR data.
+ * @param data_size             Length of @p data.
+ * @param provisioning_data_out Pointer to the provisioning data struct to populate.
+ *
+ * @retval 0 on success
+ * @retval negative value on error
+ */
 int cbor_deserialize_provisioning_data(const uint8_t *data, size_t data_size, provisioning_data_t *provisioning_data_out);
