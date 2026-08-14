@@ -1,0 +1,70 @@
+#pragma once
+
+#include <stdint.h>
+
+#include "tables/types.h"
+
+#define RECORD_TYPE_GATE_REPORT 0x00
+#define RECORD_TYPE_GATE_OBSERVATION 0x01
+#define RECORD_TYPE_GATE_COMMAND 0x03
+#define RECORD_TYPE_GATE_JOB 0x04
+
+#define RECORD_GATE_REPORT_STATE_OPEN 0x00
+#define RECORD_GATE_REPORT_STATE_CLOSED 0x01
+
+#define ARRAY_SIZE_RECORD_HEADER 5      // record type + writer ID + seq + HLC phy. + HLC log.
+#define ARRAY_SIZE_RECORD_SIGNATURE 1   // signature as byte string
+
+#define ARRAY_SIZE_RECORD_DATA_GATE_REPORT 1
+#define ARRAY_SIZE_RECORD_DATA_GATE_OBSERVATION 2
+#define ARRAY_SIZE_RECORD_DATA_GATE_COMMAND 2
+#define ARRAY_SIZE_RECORD_DATA_GATE_JOB 3
+
+
+/**
+ * @brief Deserialize a CBOR message containing a record
+ *
+ * @param buffer            Buffer containing the CBOR message.
+ * @param buffer_len        Length of @p buffer.
+ * @param record            Pointer to the record to populate
+ * @param record_data       Memory for the record data
+ * @param signature         Buffer to place the deserialized signature. Can be NULL.
+ *                          If NULL is passed as signature buffer no error will be generated if
+ *                          the serialized data carries no signature.
+ *                          If a valid buffer is passed but the data contains no signature
+ *                          this will be treated as an error.
+ * @param signature_len     Pointer to the length of @p signature. Will contain the
+ *                          signature length.
+ *
+ * @retval 0 on success
+ * @retval negative value on error
+ */
+int cbor_deserialize_record(const uint8_t *buffer, size_t buffer_len, table_record_t *record,
+                            table_record_data_buffer_t *record_data, uint8_t *signature,
+                            size_t *signature_len);
+
+/**
+ * @brief Serialize in CBOR a given record as a message of single record type
+ *
+ * @param record    Pointer to the record to serialize
+ * @param out       Pointer to the buffer that holds enough bytes to store the record.
+ * @param out_len   Pointer to the size of @p out, it will return with the amount of used
+ *                  bytes.
+ *
+ * @retval 0 on success
+ * @retval negative value on error
+ */
+int cbor_serialize_record(const table_record_t *record, uint8_t *out, size_t *out_len);
+
+/**
+ * @brief Same as cbor_serialize_record but leave out signature field
+ *
+ * @param record    Pointer to the record to serialize
+ * @param out       Pointer to the buffer that holds enough bytes to store the record.
+ * @param out_len   Pointer to the size of @p out, it will return with the amount of used
+ *                  bytes.
+ *
+ * @retval 0 on success
+ * @retval negative value on error
+ */
+int cbor_serialize_record_no_sig(const table_record_t *record, uint8_t *out, size_t *out_len);
