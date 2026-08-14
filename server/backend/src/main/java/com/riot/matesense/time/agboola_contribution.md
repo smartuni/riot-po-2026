@@ -23,7 +23,7 @@ What I contributed
 i was resposible for the time synchronization using HLC, 
 
 Current state:
-logical test passed ,was never tested in a real set up , due to bad communication , it was ready on my part but certain configurations
+logical test passed ,was never tested in a real set up , severly limited by inexperienced advanced use of GIT and bad communication , it was ready on my part but certain configurations
 changed without me knowing which meant i kept trying to work with something that wont work and wasted a lot of time (proof is in multiple failed push)
 
 Testing:
