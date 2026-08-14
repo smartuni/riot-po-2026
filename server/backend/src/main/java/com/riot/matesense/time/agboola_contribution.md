@@ -27,7 +27,7 @@ logical test passed ,was never tested in a real set up , severly limited by inex
 changed without me knowing which meant i kept trying to work with something that wont work and wasted a lot of time (proof is in multiple failed push)
 
 Testing:
-[What was tested and under which configuration]
+HLC Clock was tested to make sure test worked correctly
 
 Known problems / limitations:
 [Known issues]
