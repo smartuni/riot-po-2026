@@ -16,9 +16,6 @@ EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 DEVELHELP ?= 1
 VERBOSE_ASSERT ?= 1
 
-# Configrue device id and device type.
-# This will instruct the key-distro module to include required credentials.
-RIOT_CONFIG_DEVICE_ID ?= 1
 # Set the device type to SenseMate to configure some device specific behaviors.
 # Dont allow overwrites here, as that would only cause trouble anyway.
 # (the corresponding values are defined in tables/types.h)
@@ -54,7 +51,6 @@ PREFLASH_DELAY=8
 # set to 0 to use mtd/FAL directly (no FS)
 USE_FLASHDB_ON_VFS ?= 0
 
-CFLAGS += -DRIOT_CONFIG_DEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
 CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=$(RIOT_CONFIG_DEVICE_TYPE)
 CFLAGS += -DI2C_DEVICE_IDX=0
 CFLAGS += -DI2C_DISPLAY_ADDR=0x3c
@@ -89,7 +85,6 @@ USEMODULE += mtd_emulated
 # credential manager stuff
 USEMODULE += credential_manager
 USEMODULE += flashdb_store_service
-USEMODULE += key-distro
 
 # configure ram mtd to a size of 8 kByte
 CFLAGS += -DRAM_MTD_SECTOR_COUNT=\(16\)
@@ -119,6 +114,11 @@ endif
 USEMODULE += tables
 USEMODULE += cose_crypto_service
 USEMODULE += hlc_ztimer
+
+# required modules for identity store
+USEMODULE += identity_store
+USEMODULE += vfs_default
+USEMODULE += vfs_util
 
 FEATURES_REQUIRED = periph_pwm
 # Change this to 0 show compiler invocation lines by default:

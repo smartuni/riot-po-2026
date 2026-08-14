@@ -25,15 +25,27 @@
 #include "cbor_serialization.h"
 #include "personalization.h"
 #define LOG_LEVEL   LOG_INFO
+#include "identity_store.h"
+#include "crypto_service.h"
+#include "credential_manager.h"
+#include "cose_crypto_service.h"
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[mate_ble]: " __VA_ARGS__)
 #define _LOGINF(...) LOG_INFO("[mate_ble]: " __VA_ARGS__)
+#define _LOGERR(...) LOG_ERROR("[mate_ble]: " __VA_ARGS__)
 
 /* include sound module only on SenseMate (gate has no audio) */
 #if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
 #include "include/sound.h"
 #include "events_creation.h"
 #endif
+
+static cose_crypto_service_context_t crypto_ctx;
+
+static crypto_service_t crypto_service = {
+    .context = &crypto_ctx,
+    .interface = &cose_crypto_service_interface,
+};
 
 static const char *ok(bool condition)
 {
@@ -58,6 +70,8 @@ void* ble_rx_thread(void* args);
  * TODO: obtain from records/tables interface ? */
 #define MAX_SIGNATURE_SIZE 80
 #define MAX_SERIALIZED_RECORD_SIZE 128
+
+#define MAX_SERIALIZED_ID_REQRES_SIZE 256
 
 #define MATE_BLE_TX_POWER_UNDEF (127)
 
@@ -89,7 +103,7 @@ static uint8_t id_addr_type;
 /* Singleton reference to the tables instance. Is provided on init. */
 static tables_context_t *_tables = NULL;
 
-static const char adv_name[] = BLE_ADVERTISE_NAME;
+static char adv_name[11 + 8]; // "SenseGate-"/"SenseMate-" + maximum device id digits
 
 /* The first two bytes of the manufacturer specific data type contain
  * a company ID code which for a final product must be requested from
@@ -314,6 +328,12 @@ static void nimble_scan_evt_cb(uint8_t type, const ble_addr_t *addr,
 
 int mate_ble_init(tables_context_t *tables, kernel_pid_t *txpid)
 {
+#if (RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_GATE)
+    snprintf(adv_name, sizeof(adv_name), "SenseGate-%d", self_node_id[3]);
+#else
+    snprintf(adv_name, sizeof(adv_name), "SenseMate-%d", self_node_id[3]);
+#endif
+
     _LOGDBG("Initializing BLE extended advertisement...\n");
     _tables = tables;
 
@@ -429,6 +449,38 @@ static int _send_record(const table_record_t *record)
     return _ble_send(out_buf, out_len);
 }
 
+static int _send_id_res(void)
+{
+    size_t out_len = MAX_SERIALIZED_ID_REQRES_SIZE;
+    uint8_t out_buf[out_len];
+    signed_identity_t signed_identity;
+    int res = get_own_signed_public_identity(&signed_identity);
+    if (res != 0) {
+        _LOGERR("_send_id_res get_self_signed_public_identity failed\n");
+        return -1;
+    }
+    if (LOG_LEVEL == LOG_DEBUG) {
+        _LOGDBG("_send_id_res cbor payload\n");
+        od_hex_dump(signed_identity.cbor_payload, 40, 0);
+    }
+    if (LOG_LEVEL == LOG_DEBUG) {
+        _LOGDBG("_send_id_res signature\n");
+        od_hex_dump(signed_identity.signature, 80, 0);
+    }
+    res = cbor_serialize_id_reqres(MESSAGE_ID_RESPONSE, &signed_identity, out_buf, &out_len);
+    _LOGDBG("%s serialize:(%d) %s\n", __func__, res, ok(res == 0));
+    if (res != 0) {
+        _LOGERR("_send_id_res serialize failed!\n");
+        return -1;
+    }
+
+    if (LOG_LEVEL == LOG_DEBUG) {
+        _LOGDBG("_send_id_res: \n");
+        od_hex_dump(out_buf, out_len, 0);
+    }
+    return _ble_send(out_buf, out_len);
+}
+
 static void mateble_send_query_matches(table_query_t *q)
 {
     _LOGDBG("%s\n", __func__);
@@ -485,6 +537,11 @@ void* ble_tx_thread(void* arg)
             q = &send_all_query;
         }
         mateble_send_query_matches(q);
+        
+        // For now just send identification responses here.
+        // TODO: build proper request-response-mechanism.
+        res = _send_id_res();
+        _LOGDBG("%s _send_id_res: %d\n", __func__, res);
 
         if (received_msg) {
             free(q);
@@ -524,6 +581,147 @@ void _print_table(void)
     printf("================\n");
 }
 
+static int _handle_record(payload_descriptor_t *pd)
+{
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+    /* this part is only needed on the SenseMate to populate the encounter table */
+    //TODO: instead of parsing this from the advertised device name, extend the message format
+    //      to include a sender id (would also be useful for debugging).
+    //      Alternatively: use only specific message type (digest?) for mate encounters.
+    rssi_t rssi = pd->info.rssi;
+    const char *sensemate_prefix = "SenseMate-";
+    size_t prefix_len = strlen(sensemate_prefix);
+    bool sent_by_mate = strncmp(sensemate_prefix, pd->dev_name, prefix_len) == 0;
+    uint8_t matenum = sent_by_mate ? atoi(&pd->dev_name[prefix_len]) : 0;
+    node_id_t mate_id = { 0x00, 0x00, DEVICE_TYPE_SENSEMATE, matenum };
+#endif
+
+    table_record_t record;
+    table_record_data_buffer_t record_data;
+    uint8_t signature[MAX_SIGNATURE_SIZE];
+    size_t signature_len = sizeof(signature);
+
+    int res = cbor_deserialize_record(pd->buf, pd->buf_len, &record,
+                                &record_data, signature, &signature_len);
+
+    free(pd->buf);
+    free(pd);
+    _LOGDBG("freed buffers\n");
+
+    if (res != 0) {
+        _LOGDBG("cbor_deserialize_record failed: %d\n", res);
+        return -1;
+    }
+
+    _LOGDBG("signature length: %d\n", signature_len);
+
+    record_tostr(&record, _recv_record_str_buf,
+                sizeof(_recv_record_str_buf));
+    _LOGINF("RX %s\n", _recv_record_str_buf);
+
+    const node_id_t *writer_id;
+    get_record_writer_id(&record, &writer_id);
+    if (memcmp(writer_id, &self_node_id, sizeof(node_id_t)) == 0) {
+        _LOGDBG("ignoring received data about this device\n");
+        return -1;
+    }
+
+    _LOGDBG("trying to merge record...\n");
+    table_merge_result_t result;
+    res = tables_merge_record(_tables, &record, &result);
+    if (res != 0) {
+        _LOGDBG("tables_merge_record failed: %d\n", res);
+        //_print_table();
+    }
+
+    if (!res && (result.updated || result.new)) {
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+        if (sent_by_mate) {
+            tables_put_mate_encounter(_tables, &mate_id, rssi);
+        }
+        event_post(EVENT_PRIO_MEDIUM, &eventBleNews);
+        _LOGINF("table updated.\n");
+#endif
+    } else if (result.rejected_sig || result.invalid_record){
+        _LOGINF("Error updating table.\n");
+    } else {
+#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
+        if (sent_by_mate) {
+            tables_put_mate_encounter(_tables, &mate_id, rssi);
+        }
+        event_post(EVENT_PRIO_MEDIUM, &eventBleRx);
+#endif
+        _LOGINF("No updates.\n");
+    }
+    
+    return 0;
+}
+
+static int _handle_id_res(payload_descriptor_t *pd)
+{
+    // Get the signed identity from the reqres message.
+    signed_identity_t signed_identity;
+    message_type_t msg_type = MESSAGE_ID_RESPONSE;
+    int res = cbor_deserialize_id_reqres(pd->buf, pd->buf_len, &signed_identity, &msg_type);
+    if (res != 0) {
+        _LOGDBG("cbor_deserialize_id_reqres failed: %d\n", res);
+        return -1;
+    }
+
+    // Verify the signed identity.
+    uint8_t root_kid[NODE_ID_SIZE] = { 0x00, 0x00, 0x03, 0x00 };
+    res = crypto_service_verify(&crypto_service,
+                                root_kid, NODE_ID_SIZE,
+                                signed_identity.cbor_payload, PUBID_LEN,
+                                signed_identity.signature, PUBID_SIGNATURE_LEN);
+    if (res != 0) {
+        _LOGDBG("crypto_service_verify failed: %d\n", res);
+        return -1;
+    }
+
+    // Get the identity from the signed identity.
+    identity_t identity;
+    res = cbor_deserialize_identity(signed_identity.cbor_payload, sizeof(signed_identity.cbor_payload), &identity);
+    if (res != 0) {
+        _LOGERR("cbor_deserialize_identity failed: %d\n", res);
+        return -1;
+    }
+
+    // Check, if the learned identity is already present and return, if it is, to avoid writing to flash unnecessarily.
+    uint8_t existing_key[ED25519_KEY_LEN];
+    size_t existing_key_len = ED25519_KEY_LEN;
+    res = credential_manager_get_key(identity.kid, sizeof(identity.kid), CREDENTIAL_PUBLIC,
+            existing_key, &existing_key_len);
+    if (res == 0) {
+        if (memcmp(existing_key, identity.key, ED25519_KEY_LEN) == 0) {
+            _LOGDBG("_handle_id_res: learned identity key already exists, skipping\n");
+            return 0;
+        } else {
+            _LOGINF("_handle_id_res: learned identity key already exists, but is different, adding new key\n");
+        }
+    } else {
+        _LOGDBG("credential_manager_get_key: failed, likely because no key was found, so adding new key: %d\n", res);
+    }
+
+    // We already verified the public key signature above.
+    // The new node's identity can be safely added to the credential manager
+    // and permanently stored in the identity store.
+    res = credential_manager_add_key(identity.kid, sizeof(identity.kid), CREDENTIAL_PUBLIC,
+            identity.key, sizeof(identity.key));
+    if (res != 0) {
+        _LOGERR("credential_manager_add_key: public key addition failed: %d\n", res);
+        return -1;
+    }
+
+    res = add_signed_public_identity(&signed_identity);
+    if (res != 0) {
+        _LOGERR("add_signed_public_identity: adding new identity failed: %d\n", res);
+        return -1;
+    }
+
+    return 0;
+}
+
 void* ble_rx_thread(void* args)
 {
     _ble_receive_pid = thread_getpid();
@@ -544,80 +742,31 @@ void* ble_rx_thread(void* args)
         payload_descriptor_t *pd = (payload_descriptor_t*)msg.content.ptr;
         //TODO interpret pd->info to decide if we ignore low RSSI packet;
 
-        table_record_t record;
-        table_record_data_buffer_t record_data;
-        uint8_t signature[MAX_SIGNATURE_SIZE];
-        size_t signature_len = sizeof(signature);
-
         _LOGDBG("received %d bytes (RSSI %d):\n", pd->buf_len, pd->info.rssi);
         if (LOG_LEVEL >= LOG_DEBUG) {
             od_hex_dump(pd->buf, pd->buf_len, 0);
         }
 
-        int res = cbor_deserialize(pd->buf, pd->buf_len, &record,
-                                    &record_data, signature, &signature_len);
-
-#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
-        /* this part is only needed on the SenseMate to populate the encounter table */
-        //TODO: instead of parsing this from the advertised device name, extend the message format
-        //      to include a sender id (would also be useful for debugging).
-        //      Alternatively: use only specific message type (digest?) for mate encounters.
-        rssi_t rssi = pd->info.rssi;
-        const char *sensemate_prefix = "SenseMate-";
-        size_t prefix_len = strlen(sensemate_prefix);
-        bool sent_by_mate = strncmp(sensemate_prefix, pd->dev_name, prefix_len) == 0;
-        uint8_t matenum = sent_by_mate ? atoi(&pd->dev_name[prefix_len]) : 0;
-        node_id_t mate_id = { 0x00, 0x00, DEVICE_TYPE_SENSEMATE, matenum };
-#endif
-
-        free(pd->buf);
-        free(pd);
-        _LOGDBG("freed buffers\n");
-
-        if (res) {
-            _LOGDBG("cbor_deserialize failed: %d\n", res);
+        uint8_t msg_type;
+        int res = cbor_msg_version_info(pd->buf, pd->buf_len, &msg_type);
+        if (res != 0) {
+            _LOGDBG("cbor_msg_version_info failed: %d\n", res);
             continue;
         }
+        _LOGDBG("got msg type: %d\n", msg_type);
 
-        _LOGDBG("signature length: %d\n", signature_len);
-
-        record_tostr(&record, _recv_record_str_buf,
-                     sizeof(_recv_record_str_buf));
-        _LOGINF("RX %s\n", _recv_record_str_buf);
-
-        const node_id_t *writer_id;
-        get_record_writer_id(&record, &writer_id);
-        if (memcmp(writer_id, &self_node_id, sizeof(node_id_t)) == 0) {
-            _LOGDBG("ignoring received data about this device\n");
-            continue;
-        }
-
-        _LOGDBG("trying to merge record...\n");
-        table_merge_result_t result;
-        res = tables_merge_record(_tables, &record, &result);
-        if (res) {
-            _LOGDBG("tables_merge_record failed: %d\n", res);
-            //_print_table();
-        }
-
-        if (!res && (result.updated || result.new)) {
-#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
-            if (sent_by_mate) {
-                tables_put_mate_encounter(_tables, &mate_id, rssi);
+        if (msg_type == MESSAGE_SINGLE_REPORT) {
+            res = _handle_record(pd);
+            if (res != 0) {
+                _LOGDBG("_handle_record failed: %d\n", res);
             }
-            event_post(EVENT_PRIO_MEDIUM, &eventBleNews);
-            _LOGINF("table updated.\n");
-#endif
-        } else if (result.rejected_sig || result.invalid_record){
-            _LOGINF("Error updating table.\n");
+        } else if (msg_type == MESSAGE_ID_RESPONSE) {
+            res = _handle_id_res(pd);
+            if (res != 0) {
+                _LOGDBG("_handle_id_res failed: %d\n", res);
+            }
         } else {
-#if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
-            if (sent_by_mate) {
-                tables_put_mate_encounter(_tables, &mate_id, rssi);
-            }
-            event_post(EVENT_PRIO_MEDIUM, &eventBleRx);
-#endif
-            _LOGINF("No updates.\n");
+            _LOGDBG("Can't handle message of type %d. Ignoring.\n", msg_type);
         }
     }
     /* never reached */

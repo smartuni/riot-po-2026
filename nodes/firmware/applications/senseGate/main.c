@@ -13,6 +13,7 @@
 #include "inductive_sensor.h"
 #include "include/gate_observer.h"
 #include "mtd.h"
+#include "identity_store.h"
 #define LOG_LEVEL   LOG_DEBUG
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[main]: " __VA_ARGS__)
@@ -91,17 +92,9 @@ uint32_t inductive_sensor_measure_cb(void *ctx)
 
 gate_observer_t observer = {
     .config = {
-#if RIOT_CONFIG_DEVICE_ID == 1
-        .distance_sensor_confs = {
-                                   { .closed_min = 30,
-                                     .closed_max = 2000,
-                                     .measure_cb_ctx = &inductive_sensor,
-                                     .measure_distance_cb = inductive_sensor_measure_cb },
-                                 },
-#endif
         .limit_switch_confs = {
                                 { .pin = REED_0_PIN_0,
-                                  .pull_conf = GPIO_IN_PU,
+                                  .pull_conf = GPIO_IN,
                                   .closed_level = false }
                               },
     },
@@ -146,6 +139,12 @@ int main(void){
     ztimer_sleep(ZTIMER_SEC, 3);
     puts("[main]: starting");
 
+    int res = identity_store_init();
+    _LOGDBG("identity_store_init: %s\n", ok(res == 0));
+
+    res = get_own_node_id(self_node_id, sizeof(self_node_id));
+    _LOGDBG("get_own_node_id: %s\n", ok(res == 0));
+
     thread_create(
         shell_stack,
         sizeof(shell_stack),
@@ -156,7 +155,7 @@ int main(void){
        "shell"
     );
 
-    int res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
+    res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
     _LOGDBG("storage_setup_ram_mtd: %s\n", ok(res == 0));
 
     res = credential_manager_setup(STORAGE_MOUNT_PATH "/cred");
@@ -171,16 +170,6 @@ int main(void){
     void *cb_arg = 0;
     tables_init_query(&query, RECORD_GATE_REPORT, NULL, NULL);
     tables_add_memo(tables, &memo, &query, _table_update_cb, cb_arg);
-
-#if RIOT_CONFIG_DEVICE_ID == 1
-    res = inductive_sensor_init(&inductive_sensor,
-                                INDUCTIVE_SENSOR_DCDC_PWR_PIN,
-                                INDUCTIVE_SENSOR_DCDC_PWR_PIN_AH,
-                                INDUCTIVE_SENSOR_ADC_LINE,
-                                INDUCTIVE_SENSOR_ADC_VREF_MV,
-                                INDUCTIVE_SENSOR_VREF_MV);
-    _LOGDBG("inductive_sensor_init %s\n", ok(res == ANALOG_GATE_SENSOR_SUCCESS));
-#endif
 
     res = gate_observer_init(&observer, &observer.config, gate_observer_state_change_cb);
     _LOGDBG("gate_observer_init %s\n", ok(res == 0));

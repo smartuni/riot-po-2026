@@ -30,6 +30,7 @@
 #include "net/gnrc/pkt.h"
 #include "net/gnrc/netreg.h"
 #include "net/gnrc/netif/hdr.h"
+#include "net/gnrc/netif/lorawan.h"
 #include "random.h"
 #include "saul_reg.h"
 #include "phydat.h"
@@ -46,6 +47,9 @@
 #include "personalization.h"
 #include "event.h"
 #include "event/thread.h"
+#include "fmt.h"
+#include "string_utils.h"
+#include "identity_store.h"
 #if RIOT_CONFIG_DEVICE_TYPE == DEVICE_TYPE_SENSEMATE
 #include "events_creation.h"
 #endif
@@ -54,6 +58,7 @@
 
 #define _LOGDBG(...) LOG_DEBUG("[LoRaWAN]: " __VA_ARGS__)
 #define _LOGINF(...) LOG_INFO("[LoRaWAN]: " __VA_ARGS__)
+#define _LOGERR(...) LOG_ERROR("[LoRaWAN]: " __VA_ARGS__)
 
 /* Interval between data transmissions, in seconds */
 #define SEND_INTERVAL_SEC 1
@@ -118,6 +123,19 @@ static int _send_lorawan_packet(const netif_t *netif, const uint8_t *buf, size_t
  * @param   pkt  Pointer to the received packet.
  */
 static void _handle_received_packet(gnrc_pktsnip_t *pkt);
+
+/**
+ * TODO: Move to newer upstream and use library function.
+ * In newer RIOT OS versions part of string_utils.h.
+ * See: https://github.com/RIOT-OS/RIOT/commit/7149053fde09c07503e50b61992ca433381afe1f
+ * Source: https://github.com/RIOT-OS/RIOT/blob/78068728b9ff1daed3900216e594361ede93613e/sys/net/gnrc/netif/lorawan/gnrc_netif_lorawan.c#L263-L268
+ */
+static void _memcpy_reversed(uint8_t *dst, uint8_t *src, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        dst[size - i - 1] = src[i];
+    }
+}
 
 static void mate_lorawan_send_query_matches(table_query_t *q);
 
@@ -320,11 +338,11 @@ static void _handle_received_packet(gnrc_pktsnip_t *pkt)
             table_record_t record;
             table_record_data_buffer_t record_data;
             size_t signature_len = 0;
-            int res = cbor_deserialize(pkt->data, pkt->size, &record,
-                                        &record_data, NULL, &signature_len);
+            int res = cbor_deserialize_record(pkt->data, pkt->size, &record,
+                                              &record_data, NULL, &signature_len);
 
             if (res) {
-                _LOGINF("cbor_deserialize failed: %d\n", res);
+                _LOGINF("cbor_deserialize_record failed: %d\n", res);
                 break;
             }
 
@@ -431,6 +449,24 @@ int mate_lorawan_start(tables_context_t *t)
         return -1;
     }
 
+    gnrc_netif_t *gnrc_netif = container_of(netif, gnrc_netif_t, netif);
+
+    loramac_keys_t loramac_keys;
+    int res = get_loramac_keys(&loramac_keys);
+
+    if (res < 0) {
+        _LOGERR("Failed to get loramac keys\n");
+        return -1;
+    }
+
+#if IS_USED(MODULE_GNRC_LORAWAN_1_1)
+#error "We currently only handle the case where MODULE_GNRC_LORAWAN_1_1 isn't used. https://github.com/RIOT-OS/RIOT/blob/ca97cf42e46e93f610c7933b2fb414a2c79f6497/sys/net/gnrc/netif/lorawan/gnrc_netif_lorawan.c#L285-L297"
+#endif
+    // See: https://github.com/RIOT-OS/RIOT/blob/ca97cf42e46e93f610c7933b2fb414a2c79f6497/sys/net/gnrc/netif/lorawan/gnrc_netif_lorawan.c#L304-L306
+    _memcpy_reversed(gnrc_netif->lorawan.joineui, loramac_keys.joineui, sizeof(loramac_keys.joineui));
+    _memcpy_reversed(gnrc_netif->lorawan.deveui, loramac_keys.deveui, sizeof(loramac_keys.deveui));
+    memcpy(gnrc_netif->lorawan.nwkkey, loramac_keys.nwkkey, sizeof(loramac_keys.nwkkey));
+
     _LOGDBG("Starting thread...\n");
     /* create the reception thread] */
     kernel_pid_t rx_pid = thread_create(_mate_lorawan_stack, sizeof(_mate_lorawan_stack),
@@ -461,4 +497,3 @@ bool mate_lorawan_joined(void)
 {
     return _joined;
 }
-

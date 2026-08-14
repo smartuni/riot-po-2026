@@ -13,6 +13,8 @@ import AppLayout from '../features/shell/components/AppLayout';
 import StatusChangedDialog from '../features/gates/components/StatusChangedDialog';
 import ManualStatusDialog from '../features/gates/components/ManualStatusDialog';
 import GateMetadataCard from '../features/gates/components/GateMetadataCard';
+import { HealthBadge, useHealthForGate } from '../features/health';
+import { priorityClass } from '../features/gates/components/gateCardHelpers';
 import { useAppSelector } from '../app/store';
 import {
     useGetGatesQuery,
@@ -42,16 +44,6 @@ const pendingJobInfo = (status) => {
         case 'PENDING_OPEN': return { cls: 'status-open', label: 'Open' };
         case 'PENDING_CLOSE': return { cls: 'status-closed', label: 'Close' };
         default: return { cls: 'status-none', label: 'None' };
-    }
-};
-
-const priorityClass = (level) => {
-    switch (level) {
-        case 0: return 'priority-low';
-        case 1: return 'priority-medium';
-        case 2: return 'priority-high';
-        case 3: return 'priority-critical';
-        default: return 'priority-low';
     }
 };
 
@@ -107,6 +99,7 @@ const GateDetailPage = () => {
     const [activeTab, setActiveTab] = useState('overview');
 
     const gate = gates.find((g) => g.id === parseInt(id));
+    const health = useHealthForGate(parseInt(id));
 
     const gateActivities = activities
         .filter((a) => a.gateId === parseInt(id))
@@ -310,6 +303,10 @@ const GateDetailPage = () => {
                                         <span className="status-dot" />
                                         {sci.label}
                                     </span>
+                                ))}
+                                {infoGridItem('Health', (
+                                    // TODO: verify senseGateId === gate.id mapping with firmware team
+                                    <HealthBadge health={health} />
                                 ))}
                             </div>
                         </div>

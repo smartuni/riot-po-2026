@@ -25,7 +25,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Gate', 'GateMetadata', 'Activity', 'Notification', 'Auth'],
+  tagTypes: ['Gate', 'GateMetadata', 'Activity', 'Notification', 'Auth', 'Node', 'RootKey'],
   endpoints: (builder) => ({
     // ── Auth ──────────────────────────────────────────────
     login: builder.mutation({
@@ -199,6 +199,48 @@ export const api = createApi({
       }),
       invalidatesTags: ['Notification'],
     }),
+
+    // ── Nodes ─────────────────────────────────────────────
+    getNodes: builder.query({
+      query: () => '/api/nodes',
+      providesTags: (result) => [
+        { type: 'Node' },
+        ...(result ? result.map((node) => ({ type: 'Node', id: node.id })) : []),
+      ],
+    }),
+    addNode: builder.mutation({
+      query: (body) => ({
+        url: '/api/nodes',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Node'],
+    }),
+    deleteNode: builder.mutation({
+      query: (id) => ({
+        url: `/api/nodes/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Node'],
+    }),
+
+    // ── Root Key ──────────────────────────────────────────
+    getRootKey: builder.query({
+      query: () => '/api/nodes/root-key',
+      providesTags: ['RootKey'],
+    }),
+    uploadRootKey: builder.mutation({
+      query: (body) => ({
+        url: '/api/nodes/root-key',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['RootKey'],
+    }),
+    // ── Health ───────────────────────────────────────────
+    getHealth: builder.query({
+      query: () => '/api/health',
+    }),
   }),
 });
 
@@ -225,4 +267,10 @@ export const {
   useGetActivitiesQuery,
   useGetNotificationsByWorkerIdQuery,
   useMarkNotificationAsReadMutation,
+  useGetNodesQuery,
+  useAddNodeMutation,
+  useDeleteNodeMutation,
+  useGetRootKeyQuery,
+  useUploadRootKeyMutation,
+  useGetHealthQuery,
 } = api;

@@ -20,6 +20,8 @@
 #define _LOGDBG(...) LOG_DEBUG("[main]: " __VA_ARGS__)
 #define _LOGINF(...) LOG_INFO("[main]: " __VA_ARGS__)
 #include "ps.h"
+#include "identity_store.h"
+#include "personalization.h"
 
 static const char *ok(bool condition)
 {
@@ -35,7 +37,7 @@ static const char *ok(bool condition)
 #define STORAGE_MOUNT_PATH STORAGE_RAM_MOUNT_PATH
 #endif
 
-#define MIN_VISIBLE_RSSI -80
+static int min_visible_rssi = -100;
 
 extern int credential_manager_setup(const char *db_path);
 extern int tables_setup(tables_context_t **t, const char *db_path);
@@ -62,6 +64,19 @@ table_query_t all_gates_query = {
     .writer_id = NULL,
     .involved_id = NULL
 };
+
+bool _set_min_visible_rssi_cb(int8_t rssi)
+{
+    LOG_INFO("New minimum RSSI: %d\n", rssi);
+
+    min_visible_rssi = rssi;
+
+    return true;
+}
+
+int8_t _get_min_visible_rssi_cb(void){
+    return min_visible_rssi;
+}
 
 uint32_t _get_known_gate_count_by_type(table_record_type_t type)
 {
@@ -201,6 +216,8 @@ static bool _put_gate_observation_cb(ui_data_element_t *elem)
 static ui_data_cbs_t _ui_data_cbs = {
     .all_gates_iter = _all_gates_iter,
     .put_gate_observation = _put_gate_observation_cb,
+    .set_min_visible_rssi = _set_min_visible_rssi_cb,
+    .get_min_visible_rssi = _get_min_visible_rssi_cb,
     .jobs_iter = NULL,
 };
 
@@ -216,14 +233,22 @@ void* shell_thread(void* arg)
 }
 
 int main(void) {
+    int res = identity_store_init();
+    _LOGDBG("identity_store_init: %s\n", ok(res == 0));
+
+    res = get_own_node_id(self_node_id, sizeof(self_node_id));
+    _LOGDBG("get_own_node_id: %s\n", ok(res == 0));
+
     printf("init menu...\n");
     sensemate_ui_init(&_ui_data_cbs);
     ui_data_t *ui_state = sensemate_ui_get_state();
     ui_state->ble_state = ESTABLISHING_CONNECTION;
     sensemate_ui_update();
 
-    //ztimer_sleep(ZTIMER_MSEC, 3000);
-    int res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
+    // This is needed for the credential manager setup root key loading for some reason.
+    // TODO: Figure out why.
+    ztimer_sleep(ZTIMER_MSEC, 5000);
+    res = storage_setup_ram_mtd(STORAGE_MOUNT_PATH);
     _LOGDBG("storage_setup_ram_mtd: %s\n", ok(res == 0));
 
     res = credential_manager_setup(STORAGE_MOUNT_PATH "/cred");
@@ -241,7 +266,7 @@ int main(void) {
     //event_post(&sound_queue, &start_sound_event);
 
     printf("Device Type: %d device id: %d\n", RIOT_CONFIG_DEVICE_TYPE,
-                                              RIOT_CONFIG_DEVICE_ID);
+                                              self_node_id[3]);
     init_event();
 
     thread_create(
@@ -281,7 +306,7 @@ int main(void) {
     while (1)
     {
         ui_state->visible_gate_cnt = _get_known_gate_count();
-        ui_state->visible_mate_cnt = _get_visible_mate_count(MIN_VISIBLE_RSSI);
+        ui_state->visible_mate_cnt = _get_visible_mate_count(min_visible_rssi);
         ui_state->pending_jobs_cnt = _get_known_gate_count_by_type(RECORD_GATE_JOB);
 
         bool updateui = false;

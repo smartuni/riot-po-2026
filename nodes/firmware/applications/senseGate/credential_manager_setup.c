@@ -2,15 +2,13 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "od.h"
-#include "personalization.h"
 #include "flashdb_store_service.h"
 #include "store_service.h"
+#include "credential_manager.h"
+#include "identity_store.h"
 #if IS_USED(MODULE_FLASHDB_VFS)
 #include "vfs_default.h"
 #endif
-#include "credential_manager.h"
-#include "key_config.h"
-#include "secrets/public_keys.h"
 #define LOG_LEVEL   LOG_INFO
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[credential_manager_setup]: " __VA_ARGS__)
@@ -38,51 +36,83 @@ int credential_manager_setup(const char *db_path) {
 
     err = flashdb_store_service_init(&store_ctx, "cred_db", db_path);
     if (err) {
-        _LOGERR("flashdb_store_service_init [FAILED]");
+        _LOGERR("flashdb_store_service_init [FAILED]\n");
         return -2;
     }
 
     err = credential_manager_init(&store_service);
     if (err) {
-        _LOGERR("credential_manager_init init [FAILED]");
+        _LOGERR("credential_manager_init init [FAILED]\n");
         return -3;
     }
 
-    err = credential_manager_add_key(self_node_id, sizeof(self_node_id), CREDENTIAL_PRIVATE,
-            ed25519_secret_key, sizeof(ed25519_secret_key));
+    identity_t root_identity;
+    err = get_root_identity(&root_identity);
     if (err) {
-        _LOGERR("add private key [FAILED]");
+        _LOGERR("getting root identity [FAILED]\n");
+        return -5;
+    }
+
+    err = credential_manager_add_key(root_identity.kid, sizeof(root_identity.kid), CREDENTIAL_PUBLIC,
+            root_identity.key, sizeof(root_identity.key));
+    if (err) {
+        _LOGERR("add root public key [FAILED]\n");
         return -4;
     }
 
-    // public key of the key_config header is added from the known keys already
-    (void)ed25519_public_key;
+    identity_t own_private_identity;
+    err = get_own_private_identity(&own_private_identity);
+    if (err) {
+        _LOGERR("getting own private identity [FAILED]\n");
+        return -5;
+    }
 
-    for (unsigned i = 0; i < ARRAY_SIZE(known_keys); i++) {
-        const ed25519_public_key_entry_t *key = &known_keys[i];
-        const uint8_t *legacy_kid = known_keys[i].kid;
+    err = credential_manager_add_key(own_private_identity.kid, sizeof(own_private_identity.kid), CREDENTIAL_PRIVATE,
+            own_private_identity.key, sizeof(own_private_identity.key));
+    if (err) {
+        _LOGERR("add own private key [FAILED]\n");
+        return -4;
+    }
 
-        // TDOD: replace this remapping. The key-distro credential generator script should just
-        //       create the new key id format directly.
-        char dev_type_value = 0xFF;
-        char dev_id_value = 0xFF;
-        if (memcmp("sensemate", legacy_kid, strlen("sensemate")) == 0) {
-            dev_type_value = DEVICE_TYPE_SENSEMATE;
-            dev_id_value = atoi((char*)&legacy_kid[strlen("sensemate") + 1]);
-        } else  if (memcmp("sensegate", legacy_kid, strlen("sensegate")) == 0) {
-            dev_type_value = DEVICE_TYPE_GATE;
-            dev_id_value = atoi((char*)&legacy_kid[strlen("sensegate") + 1]);
+    identity_t own_public_identity;
+    err = get_own_public_identity(&own_public_identity);
+    if (err) {
+        _LOGERR("getting own public identity [FAILED]\n");
+        return -5;
+    }
+
+    err = credential_manager_add_key(own_public_identity.kid, sizeof(own_public_identity.kid), CREDENTIAL_PUBLIC,
+            own_public_identity.key, sizeof(own_public_identity.key));
+    if (err) {
+        _LOGERR("add own public key [FAILED]\n");
+        return -4;
+    }
+
+    vfs_DIR dirp;
+    err = get_public_identities_init(&dirp);
+    if (err) {
+        _LOGERR("get_public_identities_init [FAILED]\n");
+        return -6;
+    }
+
+    int res;
+    identity_t identity;
+    while((res = get_public_identities_next(&dirp, &identity))) {
+        if(res < 0) {
+            _LOGERR("error getting next signed public identity, skipping\n");
+            continue;
         }
 
-        const node_id_t new_kid = { 0x00, 0x00, dev_type_value, dev_id_value};
-
-        err = credential_manager_add_key(new_kid, sizeof(new_kid), CREDENTIAL_PUBLIC,
-                key->public_key, sizeof(key->public_key));
+        int err = credential_manager_add_key(identity.kid, sizeof(identity.kid), CREDENTIAL_PUBLIC, identity.key, sizeof(identity.key));
         if (err) {
-            _LOGERR("add public key [FAILED]");
+            _LOGERR("add public key [FAILED]\n");
             return -5;
         }
+        else if (LOG_LEVEL == LOG_DEBUG) {
+            _LOGDBG("added key:\n");
+            od_hex_dump(identity.kid, sizeof(identity.kid), 0);
+        }
     }
+
     return 0;
 }
-

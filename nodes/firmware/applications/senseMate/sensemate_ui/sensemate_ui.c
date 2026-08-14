@@ -13,6 +13,7 @@
 #include "periph/gpio.h"
 #include "include/sensemate_ui.h"
 #include "timex.h"
+#include "personalization.h"
 #define LOG_LEVEL   LOG_NONE
 #include "log.h"
 #define _LOGDBG(...) LOG_DEBUG("[ui]: " __VA_ARGS__)
@@ -529,7 +530,9 @@ static void _create_dashboard(lv_obj_t *parent, lv_group_t *grp)
     lv_obj_set_style_pad_all(header_pad, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     
     /* right part of the header symbols */
-    lv_obj_t *dev_id_lbl = _add_header_label(header_cont, "Mate-" STR(RIOT_CONFIG_DEVICE_ID));
+    char buffer[sizeof("Mate-") + 8];
+    snprintf(buffer, sizeof(buffer), "Mate-%d", self_node_id[3]);
+    lv_obj_t *dev_id_lbl = _add_header_label(header_cont, buffer);
     lv_obj_set_style_text_font(dev_id_lbl, &font_goldfish, 0);
 
     //alert_lbl = _add_header_label(header_cont, LV_SYMBOL_BELL);
@@ -664,16 +667,19 @@ static void _clear_tile_dyn_leave(ui_dyn_menu_ctx_t *c)
     }
 }
 
-static void slider_event_cb(lv_event_t * e)
+static void slider_event_cb(lv_event_t *e)
 {
-    lv_obj_t * slider = lv_event_get_target(e);
-    void *user_data = lv_event_get_user_data(e);
-    if (user_data) {
-        lv_obj_t *slider_label = (lv_obj_t*)user_data;
-        char buf[8];
-        lv_snprintf(buf, sizeof(buf), "%d%%", (int)lv_slider_get_value(slider));
-        lv_label_set_text(slider_label, buf);
-        lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+    lv_obj_t *slider = lv_event_get_target(e);
+    lv_obj_t *slider_label = lv_event_get_user_data(e);
+
+    int8_t rssi = (int8_t)lv_slider_get_value(slider);
+
+    char buf[16];
+    lv_snprintf(buf, sizeof(buf), "%d dBm", rssi);
+    lv_label_set_text(slider_label, buf);
+
+    if (_data_cbs && _data_cbs->set_min_visible_rssi) {
+        _data_cbs->set_min_visible_rssi(rssi);
     }
 }
 
@@ -692,16 +698,30 @@ static void _settings_menu_dyn_enter(ui_dyn_menu_ctx_t *c)
     lv_group_add_obj(c->nav_group, btn);
     //lv_obj_add_event_cb(btn, _btn_event_handler, LV_EVENT_CLICKED, NULL);
 
-    lv_obj_t * slider = lv_slider_create(list1);
+    lv_obj_t *rssi_title_label = lv_label_create(list1);
+    lv_label_set_text(rssi_title_label, "Min RSSI");
+    lv_obj_set_style_text_align(rssi_title_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(rssi_title_label, LV_ALIGN_CENTER, 0, 0);
+
+    lv_obj_t *slider = lv_slider_create(list1);
     lv_obj_set_size(slider, LV_PCT(80), LV_SIZE_CONTENT);
-    //TODO: this does not center the element in the list as intended
-    lv_obj_center(slider);
-    lv_obj_align(slider, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align_to(slider, rssi_title_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 8);
     lv_group_add_obj(c->nav_group, slider);
 
-    /*Create a label below the slider*/
+    /* Create a value label below the slider */
     lv_obj_t *slider_label = lv_label_create(list1);
-    lv_label_set_text(slider_label, "0%");
+    int8_t visible_rssi = -100;
+
+    if (_data_cbs && _data_cbs->get_min_visible_rssi) {
+        visible_rssi = _data_cbs->get_min_visible_rssi();
+    }
+
+    lv_slider_set_range(slider, -100, -30);
+    lv_slider_set_value(slider, visible_rssi, LV_ANIM_OFF);
+
+    char buf[16];
+    lv_snprintf(buf, sizeof(buf), "%d dBm", visible_rssi);
+    lv_label_set_text(slider_label, buf);
     lv_obj_align(slider_label, LV_ALIGN_CENTER, 0, 0);
     lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
     lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, slider_label);

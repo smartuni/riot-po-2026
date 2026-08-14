@@ -48,10 +48,16 @@ typedef bool (*ui_data_element_iter_cb_t)(ui_data_element_t *prev);
 
 typedef bool (*ui_create_data_element_cb_t)(ui_data_element_t *element);
 
+typedef bool (*ui_set_min_visible_rssi_cb_t)(int8_t rssi);
+
+typedef int8_t (*ui_get_min_visible_rssi_cb_t)(void);
+
 typedef struct {
     ui_data_element_iter_cb_t all_gates_iter;
     ui_data_element_iter_cb_t jobs_iter;
     ui_create_data_element_cb_t put_gate_observation;
+    ui_set_min_visible_rssi_cb_t set_min_visible_rssi;
+    ui_get_min_visible_rssi_cb_t get_min_visible_rssi;
 } ui_data_cbs_t;
 
 typedef struct {

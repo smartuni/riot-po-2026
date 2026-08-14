@@ -11,9 +11,6 @@ PROJECT_BASE ?= $(CURDIR)/../..
 RIOTBASE ?= $(PROJECT_BASE)/RIOT
 EXTERNAL_MODULE_DIRS += $(PROJECT_BASE)/custom-modules
 
-# Configrue device id and device type.
-# This will instruct the key-distro module to include required credentials.
-RIOT_CONFIG_DEVICE_ID ?= 1
 # Set the device type to 'Gate' to configure some device specific behaviors.
 # Dont allow overwrites here, as that would only cause trouble anyway.
 # (the corresponding values are defined in tables/types.h)
@@ -42,16 +39,11 @@ USEMODULE += mate_lorawan
 USEMODULE += mate_ble
 USEMODULE += inductive_sensor
 
-CFLAGS += -DRIOT_CONFIG_DEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
 CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=$(RIOT_CONFIG_DEVICE_TYPE)
 CFLAGS += -DEVENT_THREAD_HIGHEST_STACKSIZE=6*1024
 CFLAGS += -DEVENT_THREAD_MEDIUM_STACKSIZE=6*1024
 
-ifeq ($(RIOT_CONFIG_DEVICE_ID),1)
-CFLAGS += -DGATE_OBSERVER_DISTANCE_SENSOR_CNT=1
-else
 CFLAGS += -DGATE_OBSERVER_DISTANCE_SENSOR_CNT=0
-endif
 
 CFLAGS += -DTHREAD_STACKSIZE_MAIN=THREAD_STACKSIZE_LARGE*2
 
@@ -61,7 +53,6 @@ USEMODULE += mtd_emulated
 # credential manager stuff
 USEMODULE += credential_manager
 USEMODULE += flashdb_store_service
-USEMODULE += key-distro
 
 # configure ram mtd to a size of 64 kByte
 CFLAGS += -DRAM_MTD_SECTOR_COUNT=\(16\)
@@ -107,35 +98,14 @@ USEMODULE += ps
 USEMODULE += shell_cmd_genfile
 USEMODULE += shell_cmds_default
 
+# required modules for identity store
+USEMODULE += identity_store
+USEMODULE += vfs_default
+USEMODULE += vfs_util
+
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 CFLAGS += -DDEBUG_ASSERT_VERBOSE
 CFLAGS += -I$(APPDIR)/include
-
-# If you want to modify this code, be sure to make some adjustments in
-# nodes/firmware/custom-modules/key-distro/Makefile.include as well! (include $(CONFIG_FILE)
-.PHONY: init-keys generate-keys delete-keys
-
-init-keys:
-	@echo
-	@{ \
-		if [ -n "$$TTN_API_KEY" ]; then \
-			input="$$TTN_API_KEY"; \
-		else \
-			printf "Enter TTN API key: " >&2; \
-			IFS= read -r input; \
-		fi; \
-		printf "ttn_auth_token: %s\n" "$$input" > $(EXTERNAL_MODULE_DIRS)/key-distro/util_scripts/secrets.yaml; \
-	}
-
-generate-keys:
-	@echo
-	@echo Generating TTN Keys...
-	@cd $(EXTERNAL_MODULE_DIRS)/key-distro/util_scripts && python generate_prod_keys.py && python generate_ttn_devices.py
-
-delete-keys:
-	@echo
-	rm -rf $(EXTERNAL_MODULE_DIRS)/key-distro/include/secrets
-	rm -rf $(EXTERNAL_MODULE_DIRS)/key-distro/ttn_configs/*_config.mk
 
 include $(RIOTBASE)/Makefile.include

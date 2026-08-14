@@ -16,12 +16,8 @@ Sensor needs to be connected to: Grnd / A5
 
 ### Deployment
 
-Before flashing make sure [signature keys](../custom-modules/key-distro/README.md) are generated! 
+After flashing, use the [identity-manager](../../identity-manager/README.md) to generate a node identity and provision it to the node.
 
-#### Testing 
+#### Building and Flashing
 
-```make all flash RIOT_CONFIG_USE_TEST=1```
-
-#### Production
-
-```make all flash RIOT_CONFIG_DEVICE_ID=<GATE_ID>```
+```make all flash```

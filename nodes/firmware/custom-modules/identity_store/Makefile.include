@@ -1,0 +1,2 @@
+USEMODULE_INCLUDES_identity_store := $(LAST_MAKEFILEDIR)/include
+USEMODULE_INCLUDES += $(USEMODULE_INCLUDES_identity_store)

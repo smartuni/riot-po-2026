@@ -3,9 +3,14 @@ package com.riot.matesense.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.riot.matesense.enums.BatteryStatus;
+import com.riot.matesense.enums.MsgType;
 import com.riot.matesense.enums.RecordType;
+import com.riot.matesense.enums.ShockStatus;
+import com.riot.matesense.model.HealthStatusDTO;
 import org.springframework.stereotype.Service;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.riot.matesense.enums.MsgType.IST_STATE;
@@ -70,9 +75,54 @@ public class JsonFormatter {
     // ========================= Methoden =========================
 
     public String toJsonFormat(List<Object> rawData) throws Exception {
-        //===== Header -----vvvvv
-        int version = (int) rawData.get(0);
-        int messageType = (int)rawData.get(1);
+        if (rawData == null || rawData.size() < 2) {
+            throw new IllegalArgumentException("rawData ist unvollständig oder null");
+        }
+
+        // 1. Nur die absoluten Basis-Header auslesen, die JEDE Nachricht hat
+        int version = ((Number) rawData.get(0)).intValue();
+        int messageType = ((Number) rawData.get(1)).intValue();
+
+        // ================= NEW: HEALTH STATUS BLOCK (Typ 5) =================
+        // Wir prüfen hier nur auf die harte 5, um Enum-Fehler auszuschließen
+        if (messageType == 5) {
+            int senseGateId = ((Number) rawData.get(2)).intValue();
+            int eventHeader = ((Number) rawData.get(3)).intValue();
+            int eventBody = ((Number) rawData.get(4)).intValue();
+
+            ShockStatus shockStatus = ShockStatus.UNKNOWN;
+            BatteryStatus batteryStatus = BatteryStatus.UNKNOWN;
+            int voltageMv = 0;
+
+            switch (eventHeader) {
+                case 0x00 -> { // BATTERY_CHARGING
+                    batteryStatus = BatteryStatus.fromCode(0);
+                    voltageMv = eventBody;
+                }
+                case 0x01 -> { // BATTERY_DISCHARGING
+                    batteryStatus = BatteryStatus.fromCode(1);
+                    voltageMv = eventBody;
+                }
+                case 0x02 -> { // BATTERY_LOW
+                    batteryStatus = BatteryStatus.fromCode(2);
+                    voltageMv = eventBody;
+                }
+                case 0x03 -> { // SHOCK_STATUS
+                    shockStatus = ShockStatus.fromCode(eventBody);
+                }
+                case 0x04 -> {
+                    System.out.println("FREE_FALL Event empfangen (noch nicht voll implementiert)");
+                }
+                default -> System.err.println("Unbekannter Health Event Header: " + eventHeader);
+            }
+
+            HealthStatusDTO healthDTO = new HealthStatusDTO(version, senseGateId, shockStatus, batteryStatus, voltageMv);
+            Message message = new Message(messageType, List.of(healthDTO));
+
+            // Verlässt die Methode sofort für Typ 5. Der alte Code darunter wird nie erreicht!
+            return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
+        }
+
         RecordType recordType = RecordType.fromCode((int)rawData.get(2));
         byte[] writerId= (byte[])rawData.get(3);
         int hlc_phy = (int)rawData.get(5);
