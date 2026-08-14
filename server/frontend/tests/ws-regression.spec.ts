@@ -38,15 +38,15 @@ test.describe('WebSocket regression — stale lastTimeStamp bug', () => {
     // 4. KEY BUG ASSERTION: "Last Update" must show a fresh relative time.
     //    Before fix: WS sends stale lastTimeStamp → UI shows "5 months ago" (from Jan 2026 seed) → test FAILS.
     //    After fix:  WS sends fresh lastTimeStamp → UI shows "seconds ago"                     → test PASSES.
-    //const lastUpdateCell = row.locator('td[data-label="Last Update"]');
-    //await expect(lastUpdateCell).toContainText(/seconds? ago|minute/, { timeout: 5000 });
+    const lastUpdateCell = row.locator('td[data-label="Last Update"]');
+    await expect(lastUpdateCell).toContainText(/seconds? ago|minute/, { timeout: 5000 });
 
     // 5. Verify via API that DB has a fresh timestamp
-    //const gatesAfter = await (await request.get(`${BACKEND_URL}/gates`)).json();
-    //const alphaAfter = gatesAfter.find((g: { id: number }) => g.id === 1001);
-    //expect(new Date(alphaAfter.gateTimeStamp).getTime()).toBeGreaterThan(
-    //  new Date(alphaBefore.gateTimeStamp).getTime(),
-    //);
+    const gatesAfter = await (await request.get(`${BACKEND_URL}/gates`)).json();
+    const alphaAfter = gatesAfter.find((g: { id: number }) => g.id === 1001);
+    expect(new Date(alphaAfter.gateTimeStamp).getTime()).toBeGreaterThan(
+      new Date(alphaBefore.gateTimeStamp).getTime(),
+    );
 
     // 6. Verify an activity entry was added for gate 1001
     const activities = await (
