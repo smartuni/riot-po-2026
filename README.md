@@ -175,5 +175,3 @@ To stop and delete the volumes with the database state, use `docker compose down
 Notes from the summer 2026 project group to future contributors.
 
 The working state presented at the summer 2026 presentation can be found at the git tag `presentation-summer-2026`
-
-### Incomplete features:
