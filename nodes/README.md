@@ -23,6 +23,10 @@ SenseMate hardware components and drawings
 
 SenseMate and SenseGate source code
 
+## Node Identity and Identity Gossipping
+
+A high-level overview of how node identities and identity gossipping work, can be found in [Node Identity and Identity Gossipping](./node_identity_and_identity_gossipping.md).
+
 ### Deployment
 
 `make all flash` or with terminal output `make all flash term` TODO

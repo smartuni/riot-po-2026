@@ -87,6 +87,8 @@ Provisioning of devices is done via the identity-manager module found at `/nodes
 
 ##### Setup
 
+> Note: A high level overview of node identities and identity gossipping can be found in [Node Identity and Identity Gossipping](./nodes/node_identity_and_identity_gossipping.md).
+
 To use the credential manager, it needs to be set up.
 First, create the config for the credential manager at `nodes/firmware/identity-manager/config.yaml`. See the example config (`config.examle.yaml`) for reference.
 
