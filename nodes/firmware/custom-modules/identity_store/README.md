@@ -24,3 +24,28 @@ It provides functions for:
 The identity store operates on what we call `identities`: A pair of either public or private key and a corresponding key ID, which will be used for BLE communication.
 
 A `signed (public) identity` is a pair of a CBOR encoded `intentity` and the signature obtained from signing that data with the root private key.
+
+## Storage layout
+
+Itentity files and LoraWAN keys are stored in the following structure on the external flash:
+
+```
+/config
+└─/loramac
+  ├─ joineui
+  ├─ deveui
+  └─ nwkkey
+/identities
+├─/self
+│ ├─ root.pubid
+│ ├─ self.pubid
+│ └─ self.prvid
+├─/valid
+│ ├─ sensemate-001
+│ ├─ sensemate-002
+│ ├─ ...
+│ ├─ sensegate-001
+│ ├─ sensegate-002
+│ └─ ...
+└─/revoked
+```
