@@ -3,6 +3,7 @@ package com.riot.matesense.registry;
 import com.riot.matesense.config.DeviceInfo;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +28,10 @@ public class DeviceRegistry {
 
         devices.putIfAbsent(deviceName, new DeviceInfo(deviceName, type));
         System.out.println("Gerät registriert: " + deviceName + " (" + type + ")");
+    }
+
+    public DeviceInfo getDeviceInfo(String deviceName) {
+        return devices.get(deviceName);
     }
 
     public boolean removeDevice(String deviceName) {

@@ -1,4 +1,4 @@
--- V12: Add gate override/height columns, FK cascade on gate_metadata, unique constraint
+-- V14: Add gate override/height columns, FK cascade on gate_metadata, unique constraint
 -- Issue #1: GateEntity.java has manualOverride (boolean) and heightAboveNN (Double) fields
 --           but no migration adds these columns to the gates table in PostgreSQL.
 -- Issue #2: gate_metadata.gate_id has no FK to gates(id) with ON DELETE CASCADE.

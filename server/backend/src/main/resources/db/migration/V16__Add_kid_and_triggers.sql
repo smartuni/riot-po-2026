@@ -1,4 +1,4 @@
--- Migration: V12__Add_kid_and_triggers.sql
+-- Migration: V16__Add_kid_and_triggers.sql
 -- Description: Add kid column and unique constraint to root_keys, add updated_at triggers for new tables
 
 -- ============================================================================

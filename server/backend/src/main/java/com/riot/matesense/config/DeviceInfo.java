@@ -1,8 +1,10 @@
 package com.riot.matesense.config;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 public class DeviceInfo {
     public enum Type { GATE, MATE }
 

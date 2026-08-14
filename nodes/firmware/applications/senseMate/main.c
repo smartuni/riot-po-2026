@@ -1,6 +1,7 @@
 #include "od.h"
 #include "ztimer.h"
 #include <stdio.h>
+#include "personalization.h"
 #include <list.h>
 #include "board.h"
 #include "periph/gpio.h"
@@ -297,7 +298,6 @@ int main(void) {
     sensemate_ui_update();
 
     lorawan_started = mate_lorawan_start(tables);
-
     puts("entering main loop");
     uint32_t prev_gate_cnt = 0;
     uint32_t prev_mate_cnt = 0;

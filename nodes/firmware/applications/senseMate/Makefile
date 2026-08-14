@@ -20,6 +20,9 @@ VERBOSE_ASSERT ?= 1
 # Dont allow overwrites here, as that would only cause trouble anyway.
 # (the corresponding values are defined in tables/types.h)
 RIOT_CONFIG_DEVICE_TYPE = DEVICE_TYPE_SENSEMATE
+# Configrue device id and device type.
+# This will instruct the key-distro module to include required credentials.
+RIOT_CONFIG_DEVICE_ID ?= 1
 # Some workarounds are needed in order to get the tutorial running on
 # some computers.
 -include ../../lab_workarounds.mk
@@ -52,6 +55,7 @@ PREFLASH_DELAY=8
 USE_FLASHDB_ON_VFS ?= 0
 
 CFLAGS += -DRIOT_CONFIG_DEVICE_TYPE=$(RIOT_CONFIG_DEVICE_TYPE)
+CFLAGS += -DRIOT_CONFIG_DEVICE_ID=$(RIOT_CONFIG_DEVICE_ID)
 CFLAGS += -DI2C_DEVICE_IDX=0
 CFLAGS += -DI2C_DISPLAY_ADDR=0x3c
 CFLAGS += -DU8G2_DISPLAY_INIT_FUNC=u8g2_Setup_ssd1306_i2c_128x64_noname_f
@@ -85,6 +89,7 @@ USEMODULE += mtd_emulated
 # credential manager stuff
 USEMODULE += credential_manager
 USEMODULE += flashdb_store_service
+USEMODULE += key-distro
 
 # configure ram mtd to a size of 8 kByte
 CFLAGS += -DRAM_MTD_SECTOR_COUNT=\(16\)
