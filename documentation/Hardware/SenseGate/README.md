@@ -31,6 +31,15 @@ Detailed firmware documentation: [`documentation/Firmware/SenseGate/`](../../Fir
 
 ---
 
+
+## Notes on Board Assembly
+
+- the resistors R8/R9, R10/R11, R12/13, R14/R15 are meant to be mounted only one at a time. They are both in the schematic to allow deciding on the specific configuaration later
+- its intentded to only mount either R6+R7 or RV1 for the same reason
+- C1 and C2 are 4,7 uF
+
+---
+
 ## Pin Mapping
 
 The MCU connects to the SenseGate carrier via a 24-pin castellation connector (`SenseGateLib.pretty/SenseMateInterface.kicad_mod`). Signal assignments on the carrier board:
